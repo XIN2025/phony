@@ -9,14 +9,14 @@ import (
 )
 
 func TestConfigLoad(t *testing.T) {
-	// Test default values
+
 	cfg, err := config.Load()
 	assert.NoError(t, err)
 	assert.Equal(t, "debug", cfg.Environment)
 	assert.Equal(t, 8080, cfg.Port)
 	assert.Equal(t, "info", cfg.LogLevel)
 
-	// Test environment variable override
+
 	os.Setenv("APP_ENV", "release")
 	os.Setenv("PORT", "9090")
 	os.Setenv("LOG_LEVEL", "debug")
@@ -27,14 +27,14 @@ func TestConfigLoad(t *testing.T) {
 	assert.Equal(t, 9090, cfg.Port)
 	assert.Equal(t, "debug", cfg.LogLevel)
 
-	// Clean up
+
 	os.Unsetenv("APP_ENV")
 	os.Unsetenv("PORT")
 	os.Unsetenv("LOG_LEVEL")
 }
 
 func TestConfigWithOptions(t *testing.T) {
-	// Test with custom options
+
 	cfg, err := config.Load(
 		config.WithEnvironment("test"),
 		config.WithPort(3000),
@@ -76,28 +76,28 @@ func TestConfigWithOptions(t *testing.T) {
 }
 
 func TestConfigInvalidPort(t *testing.T) {
-	// Test invalid port
+
 	cfg, err := config.Load(config.WithPort(-1))
 	assert.NoError(t, err)
-	assert.Equal(t, 8080, cfg.Port) // Should use default port
+	assert.Equal(t, 8080, cfg.Port) 
 
 	cfg, err = config.Load(config.WithPort(70000))
 	assert.NoError(t, err)
-	assert.Equal(t, 8080, cfg.Port) // Should use default port
+	assert.Equal(t, 8080, cfg.Port) 
 }
 
 func TestConfigInvalidEnvironment(t *testing.T) {
-	// Test invalid environment
+
 	cfg, err := config.Load(config.WithEnvironment("invalid"))
 	assert.NoError(t, err)
-	assert.Equal(t, "debug", cfg.Environment) // Should use default environment
+	assert.Equal(t, "debug", cfg.Environment) 
 }
 
 func TestConfigInvalidLogLevel(t *testing.T) {
-	// Test invalid log level
+
 	cfg, err := config.Load(config.WithLogLevel("invalid"))
 	assert.NoError(t, err)
-	assert.Equal(t, "info", cfg.LogLevel) // Should use default log level
+	assert.Equal(t, "info", cfg.LogLevel) 
 }
 
 func TestConfigGetLoggerConfig(t *testing.T) {

@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	// Load configuration with custom options
+
 	cfg, err := config.Load(
 		config.WithEnvironment("debug"),
 		config.WithPort(8080),
@@ -42,7 +42,7 @@ func main() {
 		panic(fmt.Sprintf("Failed to load configuration: %v", err))
 	}
 
-	// Initialize logger with custom options
+
 	err = logger.Init(cfg.Environment,
 		logger.WithLevel(cfg.LogLevel),
 		logger.WithEncoding(cfg.Logger.Encoding),
@@ -54,23 +54,23 @@ func main() {
 	}
 	defer logger.Sync()
 
-	// Set Gin mode based on environment
+
 	gin.SetMode(cfg.Environment)
 
-	// Create router
+
 	router := gin.New()
 
-	// Apply middleware with custom options
+
 	router.Use(middleware.CreateLoggingMiddleware(cfg.GetLoggingMiddlewareConfig()))
 	router.Use(middleware.CreateRecoveryMiddleware(cfg.GetErrorMiddlewareConfig()))
 
-	// Create handler
+
 	h := handler.NewHandler()
 
-	// Register routes
+
 	h.RegisterRoutes(router)
 
-	// Start server
+
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	logger.Info("Starting server",
 		logger.String("address", addr),

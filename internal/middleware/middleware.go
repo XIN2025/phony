@@ -9,10 +9,10 @@ import (
 	"github.com/xin2025/go-template/pkg/logger"
 )
 
-// MiddlewareOption is a function that modifies middleware behavior
+
 type MiddlewareOption func(interface{})
 
-// WithSkipPaths sets the paths to skip in logging middleware
+
 func WithSkipPaths(paths []string) MiddlewareOption {
 	return func(m interface{}) {
 		if logging, ok := m.(*loggingMiddleware); ok {
@@ -21,7 +21,7 @@ func WithSkipPaths(paths []string) MiddlewareOption {
 	}
 }
 
-// WithLogRequestBody enables/disables request body logging
+
 func WithLogRequestBody(log bool) MiddlewareOption {
 	return func(m interface{}) {
 		if logging, ok := m.(*loggingMiddleware); ok {
@@ -30,7 +30,7 @@ func WithLogRequestBody(log bool) MiddlewareOption {
 	}
 }
 
-// WithLogResponseBody enables/disables response body logging
+
 func WithLogResponseBody(log bool) MiddlewareOption {
 	return func(m interface{}) {
 		if logging, ok := m.(*loggingMiddleware); ok {
@@ -39,7 +39,7 @@ func WithLogResponseBody(log bool) MiddlewareOption {
 	}
 }
 
-// WithAdditionalFields adds custom fields to logs
+
 func WithAdditionalFields(fields map[string]interface{}) MiddlewareOption {
 	return func(m interface{}) {
 		if logging, ok := m.(*loggingMiddleware); ok {
@@ -48,7 +48,7 @@ func WithAdditionalFields(fields map[string]interface{}) MiddlewareOption {
 	}
 }
 
-// loggingMiddleware handles request logging
+
 type loggingMiddleware struct {
 	skipPaths       []string
 	logRequestBody  bool
@@ -56,7 +56,7 @@ type loggingMiddleware struct {
 	additionalFields map[string]interface{}
 }
 
-// newLoggingMiddleware creates a new logging middleware
+
 func newLoggingMiddleware(cfg *config.LoggingConfig, options ...MiddlewareOption) gin.HandlerFunc {
 	m := &loggingMiddleware{
 		skipPaths:       cfg.SkipPaths,
@@ -65,13 +65,13 @@ func newLoggingMiddleware(cfg *config.LoggingConfig, options ...MiddlewareOption
 		additionalFields: cfg.AdditionalFields,
 	}
 
-	// Apply custom options
+
 	for _, option := range options {
 		option(m)
 	}
 
 	return func(c *gin.Context) {
-		// Skip logging for specified paths
+
 		for _, path := range m.skipPaths {
 			if c.Request.URL.Path == path {
 				c.Next()
@@ -83,10 +83,10 @@ func newLoggingMiddleware(cfg *config.LoggingConfig, options ...MiddlewareOption
 		path := c.Request.URL.Path
 		query := c.Request.URL.RawQuery
 
-		// Process request
+
 		c.Next()
 
-		// Log request details
+
 		logger.Info("Request processed",
 			logger.String("path", path),
 			logger.String("query", query),
@@ -96,27 +96,27 @@ func newLoggingMiddleware(cfg *config.LoggingConfig, options ...MiddlewareOption
 			logger.Duration("latency", time.Since(start)),
 		)
 
-		// Add custom fields
+
 		for k, v := range m.additionalFields {
 			logger.Info("Additional field", logger.Any(k, v))
 		}
 
-		// Log request/response bodies if enabled
+
 		if m.logRequestBody && c.Request.Body != nil {
-			// Implementation for request body logging
+
 		}
 		if m.logResponseBody && c.Writer != nil {
-			// Implementation for response body logging
+
 		}
 	}
 }
 
-// recoveryMiddleware handles panic recovery
+
 type recoveryMiddleware struct {
 	logStack bool
 }
 
-// newRecoveryMiddleware creates a new recovery middleware
+
 func newRecoveryMiddleware(cfg *config.ErrorConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
@@ -128,7 +128,7 @@ func newRecoveryMiddleware(cfg *config.ErrorConfig) gin.HandlerFunc {
 				)
 
 				if cfg.LogStack {
-					// Add stack trace to fields
+
 				}
 
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -138,12 +138,12 @@ func newRecoveryMiddleware(cfg *config.ErrorConfig) gin.HandlerFunc {
 	}
 }
 
-// CreateLoggingMiddleware creates a logging middleware with the given configuration
+
 func CreateLoggingMiddleware(cfg *config.LoggingConfig) gin.HandlerFunc {
 	return newLoggingMiddleware(cfg)
 }
 
-// CreateRecoveryMiddleware creates a recovery middleware with the given configuration
+
 func CreateRecoveryMiddleware(cfg *config.ErrorConfig) gin.HandlerFunc {
 	return newRecoveryMiddleware(cfg)
 } 
