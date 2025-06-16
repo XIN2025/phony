@@ -21,7 +21,7 @@ import (
 func getTestConfig() *config.Config {
 	dbDriver := os.Getenv("DB_DRIVER")
 	if dbDriver == "" {
-		dbDriver = "postgres" // default to postgres for Windows compatibility
+		dbDriver = "postgres" 
 	}
 	dbConn := os.Getenv("DB_CONNECTION_STRING")
 	if dbConn == "" {
@@ -57,7 +57,7 @@ func ensurePostgresDatabaseExists() {
 }
 
 func isDuplicateDatabaseError(err error) bool {
-	// Postgres error code 42P04: duplicate_database
+
 	return err != nil && (err.Error() == "pq: database \"ent_test\" already exists" ||
 		(err.Error() != "" && (len(err.Error()) > 0 && err.Error()[0:2] == "42")))
 }
@@ -83,11 +83,11 @@ func TestEntIntegration(t *testing.T) {
 	assert.NoError(t, err)
 	defer drv.Close()
 
-	// Create schema
+
 	err = drv.Schema.Create(ctx)
 	assert.NoError(t, err)
 
-	// Create user
+
 	now := time.Now()
 	createdUser, err := drv.User.Create().
 		SetUsername("testuser").
@@ -105,18 +105,18 @@ func TestEntIntegration(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, createdUser.ID, user2.ID)
 
-	// Update user
+
 	updated, err := drv.User.UpdateOneID(createdUser.ID).SetEmail("new@example.com").Save(ctx)
 	logger.Info("Updated user", logger.Any("user", updated))
 	assert.NoError(t, err)
 	assert.Equal(t, "new@example.com", updated.Email)
 
-	// Delete user
+
 	err = drv.User.DeleteOneID(createdUser.ID).Exec(ctx)
 	logger.Info("Deleted user", logger.Int("user_id", createdUser.ID))
 	assert.NoError(t, err)
 
-	// Ensure user is deleted
+
 	count, err := drv.User.Query().Count(ctx)
 	logger.Info("User count after delete", logger.Int("count", count))
 	assert.NoError(t, err)

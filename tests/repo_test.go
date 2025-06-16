@@ -15,12 +15,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/xin2025/go-template/internal/config"
+	"github.com/xin2025/go-template/internal/domain"
 	"github.com/xin2025/go-template/internal/ent"
 	"github.com/xin2025/go-template/internal/handler"
-	"github.com/xin2025/go-template/internal/repository"
 	mongo_repo "github.com/xin2025/go-template/internal/repository/mongo"
 	sql_repo "github.com/xin2025/go-template/internal/repository/sql"
-	"github.com/xin2025/go-template/internal/service"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -29,26 +28,26 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// setupTestApp configures the entire application stack for testing against a specific database.
-// It returns a configured Gin router and a cleanup function to be deferred.
+
+
 func setupTestApp(t *testing.T, cfg *config.Config) (*gin.Engine, func()) {
-	// 1. Set up the correct data store (repository) based on the config
-	var store *repository.Store
+
+	var store *domain.Store
 	var cleanupFunc func()
 
 	switch cfg.DBType {
 	case "sql":
-		// Wait for database to be ready
+
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		// Try to connect multiple times
+
 		var client *ent.Client
 		var err error
 		for i := 0; i < 5; i++ {
 			client, err = ent.Open(cfg.Database.Driver, cfg.Database.ConnectionString)
 			if err == nil {
-				// Test the connection using sql.DB
+
 				if db, err := sql.Open(cfg.Database.Driver, cfg.Database.ConnectionString); err == nil {
 					if err := db.PingContext(ctx); err == nil {
 						db.Close()
@@ -61,32 +60,32 @@ func setupTestApp(t *testing.T, cfg *config.Config) (*gin.Engine, func()) {
 		}
 		assert.NoError(t, err, "Failed to connect to database after multiple attempts")
 
-		// Run migrations
+
 		err = client.Schema.Create(context.Background())
 		assert.NoError(t, err)
 
 		userRepo := sql_repo.NewSQLUserRepository(client)
-		store = &repository.Store{UserRepo: userRepo}
+		store = &domain.Store{UserRepo: userRepo}
 
 		cleanupFunc = func() {
-			// Clean all user entries to ensure test isolation
+
 			_, err := client.User.Delete().Exec(context.Background())
 			assert.NoError(t, err)
-			// Don't close the client here, it will be closed after all tests
+
 		}
 
 	case "mongo":
-		// Wait for MongoDB to be ready
+
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		// Try to connect multiple times
+
 		var client *mongo.Client
 		var err error
 		for i := 0; i < 5; i++ {
 			client, err = mongo.Connect(ctx, options.Client().ApplyURI(cfg.Mongo.URI))
 			if err == nil {
-				// Test the connection
+
 				if err := client.Ping(ctx, nil); err == nil {
 					break
 				}
@@ -97,27 +96,26 @@ func setupTestApp(t *testing.T, cfg *config.Config) (*gin.Engine, func()) {
 
 		db := client.Database(cfg.Mongo.DatabaseName)
 		userRepo := mongo_repo.NewMongoUserRepository(db)
-		store = &repository.Store{UserRepo: userRepo}
+		store = &domain.Store{UserRepo: userRepo}
 
 		cleanupFunc = func() {
-			// Drop the entire collection for a clean slate
+
 			err := db.Collection("users").Drop(context.Background())
-			// We can ignore a "ns not found" error if the collection didn't exist
+
 			if err != nil && !mongo.IsNetworkError(err) && err.Error() != "ns not found" {
 				assert.NoError(t, err)
 			}
-			// Don't disconnect here, it will be disconnected after all tests
+
 		}
 
 	default:
 		t.Fatalf("Unsupported DBType for testing: %s", cfg.DBType)
 	}
 
-	// 2. Set up the service and handler
-	appService := service.NewService(store, cfg)
-	appHandler := handler.NewHandler(appService)
 
-	// 3. Set up the Gin router
+	appHandler := handler.NewUserHandler(store, cfg)
+
+
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	appHandler.RegisterRoutes(router)
@@ -125,7 +123,7 @@ func setupTestApp(t *testing.T, cfg *config.Config) (*gin.Engine, func()) {
 	return router, cleanupFunc
 }
 
-// isDBAvailable checks if a database is reachable.
+
 func isDBAvailable(driver, connStr string) bool {
 	if os.Getenv("SKIP_DB_TESTS") != "" {
 		return false
@@ -143,7 +141,7 @@ func isDBAvailable(driver, connStr string) bool {
 		return client.Ping(ctx, nil) == nil
 	}
 
-	// Use database/sql directly to check DB availability
+
 	sqldb, err := sql.Open(driver, connStr)
 	if err != nil {
 		return false
@@ -152,10 +150,10 @@ func isDBAvailable(driver, connStr string) bool {
 	return sqldb.PingContext(ctx) == nil
 }
 
-// TestFullApplicationFlow runs a full integration test for the user registration and login flow.
+
 func TestFullApplicationFlow(t *testing.T) {
-	// --- Test Cases Definition ---
-	// We define all database configurations we want to test against.
+
+
 	testCases := []struct {
 		name   string
 		config *config.Config
@@ -210,22 +208,22 @@ func TestFullApplicationFlow(t *testing.T) {
 		},
 	}
 
-	// --- Run Tests for Each Case ---
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.skip {
 				t.Skipf("Skipping %s test: Database not available or configured to skip.", tc.name)
 			}
 
-			// Setup the application with the specific database config for this test case
-			router, cleanup := setupTestApp(t, tc.config)
-			defer cleanup() // This will only clean the data, not close the connection
 
-			// --- Test Steps ---
+			router, cleanup := setupTestApp(t, tc.config)
+			defer cleanup() 
+
+
 			uniqueEmail := fmt.Sprintf("testuser_%d@example.com", time.Now().UnixNano())
 			password := "strongpassword123"
 
-			// 1. Register a new user (Success Case)
+
 			regBody := gin.H{
 				"username": "testuser",
 				"email":    uniqueEmail,
@@ -238,7 +236,7 @@ func TestFullApplicationFlow(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			router.ServeHTTP(w, req)
 
-			// Print response body for debugging
+
 			t.Logf("Register Response: %s", w.Body.String())
 
 			assert.Equal(t, http.StatusCreated, w.Code)
@@ -246,7 +244,7 @@ func TestFullApplicationFlow(t *testing.T) {
 			err := json.Unmarshal(w.Body.Bytes(), &regResponse)
 			assert.NoError(t, err)
 			
-			// Check if response has data field
+
 			data, ok := regResponse["data"].(map[string]interface{})
 			assert.True(t, ok, "Response should have a 'data' field")
 			if ok {
@@ -255,7 +253,7 @@ func TestFullApplicationFlow(t *testing.T) {
 				assert.NotEmpty(t, data["id"])
 			}
 
-			// 2. Log in with the newly created user (Success Case)
+
 			loginBody := gin.H{
 				"email":    uniqueEmail,
 				"password": password,
@@ -267,7 +265,7 @@ func TestFullApplicationFlow(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			router.ServeHTTP(w, req)
 
-			// Print response body for debugging
+
 			t.Logf("Login Response: %s", w.Body.String())
 
 			assert.Equal(t, http.StatusOK, w.Code)
@@ -275,23 +273,23 @@ func TestFullApplicationFlow(t *testing.T) {
 			err = json.Unmarshal(w.Body.Bytes(), &loginResponse)
 			assert.NoError(t, err)
 			
-			// Check if response has data field
+
 			tokenData, ok := loginResponse["data"].(map[string]interface{})
 			assert.True(t, ok, "Response should have a 'data' field")
 			if ok {
 				assert.NotEmpty(t, tokenData["token"], "Token should not be empty on successful login")
 			}
 
-			// 3. Try to register the SAME user again (Failure Case)
+
 			w = httptest.NewRecorder()
 			req, _ = http.NewRequest("POST", "/api/v1/users/register", bytes.NewBuffer(regJSON))
 			req.Header.Set("Content-Type", "application/json")
 			router.ServeHTTP(w, req)
 
-			// This should fail because the user already exists
-			assert.Equal(t, http.StatusInternalServerError, w.Code, "Should fail to register a duplicate user")
 
-			// 4. Try to log in with a bad password (Failure Case)
+			assert.Equal(t, http.StatusConflict, w.Code, "Should fail to register a duplicate user")
+
+
 			badLoginBody := gin.H{
 				"email":    uniqueEmail,
 				"password": "wrongpassword",

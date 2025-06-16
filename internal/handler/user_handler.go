@@ -5,49 +5,39 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xin2025/go-template/internal/auth"
-	"github.com/xin2025/go-template/internal/middleware"
-	"github.com/xin2025/go-template/internal/model"
-	"github.com/xin2025/go-template/internal/service"
+	"github.com/xin2025/go-template/internal/config"
+	"github.com/xin2025/go-template/internal/domain"
 	"github.com/xin2025/go-template/pkg/response"
 )
 
-type Handler struct {
-	service *service.Service
+
+
+type UserHandler struct {
+	store  *domain.Store
+	config *config.Config
 }
 
-func NewHandler(s *service.Service) *Handler {
-	return &Handler{service: s}
-}
-
-func (h *Handler) RegisterRoutes(router *gin.Engine) {
-	v1 := router.Group("/api/v1")
-	{
-		v1.GET("/health", h.HealthCheck)
-
-		users := v1.Group("/users")
-		{
-			users.POST("/register", h.RegisterUser)
-			users.POST("/login", h.LoginUser)
-		}
-
-		// Protected routes
-		protected := v1.Group("/protected")
-		protected.Use(middleware.AuthMiddleware(h.service.Config))
-		protected.GET("/", func(c *gin.Context) {
-			userID, _ := c.Get("user_id")
-			c.JSON(http.StatusOK, gin.H{"message": "Hello, user " + userID.(string)})
-		})
+func NewUserHandler(store *domain.Store, config *config.Config) *UserHandler {
+	return &UserHandler{
+		store:  store,
+		config: config,
 	}
 }
 
-func (h *Handler) HealthCheck(c *gin.Context) {
-	response.Success(c, http.StatusOK, gin.H{
-		"status":  "ok",
-		"version": "1.0.0",
-	}, "Service is healthy")
+
+func (h *UserHandler) RegisterRoutes(router *gin.Engine) {
+	v1 := router.Group("/api/v1")
+	{
+		users := v1.Group("/users")
+		{
+			users.POST("/register", h.Register)
+			users.POST("/login", h.Login)
+		}
+	}
 }
 
-func (h *Handler) RegisterUser(c *gin.Context) {
+
+func (h *UserHandler) Register(c *gin.Context) {
 	var req struct {
 		Username string `json:"username" binding:"required,min=3,max=50"`
 		Email    string `json:"email" binding:"required,email"`
@@ -59,26 +49,23 @@ func (h *Handler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	// Hash the password
 	hashedPassword, err := auth.HashPassword(req.Password)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err, "Failed to hash password")
 		return
 	}
 
-	// Create the user model
-	userModel := &model.User{
+	user := &domain.User{
 		Username:     req.Username,
 		Email:        req.Email,
 		PasswordHash: hashedPassword,
 	}
 
-	// Create the user via the repository
-	createdUser, err := h.service.Store.UserRepo.Create(c.Request.Context(), userModel)
+	createdUser, err := h.store.UserRepo.Create(c.Request.Context(), user)
 	if err != nil {
-		// Check for duplicate user error
+
 		if err.Error() == "user with this email already exists" {
-			response.Error(c, http.StatusInternalServerError, err, "User with this email already exists")
+			response.Error(c, http.StatusConflict, err, err.Error())
 			return
 		}
 		response.Error(c, http.StatusInternalServerError, err, "Failed to create user")
@@ -88,7 +75,8 @@ func (h *Handler) RegisterUser(c *gin.Context) {
 	response.Success(c, http.StatusCreated, createdUser, "User registered successfully")
 }
 
-func (h *Handler) LoginUser(c *gin.Context) {
+
+func (h *UserHandler) Login(c *gin.Context) {
 	var req struct {
 		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required"`
@@ -99,10 +87,9 @@ func (h *Handler) LoginUser(c *gin.Context) {
 		return
 	}
 
-	// Find user by email
-	user, err := h.service.Store.UserRepo.FindByEmail(c.Request.Context(), req.Email)
+	user, err := h.store.UserRepo.FindByEmail(c.Request.Context(), req.Email)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err, "Failed to query user")
+		response.Error(c, http.StatusInternalServerError, err, "Database error")
 		return
 	}
 	if user == nil {
@@ -110,20 +97,16 @@ func (h *Handler) LoginUser(c *gin.Context) {
 		return
 	}
 
-	// Verify password
 	if !auth.CheckPasswordHash(req.Password, user.PasswordHash) {
 		response.Error(c, http.StatusUnauthorized, nil, "Invalid email or password")
 		return
 	}
 
-	// Generate JWT token
-	token, err := auth.GenerateJWT(user.ID, h.service.Config.JWT.Secret)
+	token, err := auth.GenerateJWT(user.ID, h.config.JWT.Secret)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err, "Failed to generate token")
 		return
 	}
 
-	response.Success(c, http.StatusOK, gin.H{
-		"token": token,
-	}, "Login successful")
+	response.Success(c, http.StatusOK, gin.H{"token": token}, "Login successful")
 }

@@ -129,7 +129,7 @@ func newRecoveryMiddleware(cfg *config.ErrorConfig) gin.HandlerFunc {
 				)
 
 				if cfg.LogStack {
-					// Stack logging can be added here if needed
+
 				}
 
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -147,7 +147,7 @@ func CreateRecoveryMiddleware(cfg *config.ErrorConfig) gin.HandlerFunc {
 	return newRecoveryMiddleware(cfg)
 }
 
-// AuthMiddleware validates JWT tokens
+
 func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")

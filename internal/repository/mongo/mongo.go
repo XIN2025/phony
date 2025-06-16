@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-// NewClient establishes a new connection to a MongoDB instance.
+
 func NewClient(cfg config.MongoConfig) (*mongo.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -20,7 +20,7 @@ func NewClient(cfg config.MongoConfig) (*mongo.Client, error) {
 		return nil, err
 	}
 
-	// Ping the primary to verify the connection.
+
 	if err := client.Ping(ctx, readpref.Primary()); err != nil {
 		return nil, err
 	}

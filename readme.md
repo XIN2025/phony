@@ -1,347 +1,273 @@
-# Go Project Template
+# Advanced Go API Template
 
-![Go Version](https://img.shields.io/badge/Go-1.16%2B-blue.svg)
+[![Go Version](https://img.shields.io/badge/go-1.18+-blue.svg)](https://golang.org/)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 
-This is a comprehensive template for building RESTful APIs in Go using the Gin framework. It’s designed to provide a solid foundation for Golang projects with features like configuration management, logging, middleware, standardized responses, and testing. Whether you’re building a small service or a large-scale application, this template helps you get started quickly with best practices in mind.
+This repository serves as a production-ready template for building robust, scalable, and maintainable web services in Go. It is built upon a foundation of Clean Architecture principles, ensuring a clear separation of concerns and making the codebase easy to test, extend, and reason about.
 
-## What This Template Can Do
+It comes pre-configured with a suite of best-practice tools and features, allowing you to focus on writing business logic instead of boilerplate code.
 
--   **RESTful API Development**: Create scalable APIs with predefined routes and handlers.
--   **Configuration Flexibility**: Customize settings via environment variables or code with validation.
--   **Robust Logging**: Log requests, errors, and custom messages with configurable levels and outputs.
--   **Middleware Support**: Handle request logging and panic recovery out of the box.
--   **Standardized Responses**: Ensure consistent API responses for success and error cases.
--   **Testing**: Run unit tests for critical components.
--   **Build Automation**: Use Makefile commands for streamlined workflows.
+---
 
-## What This Template Cannot Do
+## ✨ Key Features
 
--   **Database Integration**: No built-in database support (e.g., SQL, NoSQL); you’ll need to add your own.
--   **Authentication**: Basic user endpoints exist, but full auth (e.g., JWT, OAuth) isn’t implemented.
--   **Complex Business Logic**: Focused on structure, not specific application logic.
--   **Frontend**: This is a backend-only template; no UI components are included.
+*   **Clean Architecture:** A clear separation between domain logic, data persistence, and API delivery layers.
+*   **Dual Database Support:** Easily switch between SQL and MongoDB backends.
+    *   **SQL:** Uses **[Ent](https://entgo.io/)** for type-safe, auto-generated, and graph-based ORM.
+    *   **MongoDB:** Native driver implementation for high performance.
+*   **Configuration Management:** Centralized, environment-aware configuration loaded from environment variables with sensible defaults.
+*   **Structured Logging:** Powerful structured logging with **[Logrus](https://github.com/sirupsen/logrus)**, configurable for JSON or console output.
+*   **Robust Middleware:** Includes pre-built middleware for request logging, panic recovery, and authentication.
+*   **Authentication:** JWT-based authentication for securing endpoints.
+*   **Standardized Responses:** A `pkg/response` utility for consistent JSON success and error responses.
+*   **Comprehensive Testing:** A full suite of tests, including:
+    *   Unit tests for individual components.
+    *   **Full integration tests** that run against real PostgreSQL, MySQL, and MongoDB databases.
+*   **Containerized Development:** `docker-compose.yml` to spin up a complete development database environment (Postgres, MySQL, Mongo) with a single command.
+*   **Developer Tooling:** A `Makefile` with convenient commands for common tasks like building, testing, running, and code generation.
 
-## Features
+---
 
--   **Configuration Management**: Load settings from environment variables or code with defaults and validation.
--   **Custom Logging**: Built with Zap for flexible, high-performance logging.
--   **Middleware**: Includes logging and error recovery middleware with customization options.
--   **Handlers**: Predefined routes for health checks and user management, easily extensible.
--   **Response Formatting**: Consistent JSON responses with a customizable structure.
--   **Testing Suite**: Unit tests for config, logger, and middleware.
--   **Makefile**: Commands for building, testing, and running the app.
+## 🏗️ Architectural Overview
 
-## Directory Structure
+This project is built using **Clean Architecture** principles to create a decoupled, testable, and maintainable system. The diagram below illustrates the component layers and the flow of data from an incoming request to the final response.
+
+![Application Architecture and Data Flow](./images/architecture.png)
+
+### Data & Dependency Flow Breakdown
+
+1.  **Entry Point (`cmd/api/main.go`):** The application starts here. Its only job is to initialize and run the core application logic from `internal/app`.
+2.  **Composition Root (`internal/app/app.go`):** This is the "glue" of the application. It reads configuration, sets up the logger, initializes the database connection (`repository`), and injects these dependencies into the `handler` layer. It also sets up the Gin router, middleware, and routes.
+3.  **HTTP Request:** An incoming request first hits the **Gin Router**.
+4.  **Middleware (`internal/middleware`):** The request passes through the configured middleware (e.g., Logging, Panic Recovery, Authentication) before reaching the designated handler.
+5.  **Handler (`internal/handler`):** The handler is responsible for the API layer. It parses and validates the request body, calls the appropriate methods on the repository (via an interface), and uses the `pkg/response` utility to format the JSON response. **It knows nothing about the database; it only knows about the `domain` interface it depends on.**
+6.  **Repository (`internal/repository`):** This is the infrastructure layer. It provides the concrete implementation of the `domain`'s repository interface. It contains all the logic for communicating with the database, whether it's building a query with Ent (for SQL) or using the Mongo driver.
+7.  **Domain (`internal/domain`):** This is the heart of the application. It contains the core business logic, entities (e.g., `User` struct), and repository interfaces. **This layer has zero dependencies on any other part of the application (like Gin or Ent).**
+
+### Architectural Principles
+
+*   **The Dependency Rule:** Dependencies only point inwards. The `handler` and `repository` layers depend on the `domain` layer, but the `domain` layer depends on nothing. This ensures that the core business logic is independent of infrastructure details like the database or web framework.
+*   **Dependency Inversion:** Instead of high-level components (handlers) depending on low-level components (repositories), both depend on abstractions (interfaces defined in `domain`). This allows us to easily swap out the database implementation (from SQL to Mongo) without changing a single line of code in the handler.
+
+---
+
+## 📁 Directory Structure
 
 ```
 .
-├── cmd
-│   └── api
-│       └── main.go          # Application entry point
-├── internal
-│   ├── config
-│   │   └── config.go        # Configuration management
-│   ├── handler
-│   │   └── handler.go       # HTTP handlers and routes
-│   └── middleware
-│       └── middleware.go    # Middleware for logging and recovery
-├── pkg
-│   ├── logger
-│   │   └── logger.go        # Custom Zap-based logger
-│   └── response
-│       └── response.go      # Standardized API response formatting
-├── tests
-│   ├── config_test.go       # Tests for configuration
-│   ├── logger_test.go       # Tests for logger
-│   └── middleware_test.go   # Tests for middleware
-└── Makefile                 # Build and run automation
+├── cmd/api/main.go         # Main application entry point.
+├── docker-compose.yml      # Docker configuration for development databases.
+├── images/architecture.png  
+├── internal                # All private application logic.
+│   ├── app                 # Core application setup and composition root.
+│   ├── auth                # JWT generation/validation and password hashing.
+│   ├── config              # Configuration loading and management.
+│   ├── domain              # Core business models and repository interfaces.
+│   ├── ent                 # Ent (SQL ORM) auto-generated code and schema.
+│   ├── handler             # HTTP handlers (controllers).
+│   ├── middleware          # Gin middleware (logging, recovery, auth).
+│   └── repository          # Data access layer implementations.
+│       ├── mongo           # MongoDB repository implementation.
+│       └── sql             # SQL (Ent) repository implementation.
+├── pkg                     # Shared, reusable packages.
+│   ├── logger              # Structured logger wrapper.
+│   └── response            # Standardized JSON response utility.
+├── tests                   # Unit and integration tests.
+├── .gitignore              # Standard Go .gitignore.
+└── Makefile                # Commands for development tasks.
 ```
 
-### File Descriptions
+---
 
--   `cmd/api/main.go`: The entry point. Initializes config, logger, middleware, routes, and starts the server.
--   `internal/config/config.go`: Manages app settings (e.g., port, log level) with an options pattern.
--   `internal/handler/handler.go`: Defines API endpoints like `/health`, `/users/register`, and `/users/login`.
--   `internal/middleware/middleware.go`: Provides logging and panic recovery middleware.
--   `pkg/logger/logger.go`: A reusable Zap logger with customizable levels, encoding, and outputs.
--   `pkg/response/response.go`: Formats API responses consistently (e.g., `{ "status": "success", "data": {...} }`).
--   `tests/*_test.go`: Unit tests for key components.
--   `Makefile`: Automates building, testing, and running tasks.
-
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
--   **Go**: Version 1.16 or higher.
--   **Make**: Optional, for using the Makefile.
--   **Git**: To clone the repository.
+*   [Go](https://golang.org/doc/install) (version 1.18 or newer)
+*   [Docker](https://www.docker.com/products/docker-desktop/) & Docker Compose
+*   [Make](https://www.gnu.org/software/make/) (optional, but recommended for using the Makefile commands)
 
-### Installation
+### 1. Set Up the Environment
 
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/yourusername/go-template.git
-    cd go-template
-    ```
-
-2.  **Install Dependencies:**
-    ```bash
-    go mod tidy
-    ```
-
-3.  **Build the Application:**
-    ```bash
-    make build
-    ```
-
-4.  **Run the Application:**
-    ```bash
-    make run
-    ```
-    Or, for development with live reloading:
-    ```bash
-    make dev
-    ```
-    The server starts on `http://localhost:8080` by default.
-
-### Example Usage
-
-Try the health check endpoint:
-
+First, clone the repository:
 ```bash
-curl http://localhost:8080/api/v1/health
+git clone https://github.com/your-username/your-repo.git
+cd your-repo
 ```
 
-**Response:**
+### 2. Start Development Databases
 
-```json
-{
-  "status": "success",
-  "data": {
-    "status": "ok",
-    "version": "1.0.0"
-  },
-  "message": "Service is healthy"
-}
-```
-
-## Configuration
-
-Customize the app via environment variables or programmatically in `main.go`.
-
-### Environment Variables
-
-| Variable    | Description       | Default | Valid Values             |
-| :---------- | :---------------- | :------ | :----------------------- |
-| `APP_ENV`   | Environment mode  | `debug` | `debug`, `release`, `test` |
-| `PORT`      | Server port       | `8080`  | `1-65535`                |
-| `LOG_LEVEL` | Logging verbosity | `info`  | `debug`, `info`, `warn`, `error`, `fatal` |
-
-**Example:**
+This template includes a `docker-compose.yml` file to easily run PostgreSQL, MySQL, and MongoDB for development and testing.
 
 ```bash
-export APP_ENV=release
-export PORT=9090
-export LOG_LEVEL=debug
+docker-compose up -d
+```
+
+This command will start all three databases in the background. You can start a specific one if you prefer (e.g., `docker-compose up -d postgres`).
+
+### 3. Generate Ent Code (for SQL)
+
+If you plan to use an SQL database, you must first generate the type-safe ORM code from your schema.
+
+```bash
+make ent-generate
+```
+This command reads the schema from `internal/ent/schema` and generates the necessary Go code in `internal/ent`.
+
+### 4. Run the Application
+
+You can now run the application. It will use an in-memory SQLite database by default.
+
+```bash
+make dev
+```
+The server will start on `http://localhost:8080`.
+
+To run a compiled binary instead:
+```bash
 make run
 ```
 
-### Code Configuration
+---
 
-Modify `cmd/api/main.go` to set options programmatically:
+## ⚙️ Configuration
 
-```go
-cfg, err := config.Load(
-    config.WithEnvironment("release"),
-    config.WithPort(9090),
-    config.WithLogLevel("debug"),
-    config.WithLoggerConfig(config.LoggerConfig{
-        Encoding:   "json",
-        OutputPaths: []string{"stdout", "app.log"},
-    }),
-    config.WithMiddlewareConfig(config.MiddlewareConfig{
-        Logging: config.LoggingConfig{
-            SkipPaths: []string{"/health"},
-            LogRequestBody: true,
-        },
-    }),
-)
-```
+The application is configured using environment variables. You can set them directly in your shell or create a `.env` file in the root directory.
 
-## Logging
+| Environment Variable     | Description                                                                  | Default Value                                    |
+| ------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------ |
+| `APP_ENV`                | Application environment. Affects Gin mode. (`debug`, `release`, `test`)        | `debug`                                          |
+| `PORT`                   | The port for the HTTP server to listen on.                                   | `8080`                                           |
+| `LOG_LEVEL`              | The minimum log level to output. (`debug`, `info`, `warn`, `error`)            | `info`                                           |
+| `JWT_SECRET`             | The secret key used to sign and validate JWTs. **Change this in production!**  | `default-secret`                                 |
+| `DB_TYPE`                | The database backend to use. (`sql` or `mongo`)                              | `sql`                                            |
+| `DB_DRIVER`              | The SQL driver to use (when `DB_TYPE=sql`). (`sqlite3`, `postgres`, `mysql`)   | `sqlite3`                                        |
+| `DB_CONNECTION_STRING`   | The connection string for the SQL database.                                  | `file:ent?mode=memory&cache=shared&_fk=1`        |
+| `MONGO_URI`              | The connection URI for MongoDB (when `DB_TYPE=mongo`).                         | `mongodb://localhost:27017`                      |
+| `MONGO_DATABASE`         | The database name in MongoDB.                                                | `template_db`                                    |
 
-The template uses a Zap-based logger available in the `pkg/logger` package. It’s initialized in `main.go` and can be used globally.
+#### Example: Running with PostgreSQL
 
-### Example Usage
+1.  Ensure Postgres is running via Docker Compose.
+2.  Set the environment variables and run:
 
-```go
-logger.Info("Server started", logger.String("port", "8080"))
-logger.Error("Something failed", logger.ErrorField(err))
-```
+    ```bash
+    export DB_TYPE=sql
+    export DB_DRIVER=postgres
+    export DB_CONNECTION_STRING="host=localhost port=5432 user=postgres password=postgres dbname=ent_test sslmode=disable"
+    export JWT_SECRET="a-very-secure-secret-key"
 
-### Customization
+    make dev
+    ```
 
-Adjust logger settings in `main.go`:
+#### Example: Running with MongoDB
 
-```go
-logger.Init("debug",
-    logger.WithLevel("debug"),
-    logger.WithEncoding("json"),
-    logger.WithOutputPaths([]string{"stdout", "app.log"}),
-)
-```
+1.  Ensure Mongo is running via Docker Compose.
+2.  Set the environment variables and run:
 
-## Middleware
+    ```bash
+    export DB_TYPE=mongo
+    export MONGO_URI="mongodb://localhost:27017"
+    export MONGO_DATABASE="my_app_db"
+    export JWT_SECRET="a-very-secure-secret-key"
 
-Two middleware functions are included:
+    make dev
+    ```
 
--   **Logging Middleware**: Logs request details (path, method, status, latency). Configurable via `config.MiddlewareConfig.Logging`.
-    
-    *Example log:*
+---
+
+## 🔌 API Endpoints
+
+The following endpoints are available.
+
+| Method | Endpoint                    | Authentication | Description                                      |
+| :----- | :-------------------------- | :------------- | :----------------------------------------------- |
+| `GET`  | `/health`                   | None           | Health check to see if the service is running.   |
+| `POST` | `/api/v1/users/register`    | None           | Registers a new user.                            |
+| `POST` | `/api/v1/users/login`       | None           | Authenticates a user and returns a JWT.          |
+| `GET`  | `/api/v1/protected/`        | **JWT**        | An example of a route protected by JWT middleware. |
+
+### Example Usage with `curl`
+
+1.  **Register a new user:**
+    ```bash
+    curl -X POST http://localhost:8080/api/v1/users/register \
+    -H "Content-Type: application/json" \
+    -d '{
+        "username": "testuser",
+        "email": "test@example.com",
+        "password": "password123"
+    }'
+    ```
+
+2.  **Login:**
+    ```bash
+    curl -X POST http://localhost:8080/api/v1/users/login \
+    -H "Content-Type: application/json" \
+    -d '{
+        "email": "test@example.com",
+        "password": "password123"
+    }'
+    ```
+    *Response (save the token):*
     ```json
-    {"level":"info","msg":"Request processed","path":"/api/v1/health","query":"","status":200,"method":"GET","ip":"127.0.0.1","latency":"1.234ms"}
+    { "status": "success", "data": { "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." } }
     ```
 
--   **Recovery Middleware**: Catches panics, logs them, and returns a 500 error.
-    
-    *Example customization:*
-    ```go
-    config.WithMiddlewareConfig(config.MiddlewareConfig{
-        Error: config.ErrorConfig{LogStack: true},
-    })
+3.  **Access a protected route:**
+    ```bash
+    TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." # Paste your token here
+
+    curl http://localhost:8080/api/v1/protected/ \
+    -H "Authorization: Bearer $TOKEN"
     ```
 
-## Handlers
+---
 
-Handlers live in `internal/handler/handler.go`. The template includes:
+## 🧪 Testing
 
--   `/api/v1/health`: Health check endpoint.
--   `/api/v1/users/register`: User registration (placeholder).
--   `/api/v1/users/login`: User login (placeholder).
+This template is configured with a comprehensive testing suite located in the `/tests` directory.
 
-### Adding a New Endpoint
-
-Add a new route in the `RegisterRoutes` function:
-
-```go
-v1.GET("/hello", func(c *gin.Context) {
-    response.Success(c, http.StatusOK, gin.H{"greeting": "Hello, World!"}, "Success")
-})
-```
-
-Test it:
-
-```bash
-curl http://localhost:8080/api/v1/hello
-```
-
-**Response:**
-
-```json
-{
-  "status": "success",
-  "data": {
-    "greeting": "Hello, World!"
-  },
-  "message": "Success"
-}
-```
-
-## Responses
-
-The `pkg/response` package ensures consistent API responses.
-
-### Success Response
-
-```go
-response.Success(c, http.StatusOK, data, "Operation completed")
-```
-
-**Output:**
-
-```json
-{
-  "status": "success",
-  "data": {...},
-  "message": "Operation completed"
-}
-```
-
-### Error Response
-
-```go
-response.Error(c, http.StatusBadRequest, err, "Invalid input")
-```
-
-**Output:**
-
-```json
-{
-  "status": "error",
-  "message": "Invalid input",
-  "error": "detailed error message"
-}
-```
-
-### Customization
-
-You can create a custom formatter and set it as the default:
-
-```go
-type CustomFormatter struct {}
-
-func (f *CustomFormatter) FormatSuccess(c *gin.Context, code int, data interface{}, message string) {
-    c.JSON(code, gin.H{"result": "ok", "payload": data, "note": message})
-}
-
-// In your setup:
-response.SetFormatter(&CustomFormatter{})
-```
-
-## Testing
-
-Unit tests are located in the `tests` directory.
-
-Run all tests:
-
+**To run all tests:**
 ```bash
 make test
 ```
+This command executes all files ending in `_test.go` within the `/tests` directory.
 
-Or run them directly with Go:
+**Integration Testing:**
+The `repo_test.go` file contains a full-stack integration test that simulates the entire register/login flow. It is designed to run against **all supported databases** (SQLite, PostgreSQL, MySQL, and MongoDB) to ensure repository implementations are consistent.
 
+Before running, ensure the databases are up:
 ```bash
-go test ./tests/... -v -count=1
+docker-compose up -d postgres mysql mongo
 ```
 
-### Writing Tests
+The test runner will automatically detect if a database is unavailable and skip the corresponding tests.
 
-Example test for a new handler in `tests/handler_test.go`:
+---
 
-```go
-func TestHelloEndpoint(t *testing.T) {
-    // Setup
-    router := gin.New()
-    h := handler.NewHandler()
-    h.RegisterRoutes(router)
+## 🔧 Makefile Commands
 
-    // Create a request
-    w := httptest.NewRecorder()
-    req, _ := http.NewRequest("GET", "/api/v1/hello", nil)
-    router.ServeHTTP(w, req)
+The `Makefile` provides several useful commands:
 
-    // Assertions
-    assert.Equal(t, http.StatusOK, w.Code)
-    assert.Contains(t, w.Body.String(), "Hello, World!")
-}
-```
+| Command           | Description                                                 |
+| ----------------- | ----------------------------------------------------------- |
+| `make build`      | Compiles the application into a single binary (`go-template`).|
+| `make run`        | Builds and then runs the binary.                            |
+| `make dev`        | Runs the application in development mode (`go run`).        |
+| `make test`       | Runs all unit and integration tests.                        |
+| `make ent-generate` | Generates Go code from the Ent schema definitions.        |
+| `make clean`      | Removes the built binary and other temporary files.         |
+| `make help`       | Displays a list of all available commands.                  |
 
-## Makefile Commands
+---
 
-| Command      | Description                               |
-| :----------- | :---------------------------------------- |
-| `make build` | Builds the app into a binary.             |
-| `make clean` | Removes build artifacts.                  |
-| `make test`  | Runs all tests.                           |
-| `make run`   | Builds and runs the app.                  |
-| `make dev`   | Runs the app in development mode with live reloading. |
+## 📦 Core Dependencies
+
+*   [Gin](https://github.com/gin-gonic/gin): HTTP web framework.
+*   [Ent](https://entgo.io/): Type-safe entity framework for Go (ORM).
+*   [Logrus](https://github.com/sirupsen/logrus): Structured logger.
+*   [Go JWT](https://github.com/golang-jwt/jwt): JWT implementation.
+*   [Testify](https://github.com/stretchr/testify): Assertion toolkit for testing.
+*   [Go-Mongo-Driver](https://github.com/mongodb/mongo-go-driver): Official MongoDB driver.
+*   SQL Drivers for [Postgres](https://github.com/lib/pq), [MySQL](https://github.com/go-sql-driver/mysql), and [SQLite3](https://github.com/mattn/go-sqlite3).

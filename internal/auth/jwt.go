@@ -6,13 +6,13 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-// Claims defines the structure of JWT claims
+
 type Claims struct {
 	UserID string `json:"user_id"`
 	jwt.StandardClaims
 }
 
-// GenerateJWT creates a new JWT token
+
 func GenerateJWT(userID string, secret string) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
@@ -25,7 +25,7 @@ func GenerateJWT(userID string, secret string) (string, error) {
 	return token.SignedString([]byte(secret))
 }
 
-// ValidateJWT verifies a JWT token
+
 func ValidateJWT(tokenString string, secret string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {

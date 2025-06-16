@@ -70,17 +70,17 @@ func Init(env string, options ...LoggerOption) error {
 
 	log = logrus.New()
 
-	// Set log level
+
 	level, err := logrus.ParseLevel(cfg.Level)
 	if err != nil {
 		return fmt.Errorf("invalid log level: %s", cfg.Level)
 	}
 	log.SetLevel(level)
 
-	// Set output
+
 	log.SetOutput(os.Stdout)
 
-	// Set formatter
+
 	if cfg.Encoding == "json" {
 		log.SetFormatter(&logrus.JSONFormatter{
 			TimestampFormat: time.RFC3339,
@@ -100,7 +100,7 @@ func Init(env string, options ...LoggerOption) error {
 
 
 func Sync() error {
-	return nil // Logrus doesn't need explicit sync
+	return nil 
 }
 
 
@@ -193,7 +193,7 @@ func DefaultInit() error {
 	return Init("debug", WithLevel("info"), WithEncoding("console"), WithOutputPaths([]string{"stdout"}))
 }
 
-// Helper function to convert interface{} fields to logrus.Fields
+
 func convertFields(fields ...interface{}) logrus.Fields {
 	result := make(logrus.Fields)
 	for _, field := range fields {

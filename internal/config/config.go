@@ -72,11 +72,11 @@ type Config struct {
 	Environment string
 	Port        int
 	LogLevel    string
-	DBType      string // "sql" or "mongo"
+	DBType      string 
 	Logger      LoggerConfig
 	Middleware  MiddlewareConfig
-	Database    DatabaseConfig // For SQL
-	Mongo       MongoConfig    // For MongoDB
+	Database    DatabaseConfig 
+	Mongo       MongoConfig    
 	JWT         JWTConfig
 }
 
@@ -103,16 +103,16 @@ type ErrorConfig struct {
 	LogStack bool
 }
 
-// DatabaseConfig is for SQL databases
+
 type DatabaseConfig struct {
 	Driver           string
 	ConnectionString string
 	MaxOpenConns     int
 	MaxIdleConns     int
-	ConnMaxLifetime  int // in seconds
+	ConnMaxLifetime  int 
 }
 
-// MongoConfig is for MongoDB
+
 type MongoConfig struct {
 	URI          string
 	DatabaseName string
@@ -125,10 +125,10 @@ type JWTConfig struct {
 func Load(options ...ConfigOption) (*Config, error) {
 	cfg := &Config{}
 
-	// Apply default environment
+
 	WithEnvironment(os.Getenv("APP_ENV"))(cfg)
 
-	// Port from env or default
+
 	portStr := os.Getenv("PORT")
 	if portStr == "" {
 		portStr = "8080"
@@ -139,16 +139,16 @@ func Load(options ...ConfigOption) (*Config, error) {
 	}
 	WithPort(port)(cfg)
 
-	// Log level from env or default
+
 	WithLogLevel(os.Getenv("LOG_LEVEL"))(cfg)
 
-	// Default DB Type
+
 	cfg.DBType = "sql"
 	if dbType := os.Getenv("DB_TYPE"); dbType == "mongo" {
 		cfg.DBType = "mongo"
 	}
 
-	// Default logger config
+
 	cfg.Logger = LoggerConfig{
 		Environment: cfg.Environment,
 		Level:       cfg.LogLevel,
@@ -156,7 +156,7 @@ func Load(options ...ConfigOption) (*Config, error) {
 		OutputPaths: []string{"stdout"},
 	}
 
-	// Default middleware config
+
 	cfg.Middleware = MiddlewareConfig{
 		Logging: LoggingConfig{
 			SkipPaths:       []string{"/health", "/metrics"},
@@ -172,31 +172,31 @@ func Load(options ...ConfigOption) (*Config, error) {
 		},
 	}
 
-	// Default SQL database config
+
 	cfg.Database = DatabaseConfig{
 		Driver:           "sqlite3",
 		ConnectionString: "file:ent?mode=memory&cache=shared&_fk=1",
 		MaxOpenConns:     25,
 		MaxIdleConns:     25,
-		ConnMaxLifetime:  300, // 5 minutes
+		ConnMaxLifetime:  300, 
 	}
 
-	// Override SQL config with environment variables if set
+
 	if driver := os.Getenv("DB_DRIVER"); driver != "" {
 		cfg.Database.Driver = driver
 	}
 	if connStr := os.Getenv("DB_CONNECTION_STRING"); connStr != "" {
 		cfg.Database.ConnectionString = connStr
 	}
-	// ... (rest of SQL env vars) ...
 
-	// Default MongoDB config
+
+
 	cfg.Mongo = MongoConfig{
 		URI:          "mongodb://localhost:27017",
 		DatabaseName: "template_db",
 	}
 
-	// Override Mongo config with environment variables if set
+
 	if uri := os.Getenv("MONGO_URI"); uri != "" {
 		cfg.Mongo.URI = uri
 	}
@@ -204,15 +204,15 @@ func Load(options ...ConfigOption) (*Config, error) {
 		cfg.Mongo.DatabaseName = dbName
 	}
 
-	// Default JWT config
+
 	cfg.JWT = JWTConfig{
-		Secret: "default-secret", // Override with env var in production
+		Secret: "default-secret", 
 	}
 	if secret := os.Getenv("JWT_SECRET"); secret != "" {
 		cfg.JWT.Secret = secret
 	}
 
-	// Apply provided options
+
 	for _, option := range options {
 		option(cfg)
 	}
