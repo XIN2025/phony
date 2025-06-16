@@ -8,12 +8,12 @@ import (
 
 // Claims defines the structure of JWT claims
 type Claims struct {
-	UserID int `json:"user_id"`
+	UserID string `json:"user_id"`
 	jwt.StandardClaims
 }
 
 // GenerateJWT creates a new JWT token
-func GenerateJWT(userID int, secret string) (string, error) {
+func GenerateJWT(userID string, secret string) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID: userID,

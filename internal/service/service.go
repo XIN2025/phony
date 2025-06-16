@@ -2,19 +2,19 @@ package service
 
 import (
 	"github.com/xin2025/go-template/internal/config"
-	"github.com/xin2025/go-template/internal/ent"
+	"github.com/xin2025/go-template/internal/repository"
 )
 
 // Service holds application dependencies
 type Service struct {
-	Client *ent.Client
+	Store  *repository.Store
 	Config *config.Config
 }
 
 // NewService initializes a new Service instance
-func NewService(client *ent.Client, cfg *config.Config) *Service {
+func NewService(store *repository.Store, cfg *config.Config) *Service {
 	return &Service{
-		Client: client,
+		Store:  store,
 		Config: cfg,
 	}
 }

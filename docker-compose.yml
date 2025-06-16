@@ -1,4 +1,5 @@
-version: '3.8'
+# MAKE SURE THE "version:" LINE IS GONE FROM THE TOP!
+
 services:
   postgres:
     image: postgres:15
@@ -14,6 +15,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   mysql:
     image: mysql:8
@@ -24,7 +26,26 @@ services:
     ports:
       - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      # THIS LINE MUST BE CORRECT
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost --password=password"]
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 10s
+      
+  mongo:
+    image: mongo:6
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      # THIS IS THE NEW, MORE ROBUST COMMAND
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' | grep -q '\"ok\" : 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+volumes:
+  mongo-data:

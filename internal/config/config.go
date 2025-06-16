@@ -62,21 +62,29 @@ func WithDatabaseConfig(dbConfig DatabaseConfig) ConfigOption {
 	}
 }
 
+func WithMongoConfig(mongoConfig MongoConfig) ConfigOption {
+	return func(c *Config) {
+		c.Mongo = mongoConfig
+	}
+}
+
 type Config struct {
 	Environment string
 	Port        int
 	LogLevel    string
+	DBType      string // "sql" or "mongo"
 	Logger      LoggerConfig
 	Middleware  MiddlewareConfig
-	Database    DatabaseConfig
+	Database    DatabaseConfig // For SQL
+	Mongo       MongoConfig    // For MongoDB
 	JWT         JWTConfig
 }
 
 type LoggerConfig struct {
-	Environment  string
-	Level        string
-	Encoding     string
-	OutputPaths  []string
+	Environment string
+	Level       string
+	Encoding    string
+	OutputPaths []string
 }
 
 type MiddlewareConfig struct {
@@ -95,12 +103,19 @@ type ErrorConfig struct {
 	LogStack bool
 }
 
+// DatabaseConfig is for SQL databases
 type DatabaseConfig struct {
 	Driver           string
 	ConnectionString string
 	MaxOpenConns     int
 	MaxIdleConns     int
 	ConnMaxLifetime  int // in seconds
+}
+
+// MongoConfig is for MongoDB
+type MongoConfig struct {
+	URI          string
+	DatabaseName string
 }
 
 type JWTConfig struct {
@@ -127,6 +142,12 @@ func Load(options ...ConfigOption) (*Config, error) {
 	// Log level from env or default
 	WithLogLevel(os.Getenv("LOG_LEVEL"))(cfg)
 
+	// Default DB Type
+	cfg.DBType = "sql"
+	if dbType := os.Getenv("DB_TYPE"); dbType == "mongo" {
+		cfg.DBType = "mongo"
+	}
+
 	// Default logger config
 	cfg.Logger = LoggerConfig{
 		Environment: cfg.Environment,
@@ -151,7 +172,7 @@ func Load(options ...ConfigOption) (*Config, error) {
 		},
 	}
 
-	// Default database config
+	// Default SQL database config
 	cfg.Database = DatabaseConfig{
 		Driver:           "sqlite3",
 		ConnectionString: "file:ent?mode=memory&cache=shared&_fk=1",
@@ -160,27 +181,27 @@ func Load(options ...ConfigOption) (*Config, error) {
 		ConnMaxLifetime:  300, // 5 minutes
 	}
 
-	// Override with environment variables if set
+	// Override SQL config with environment variables if set
 	if driver := os.Getenv("DB_DRIVER"); driver != "" {
 		cfg.Database.Driver = driver
 	}
 	if connStr := os.Getenv("DB_CONNECTION_STRING"); connStr != "" {
 		cfg.Database.ConnectionString = connStr
 	}
-	if maxOpen := os.Getenv("DB_MAX_OPEN_CONNS"); maxOpen != "" {
-		if val, err := strconv.Atoi(maxOpen); err == nil {
-			cfg.Database.MaxOpenConns = val
-		}
+	// ... (rest of SQL env vars) ...
+
+	// Default MongoDB config
+	cfg.Mongo = MongoConfig{
+		URI:          "mongodb://localhost:27017",
+		DatabaseName: "template_db",
 	}
-	if maxIdle := os.Getenv("DB_MAX_IDLE_CONNS"); maxIdle != "" {
-		if val, err := strconv.Atoi(maxIdle); err == nil {
-			cfg.Database.MaxIdleConns = val
-		}
+
+	// Override Mongo config with environment variables if set
+	if uri := os.Getenv("MONGO_URI"); uri != "" {
+		cfg.Mongo.URI = uri
 	}
-	if maxLifetime := os.Getenv("DB_CONN_MAX_LIFETIME"); maxLifetime != "" {
-		if val, err := strconv.Atoi(maxLifetime); err == nil {
-			cfg.Database.ConnMaxLifetime = val
-		}
+	if dbName := os.Getenv("MONGO_DATABASE"); dbName != "" {
+		cfg.Mongo.DatabaseName = dbName
 	}
 
 	// Default JWT config

@@ -2,14 +2,13 @@ package handler
 
 import (
 	"net/http"
-	"github.com/xin2025/go-template/internal/ent"
-	"github.com/xin2025/go-template/internal/ent/user"
+
 	"github.com/gin-gonic/gin"
 	"github.com/xin2025/go-template/internal/auth"
 	"github.com/xin2025/go-template/internal/middleware"
+	"github.com/xin2025/go-template/internal/model"
 	"github.com/xin2025/go-template/internal/service"
 	"github.com/xin2025/go-template/pkg/response"
- 
 )
 
 type Handler struct {
@@ -67,22 +66,26 @@ func (h *Handler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	// Create the user
-	user, err := h.service.Client.User.Create().
-		SetUsername(req.Username).
-		SetEmail(req.Email).
-		SetPasswordHash(hashedPassword).
-		Save(c.Request.Context())
+	// Create the user model
+	userModel := &model.User{
+		Username:     req.Username,
+		Email:        req.Email,
+		PasswordHash: hashedPassword,
+	}
+
+	// Create the user via the repository
+	createdUser, err := h.service.Store.UserRepo.Create(c.Request.Context(), userModel)
 	if err != nil {
+		// Check for duplicate user error
+		if err.Error() == "user with this email already exists" {
+			response.Error(c, http.StatusInternalServerError, err, "User with this email already exists")
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, err, "Failed to create user")
 		return
 	}
 
-	response.Success(c, http.StatusCreated, gin.H{
-		"id":       user.ID,
-		"username": user.Username,
-		"email":    user.Email,
-	}, "User registered successfully")
+	response.Success(c, http.StatusCreated, createdUser, "User registered successfully")
 }
 
 func (h *Handler) LoginUser(c *gin.Context) {
@@ -97,15 +100,13 @@ func (h *Handler) LoginUser(c *gin.Context) {
 	}
 
 	// Find user by email
-	user, err := h.service.Client.User.Query().
-		Where(user.Email(req.Email)).
-		Only(c.Request.Context())
+	user, err := h.service.Store.UserRepo.FindByEmail(c.Request.Context(), req.Email)
 	if err != nil {
-		if ent.IsNotFound(err) {
-			response.Error(c, http.StatusUnauthorized, nil, "Invalid email or password")
-		} else {
-			response.Error(c, http.StatusInternalServerError, err, "Failed to query user")
-		}
+		response.Error(c, http.StatusInternalServerError, err, "Failed to query user")
+		return
+	}
+	if user == nil {
+		response.Error(c, http.StatusUnauthorized, nil, "Invalid email or password")
 		return
 	}
 
