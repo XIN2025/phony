@@ -57,3 +57,22 @@ debug.test
 
 # Local development files
 *.local 
+
+# Docker Compose override
+docker-compose.override.yml
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Go coverage files
+coverage.out
+*.coverprofile
+
+# Editor swap/backup files
+*.bak
+*.tmp
+
+# Remove typo entry
+-remove.sh

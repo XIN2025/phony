@@ -2,44 +2,51 @@ package handler
 
 import (
 	"net/http"
-
+	"github.com/xin2025/go-template/internal/ent"
+	"github.com/xin2025/go-template/internal/ent/user"
 	"github.com/gin-gonic/gin"
+	"github.com/xin2025/go-template/internal/auth"
+	"github.com/xin2025/go-template/internal/middleware"
+	"github.com/xin2025/go-template/internal/service"
 	"github.com/xin2025/go-template/pkg/response"
+ 
 )
 
 type Handler struct {
-
+	service *service.Service
 }
 
-func NewHandler() *Handler {
-	return &Handler{}
+func NewHandler(s *service.Service) *Handler {
+	return &Handler{service: s}
 }
-
 
 func (h *Handler) RegisterRoutes(router *gin.Engine) {
-
 	v1 := router.Group("/api/v1")
 	{
-
 		v1.GET("/health", h.HealthCheck)
-		
 
 		users := v1.Group("/users")
 		{
 			users.POST("/register", h.RegisterUser)
 			users.POST("/login", h.LoginUser)
 		}
+
+		// Protected routes
+		protected := v1.Group("/protected")
+		protected.Use(middleware.AuthMiddleware(h.service.Config))
+		protected.GET("/", func(c *gin.Context) {
+			userID, _ := c.Get("user_id")
+			c.JSON(http.StatusOK, gin.H{"message": "Hello, user " + userID.(string)})
+		})
 	}
 }
 
-
 func (h *Handler) HealthCheck(c *gin.Context) {
 	response.Success(c, http.StatusOK, gin.H{
-		"status": "ok",
+		"status":  "ok",
 		"version": "1.0.0",
 	}, "Service is healthy")
 }
-
 
 func (h *Handler) RegisterUser(c *gin.Context) {
 	var req struct {
@@ -53,13 +60,30 @@ func (h *Handler) RegisterUser(c *gin.Context) {
 		return
 	}
 
+	// Hash the password
+	hashedPassword, err := auth.HashPassword(req.Password)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, err, "Failed to hash password")
+		return
+	}
+
+	// Create the user
+	user, err := h.service.Client.User.Create().
+		SetUsername(req.Username).
+		SetEmail(req.Email).
+		SetPasswordHash(hashedPassword).
+		Save(c.Request.Context())
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, err, "Failed to create user")
+		return
+	}
 
 	response.Success(c, http.StatusCreated, gin.H{
-		"username": req.Username,
-		"email":    req.Email,
+		"id":       user.ID,
+		"username": user.Username,
+		"email":    user.Email,
 	}, "User registered successfully")
 }
-
 
 func (h *Handler) LoginUser(c *gin.Context) {
 	var req struct {
@@ -72,8 +96,33 @@ func (h *Handler) LoginUser(c *gin.Context) {
 		return
 	}
 
+	// Find user by email
+	user, err := h.service.Client.User.Query().
+		Where(user.Email(req.Email)).
+		Only(c.Request.Context())
+	if err != nil {
+		if ent.IsNotFound(err) {
+			response.Error(c, http.StatusUnauthorized, nil, "Invalid email or password")
+		} else {
+			response.Error(c, http.StatusInternalServerError, err, "Failed to query user")
+		}
+		return
+	}
+
+	// Verify password
+	if !auth.CheckPasswordHash(req.Password, user.PasswordHash) {
+		response.Error(c, http.StatusUnauthorized, nil, "Invalid email or password")
+		return
+	}
+
+	// Generate JWT token
+	token, err := auth.GenerateJWT(user.ID, h.service.Config.JWT.Secret)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, err, "Failed to generate token")
+		return
+	}
 
 	response.Success(c, http.StatusOK, gin.H{
-		"message": "Login successful",
-	}, "User logged in successfully")
-} 
+		"token": token,
+	}, "Login successful")
+}

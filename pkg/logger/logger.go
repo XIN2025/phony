@@ -5,8 +5,7 @@ import (
 	"os"
 	"time"
 
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"github.com/sirupsen/logrus"
 )
 
 
@@ -50,7 +49,7 @@ func WithDevelopment(dev bool) LoggerOption {
 }
 
 var (
-	log *zap.Logger
+	log *logrus.Logger
 )
 
 
@@ -69,26 +68,31 @@ func Init(env string, options ...LoggerOption) error {
 	}
 
 
-	zapConfig := zap.NewProductionConfig()
-	if cfg.Development {
-		zapConfig = zap.NewDevelopmentConfig()
-		zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	}
+	log = logrus.New()
 
-
-	if level, err := zapcore.ParseLevel(cfg.Level); err != nil {
-		return fmt.Errorf("invalid log level: %s", cfg.Level)
-	} else {
-		zapConfig.Level = zap.NewAtomicLevelAt(level)
-	}
-	zapConfig.Encoding = cfg.Encoding
-	zapConfig.OutputPaths = cfg.OutputPaths
-
-
-	var err error
-	log, err = zapConfig.Build()
+	// Set log level
+	level, err := logrus.ParseLevel(cfg.Level)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid log level: %s", cfg.Level)
+	}
+	log.SetLevel(level)
+
+	// Set output
+	log.SetOutput(os.Stdout)
+
+	// Set formatter
+	if cfg.Encoding == "json" {
+		log.SetFormatter(&logrus.JSONFormatter{
+			TimestampFormat: time.RFC3339,
+		})
+	} else {
+		log.SetFormatter(&logrus.TextFormatter{
+			FullTimestamp:   true,
+			TimestampFormat: time.RFC3339,
+			ForceColors:     true,
+			DisableQuote:    true,
+			PadLevelText:    true,
+		})
 	}
 
 	return nil
@@ -96,84 +100,81 @@ func Init(env string, options ...LoggerOption) error {
 
 
 func Sync() error {
-	if log != nil {
-		return log.Sync()
-	}
-	return nil
+	return nil // Logrus doesn't need explicit sync
 }
 
 
-func Debug(msg string, fields ...zap.Field) {
+func Debug(msg string, fields ...interface{}) {
 	if log != nil {
-		log.Debug(msg, fields...)
+		log.WithFields(convertFields(fields...)).Debug(msg)
 	}
 }
 
 
-func Info(msg string, fields ...zap.Field) {
+func Info(msg string, fields ...interface{}) {
 	if log != nil {
-		log.Info(msg, fields...)
+		log.WithFields(convertFields(fields...)).Info(msg)
 	}
 }
 
 
-func Warn(msg string, fields ...zap.Field) {
+func Warn(msg string, fields ...interface{}) {
 	if log != nil {
-		log.Warn(msg, fields...)
+		log.WithFields(convertFields(fields...)).Warn(msg)
 	}
 }
 
 
-func Error(msg string, fields ...zap.Field) {
+func Error(msg string, fields ...interface{}) {
 	if log != nil {
-		log.Error(msg, fields...)
+		log.WithFields(convertFields(fields...)).Error(msg)
 	}
 }
 
 
-func Fatal(msg string, fields ...zap.Field) {
+func Fatal(msg string, fields ...interface{}) {
 	if log != nil {
-		log.Fatal(msg, fields...)
+		log.WithFields(convertFields(fields...)).Fatal(msg)
 	}
 	os.Exit(1)
 }
 
 
-func String(key, value string) zap.Field {
-	return zap.String(key, value)
+func String(key, value string) interface{} {
+	return logrus.Fields{key: value}
 }
 
 
-func Int(key string, value int) zap.Field {
-	return zap.Int(key, value)
+func Int(key string, value int) interface{} {
+	return logrus.Fields{key: value}
 }
 
 
-func Float64(key string, value float64) zap.Field {
-	return zap.Float64(key, value)
+func Float64(key string, value float64) interface{} {
+	return logrus.Fields{key: value}
 }
 
 
-func Bool(key string, value bool) zap.Field {
-	return zap.Bool(key, value)
+func Bool(key string, value bool) interface{} {
+	return logrus.Fields{key: value}
 }
 
 
-func Duration(key string, value time.Duration) zap.Field {
-	return zap.Duration(key, value)
+func Duration(key string, value time.Duration) interface{} {
+	return logrus.Fields{key: value}
 }
 
 
-func Any(key string, value interface{}) zap.Field {
-	return zap.Any(key, value)
+func Any(key string, value interface{}) interface{} {
+	return logrus.Fields{key: value}
 }
 
 
-func ErrorField(err error) zap.Field {
-	return zap.Error(err)
+func ErrorField(err error) interface{} {
+	return logrus.Fields{"error": err}
 }
 
-func GetLogger() *zap.Logger {
+func GetLogger() *logrus.Logger {
 	if log == nil {
 		Init("development", WithLevel("info"), WithEncoding("console"), WithOutputPaths([]string{"stdout"}))
 	}
@@ -185,36 +186,22 @@ func Initialize(level string) error {
 		return fmt.Errorf("log level cannot be empty")
 	}
 
-	var zapLevel zapcore.Level
-	if err := zapLevel.UnmarshalText([]byte(level)); err != nil {
-		return err
-	}
-
-	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.LowercaseLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
-	}
-
-	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderConfig),
-		zapcore.AddSync(os.Stdout),
-		zapLevel,
-	)
-
-	log = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
-	return nil
+	return Init("development", WithLevel(level))
 }
-
 
 func DefaultInit() error {
 	return Init("debug", WithLevel("info"), WithEncoding("console"), WithOutputPaths([]string{"stdout"}))
+}
+
+// Helper function to convert interface{} fields to logrus.Fields
+func convertFields(fields ...interface{}) logrus.Fields {
+	result := make(logrus.Fields)
+	for _, field := range fields {
+		if f, ok := field.(logrus.Fields); ok {
+			for k, v := range f {
+				result[k] = v
+			}
+		}
+	}
+	return result
 } 

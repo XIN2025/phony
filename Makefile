@@ -6,7 +6,7 @@ GOTEST=$(GOCMD) test
 BINARY_NAME=go-template
 MAIN_FILE=cmd/api/main.go
 
-.PHONY: all build clean test run
+.PHONY: all build clean test run ent-generate
 
 all: clean build
 
@@ -26,10 +26,14 @@ run: build
 dev:
 	$(GOCMD) run $(MAIN_FILE)
 
+ent-generate:
+	$(GOCMD) run entgo.io/ent/cmd/ent generate ./internal/ent/schema
+
 help:
 	@echo "Available commands:"
-	@echo "  make build  - Build the application"
-	@echo "  make clean  - Clean build files"
-	@echo "  make test   - Run tests"
-	@echo "  make run    - Build and run the application"
-	@echo "  make dev    - Run in development mode" 
+	@echo "  make build       - Build the application"
+	@echo "  make clean       - Clean build files"
+	@echo "  make test        - Run tests"
+	@echo "  make run         - Build and run the application"
+	@echo "  make dev         - Run in development mode"
+	@echo "  make ent-generate - Generate Ent schema code"
