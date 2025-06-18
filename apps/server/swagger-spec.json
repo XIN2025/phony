@@ -1,0 +1,99 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["App"]
+      }
+    },
+    "/api/auth/google": {
+      "post": {
+        "operationId": "AuthController_googleAuth",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GoogleAuthDto" } } }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponseDto" } } }
+          }
+        },
+        "tags": ["Auth"]
+      }
+    },
+    "/api/auth/otp": {
+      "post": {
+        "operationId": "AuthController_otpAuth",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OtpAuthDto" } } }
+        },
+        "responses": {
+          "default": {
+            "description": "Whether the OTP was sent successfully",
+            "content": { "application/json": { "schema": { "type": "boolean" } } }
+          }
+        },
+        "tags": ["Auth"]
+      }
+    },
+    "/api/auth/otp/verify": {
+      "post": {
+        "operationId": "AuthController_verifyOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VerifyOtpDto" } } }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponseDto" } } }
+          }
+        },
+        "tags": ["Auth"]
+      }
+    }
+  },
+  "info": { "title": "NestJS API", "description": "API for NestJS", "version": "1.0", "contact": {} },
+  "tags": [{ "name": "API", "description": "" }],
+  "servers": [],
+  "components": {
+    "securitySchemes": { "bearer": { "scheme": "bearer", "bearerFormat": "JWT", "type": "http" } },
+    "schemas": {
+      "GoogleAuthDto": {
+        "type": "object",
+        "properties": { "idToken": { "type": "string", "description": "The ID token from Google" } },
+        "required": ["idToken"]
+      },
+      "UserDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string" },
+          "name": { "type": "string", "nullable": true },
+          "avatarUrl": { "type": "string", "nullable": true },
+          "role": { "type": "string", "enum": ["ADMIN", "USER"] }
+        },
+        "required": ["id", "email", "name", "avatarUrl", "role"]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": { "token": { "type": "string" }, "user": { "$ref": "#/components/schemas/UserDto" } },
+        "required": ["token", "user"]
+      },
+      "OtpAuthDto": { "type": "object", "properties": { "email": { "type": "string" } }, "required": ["email"] },
+      "VerifyOtpDto": {
+        "type": "object",
+        "properties": { "email": { "type": "string" }, "otp": { "type": "string" } },
+        "required": ["email", "otp"]
+      }
+    }
+  }
+}
