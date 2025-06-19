@@ -10,7 +10,7 @@ import { Button } from '@repo/ui/components/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@repo/ui/components/form';
 import { Input } from '@repo/ui/components/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input-otp';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@repo/ui/components/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@repo/ui/components/card';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,14 +24,14 @@ export default function LoginPage() {
   const [resendTimer, setResendTimer] = React.useState(0);
   const router = useRouter();
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useMutation({
-    mutationFn: (email: string) => AuthService.sendOtp(email),
+    mutationFn: (email: string) => AuthService.sendOtp({ email }),
     onSuccess: () => {
       toast.success('OTP sent successfully');
       startResendTimer();
       setShowOTP(true);
     },
-    onError: () => {
-      toast.error('Failed to send OTP');
+    onError: (error) => {
+      toast.error(error.message ?? 'Failed to send OTP');
     },
   });
 
@@ -65,13 +65,14 @@ export default function LoginPage() {
     const res = await signIn('credentials', {
       email: values.email,
       otp: values.otp,
+      role: 'PRACTITIONER',
       redirect: false,
     });
 
     if (res?.error) {
-      toast.error('Invalid OTP');
+      toast.error(res.error ?? 'Invalid OTP');
     } else {
-      router.push('/');
+      router.push('/practitioner');
       toast.success('Logged in successfully');
     }
     setIsLoading(false);
@@ -171,25 +172,6 @@ export default function LoginPage() {
               </form>
             </Form>
           </CardContent>
-          <CardFooter className='flex flex-col space-y-4 pt-6'>
-            <div className='relative w-full'>
-              <div className='absolute inset-0 flex items-center'>
-                <div className='border-muted w-full border-t' />
-              </div>
-              <div className='relative flex justify-center text-xs uppercase'>
-                <span className='bg-background text-muted-foreground px-2'>Or continue with</span>
-              </div>
-            </div>
-            <motion.div className='w-full' whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-              <Button
-                variant='outline'
-                onClick={() => signIn('google', { callbackUrl: '/' })}
-                className='w-full shadow-xs'
-              >
-                Google
-              </Button>
-            </motion.div>
-          </CardFooter>
         </Card>
       </motion.div>
     </div>

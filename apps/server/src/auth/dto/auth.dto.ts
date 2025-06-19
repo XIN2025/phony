@@ -1,27 +1,28 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
-import { LoginResponse, User } from '@repo/shared-types/types';
+import { LoginResponse, SendOtpRequest, User, VerifyOtpRequest } from '@repo/shared-types/types';
 import { UserRole } from '@repo/db';
 
-export class GoogleAuthDto {
-  @ApiProperty({ description: 'The ID token from Google' })
-  @IsString()
-  idToken: string;
-}
-
-export class OtpAuthDto {
+export class OtpAuthDto implements SendOtpRequest {
   @ApiProperty()
   @IsEmail()
   email: string;
 }
 
-export class VerifyOtpDto {
+export class VerifyOtpDto implements VerifyOtpRequest {
   @ApiProperty()
   @IsEmail()
   email: string;
   @ApiProperty()
   @IsString()
   otp: string;
+
+  @ApiProperty({
+    type: 'string',
+    enum: UserRole,
+  })
+  @IsEnum(UserRole)
+  role: UserRole;
 }
 
 export class UserDto implements User {

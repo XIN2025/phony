@@ -22,7 +22,7 @@ export const config = {
     },
     defaults: {
       from: process.env.SMTP_FROM!,
-      fromName: process.env.SMTP_FROM_NAME ?? 'Opengig',
+      fromName: process.env.SMTP_FROM_NAME ?? 'Continuum',
     },
   },
 };

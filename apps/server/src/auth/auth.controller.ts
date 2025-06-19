@@ -1,19 +1,12 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
-import { GoogleAuthDto, LoginResponseDto, OtpAuthDto, VerifyOtpDto } from './dto/auth.dto';
+import { LoginResponseDto, OtpAuthDto, VerifyOtpDto } from './dto/auth.dto';
 import { ApiResponse } from '@nestjs/swagger';
 
 @Controller('/api/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
-  @Post('google')
-  @Public()
-  @ApiResponse({ type: LoginResponseDto })
-  async googleAuth(@Body() body: GoogleAuthDto): Promise<LoginResponseDto> {
-    return this.authService.handleGoogleAuth(body.idToken);
-  }
 
   @Post('otp')
   @Public()
@@ -26,6 +19,6 @@ export class AuthController {
   @Public()
   @ApiResponse({ type: LoginResponseDto })
   async verifyOtp(@Body() body: VerifyOtpDto): Promise<LoginResponseDto> {
-    return this.authService.verifyOtp(body.email, body.otp);
+    return this.authService.verifyOtp(body.email, body.otp, body.role);
   }
 }

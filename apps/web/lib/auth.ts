@@ -1,19 +1,13 @@
 import { AuthOptions, User } from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { envConfig } from '@/config';
 import { AuthService } from '@/services';
-
-const googleAuthProvider = GoogleProvider({
-  clientId: envConfig.providers.google.clientId,
-  clientSecret: envConfig.providers.google.clientSecret,
-});
 
 const credentialsAuthProvider = CredentialsProvider({
   name: 'Credentials',
   credentials: {
     email: { label: 'Email', type: 'email' },
     otp: { label: 'OTP', type: 'text' },
+    role: { label: 'Role', type: 'text' },
   },
   async authorize(credentials) {
     try {
@@ -21,20 +15,19 @@ const credentialsAuthProvider = CredentialsProvider({
         throw new Error('Email and password required');
       }
 
-      const res = await AuthService.verifyOtp(credentials.email, credentials.otp);
-
-      if (res.data) {
-        return {
-          id: res.data.user.id,
-          email: res.data.user.email,
-          token: res.data.token,
-          role: res.data.user.role,
-          name: res.data.user.name ?? 'Unknown',
-          avatarUrl: res.data.user.avatarUrl ?? '',
-        } satisfies User;
-      }
-
-      throw new Error('Invalid credentials');
+      const res = await AuthService.verifyOtp({
+        email: credentials.email,
+        otp: credentials.otp,
+        role: credentials.role as 'CLIENT' | 'PRACTITIONER',
+      });
+      return {
+        id: res.user.id,
+        email: res.user.email,
+        token: res.token,
+        role: res.user.role,
+        name: res.user.name ?? 'Unknown',
+        avatarUrl: res.user.avatarUrl ?? '',
+      } satisfies User;
     } catch (error) {
       throw new Error((error as Error)?.message || 'Invalid credentials');
     }
@@ -42,33 +35,8 @@ const credentialsAuthProvider = CredentialsProvider({
 });
 
 export const authOptions: AuthOptions = {
-  providers: [googleAuthProvider, credentialsAuthProvider],
+  providers: [credentialsAuthProvider],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      if (account?.provider === 'google') {
-        const email = profile?.email;
-
-        if (email && account.id_token) {
-          try {
-            const resp = await AuthService.handleGoogleAuth(account.id_token);
-            if (resp.data) {
-              user.id = resp.data.user.id;
-              user.name = resp.data.user.name ?? 'Unknown';
-              user.email = resp.data.user.email;
-              user.avatarUrl = resp.data.user.avatarUrl || user.image || '';
-              user.token = resp.data.token;
-            } else {
-              console.error('Error signing in:', resp.error);
-              return false;
-            }
-          } catch (error) {
-            console.error('Error signing in:', error);
-            return false;
-          }
-        }
-      }
-      return true;
-    },
     async jwt({ token, user, trigger, session }) {
       if (trigger === 'update' && session?.user) {
         return { ...token, ...session.user };
@@ -98,9 +66,5 @@ export const authOptions: AuthOptions = {
   session: {
     strategy: 'jwt',
     maxAge: 7 * 24 * 60 * 60,
-  },
-  pages: {
-    signIn: '/auth',
-    error: '/auth',
   },
 };

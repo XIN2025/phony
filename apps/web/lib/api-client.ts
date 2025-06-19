@@ -4,22 +4,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getSession } from 'next-auth/react';
 
-type ApiResult<T> =
-  | {
-      data: T;
-      error?: never;
-    }
-  | {
-      data?: never;
-      error: {
-        message: string;
-        status: number;
-        details?: Record<string, unknown>;
-      };
-    };
-
 export class ApiClient {
-  static async request<T>(config: AxiosRequestConfig): Promise<ApiResult<T>> {
+  static async request<T>(config: AxiosRequestConfig): Promise<T> {
     try {
       const isServer = typeof window === 'undefined';
       const session = isServer ? await getServerSession(authOptions) : await getSession();
@@ -34,44 +20,32 @@ export class ApiClient {
         },
       });
       const response: AxiosResponse<T> = await client.request(config);
-      return { data: response.data };
+      return response.data;
     } catch (err) {
       if (isAxiosError(err)) {
-        return {
-          error: {
-            message: err.response?.data.message,
-            details: err.response?.data.data,
-            status: err.response?.status || 500,
-          },
-        };
+        throw new Error(err.response?.data.message ?? 'An unknown error occurred');
       }
-      console.log(err);
-      return {
-        error: {
-          message: 'An unknown error occurred',
-          status: 500,
-        },
-      };
+      throw new Error('An unknown error occurred');
     }
   }
 
-  static async get<T>(url: string, params?: Record<string, unknown>): Promise<ApiResult<T>> {
+  static async get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
     return this.request<T>({ method: 'GET', url, params });
   }
 
-  static async post<T, D = unknown>(url: string, data?: D): Promise<ApiResult<T>> {
+  static async post<T, D = unknown>(url: string, data?: D): Promise<T> {
     return this.request<T>({ method: 'POST', url, data });
   }
 
-  static async put<T, D = unknown>(url: string, data?: D): Promise<ApiResult<T>> {
+  static async put<T, D = unknown>(url: string, data?: D): Promise<T> {
     return this.request<T>({ method: 'PUT', url, data });
   }
 
-  static async patch<T, D = unknown>(url: string, data?: D): Promise<ApiResult<T>> {
+  static async patch<T, D = unknown>(url: string, data?: D): Promise<T> {
     return this.request<T>({ method: 'PATCH', url, data });
   }
 
-  static async delete<T>(url: string, params?: Record<string, unknown>): Promise<ApiResult<T>> {
+  static async delete<T>(url: string, params?: Record<string, unknown>): Promise<T> {
     return this.request<T>({ method: 'DELETE', url, params });
   }
 }

@@ -9,23 +9,6 @@
         "tags": ["App"]
       }
     },
-    "/api/auth/google": {
-      "post": {
-        "operationId": "AuthController_googleAuth",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GoogleAuthDto" } } }
-        },
-        "responses": {
-          "default": {
-            "description": "",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponseDto" } } }
-          }
-        },
-        "tags": ["Auth"]
-      }
-    },
     "/api/auth/otp": {
       "post": {
         "operationId": "AuthController_otpAuth",
@@ -67,10 +50,15 @@
   "components": {
     "securitySchemes": { "bearer": { "scheme": "bearer", "bearerFormat": "JWT", "type": "http" } },
     "schemas": {
-      "GoogleAuthDto": {
+      "OtpAuthDto": { "type": "object", "properties": { "email": { "type": "string" } }, "required": ["email"] },
+      "VerifyOtpDto": {
         "type": "object",
-        "properties": { "idToken": { "type": "string", "description": "The ID token from Google" } },
-        "required": ["idToken"]
+        "properties": {
+          "email": { "type": "string" },
+          "otp": { "type": "string" },
+          "role": { "type": "string", "enum": ["PRACTITIONER", "CLIENT"] }
+        },
+        "required": ["email", "otp", "role"]
       },
       "UserDto": {
         "type": "object",
@@ -79,7 +67,7 @@
           "email": { "type": "string" },
           "name": { "type": "string", "nullable": true },
           "avatarUrl": { "type": "string", "nullable": true },
-          "role": { "type": "string", "enum": ["ADMIN", "USER"] }
+          "role": { "type": "string", "enum": ["PRACTITIONER", "CLIENT"] }
         },
         "required": ["id", "email", "name", "avatarUrl", "role"]
       },
@@ -87,12 +75,6 @@
         "type": "object",
         "properties": { "token": { "type": "string" }, "user": { "$ref": "#/components/schemas/UserDto" } },
         "required": ["token", "user"]
-      },
-      "OtpAuthDto": { "type": "object", "properties": { "email": { "type": "string" } }, "required": ["email"] },
-      "VerifyOtpDto": {
-        "type": "object",
-        "properties": { "email": { "type": "string" }, "otp": { "type": "string" } },
-        "required": ["email", "otp"]
       }
     }
   }

@@ -11,6 +11,7 @@
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "db:deploy": "turbo run db:deploy",
+    "db:push": "turbo run db:push",
     "format:check": "prettier --check \"**/*.{ts,tsx,md,json,css,scss,js,jsx,html,mdx,yml,yaml}\"",
     "format": "prettier --write \"**/*.{ts,tsx,md,json,css,scss,js,jsx,html,mdx,yml,yaml}\"",
     "check-types": "turbo run check-types"
@@ -33,6 +34,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@repo/db": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "@tanstack/react-query": "^5.80.7",
     "axios": "^1.10.0",
