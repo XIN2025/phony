@@ -6,7 +6,7 @@ import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
 export class IntakeFormService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(practitionerId: string, data: CreateIntakeFormDto) {
+  create(practitionerId: string, data: CreateIntakeFormDto) {
     const { title, description, questions } = data;
 
     return this.prisma.intakeForm.create({
@@ -104,7 +104,7 @@ export class IntakeFormService {
     });
   }
 
-  async findAllForPractitioner(practitionerId: string) {
+  findAllForPractitioner(practitionerId: string) {
     return this.prisma.intakeForm.findMany({
       where: { practitionerId },
       orderBy: { updatedAt: 'desc' },

@@ -108,6 +108,8 @@ export class PractitionerService {
     console.log(
       `[PractitionerService] Creating invitation for ${normalizedEmail} with new token: ${token.substring(0, 8)}...`
     );
+    console.log(`[PractitionerService] Generated token length: ${token.length}`);
+    console.log(`[PractitionerService] Full generated token: ${token}`);
 
     // Create invitation
     const invitation = await this.prisma.invitation.create({
@@ -121,11 +123,13 @@ export class PractitionerService {
     });
 
     console.log(`[PractitionerService] Invitation created in DB with ID: ${invitation.id}`);
+    console.log(`[PractitionerService] Stored token in DB: ${invitation.token.substring(0, 8)}...`);
 
     // Send invitation email
     try {
       const invitationLink = `${config.frontendUrl}/client/auth/signup?token=${encodeURIComponent(token)}`;
       console.log(`[PractitionerService] Attempting to send email to ${normalizedEmail} with link: ${invitationLink}`);
+      console.log(`[PractitionerService] Encoded token in URL: ${encodeURIComponent(token)}`);
 
       const emailSent = await this.mailService.sendClientInvitation({
         to: normalizedEmail,
@@ -164,9 +168,51 @@ export class PractitionerService {
 
   async getInvitationByToken(token: string) {
     console.log(`[PractitionerService] Validating token: ${token.substring(0, 8)}...`);
-    const invitation = await this.prisma.invitation.findUnique({
-      where: { token },
+    console.log(`[PractitionerService] Token length: ${token.length}`);
+    console.log(`[PractitionerService] Full token: ${token}`);
+
+    // Clean the token - remove any potential URL encoding issues
+    const cleanToken = token.trim();
+
+    // Try to find the invitation with the exact token
+    let invitation = await this.prisma.invitation.findUnique({
+      where: { token: cleanToken },
     });
+
+    // If not found, try with URL decoded version
+    if (!invitation) {
+      try {
+        const decodedToken = decodeURIComponent(cleanToken);
+        console.log(`[PractitionerService] Trying decoded token: ${decodedToken.substring(0, 8)}...`);
+        invitation = await this.prisma.invitation.findUnique({
+          where: { token: decodedToken },
+        });
+      } catch (error) {
+        console.log(`[PractitionerService] URL decode failed:`, error);
+      }
+    }
+
+    // If still not found, try to find by partial match (for debugging)
+    if (!invitation) {
+      console.log(`[PractitionerService] Token not found, searching for partial matches...`);
+      const allInvitations = await this.prisma.invitation.findMany({
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+      });
+
+      console.log(
+        `[PractitionerService] Recent invitations:`,
+        allInvitations.map((inv) => ({
+          id: inv.id,
+          clientEmail: inv.clientEmail,
+          tokenStart: inv.token.substring(0, 8),
+          tokenLength: inv.token.length,
+          createdAt: inv.createdAt,
+          isAccepted: inv.isAccepted,
+          expiresAt: inv.expiresAt,
+        }))
+      );
+    }
 
     const currentTime = new Date();
 
@@ -205,38 +251,82 @@ export class PractitionerService {
 
   async debugInvitationToken(token: string) {
     console.log(`[PractitionerService] Debugging token: ${token.substring(0, 8)}...`);
+    console.log(`[PractitionerService] Debug token length: ${token.length}`);
+    console.log(`[PractitionerService] Debug full token: ${token}`);
 
-    // Try to find the invitation with the exact token
-    const invitation = await this.prisma.invitation.findUnique({
-      where: { token },
-    });
+    // Try different token variations
+    const tokenVariations = [
+      token,
+      token.trim(),
+      decodeURIComponent(token.trim()),
+      token.replace(/\+/g, ' '), // Handle plus signs that might be URL encoded spaces
+    ];
+
+    console.log(
+      `[PractitionerService] Testing token variations:`,
+      tokenVariations.map((t) => ({
+        token: t.substring(0, 8) + '...',
+        length: t.length,
+        isHex: /^[0-9a-fA-F]+$/.test(t),
+      }))
+    );
+
+    // Try to find the invitation with each token variation
+    let foundInvitation: {
+      id: string;
+      clientEmail: string;
+      isAccepted: boolean;
+      expiresAt: Date;
+      createdAt: Date;
+      token: string;
+    } | null = null;
+    for (const tokenVar of tokenVariations) {
+      try {
+        const invitation = await this.prisma.invitation.findUnique({
+          where: { token: tokenVar },
+        });
+        if (invitation) {
+          foundInvitation = invitation;
+          console.log(`[PractitionerService] Found invitation with token variation: ${tokenVar.substring(0, 8)}...`);
+          break;
+        }
+      } catch (error) {
+        console.log(`[PractitionerService] Error testing token variation:`, error);
+      }
+    }
 
     // Also try to find any invitation that might be similar
     const allInvitations = await this.prisma.invitation.findMany({
-      take: 5,
+      take: 10,
       orderBy: { createdAt: 'desc' },
     });
 
     const debugInfo = {
       token: token.substring(0, 8) + '...',
       tokenLength: token.length,
-      foundExactMatch: !!invitation,
-      invitationDetails: invitation
+      foundExactMatch: !!foundInvitation,
+      invitationDetails: foundInvitation
         ? {
-            id: invitation.id,
-            clientEmail: invitation.clientEmail,
-            isAccepted: invitation.isAccepted,
-            expiresAt: invitation.expiresAt,
-            createdAt: invitation.createdAt,
-            tokenStart: invitation.token.substring(0, 8) + '...',
-            tokenLength: invitation.token.length,
+            id: foundInvitation.id,
+            clientEmail: foundInvitation.clientEmail,
+            isAccepted: foundInvitation.isAccepted,
+            expiresAt: foundInvitation.expiresAt,
+            createdAt: foundInvitation.createdAt,
+            tokenStart: foundInvitation.token.substring(0, 8) + '...',
+            tokenLength: foundInvitation.token.length,
           }
         : null,
       currentTime: new Date(),
+      tokenVariations: tokenVariations.map((t) => ({
+        token: t.substring(0, 8) + '...',
+        length: t.length,
+        isHex: /^[0-9a-fA-F]+$/.test(t),
+      })),
       recentInvitations: allInvitations.map((inv) => ({
         id: inv.id,
         clientEmail: inv.clientEmail,
         tokenStart: inv.token.substring(0, 8) + '...',
+        tokenLength: inv.token.length,
         isAccepted: inv.isAccepted,
         expiresAt: inv.expiresAt,
         createdAt: inv.createdAt,
