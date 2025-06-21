@@ -7,16 +7,22 @@
     "dev": "next dev --turbopack --port 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint --max-warnings 0",
+    "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
     "@repo/ui": "workspace:*",
+    "@tanstack/react-query": "^5.80.7",
+    "framer-motion": "^12.18.1",
+    "lucide-react": "^0.475.0",
     "next": "^15.3.0",
     "next-auth": "^4.24.11",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-hook-form": "^7.57.0",
+    "sonner": "^2.0.5",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

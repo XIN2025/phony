@@ -153,6 +153,78 @@ export class MailService {
     }
   }
 
+  /**
+   * Sends a client invitation email.
+   *
+   * @param options - The invitation email options
+   * @param options.to - Client's email address
+   * @param options.clientName - Client's full name
+   * @param options.practitionerName - Practitioner's name
+   * @param options.invitationLink - Secure invitation link
+   * @param options.intakeFormTitle - Title of the intake form (optional)
+   * @returns Promise resolving to true if email was sent successfully, false otherwise
+   */
+  async sendClientInvitation(options: {
+    to: string;
+    clientName: string;
+    practitionerName: string;
+    invitationLink: string;
+    intakeFormTitle?: string;
+  }): Promise<boolean> {
+    console.log(`[MailService] Attempting to send client invitation to ${options.to}`);
+    console.log(`[MailService] Mail config:`, {
+      host: config.mail.smtp.host,
+      port: config.mail.smtp.port,
+      user: config.mail.smtp.auth.user,
+      from: config.mail.defaults.from,
+      fromName: config.mail.defaults.fromName,
+    });
+
+    const subject = `Invitation from ${options.practitionerName} - Join Continuum`;
+
+    try {
+      // Use the template system like OTP emails
+      const context: {
+        clientName: string;
+        practitionerName: string;
+        invitationLink: string;
+        intakeFormTitle: string;
+      } = {
+        clientName: options.clientName,
+        practitionerName: options.practitionerName,
+        invitationLink: options.invitationLink,
+        intakeFormTitle: '',
+      };
+
+      // Only add intake form title if it exists and is not empty
+      if (options.intakeFormTitle && options.intakeFormTitle.trim()) {
+        context.intakeFormTitle = `<p><strong>Intake Form:</strong> ${options.intakeFormTitle}</p>`;
+      } else {
+        context.intakeFormTitle = '';
+      }
+
+      const result = await this.sendTemplateMail({
+        to: options.to,
+        subject,
+        templateName: 'CLIENT_INVITATION',
+        context,
+      });
+
+      if (result) {
+        console.log(`[MailService] Client invitation email sent successfully to ${options.to}`);
+      } else {
+        console.error(
+          `[MailService] Failed to send client invitation email to ${options.to} - sendTemplateMail returned false`
+        );
+      }
+
+      return result;
+    } catch (error) {
+      console.error(`[MailService] Error sending client invitation email to ${options.to}:`, error);
+      return false;
+    }
+  }
+
   private renderTemplate<T extends Template>(template: string, context: TemplateContextMap[T]): string {
     let rendered = template;
     Object.entries(context).forEach(([key, value]) => {

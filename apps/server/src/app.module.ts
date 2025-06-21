@@ -5,6 +5,11 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
+import { MailModule } from './mail/mail.module';
+import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module';
+import { PractitionerModule } from './practitioner/practitioner.module';
+import { IntakeFormModule } from './intake-form/intake-form.module';
 
 @Module({
   imports: [
@@ -29,7 +34,12 @@ import { AuthModule } from './auth/auth.module';
         level: 'debug',
       },
     }),
+    ConfigModule.forRoot(),
     AuthModule,
+    PrismaModule,
+    MailModule,
+    PractitionerModule,
+    IntakeFormModule,
   ],
   controllers: [AppController],
   providers: [

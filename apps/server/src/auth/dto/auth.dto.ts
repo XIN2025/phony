@@ -25,6 +25,32 @@ export class VerifyOtpDto implements VerifyOtpRequest {
   role: UserRole;
 }
 
+export class PractitionerSignUpDto implements VerifyOtpRequest {
+  @ApiProperty()
+  @IsEmail()
+  email: string;
+
+  @ApiProperty()
+  @IsString()
+  otp: string;
+
+  @ApiProperty({
+    type: 'string',
+    enum: ['PRACTITIONER'],
+    default: 'PRACTITIONER',
+  })
+  @IsEnum(UserRole)
+  role: UserRole;
+
+  @ApiProperty()
+  @IsString()
+  name: string;
+
+  @ApiProperty()
+  @IsString()
+  profession: string;
+}
+
 export class UserDto implements User {
   @ApiProperty()
   @IsString()
@@ -56,6 +82,14 @@ export class UserDto implements User {
   })
   @IsEnum(UserRole)
   role: UserRole;
+
+  @ApiProperty({
+    type: 'string',
+    nullable: true,
+  })
+  @IsString()
+  @IsOptional()
+  profession: string | null;
 }
 export class LoginResponseDto implements LoginResponse {
   @ApiProperty()

@@ -46,6 +46,7 @@ export const authOptions: AuthOptions = {
         token.email = user.email;
         token.name = user.name;
         token.role = user.role;
+        token.profession = user.profession;
         token.avatarUrl = user.avatarUrl || '';
         token.token = user.token;
       }
@@ -58,6 +59,7 @@ export const authOptions: AuthOptions = {
         session.user.name = token.name as string;
         session.user.avatarUrl = token.avatarUrl as string;
         session.user.role = token.role as string;
+        session.user.profession = token.profession as string;
         session.user.token = token.token as string;
       }
       return session;
