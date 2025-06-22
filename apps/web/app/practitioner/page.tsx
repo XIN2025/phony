@@ -34,54 +34,54 @@ export default function PractitionerDashboard() {
   });
 
   return (
-    <div className='container mx-auto p-6 space-y-6'>
-      <div>
-        <h1 className='text-3xl font-bold'>Dashboard</h1>
-        <p className='text-muted-foreground'>Welcome back! Here's an overview of your practice.</p>
+    <div className='container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6'>
+      <div className='space-y-2 sm:space-y-3'>
+        <h1 className='text-2xl sm:text-3xl lg:text-4xl font-bold'>Dashboard</h1>
+        <p className='text-sm sm:text-base text-muted-foreground'>Welcome back! Here's an overview of your practice.</p>
       </div>
 
       {/* Stats Cards */}
-      <div className='grid gap-4 md:grid-cols-3'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Total Clients</CardTitle>
+            <CardTitle className='text-xs sm:text-sm font-medium'>Total Clients</CardTitle>
             <Users className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{isLoading ? '...' : stats?.totalClients || 0}</div>
+            <div className='text-xl sm:text-2xl font-bold'>{isLoading ? '...' : stats?.totalClients || 0}</div>
             <p className='text-xs text-muted-foreground'>Active clients in your practice</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Intake Forms</CardTitle>
+            <CardTitle className='text-xs sm:text-sm font-medium'>Intake Forms</CardTitle>
             <FileText className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{isLoading ? '...' : stats?.totalForms || 0}</div>
+            <div className='text-xl sm:text-2xl font-bold'>{isLoading ? '...' : stats?.totalForms || 0}</div>
             <p className='text-xs text-muted-foreground'>Forms available for clients</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='sm:col-span-2 lg:col-span-1'>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Pending Invitations</CardTitle>
+            <CardTitle className='text-xs sm:text-sm font-medium'>Pending Invitations</CardTitle>
             <MessageSquare className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{isLoading ? '...' : stats?.pendingInvitations || 0}</div>
+            <div className='text-xl sm:text-2xl font-bold'>{isLoading ? '...' : stats?.pendingInvitations || 0}</div>
             <p className='text-xs text-muted-foreground'>Invitations awaiting response</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Quick Actions */}
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common tasks to get you started</CardDescription>
+            <CardTitle className='text-base sm:text-lg'>Quick Actions</CardTitle>
+            <CardDescription className='text-sm'>Common tasks to get you started</CardDescription>
           </CardHeader>
           <CardContent className='space-y-3'>
             <Button
@@ -105,8 +105,8 @@ export default function PractitionerDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest updates from your practice</CardDescription>
+            <CardTitle className='text-base sm:text-lg'>Recent Activity</CardTitle>
+            <CardDescription className='text-sm'>Latest updates from your practice</CardDescription>
           </CardHeader>
           <CardContent>
             <div className='text-sm text-muted-foreground'>No recent activity to display.</div>

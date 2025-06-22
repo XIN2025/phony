@@ -70,13 +70,13 @@ export default function ClientsPage() {
   };
 
   return (
-    <div className='container mx-auto p-6 space-y-6'>
-      <div className='flex justify-between items-center'>
-        <div>
-          <h1 className='text-3xl font-bold'>Clients</h1>
-          <p className='text-muted-foreground'>Manage your clients and view pending invitations</p>
+    <div className='container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6'>
+      <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4'>
+        <div className='space-y-1 sm:space-y-2'>
+          <h1 className='text-2xl sm:text-3xl font-bold'>Clients</h1>
+          <p className='text-sm sm:text-base text-muted-foreground'>Manage your clients and view pending invitations</p>
         </div>
-        <Button onClick={() => router.push('/practitioner/invite')}>
+        <Button onClick={() => router.push('/practitioner/invite')} className='w-full sm:w-auto'>
           <Plus className='w-4 h-4 mr-2' />
           Invite Client
         </Button>
@@ -84,11 +84,11 @@ export default function ClientsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Users className='w-5 h-5' />
+          <CardTitle className='flex items-center gap-2 text-base sm:text-lg'>
+            <Users className='w-4 h-4 sm:w-5 sm:h-5' />
             Active Clients
           </CardTitle>
-          <CardDescription>Clients who have accepted your invitation.</CardDescription>
+          <CardDescription className='text-sm'>Clients who have accepted your invitation.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -97,18 +97,21 @@ export default function ClientsPage() {
               <Skeleton className='h-12 w-full' />
             </div>
           ) : clients && clients.length > 0 ? (
-            <div className='space-y-4'>
+            <div className='space-y-3 sm:space-y-4'>
               {clients.map((client) => (
-                <div key={client.id} className='flex items-center justify-between p-3 border rounded-lg'>
-                  <div>
-                    <h3 className='font-medium'>{client.name}</h3>
-                    <p className='text-sm text-muted-foreground'>{client.email}</p>
+                <div
+                  key={client.id}
+                  className='flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2 sm:gap-0'
+                >
+                  <div className='space-y-1'>
+                    <h3 className='font-medium text-sm sm:text-base'>{client.name}</h3>
+                    <p className='text-xs sm:text-sm text-muted-foreground'>{client.email}</p>
                   </div>
-                  <div className='flex items-center gap-2'>
-                    <Badge variant={client.isActive ? 'default' : 'secondary'}>
+                  <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3'>
+                    <Badge variant={client.isActive ? 'default' : 'secondary'} className='w-fit'>
                       {client.isActive ? 'Active' : 'Inactive'}
                     </Badge>
-                    <span className='text-sm text-muted-foreground'>
+                    <span className='text-xs sm:text-sm text-muted-foreground'>
                       Joined {new Date(client.createdAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -116,18 +119,18 @@ export default function ClientsPage() {
               ))}
             </div>
           ) : (
-            <div className='text-center py-8 text-muted-foreground'>No active clients yet.</div>
+            <div className='text-center py-8 text-muted-foreground text-sm sm:text-base'>No active clients yet.</div>
           )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Mail className='w-5 h-5' />
+          <CardTitle className='flex items-center gap-2 text-base sm:text-lg'>
+            <Mail className='w-4 h-4 sm:w-5 sm:h-5' />
             Pending Invitations
           </CardTitle>
-          <CardDescription>Invitations that have been sent but not yet accepted.</CardDescription>
+          <CardDescription className='text-sm'>Invitations that have been sent but not yet accepted.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -135,17 +138,22 @@ export default function ClientsPage() {
               <Skeleton className='h-12 w-full' />
             </div>
           ) : invitations && invitations.filter((inv) => inv.status === 'pending').length > 0 ? (
-            <div className='space-y-4'>
+            <div className='space-y-3 sm:space-y-4'>
               {invitations
                 .filter((invitation) => invitation.status === 'pending')
                 .map((invitation) => (
-                  <div key={invitation.id} className='flex items-center justify-between p-3 border rounded-lg'>
-                    <div>
-                      <h3 className='font-medium'>{invitation.clientEmail}</h3>
+                  <div
+                    key={invitation.id}
+                    className='flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2 sm:gap-0'
+                  >
+                    <div className='space-y-1'>
+                      <h3 className='font-medium text-sm sm:text-base'>{invitation.clientEmail}</h3>
                     </div>
-                    <div className='flex items-center gap-2'>
-                      <Badge variant='outline'>Pending</Badge>
-                      <span className='text-sm text-muted-foreground'>
+                    <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3'>
+                      <Badge variant='outline' className='w-fit'>
+                        Pending
+                      </Badge>
+                      <span className='text-xs sm:text-sm text-muted-foreground'>
                         Sent {new Date(invitation.createdAt).toLocaleDateString()}
                       </span>
                       <AlertDialog>
@@ -154,7 +162,7 @@ export default function ClientsPage() {
                             variant='ghost'
                             size='sm'
                             disabled={deleteInvitationMutation.isPending}
-                            className='text-destructive hover:text-destructive'
+                            className='text-destructive hover:text-destructive w-fit'
                           >
                             <Trash2 className='h-4 w-4' />
                           </Button>
@@ -183,7 +191,7 @@ export default function ClientsPage() {
                 ))}
             </div>
           ) : (
-            <div className='text-center py-8 text-muted-foreground'>No pending invitations.</div>
+            <div className='text-center py-8 text-muted-foreground text-sm sm:text-base'>No pending invitations.</div>
           )}
         </CardContent>
       </Card>

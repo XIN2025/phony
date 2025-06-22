@@ -83,8 +83,8 @@ export default function PractitionerAuthPage() {
 
   if (status === 'loading') {
     return (
-      <div className='flex min-h-screen flex-col items-center justify-center'>
-        <Logo className='h-10 w-10 animate-pulse' />
+      <div className='flex min-h-screen flex-col items-center justify-center p-4'>
+        <Logo className='h-8 w-8 sm:h-10 sm:w-10 animate-pulse' />
       </div>
     );
   }
@@ -96,103 +96,107 @@ export default function PractitionerAuthPage() {
   }
 
   return (
-    <AnimatePresence mode='wait'>
-      <motion.div
-        key={showOTP ? 'otp' : 'form'}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3 }}
-      >
-        {showOTP ? (
-          <div>
-            <div className='text-left mb-8'>
-              <h1 className='text-2xl font-bold'>Enter Verification Code</h1>
-              <p className='text-muted-foreground'>A 6-digit code was sent to your email.</p>
-            </div>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
-                <FormField
-                  control={form.control}
-                  name='otp'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <InputOTP {...field} maxLength={6}>
-                          <InputOTPGroup className='w-full justify-between'>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                          </InputOTPGroup>
-                        </InputOTP>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+    <div className='min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8'>
+      <div className='w-full max-w-md mx-auto'>
+        <AnimatePresence mode='wait'>
+          <motion.div
+            key={showOTP ? 'otp' : 'form'}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {showOTP ? (
+              <div className='space-y-6'>
+                <div className='text-left space-y-2'>
+                  <h1 className='text-xl sm:text-2xl font-bold'>Enter Verification Code</h1>
+                  <p className='text-sm sm:text-base text-muted-foreground'>A 6-digit code was sent to your email.</p>
+                </div>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4 sm:space-y-6'>
+                    <FormField
+                      control={form.control}
+                      name='otp'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <InputOTP {...field} maxLength={6}>
+                              <InputOTPGroup className='w-full justify-between gap-2'>
+                                <InputOTPSlot index={0} />
+                                <InputOTPSlot index={1} />
+                                <InputOTPSlot index={2} />
+                                <InputOTPSlot index={3} />
+                                <InputOTPSlot index={4} />
+                                <InputOTPSlot index={5} />
+                              </InputOTPGroup>
+                            </InputOTP>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type='submit' className='w-full' disabled={isLoading}>
+                      {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                      Verify
+                    </Button>
+                  </form>
+                </Form>
+                <div className='text-center text-xs sm:text-sm'>
+                  {resendTimer > 0 ? (
+                    <p className='text-muted-foreground'>Resend code in {resendTimer}s</p>
+                  ) : (
+                    <p>
+                      Didn't receive code?{' '}
+                      <Button
+                        type='button'
+                        variant='link'
+                        className='p-0 h-auto text-xs sm:text-sm'
+                        onClick={() => handleSendOTP(form.getValues('email'))}
+                        disabled={isSendingOTP}
+                      >
+                        Resend Now
+                      </Button>
+                    </p>
                   )}
-                />
-                <Button type='submit' className='w-full' disabled={isLoading}>
-                  {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-                  Verify
-                </Button>
-              </form>
-            </Form>
-            <div className='mt-4 text-center text-sm'>
-              {resendTimer > 0 ? (
-                <p className='text-muted-foreground'>Resend code in {resendTimer}s</p>
-              ) : (
-                <p>
-                  Didn't receive code?{' '}
-                  <Button
-                    type='button'
-                    variant='link'
-                    className='p-0 h-auto'
-                    onClick={() => handleSendOTP(form.getValues('email'))}
-                    disabled={isSendingOTP}
-                  >
-                    Resend Now
-                  </Button>
-                </p>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div>
-            <div className='text-left mb-8'>
-              <h1 className='text-2xl font-bold'>Sign In to Your Account</h1>
-              <p className='text-muted-foreground'>
-                Don't have an account?{' '}
-                <Link href='/practitioner/auth/signup' className='text-primary hover:underline font-medium'>
-                  Sign Up
-                </Link>
-              </p>
-            </div>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-                <FormField
-                  control={form.control}
-                  name='email'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type='email' placeholder='john.doe@example.com' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type='submit' className='w-full' disabled={isSendingOTP}>
-                  {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-                  Continue with Email
-                </Button>
-              </form>
-            </Form>
-          </div>
-        )}
-      </motion.div>
-    </AnimatePresence>
+                </div>
+              </div>
+            ) : (
+              <div className='space-y-6'>
+                <div className='text-left space-y-2'>
+                  <h1 className='text-xl sm:text-2xl font-bold'>Sign In to Your Account</h1>
+                  <p className='text-sm sm:text-base text-muted-foreground'>
+                    Don't have an account?{' '}
+                    <Link href='/practitioner/auth/signup' className='text-primary hover:underline font-medium'>
+                      Sign Up
+                    </Link>
+                  </p>
+                </div>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4 sm:space-y-6'>
+                    <FormField
+                      control={form.control}
+                      name='email'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type='email' placeholder='john.doe@example.com' {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type='submit' className='w-full' disabled={isSendingOTP}>
+                      {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                      Continue with Email
+                    </Button>
+                  </form>
+                </Form>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }

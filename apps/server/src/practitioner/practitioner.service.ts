@@ -200,18 +200,22 @@ export class PractitionerService {
         orderBy: { createdAt: 'desc' },
       });
 
-      console.log(
-        `[PractitionerService] Recent invitations:`,
-        allInvitations.map((inv) => ({
-          id: inv.id,
-          clientEmail: inv.clientEmail,
-          tokenStart: inv.token.substring(0, 8),
-          tokenLength: inv.token.length,
-          createdAt: inv.createdAt,
-          isAccepted: inv.isAccepted,
-          expiresAt: inv.expiresAt,
-        }))
-      );
+      if (allInvitations && allInvitations.length > 0) {
+        console.log(
+          `[PractitionerService] Recent invitations:`,
+          allInvitations.map((inv) => ({
+            id: inv.id,
+            clientEmail: inv.clientEmail,
+            tokenStart: inv.token.substring(0, 8),
+            tokenLength: inv.token.length,
+            createdAt: inv.createdAt,
+            isAccepted: inv.isAccepted,
+            expiresAt: inv.expiresAt,
+          }))
+        );
+      } else {
+        console.log(`[PractitionerService] No recent invitations found`);
+      }
     }
 
     const currentTime = new Date();
@@ -322,15 +326,17 @@ export class PractitionerService {
         length: t.length,
         isHex: /^[0-9a-fA-F]+$/.test(t),
       })),
-      recentInvitations: allInvitations.map((inv) => ({
-        id: inv.id,
-        clientEmail: inv.clientEmail,
-        tokenStart: inv.token.substring(0, 8) + '...',
-        tokenLength: inv.token.length,
-        isAccepted: inv.isAccepted,
-        expiresAt: inv.expiresAt,
-        createdAt: inv.createdAt,
-      })),
+      recentInvitations: allInvitations
+        ? allInvitations.map((inv) => ({
+            id: inv.id,
+            clientEmail: inv.clientEmail,
+            tokenStart: inv.token.substring(0, 8) + '...',
+            tokenLength: inv.token.length,
+            isAccepted: inv.isAccepted,
+            expiresAt: inv.expiresAt,
+            createdAt: inv.createdAt,
+          }))
+        : [],
     };
 
     console.log(`[PractitionerService] Debug info:`, debugInfo);

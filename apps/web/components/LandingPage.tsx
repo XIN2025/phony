@@ -10,7 +10,7 @@ export default function LandingPage() {
   const router = useRouter();
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-background/50 to-muted/30 flex items-center justify-center p-4'>
+    <div className='min-h-screen bg-gradient-to-br from-background/50 to-muted/30 flex items-center justify-center p-4 sm:p-6 lg:p-8'>
       <motion.div
         className='w-full max-w-4xl mx-auto'
         initial={{ opacity: 0, y: 20 }}
@@ -18,9 +18,9 @@ export default function LandingPage() {
         transition={{ duration: 0.5 }}
       >
         {/* Header */}
-        <div className='text-center mb-12'>
+        <div className='text-center mb-8 sm:mb-12'>
           <motion.h1
-            className='text-4xl font-bold mb-4'
+            className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4'
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -28,7 +28,7 @@ export default function LandingPage() {
             Welcome to Continuum
           </motion.h1>
           <motion.p
-            className='text-xl text-muted-foreground'
+            className='text-base sm:text-lg md:text-xl text-muted-foreground px-4'
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
@@ -38,25 +38,27 @@ export default function LandingPage() {
         </div>
 
         {/* Role Selection Cards */}
-        <div className='grid md:grid-cols-2 gap-8 max-w-2xl mx-auto'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-2xl mx-auto px-4 sm:px-0'>
           {/* Practitioner Card */}
           <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
             <Card className='h-full hover:shadow-lg transition-shadow'>
               <CardHeader className='text-center pb-4'>
-                <div className='mx-auto mb-4 p-3 bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center'>
-                  <Users className='w-8 h-8 text-primary' />
+                <div className='mx-auto mb-4 p-2 sm:p-3 bg-primary/10 rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center'>
+                  <Users className='w-6 h-6 sm:w-8 sm:h-8 text-primary' />
                 </div>
-                <CardTitle className='text-2xl'>Practitioner</CardTitle>
-                <CardDescription>Healthcare professionals, therapists, and counselors</CardDescription>
+                <CardTitle className='text-xl sm:text-2xl'>Practitioner</CardTitle>
+                <CardDescription className='text-sm sm:text-base'>
+                  Healthcare professionals, therapists, and counselors
+                </CardDescription>
               </CardHeader>
-              <CardContent className='text-center space-y-3'>
+              <CardContent className='text-center space-y-3 px-4 sm:px-6'>
                 <Button className='w-full' variant='default' onClick={() => router.push('/practitioner/auth')}>
                   Sign In
                 </Button>
                 <Button className='w-full' variant='outline' onClick={() => router.push('/practitioner/auth/signup')}>
                   Sign Up
                 </Button>
-                <p className='text-sm text-muted-foreground mt-3'>
+                <p className='text-xs sm:text-sm text-muted-foreground mt-3'>
                   Manage clients, record sessions, and create treatment plans
                 </p>
               </CardContent>
@@ -67,17 +69,17 @@ export default function LandingPage() {
           <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
             <Card className='h-full hover:shadow-lg transition-shadow'>
               <CardHeader className='text-center pb-4'>
-                <div className='mx-auto mb-4 p-3 bg-secondary/10 rounded-full w-16 h-16 flex items-center justify-center'>
-                  <User className='w-8 h-8 text-secondary' />
+                <div className='mx-auto mb-4 p-2 sm:p-3 bg-secondary/10 rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center'>
+                  <User className='w-6 h-6 sm:w-8 sm:h-8 text-secondary' />
                 </div>
-                <CardTitle className='text-2xl'>Client</CardTitle>
-                <CardDescription>Patients and therapy clients</CardDescription>
+                <CardTitle className='text-xl sm:text-2xl'>Client</CardTitle>
+                <CardDescription className='text-sm sm:text-base'>Patients and therapy clients</CardDescription>
               </CardHeader>
-              <CardContent className='text-center'>
+              <CardContent className='text-center px-4 sm:px-6'>
                 <Button className='w-full' variant='secondary' onClick={() => router.push('/client/auth')}>
                   Sign In as Client
                 </Button>
-                <p className='text-sm text-muted-foreground mt-3'>
+                <p className='text-xs sm:text-sm text-muted-foreground mt-3'>
                   Access your treatment plans and communicate with your practitioner
                 </p>
               </CardContent>
@@ -87,7 +89,7 @@ export default function LandingPage() {
 
         {/* Footer */}
         <motion.div
-          className='text-center mt-12 text-sm text-muted-foreground'
+          className='text-center mt-8 sm:mt-12 text-xs sm:text-sm text-muted-foreground px-4'
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
