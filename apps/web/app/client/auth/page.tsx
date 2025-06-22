@@ -83,7 +83,7 @@ export default function ClientAuthPage() {
 
   if (status === 'loading') {
     return (
-      <div className='flex min-h-screen flex-col items-center justify-center'>
+      <div className='flex flex-col items-center justify-center'>
         <Logo className='h-10 w-10 animate-pulse' />
       </div>
     );
@@ -96,101 +96,99 @@ export default function ClientAuthPage() {
   }
 
   return (
-    <div className='from-background/50 to-muted/30 flex min-h-screen w-full items-center justify-center bg-linear-to-br p-4'>
-      <motion.div
-        className='mx-auto w-full max-w-md'
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-      >
-        <Card className='w-full shadow-none'>
-          <CardHeader className='space-y-2 pb-6'>
-            <CardTitle className='text-center text-2xl font-semibold'>Welcome back</CardTitle>
-            <CardDescription className='text-center text-sm'>
-              {showOTP ? 'Enter the verification code sent to your email' : 'Sign in to your account'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-                <FormField
-                  control={form.control}
-                  name='email'
-                  render={({ field }) => (
-                    <FormItem className='flex flex-col items-center space-y-2'>
-                      <FormLabel>Email address</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder='name@example.com'
-                          {...field}
-                          disabled={showOTP}
-                          className='placeholder:text-center'
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <AnimatePresence mode='wait'>
-                  {showOTP && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className='space-y-4'
-                    >
-                      <FormField
-                        control={form.control}
-                        name='otp'
-                        render={({ field }) => (
-                          <FormItem className='flex flex-col items-center space-y-2'>
-                            <FormLabel className='mb-3'>Verification code</FormLabel>
-                            <FormControl>
-                              <InputOTP value={field.value} onChange={field.onChange} maxLength={6}>
-                                <InputOTPGroup>
-                                  <InputOTPSlot index={0} />
-                                  <InputOTPSlot index={1} />
-                                  <InputOTPSlot index={2} />
-                                  <InputOTPSlot index={3} />
-                                  <InputOTPSlot index={4} />
-                                  <InputOTPSlot index={5} />
-                                </InputOTPGroup>
-                              </InputOTP>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+    <motion.div
+      className='mx-auto w-full max-w-md'
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
+      <Card className='w-full shadow-none'>
+        <CardHeader className='space-y-2 pb-4 sm:pb-6'>
+          <CardTitle className='text-center text-xl sm:text-2xl font-semibold'>Welcome back</CardTitle>
+          <CardDescription className='text-center text-sm'>
+            {showOTP ? 'Enter the verification code sent to your email' : 'Sign in to your account'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className='p-4 sm:p-6'>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+              <FormField
+                control={form.control}
+                name='email'
+                render={({ field }) => (
+                  <FormItem className='flex flex-col items-center space-y-2'>
+                    <FormLabel>Email address</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder='name@example.com'
+                        {...field}
+                        disabled={showOTP}
+                        className='placeholder:text-center w-full'
                       />
-                      <div className='text-center'>
-                        {resendTimer > 0 ? (
-                          <p className='text-muted-foreground text-sm'>Resend code in {resendTimer}s</p>
-                        ) : (
-                          <Button
-                            type='button'
-                            variant='link'
-                            className='h-auto p-0 text-sm'
-                            onClick={() => handleSendOTP(form.getValues('email'))}
-                            disabled={isLoading || isSendingOTP}
-                          >
-                            Resend verification code
-                          </Button>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <Button type='submit' className='w-full shadow-xs' disabled={isLoading || isSendingOTP}>
-                  {(isLoading || isSendingOTP) && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-                  {showOTP ? 'Verify code' : 'Continue with email'}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </div>
+              <AnimatePresence mode='wait'>
+                {showOTP && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className='space-y-4'
+                  >
+                    <FormField
+                      control={form.control}
+                      name='otp'
+                      render={({ field }) => (
+                        <FormItem className='flex flex-col items-center space-y-2'>
+                          <FormLabel className='mb-3'>Verification code</FormLabel>
+                          <FormControl>
+                            <InputOTP value={field.value} onChange={field.onChange} maxLength={6}>
+                              <InputOTPGroup className='gap-1 sm:gap-2'>
+                                <InputOTPSlot index={0} />
+                                <InputOTPSlot index={1} />
+                                <InputOTPSlot index={2} />
+                                <InputOTPSlot index={3} />
+                                <InputOTPSlot index={4} />
+                                <InputOTPSlot index={5} />
+                              </InputOTPGroup>
+                            </InputOTP>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className='text-center'>
+                      {resendTimer > 0 ? (
+                        <p className='text-muted-foreground text-sm'>Resend code in {resendTimer}s</p>
+                      ) : (
+                        <Button
+                          type='button'
+                          variant='link'
+                          className='h-auto p-0 text-sm'
+                          onClick={() => handleSendOTP(form.getValues('email'))}
+                          disabled={isLoading || isSendingOTP}
+                        >
+                          Resend verification code
+                        </Button>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <Button type='submit' className='w-full shadow-xs' disabled={isLoading || isSendingOTP}>
+                {(isLoading || isSendingOTP) && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                {showOTP ? 'Verify code' : 'Continue with email'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

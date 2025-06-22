@@ -2,213 +2,218 @@
 
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { intakeFormSchema, CreateIntakeFormDto, questionTypeEnum } from '@repo/shared-types/schemas';
+import { intakeFormSchema, CreateIntakeFormDto } from '@repo/shared-types/schemas';
 import { Button } from '@repo/ui/components/button';
 import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@repo/ui/components/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
-import { Switch } from '@repo/ui/components/switch';
-import { Trash2, Plus, GripVertical, Copy, ChevronLeft } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Copy } from 'lucide-react';
+import { QuestionType } from '@repo/db/question-type';
+import { useInviteContext } from '@/context/InviteContext';
+import { useEffect, useState } from 'react';
+import { Checkbox } from '@repo/ui/components/checkbox';
 
-type QuestionType = z.infer<typeof questionTypeEnum>;
-
-const questionTypeLabels: Record<QuestionType, string> = {
-  SHORT_ANSWER: 'Short Answer',
-  LONG_ANSWER: 'Paragraph',
-  MULTIPLE_CHOICE: 'Multiple Choice',
-  CHECKBOXES: 'Checkboxes',
-  DROPDOWN: 'Drop-down',
-  FILE_UPLOAD: 'File upload',
-  SCALE: 'Linear Scale',
-  RATING: 'Rating',
-  MULTIPLE_CHOICE_GRID: 'Multiple choice grid',
-  TICK_BOX_GRID: 'Tick box grid',
-};
-
-interface IntakeFormBuilderProps {
-  onSubmit: (data: CreateIntakeFormDto) => void;
-  onBack: () => void;
-  isLoading?: boolean;
-  initialData?: CreateIntakeFormDto;
-}
-
-const QuestionOptions = ({
-  questionIndex,
-  control,
-  type,
-}: {
-  questionIndex: number;
-  control: any;
-  type: QuestionType;
-}) => {
+function QuestionOptions({ questionIndex, control, register }: any) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: `questions.${questionIndex}.options`,
   });
 
-  if (type !== 'MULTIPLE_CHOICE' && type !== 'CHECKBOXES' && type !== 'DROPDOWN') {
-    return null;
-  }
-
   return (
-    <div className='mt-4 space-y-2 pl-4'>
+    <div className='space-y-2 pt-4'>
       <Label>Choices</Label>
       {fields.map((field, optionIndex) => (
         <div key={field.id} className='flex items-center gap-2'>
-          <Controller
-            control={control}
-            name={`questions.${questionIndex}.options.${optionIndex}.text`}
-            render={({ field }) => <Input {...field} placeholder={`Option ${optionIndex + 1}`} className='flex-grow' />}
+          <Input
+            placeholder={`Option ${optionIndex + 1}`}
+            {...register(`questions.${questionIndex}.options.${optionIndex}.text`)}
           />
-          <Button type='button' variant='ghost' size='icon' onClick={() => remove(optionIndex)}>
+          <Button type='button' variant='ghost' size='icon' onClick={() => remove(optionIndex)} className='shrink-0'>
             <Trash2 className='h-4 w-4' />
           </Button>
         </div>
       ))}
-      <Button type='button' variant='outline' size='sm' onClick={() => append({ text: '' })}>
-        <Plus className='h-4 w-4 mr-2' />
+      <Button
+        type='button'
+        variant='link'
+        className='p-0 h-auto text-sm font-semibold'
+        onClick={() => append({ text: '' })}
+      >
+        <Plus className='h-4 w-4 mr-1' />
         Add Option
       </Button>
     </div>
   );
-};
+}
 
-export function IntakeFormBuilder({ onSubmit, onBack, isLoading, initialData }: IntakeFormBuilderProps) {
+interface IntakeFormBuilderProps {
+  onSubmit: (data: CreateIntakeFormDto) => void;
+  onBack?: () => void;
+  isLoading?: boolean;
+}
+
+const questionTypeOptions = [
+  { value: QuestionType.SHORT_ANSWER, label: 'Short Answer' },
+  { value: QuestionType.LONG_ANSWER, label: 'Paragraph' },
+  { value: QuestionType.MULTIPLE_CHOICE, label: 'Multiple Choice' },
+  { value: QuestionType.CHECKBOXES, label: 'Checkboxes' },
+  { value: QuestionType.DROPDOWN, label: 'Drop-down' },
+  { value: QuestionType.FILE_UPLOAD, label: 'File upload' },
+  { value: QuestionType.SCALE, label: 'Linear Scale' },
+  { value: QuestionType.RATING, label: 'Rating' },
+  { value: QuestionType.MULTIPLE_CHOICE_GRID, label: 'Multiple choice grid' },
+  { value: QuestionType.TICK_BOX_GRID, label: 'Tick box grid' },
+];
+
+export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBuilderProps) {
+  const { inviteData, setInviteData } = useInviteContext();
+  const [saveAsTemplate, setSaveAsTemplate] = useState(true);
+
   const form = useForm<CreateIntakeFormDto>({
     resolver: zodResolver(intakeFormSchema),
-    defaultValues: initialData || {
-      title: 'Intake Survey',
-      description: 'Please fill out this form before our first session.',
-      questions: [
-        {
-          text: 'Why do you want to begin therapy?',
-          type: 'SHORT_ANSWER',
-          isRequired: true,
-          order: 0,
-        },
-      ],
-    },
+    defaultValues:
+      inviteData.newIntakeForm ||
+      ({
+        title: '',
+        description: '',
+        questions: [
+          {
+            text: '',
+            type: QuestionType.MULTIPLE_CHOICE,
+            isRequired: true,
+            order: 0,
+            options: [{ text: '' }],
+          },
+        ],
+      } as CreateIntakeFormDto),
   });
 
-  const { fields, append, remove, move } = useFieldArray({
+  useEffect(() => {
+    return () => {
+      setInviteData({ newIntakeForm: form.getValues() });
+    };
+  }, [setInviteData, form]);
+
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'questions',
   });
 
-  const addQuestion = (type: QuestionType) => {
+  const addQuestion = () => {
     append({
       text: '',
-      type,
-      isRequired: false,
+      type: QuestionType.MULTIPLE_CHOICE,
+      isRequired: true,
       order: fields.length,
-      options: type === 'MULTIPLE_CHOICE' || type === 'CHECKBOXES' || type === 'DROPDOWN' ? [{ text: '' }] : undefined,
+      options: [{ text: '' }],
     });
   };
 
   return (
-    <Card className='max-w-4xl mx-auto'>
-      <CardHeader>
-        <CardTitle>Create an Intake Form</CardTitle>
-        <CardDescription>Build a custom form to gather information from your clients.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
-          <div className='space-y-2'>
-            <Label htmlFor='form-title'>Form Title</Label>
-            <Input id='form-title' {...form.register('title')} placeholder='e.g. Pre-Session Questionnaire' />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='form-description'>Description</Label>
-            <Input
-              id='form-description'
-              {...form.register('description')}
-              placeholder='A short description for your client'
-            />
-          </div>
-
-          <div className='border-t pt-6 space-y-4'>
-            {fields.map((field, index) => {
-              const questionType = form.watch(`questions.${index}.type`);
-              return (
-                <Card key={field.id} className='bg-muted/40 p-4'>
-                  <div className='flex items-start gap-4'>
-                    <Button variant='ghost' size='icon' className='cursor-grab'>
-                      <GripVertical className='h-5 w-5' />
-                    </Button>
-                    <div className='flex-grow space-y-4'>
-                      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                        <Controller
-                          control={form.control}
-                          name={`questions.${index}.text`}
-                          render={({ field }) => (
-                            <Input {...field} placeholder='Enter your question' className='text-base' />
-                          )}
+    <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+      <div className='space-y-2'>
+        <Label htmlFor='form-title' className='text-lg font-semibold'>
+          Form Title
+        </Label>
+        <Input
+          id='form-title'
+          placeholder='Enter the form title'
+          {...form.register('title')}
+          className='text-xl border-gray-700'
+        />
+        {form.formState.errors.title && (
+          <p className='text-sm text-destructive'>{form.formState.errors.title.message}</p>
+        )}
+      </div>
+      <div className='space-y-4'>
+        {fields.map((field, index) => (
+          <div key={field.id} className='rounded-xl border border-gray-700 bg-card p-6 text-card-foreground'>
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <div className='space-y-2'>
+                <Label htmlFor={`question-${index}`}>Question</Label>
+                <Input
+                  id={`question-${index}`}
+                  placeholder='Why do you want to begin therapy?'
+                  {...form.register(`questions.${index}.text`)}
+                  className='text-base'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor={`question-type-${index}`}>Type of question</Label>
+                <Controller
+                  control={form.control}
+                  name={`questions.${index}.type`}
+                  render={({ field: selectField }) => (
+                    <Select value={selectField.value} onValueChange={selectField.onChange}>
+                      <SelectTrigger className='w-full'>
+                        <SelectValue
+                          placeholder={
+                            <div className='flex items-center gap-2 text-muted-foreground'>
+                              <GripVertical className='h-5 w-5' />
+                              <span>-- select --</span>
+                            </div>
+                          }
                         />
-                        <Controller
-                          control={form.control}
-                          name={`questions.${index}.type`}
-                          render={({ field }) => (
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select a type' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(questionTypeLabels).map(([key, label]) => (
-                                  <SelectItem key={key} value={key}>
-                                    {label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </div>
-                      <QuestionOptions questionIndex={index} control={form.control} type={questionType} />
-                    </div>
-                  </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {questionTypeOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            <div className='flex items-center gap-2'>
+                              <GripVertical className='h-5 w-5 text-muted-foreground' />
+                              <span>{opt.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+            </div>
 
-                  <div className='flex justify-end items-center gap-4 mt-4 pt-4 border-t'>
-                    <div className='flex items-center gap-2'>
-                      <Controller
-                        control={form.control}
-                        name={`questions.${index}.isRequired`}
-                        render={({ field }) => (
-                          <Switch
-                            id={`required-switch-${index}`}
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        )}
-                      />
-                      <Label htmlFor={`required-switch-${index}`}>Required</Label>
-                    </div>
-                    <Button type='button' variant='ghost' size='icon' onClick={() => remove(index)}>
-                      <Trash2 className='h-4 w-4' />
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })}
+            {form.watch(`questions.${index}.type`) === QuestionType.MULTIPLE_CHOICE && (
+              <QuestionOptions questionIndex={index} control={form.control} register={form.register} />
+            )}
+
+            <div className='flex justify-end items-center gap-2 pt-4 mt-4'>
+              <Button type='button' variant='ghost' size='icon'>
+                <Copy className='h-5 w-5' />
+              </Button>
+              <Button type='button' variant='ghost' size='icon' onClick={() => remove(index)}>
+                <Trash2 className='h-5 w-5' />
+              </Button>
+            </div>
           </div>
+        ))}
+      </div>
 
-          <Button type='button' variant='outline' onClick={() => addQuestion('SHORT_ANSWER')}>
-            <Plus className='h-4 w-4 mr-2' />
-            Add Question
-          </Button>
+      <Button type='button' variant='link' onClick={addQuestion} className='p-0 h-auto font-semibold'>
+        <Plus className='h-4 w-4 mr-2' />
+        Add Question
+      </Button>
 
-          <div className='flex justify-between items-center pt-6 border-t'>
-            <Button type='button' variant='outline' onClick={onBack}>
-              <ChevronLeft className='mr-2 h-4 w-4' />
-              Back
-            </Button>
-            <Button type='submit' disabled={isLoading} className='px-8 bg-gray-900 text-white hover:bg-gray-800'>
-              {isLoading ? 'Saving...' : 'Preview & Continue'}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+      <div className='flex items-center space-x-2'>
+        <Checkbox
+          id='save-template'
+          checked={saveAsTemplate}
+          onCheckedChange={(checked) => setSaveAsTemplate(Boolean(checked))}
+        />
+        <label
+          htmlFor='save-template'
+          className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+        >
+          Save form as a template
+        </label>
+      </div>
+
+      <div className='flex flex-col-reverse gap-4 sm:flex-row sm:justify-between'>
+        <Button type='button' variant='secondary' onClick={onBack} className='w-full sm:w-auto'>
+          Cancel
+        </Button>
+        <Button type='submit' disabled={isLoading} className='w-full sm:w-auto'>
+          {isLoading ? 'Saving...' : 'Preview'}
+        </Button>
+      </div>
+    </form>
   );
 }

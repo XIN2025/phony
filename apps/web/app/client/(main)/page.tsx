@@ -13,7 +13,7 @@ const ClientPage = () => {
   };
 
   return (
-    <div className='min-h-screen bg-background p-6'>
+    <div className='bg-background p-6'>
       <div className='max-w-6xl mx-auto'>
         {/* Header */}
         <div className='flex justify-between items-center mb-8'>

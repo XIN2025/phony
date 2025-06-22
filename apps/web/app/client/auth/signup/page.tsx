@@ -18,26 +18,31 @@ interface LoggedInWarningProps {
 }
 
 function LoggedInWarning({ onLogout, practitionerName, isInvitationAccepted }: LoggedInWarningProps) {
-  const title = isInvitationAccepted ? 'Invitation Already Accepted' : 'Accepting a Client Invitation';
-  const description = isInvitationAccepted
-    ? `You are logged in as ${practitionerName}. The invitation for this client has already been accepted. To continue, you can log out and sign in to the client's account.`
-    : `You are currently logged in as ${practitionerName}. This invitation is for a new Client account. To proceed, you will be logged out of your practitioner account first.`;
-  const buttonText = isInvitationAccepted ? 'Log Out & Continue to Log In' : 'Log Out & Continue to Sign Up';
-
   return (
-    <Card className='w-full max-w-md text-center'>
-      <CardHeader>
-        <CardTitle className='text-xl font-semibold'>{title}</CardTitle>
-        <CardDescription className='pt-2'>{description}</CardDescription>
+    <Card className='w-full max-w-md mx-auto'>
+      <CardHeader className='text-center pb-4'>
+        <CardTitle className='text-xl sm:text-2xl'>Already Logged In</CardTitle>
+        <CardDescription className='text-sm sm:text-base'>
+          You are currently logged in as {practitionerName}
+        </CardDescription>
       </CardHeader>
-      <CardFooter className='flex flex-col gap-2'>
-        <Button onClick={onLogout} className='w-full'>
-          {buttonText}
-        </Button>
-        <Button onClick={() => (window.location.href = '/practitioner')} variant='outline' className='w-full'>
-          Cancel and Return to Dashboard
-        </Button>
-      </CardFooter>
+      <CardContent className='p-4 sm:p-6'>
+        <div className='space-y-4'>
+          <p className='text-sm sm:text-base text-muted-foreground'>
+            {isInvitationAccepted
+              ? 'This invitation has already been accepted. You can log in with the client account.'
+              : 'To accept this invitation, you need to log out of your practitioner account first.'}
+          </p>
+          <div className='space-y-3'>
+            <Button onClick={onLogout} className='w-full'>
+              {isInvitationAccepted ? 'Go to Login' : 'Logout and Continue'}
+            </Button>
+            <Button variant='outline' onClick={() => window.history.back()} className='w-full'>
+              Go Back
+            </Button>
+          </div>
+        </div>
+      </CardContent>
     </Card>
   );
 }
@@ -169,7 +174,7 @@ export default function ClientSignUpPage() {
 
   if (status === 'loading' || (isLoading && !invitationStatus)) {
     return (
-      <div className='flex min-h-screen flex-col items-center justify-center'>
+      <div className='flex flex-col items-center justify-center'>
         <Logo className='h-10 w-10 animate-pulse' />
       </div>
     );
@@ -194,20 +199,20 @@ export default function ClientSignUpPage() {
 
   if (error) {
     return (
-      <Card className='w-full max-w-md text-center'>
-        <CardHeader>
-          <CardTitle>Error</CardTitle>
+      <Card className='w-full max-w-md mx-auto text-center'>
+        <CardHeader className='pb-4'>
+          <CardTitle className='text-xl sm:text-2xl'>Error</CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className='text-destructive'>{error}</p>
+        <CardContent className='p-4 sm:p-6'>
+          <p className='text-destructive text-sm sm:text-base'>{error}</p>
           {detailedError && (
-            <div className='mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded-md text-left text-xs overflow-auto max-h-48'>
+            <div className='mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-md text-left text-xs overflow-auto max-h-48'>
               <pre>
                 <code>{detailedError}</code>
               </pre>
             </div>
           )}
-          <div className='mt-4 space-y-2'>
+          <div className='mt-6 space-y-3'>
             <Button onClick={() => router.push('/')} className='w-full'>
               Back to Home
             </Button>
@@ -238,43 +243,52 @@ export default function ClientSignUpPage() {
 
   // Final state: render the sign up form
   return (
-    <Card className='w-full'>
+    <Card className='w-full max-w-md mx-auto'>
       <form onSubmit={handleSignUp}>
-        <CardHeader>
-          <CardTitle className='text-2xl'>Create Your Account</CardTitle>
-          <CardDescription>Welcome! Please confirm your details to get started.</CardDescription>
+        <CardHeader className='text-center pb-4'>
+          <CardTitle className='text-xl sm:text-2xl'>Create Your Account</CardTitle>
+          <CardDescription className='text-sm sm:text-base'>
+            Welcome! Please confirm your details to get started.
+          </CardDescription>
         </CardHeader>
-        <CardContent className='space-y-4'>
+        <CardContent className='space-y-4 p-4 sm:p-6'>
           {error && (
             <div className='p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md'>
               {error}
             </div>
           )}
-          <div className='space-y-2'>
-            <Label htmlFor='email'>Email</Label>
-            <Input
-              id='email'
-              type='email'
-              placeholder='Enter the email you were invited with'
-              required
-              value={email}
-              readOnly
-              className='cursor-not-allowed bg-muted/50'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='name'>Full Name</Label>
-            <Input
-              id='name'
-              placeholder='Your full name'
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={isLoading || hasSubmitted}
-            />
+          <div className='space-y-3'>
+            <div className='space-y-2'>
+              <Label htmlFor='email' className='text-sm font-medium'>
+                Email
+              </Label>
+              <Input
+                id='email'
+                type='email'
+                placeholder='Enter the email you were invited with'
+                required
+                value={email}
+                readOnly
+                className='cursor-not-allowed bg-muted/50 w-full'
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='name' className='text-sm font-medium'>
+                Full Name
+              </Label>
+              <Input
+                id='name'
+                placeholder='Your full name'
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={isLoading || hasSubmitted}
+                className='w-full'
+              />
+            </div>
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className='p-4 sm:p-6 pt-0'>
           <Button
             type='submit'
             className='w-full'

@@ -3,30 +3,28 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 import { InviteClientDetailsForm } from '@/components/invite/InviteClientDetailsForm';
 import { IntakeFormSelector } from '@/components/invite/IntakeFormSelector';
 import { IntakeFormBuilder } from '@/components/invite/IntakeFormBuilder';
 import { IntakeFormPreview } from '@/components/invite/IntakeFormPreview';
-import { ApiClient } from '@/lib/api-client';
-import { useInviteContext, InviteData } from '@/context/InviteContext';
+import { useInviteContext } from '@/context/InviteContext';
 import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
+import { Button } from '@repo/ui/components/button';
+import { ApiClient } from '@/lib/api-client';
 
 export default function InviteClientPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { step, inviteData, setInviteData, goToNextStep, resetInviteFlow, goToPrevStep } = useInviteContext();
-  const [newlyCreatedForm, setNewlyCreatedForm] = useState<CreateIntakeFormDto | null>(null);
+  const { step, inviteData, setInviteData, goToNextStep, goToPrevStep, goToStep, resetInviteFlow } = useInviteContext();
 
   const mutation = useMutation({
     mutationFn: (data: typeof inviteData) => ApiClient.post('/api/practitioner/invite-client', data),
-    onSuccess: () => {
-      resetInviteFlow();
-      setNewlyCreatedForm(null);
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['invitations'] });
       router.push('/practitioner/invite/success');
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
-      queryClient.invalidateQueries({ queryKey: ['invitations'] });
     },
     onError: (error: any) => {
       console.error('Invitation error:', error);
@@ -51,88 +49,107 @@ export default function InviteClientPage() {
     setInviteData(normalizedData);
 
     if (normalizedData.includeIntakeForm) {
-      goToNextStep(); // -> Step 2: IntakeFormSelector
+      goToNextStep();
     } else {
       mutation.mutate(normalizedData);
     }
   };
 
-  const handleFormSelect = (formId: string | 'create-new') => {
+  const handleFormSelect = async (formId: string | 'create-new') => {
     if (formId === 'create-new') {
-      setInviteData({ intakeFormId: undefined });
-      goToNextStep(); // -> Step 3: IntakeFormBuilder
+      if (inviteData.intakeFormId) {
+        setInviteData({ intakeFormId: undefined, newIntakeForm: undefined });
+      }
+      goToNextStep();
     } else {
-      const finalData = { ...inviteData, intakeFormId: formId };
-      setInviteData(finalData);
-      mutation.mutate(finalData);
+      try {
+        const selectedForm = await ApiClient.get<CreateIntakeFormDto>(`/api/intake-forms/${formId}`);
+        setInviteData({ newIntakeForm: selectedForm, intakeFormId: formId });
+        goToNextStep();
+      } catch (error) {
+        toast.error('Could not load form for editing. Please try again.');
+      }
     }
   };
 
   const handleFormCreatePreview = (formData: CreateIntakeFormDto) => {
-    setNewlyCreatedForm(formData);
-    goToNextStep(); // -> Step 4: Preview
+    setInviteData({ newIntakeForm: formData, intakeFormId: null });
+    goToNextStep();
   };
 
-  const handleFormSubmit = async () => {
-    if (!newlyCreatedForm) return;
+  const handleFormSubmit = async (saveAsTemplate: boolean) => {
+    if (!inviteData.newIntakeForm) return;
+
     try {
-      const newForm = await ApiClient.post<{ id: string }>('/api/intake-forms', newlyCreatedForm);
-      const finalData = { ...inviteData, intakeFormId: newForm.id };
+      let finalData = { ...inviteData };
+
+      if (!finalData.intakeFormId && saveAsTemplate) {
+        const newForm = await ApiClient.post<{ id: string }>('/api/intake-forms', inviteData.newIntakeForm);
+        finalData = { ...finalData, intakeFormId: newForm.id };
+      }
+
       setInviteData(finalData);
       mutation.mutate(finalData);
     } catch (error: any) {
-      console.error('Failed to create intake form:', error);
       toast.error(error.response?.data?.message || 'Failed to create form.');
     }
   };
 
   const handleBack = () => {
-    if (step === 4) {
-      // from preview back to builder
-      goToPrevStep();
-    } else if (step === 3) {
-      // from builder back to selector
-      setInviteData({ intakeFormId: undefined });
-      goToPrevStep();
-    } else {
-      goToPrevStep();
+    if (step === 1) {
+      router.back();
+      return;
     }
+    goToPrevStep();
   };
 
   const steps = useMemo(
     () => [
       {
         step: 1,
-        component: <InviteClientDetailsForm onNext={handleDetailsSubmit} isLoading={mutation.isPending} />,
+        title: 'Invite Client',
+        component: (
+          <InviteClientDetailsForm onNext={handleDetailsSubmit} isLoading={mutation.isPending} onCancel={handleBack} />
+        ),
       },
       {
         step: 2,
-        component: <IntakeFormSelector onNext={handleFormSelect} onBack={handleBack} />,
+        title: 'Invite Client',
+        component: <IntakeFormSelector onNext={handleFormSelect} />,
       },
       {
         step: 3,
+        title: 'Create Intake Form',
         component: <IntakeFormBuilder onSubmit={handleFormCreatePreview} onBack={handleBack} />,
       },
       {
         step: 4,
-        component: newlyCreatedForm ? (
+        title: 'Preview Intake Form',
+        component: inviteData.newIntakeForm ? (
           <IntakeFormPreview
-            formData={newlyCreatedForm}
+            formData={inviteData.newIntakeForm}
             onBack={handleBack}
             onSubmit={handleFormSubmit}
             isLoading={mutation.isPending}
+            isNewForm={!inviteData.intakeFormId}
           />
         ) : null,
       },
     ],
-    [mutation.isPending, newlyCreatedForm],
+    [mutation.isPending, inviteData.newIntakeForm, inviteData.intakeFormId, handleBack],
   );
 
-  const currentStepComponent = steps.find((s) => s.step === step)?.component;
+  const currentStepData = steps.find((s) => s.step === step);
 
   return (
-    <div className='container mx-auto max-w-4xl p-6'>
-      {currentStepComponent || <InviteClientDetailsForm onNext={handleDetailsSubmit} isLoading={mutation.isPending} />}
+    <div className='mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8'>
+      <Button variant='ghost' size='sm' className='-ml-2 mb-4' onClick={handleBack}>
+        <ArrowLeft className='h-5 w-5' />
+      </Button>
+      <div className='mb-8'>
+        <h1 className='text-3xl font-semibold tracking-tight'>{currentStepData?.title}</h1>
+      </div>
+      <div>{currentStepData?.component}</div>
     </div>
   );
 }

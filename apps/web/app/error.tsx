@@ -32,7 +32,7 @@ const ErrorPage: React.FC<ErrorProps> = ({ error, reset }) => {
               <RefreshCw className='mr-2 h-4 w-4' />
               Try Again
             </Button>
-            <Button variant='secondary' className='w-full' asChild>
+            <Button variant='secondary' className='w-full ' asChild>
               <Link href='/'>
                 <Home className='mr-2 h-4 w-4' />
                 Home

@@ -1,249 +1,272 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
-import { Button } from '@repo/ui/components/button';
-import { Users, Calendar, Mail, Eye, MessageSquare, Plus } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Badge } from '@repo/ui/components/badge';
+import { Button } from '@repo/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
+import {
+  Calendar,
+  MessageCircle,
+  Eye,
+  Users,
+  Plus,
+  Menu,
+  Home,
+  File as FileIcon,
+  MessageSquare,
+  RefreshCw,
+  XCircle,
+} from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ApiClient } from '@/lib/api-client';
+import { Skeleton } from '@repo/ui/components/skeleton';
+import { Sheet, SheetContent, SheetTrigger } from '@repo/ui/components/sheet';
+import { usePathname } from 'next/navigation';
+import { SidebarContent, getInitials } from '@/components/practitioner/Sidebar';
 
-// NOTE: I've updated the client data to include a unique 'id' for the map key.
-// This is a better practice than using the name.
-const clients = [
+interface Client {
+  id: string;
+
+  clientFirstName: string;
+  clientLastName: string;
+  clientEmail: string;
+  status: 'PENDING' | 'JOINED';
+  invited?: string;
+  avatar?: string;
+}
+
+const engagementBadgeVariant = (engagement?: string) => {
+  switch (engagement?.toLowerCase()) {
+    case 'high':
+      return 'bg-gray-200 text-gray-800 hover:bg-gray-300';
+    case 'medium':
+      return 'bg-gray-100 text-gray-700 hover:bg-gray-200';
+    case 'low':
+      return 'bg-gray-50 text-gray-600 hover:bg-gray-100';
+    default:
+      return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+  }
+};
+
+const mockClients: Client[] = [
   {
-    id: 1,
-    name: 'Emma Chamberlin',
-    email: 'emma01@gmail.com',
-    lastSession: 'May 10, 2025',
-    engagement: 'Medium',
-    lastActive: 'May 10, 2025',
-    status: 'Joined',
+    id: '1',
+    clientFirstName: 'Emma',
+    clientLastName: 'Chamberlin',
+    clientEmail: 'emma01@gmail.com',
+    status: 'JOINED',
+    invited: 'May 12, 2025',
+    avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
   },
   {
-    id: 2,
-    name: 'Jiya',
-    email: 'emma01@gmail.com',
-    lastSession: 'May 10, 2025',
-    engagement: 'Low',
-    lastActive: 'May 10, 2025',
-    status: 'Joined',
+    id: '2',
+    clientFirstName: 'Jiya',
+    clientLastName: '',
+    clientEmail: 'jiya@gmail.com',
+    status: 'JOINED',
+    invited: 'May 12, 2025',
+    avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
   },
   {
-    id: 3,
-    name: 'Justin King',
-    email: 'emma01@gmail.com',
-    lastSession: 'May 10, 2025',
-    engagement: 'Medium',
-    lastActive: 'May 10, 2025',
-    status: 'Joined',
+    id: '3',
+    clientFirstName: 'Ana',
+    clientLastName: '',
+    clientEmail: 'ana@gmail.com',
+    status: 'PENDING',
+    invited: 'May 12, 2025',
+    avatar: 'https://randomuser.me/api/portraits/women/3.jpg',
   },
   {
-    id: 4,
-    name: 'Henry Hugh',
-    email: 'emma01@gmail.com',
-    lastSession: 'May 10, 2025',
-    engagement: 'High',
-    lastActive: 'May 10, 2025',
-    status: 'Joined',
+    id: '4',
+    clientFirstName: 'Sheena',
+    clientLastName: 'Singh',
+    clientEmail: 'sheena@gmail.com',
+    status: 'PENDING',
+    invited: 'May 12, 2025',
+    avatar: 'https://randomuser.me/api/portraits/women/4.jpg',
   },
   {
-    id: 5,
-    name: 'Fatima Wasim',
-    email: 'emma01@gmail.com',
-    lastSession: 'May 10, 2025',
-    engagement: 'High',
-    lastActive: 'May 10, 2025',
-    status: 'Joined',
-  },
-  {
-    id: 6,
-    name: 'Ana',
-    email: 'emma01@gmail.com',
-    lastSession: 'May 10, 2025',
-    engagement: 'Medium',
-    lastActive: 'May 10, 2025',
-    status: 'Pending',
-  },
-  {
-    id: 7,
-    name: 'Sheena Singh',
-    email: 'emma01@gmail.com',
-    lastSession: 'May 10, 2025',
-    engagement: 'Low',
-    lastActive: 'May 10, 2025',
-    status: 'Pending',
-  },
-  {
-    id: 8,
-    name: 'Quinn Taylor',
-    email: 'emma01@gmail.com',
-    lastSession: 'May 10, 2025',
-    engagement: 'High',
-    lastActive: 'May 10, 2025',
-    status: 'Pending',
+    id: '5',
+    clientFirstName: 'Quinn',
+    clientLastName: 'Taylor',
+    clientEmail: 'quinn@gmail.com',
+    status: 'PENDING',
+    invited: 'May 12, 2025',
+    avatar: 'https://randomuser.me/api/portraits/women/5.jpg',
   },
 ];
 
-// Helper to get initials for Avatars
-const getInitials = (name: string) => {
-  if (!name) return '';
-  const names = name.split(' ');
-  if (names.length > 1) {
-    return `${names[0]?.[0] ?? ''}${names[names.length - 1]?.[0] ?? ''}`;
-  }
-  return name.substring(0, 2);
-};
+const StatCard = ({
+  title,
+  value,
+  subtitle,
+  Icon,
+}: {
+  title: string;
+  value: string;
+  subtitle: string;
+  Icon: React.ElementType;
+}) => (
+  <Card className='relative overflow-hidden'>
+    <CardHeader className='pb-2'>
+      <CardTitle className='text-sm font-medium'>{title}</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <Icon className='absolute -right-4 -bottom-4 h-20 w-20 text-gray-200 sm:h-28 sm:w-28' strokeWidth={1} />
+      <div className='text-3xl font-bold'>{value}</div>
+      <p className='text-xs text-muted-foreground'>{subtitle}</p>
+    </CardContent>
+  </Card>
+);
 
 export default function PractitionerDashboard() {
   const { data: session } = useSession();
-
-  // The design uses "Dr. Ana", so we format it this way.
-  // Falls back gracefully if session data is not available.
   const practitionerName = session?.user?.name?.split(' ')[0] || 'Ana';
+  const userName = session?.user?.name ?? 'Ana Johnson';
+  const pathname = usePathname();
+
+  const navLinks = [
+    { href: '/practitioner', icon: Home, label: 'Home' },
+    { href: '/practitioner/clients', icon: Users, label: 'Clients' },
+    { href: '/practitioner/messages', icon: MessageSquare, label: 'Messages' },
+    { href: '/practitioner/forms', icon: FileIcon, label: 'Forms' },
+  ];
+
+  const queryClient = useQueryClient();
+
+  const {
+    data: invitations = [],
+    isLoading,
+    isError,
+  } = useQuery<Client[]>({
+    queryKey: ['invitations'],
+    queryFn: () => ApiClient.get('/api/practitioner/invitations'),
+    enabled: !!session,
+  });
+
+  const { mutate: deleteInvitation, isPending: isDeleting } = useMutation({
+    mutationFn: (invitationId: string) => ApiClient.delete(`/api/practitioner/invitations/${invitationId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+    },
+  });
+
+  const { mutate: resendInvitation, isPending: isResending } = useMutation({
+    mutationFn: (invitationId: string) => ApiClient.post(`/api/practitioner/invitations/${invitationId}/resend`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+    },
+  });
+
+  const renderSkeleton = () => (
+    <div className='space-y-4 p-4'>
+      <Skeleton className='h-16 w-full' />
+      <Skeleton className='h-16 w-full' />
+      <Skeleton className='h-16 w-full' />
+    </div>
+  );
 
   return (
-    // Increased overall padding for a more spacious feel like the design.
-    <div className='flex flex-col gap-8 p-6 md:p-8'>
-      <div className='flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center'>
-        <h1 className='text-3xl font-bold text-gray-800'>Welcome Back Dr. {practitionerName}</h1>
-        {/* Styled the button to be black as per the design */}
+    <>
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-4'>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size='icon' variant='outline' className='lg:hidden'>
+                <Menu className='h-5 w-5' />
+                <span className='sr-only'>Toggle Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side='left' className='max-w-xs p-0'>
+              <SidebarContent navLinks={navLinks} pathname={pathname} userName={userName} />
+            </SheetContent>
+          </Sheet>
+          <h1 className='text-2xl font-semibold'>Welcome Back, Dr. {practitionerName}</h1>
+        </div>
         <Link href='/practitioner/invite'>
-          <Button className='bg-gray-900 text-white hover:bg-gray-800'>
-            <Plus className='mr-2 h-4 w-4' /> Invite Client
+          <Button className='flex items-center gap-2'>
+            <Plus className='h-4 w-4' />
+            <span>Invite Client</span>
           </Button>
         </Link>
       </div>
-
-      {/* --- STATS CARDS --- */}
-      {/* Cards are updated to include the large, stylized background icons */}
-      <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-        <Card className='relative overflow-hidden'>
-          <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-sm font-medium'>Total Clients</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* The design's icons are custom. We can replicate the effect with Lucide icons
-                by making them large, semi-transparent, and positioning them in the background. */}
-            <Users className='absolute -right-4 -top-4 h-24 w-24 text-gray-100' />
-            <div className='text-3xl font-bold'>14</div>
-            <p className='text-xs text-muted-foreground'>+2 from last month</p>
-          </CardContent>
-        </Card>
-        <Card className='relative overflow-hidden'>
-          <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-sm font-medium'>Sessions this week</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Calendar className='absolute -right-4 -top-4 h-24 w-24 text-gray-100' />
-            <div className='text-3xl font-bold'>42</div>
-            <p className='text-xs text-muted-foreground'>+3 from last week</p>
-          </CardContent>
-        </Card>
-        <Card className='relative overflow-hidden'>
-          <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-sm font-medium'>Unread Messages</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Mail className='absolute -right-4 -top-4 h-24 w-24 text-gray-100' />
-            <div className='text-3xl font-bold'>2</div>
-            {/* The design doesn't have subtitle text here, so it's removed for accuracy. */}
-          </CardContent>
-        </Card>
+      <div className='grid gap-4 md:grid-cols-3'>
+        <StatCard title='Total Clients' value={'12'} subtitle='+2 from last month' Icon={Users} />
+        <StatCard title='Sessions this week' value='42' subtitle='+3 from last week' Icon={Calendar} />
+        <StatCard title='Pending Invitations' value={invitations.length.toString()} subtitle='' Icon={MessageCircle} />
       </div>
-
-      {/* --- LAST ACTIVE CLIENTS LIST --- */}
-      {/* Replaced the <table> with a more flexible and modern div-based grid layout.
-          This is key to matching the design's spacing and alignment. */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Last Active Clients</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* This wrapper ensures the list can scroll horizontally on small screens, preventing layout breaks. */}
-          <div className='overflow-x-auto'>
-            <div className='min-w-[1000px]'>
-              {/* Header Row */}
-              <div className='grid grid-cols-12 gap-4 border-b pb-4 text-sm font-medium text-muted-foreground'>
-                <div className='col-span-3'>Member</div>
-                <div className='col-span-2'>Last Session</div>
-                <div className='col-span-2'>Engagement</div>
-                <div className='col-span-2'>Last Active</div>
-                <div className='col-span-1'>Status</div>
-                <div className='col-span-2 text-right'>Actions</div>
+      <div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Invitations</CardTitle>
+          </CardHeader>
+          <CardContent className='p-0'>
+            {isLoading ? (
+              renderSkeleton()
+            ) : isError ? (
+              <div className='flex h-48 items-center justify-center'>
+                <p className='text-center text-destructive'>Failed to load invitations.</p>
               </div>
-
-              {/* Client Rows */}
-              <div className='flex flex-col'>
-                {clients.map((client) => (
-                  <div
-                    key={client.id}
-                    className='grid grid-cols-12 items-center gap-4 border-b py-4 transition-colors hover:bg-gray-50'
-                  >
-                    {/* Member */}
-                    <div className='col-span-3'>
-                      <div className='flex items-center gap-3'>
-                        <Avatar className='h-10 w-10'>
-                          {/* The design uses gray placeholders instead of images */}
-                          <AvatarFallback className='bg-gray-200 text-gray-600'>
-                            {getInitials(client.name)}
+            ) : invitations.length > 0 ? (
+              <div className='max-h-96 overflow-y-auto'>
+                <ul className='divide-y divide-gray-200'>
+                  {invitations.map((invite) => (
+                    <li key={invite.id} className='flex items-center justify-between p-4'>
+                      <div className='flex items-center gap-4'>
+                        <Avatar>
+                          <AvatarImage src={invite.avatar} alt={`${invite.clientFirstName} ${invite.clientLastName}`} />
+                          <AvatarFallback>
+                            {getInitials(`${invite.clientFirstName} ${invite.clientLastName}`)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className='font-medium text-gray-800'>{client.name}</p>
-                          <p className='text-sm text-muted-foreground'>{client.email}</p>
+                          <p className='font-medium'>{`${invite.clientFirstName} ${invite.clientLastName}`}</p>
+                          <p className='text-sm text-muted-foreground'>{invite.clientEmail}</p>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Last Session */}
-                    <div className='col-span-2 flex items-center gap-2 text-muted-foreground'>
-                      <Calendar className='h-4 w-4' />
-                      <span>{client.lastSession}</span>
-                    </div>
-
-                    {/* Engagement */}
-                    <div className='col-span-2'>
-                      {/* Styled the badge to be more like a pill, as in the design. */}
-                      <Badge
-                        variant={
-                          client.engagement === 'High'
-                            ? 'default'
-                            : client.engagement === 'Medium'
-                              ? 'secondary'
-                              : 'outline'
-                        }
-                        className='rounded-full px-3 py-1 font-normal capitalize'
-                      >
-                        {client.engagement}
-                      </Badge>
-                    </div>
-
-                    {/* Last Active */}
-                    <div className='col-span-2 flex items-center gap-2 text-muted-foreground'>
-                      <Calendar className='h-4 w-4' />
-                      <span>{client.lastActive}</span>
-                    </div>
-
-                    {/* Status */}
-                    <div className='col-span-1 text-muted-foreground'>{client.status}</div>
-
-                    {/* Actions */}
-                    <div className='col-span-2 flex items-center justify-end gap-2'>
-                      <Button variant='ghost' size='icon' aria-label='Message Client'>
-                        <MessageSquare className='h-5 w-5' />
-                      </Button>
-                      <Button variant='ghost' size='icon' aria-label='View Client Details'>
-                        <Eye className='h-5 w-5' />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                      <div className='flex items-center gap-2'>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          className='hover:bg-gray-200'
+                          onClick={() => resendInvitation(invite.id)}
+                          disabled={isResending}
+                        >
+                          <RefreshCw className='h-4 w-4' />
+                          <span className='sr-only'>Resend</span>
+                        </Button>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          className='hover:bg-red-100 hover:text-red-600'
+                          onClick={() => deleteInvitation(invite.id)}
+                          disabled={isDeleting}
+                        >
+                          <XCircle className='h-4 w-4' />
+                          <span className='sr-only'>Cancel</span>
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            ) : (
+              <div className='flex h-48 flex-col items-center justify-center text-center'>
+                <div className='rounded-full border-8 border-gray-100 bg-white p-3'>
+                  <Users className='h-8 w-8 text-gray-400' />
+                </div>
+                <p className='mt-4 font-medium'>No pending invitations</p>
+                <p className='text-sm text-muted-foreground'>
+                  When you invite a new client, you'll see their invitation status here.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

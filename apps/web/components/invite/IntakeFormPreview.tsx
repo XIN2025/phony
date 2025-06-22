@@ -2,84 +2,122 @@
 
 import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
 import { Button } from '@repo/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@repo/ui/components/card';
+import { Card, CardContent } from '@repo/ui/components/card';
 import { Label } from '@repo/ui/components/label';
 import { Input } from '@repo/ui/components/input';
 import { Textarea } from '@repo/ui/components/textarea';
 import { RadioGroup, RadioGroupItem } from '@repo/ui/components/radio-group';
 import { Checkbox } from '@repo/ui/components/checkbox';
-import { ChevronLeft } from 'lucide-react';
+import { useState } from 'react';
 
 interface Props {
   formData: CreateIntakeFormDto;
   onBack: () => void;
-  onSubmit: () => void;
+  onSubmit: (saveAsTemplate: boolean) => void;
   isLoading: boolean;
+  isNewForm: boolean;
 }
 
-export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading }: Props) {
-  return (
-    <div className='max-w-3xl mx-auto space-y-6'>
-      <div className='flex justify-between items-center'>
-        <div>
-          <h1 className='text-3xl font-bold'>Preview Intake Form</h1>
-          <p className='text-muted-foreground'>This is how the form will look to your client.</p>
-        </div>
-      </div>
+export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNewForm }: Props) {
+  const [saveAsTemplate, setSaveAsTemplate] = useState(true);
+  const renderAnswer = (question: CreateIntakeFormDto['questions'][0]) => {
+    const commonProps = {
+      className: 'bg-gray-100 border-gray-300 rounded-md',
+      disabled: true,
+    };
 
-      <Card className='shadow-lg'>
-        <CardHeader>
-          <CardTitle>{formData.title}</CardTitle>
-          {formData.description && <CardDescription>{formData.description}</CardDescription>}
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          {formData.questions
-            .sort((a, b) => a.order - b.order)
-            .map((q, index) => (
-              <div key={index} className='space-y-3 p-4 rounded-lg bg-background border'>
-                <Label className='font-semibold text-base'>
-                  {q.text} {q.isRequired && <span className='text-destructive'>*</span>}
+    switch (question.type) {
+      case 'SHORT_ANSWER':
+        return <Input {...commonProps} placeholder='I have issues' />;
+      case 'LONG_ANSWER':
+        return (
+          <Textarea
+            {...commonProps}
+            placeholder='A lot of issues that are affecting my everyday life. I am very unhappy with how things are and I am stuck in a loop trying to get myself out of this mess.'
+          />
+        );
+      case 'MULTIPLE_CHOICE':
+      case 'DROPDOWN':
+        return (
+          <RadioGroup disabled>
+            {question.options?.map((opt, i) => (
+              <div key={i} className='mb-2'>
+                <Label
+                  htmlFor={`q-preview-${i}`}
+                  className='flex items-center space-x-2 p-3 rounded-md bg-gray-100 border border-gray-300'
+                >
+                  <RadioGroupItem value={opt.text} id={`q-preview-${i}`} />
+                  <span>
+                    {String.fromCharCode(65 + i)}. {opt.text}
+                  </span>
                 </Label>
-                <div className='pl-2'>
-                  {q.type === 'SHORT_ANSWER' && <Input disabled placeholder='Short answer text' />}
-                  {q.type === 'LONG_ANSWER' && <Textarea disabled placeholder='Long answer text' />}
-                  {(q.type === 'MULTIPLE_CHOICE' || q.type === 'DROPDOWN') && (
-                    <RadioGroup disabled>
-                      {q.options?.map((opt, i) => (
-                        <div key={i} className='flex items-center space-x-3'>
-                          <RadioGroupItem value={opt.text} id={`q${index}-opt${i}`} />
-                          <Label htmlFor={`q${index}-opt${i}`} className='font-normal'>
-                            {opt.text}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  )}
-                  {q.type === 'CHECKBOXES' && (
-                    <div className='space-y-3'>
-                      {q.options?.map((opt, i) => (
-                        <div key={i} className='flex items-center space-x-3'>
-                          <Checkbox id={`q${index}-opt${i}`} disabled />
-                          <Label htmlFor={`q${index}-opt${i}`} className='font-normal'>
-                            {opt.text}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {/* Add other question types here as needed */}
               </div>
             ))}
-        </CardContent>
-      </Card>
-      <div className='flex justify-between items-center pt-6 border-t'>
-        <Button type='button' variant='outline' onClick={onBack}>
-          <ChevronLeft className='mr-2 h-4 w-4' />
-          Back to Edit
+          </RadioGroup>
+        );
+      case 'CHECKBOXES':
+        return (
+          <div className='space-y-2'>
+            {question.options?.map((opt, i) => (
+              <Label
+                key={i}
+                htmlFor={`q-preview-check-${i}`}
+                className='flex items-center space-x-2 p-3 rounded-md bg-gray-100 border border-gray-300'
+              >
+                <Checkbox id={`q-preview-check-${i}`} disabled />
+                <span>
+                  {String.fromCharCode(65 + i)}. {opt.text}
+                </span>
+              </Label>
+            ))}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className='flex flex-col h-full'>
+      <div className='flex-grow overflow-y-auto'>
+        <Card className='rounded-2xl border-2 shadow-none'>
+          <CardContent className='p-6 space-y-6'>
+            <h2 className='text-xl font-semibold text-center'>{formData.title}</h2>
+            {formData.questions
+              .sort((a, b) => a.order - b.order)
+              .map((q, index) => (
+                <div key={index} className='space-y-3'>
+                  <Label className='font-semibold text-base'>
+                    {q.text} {q.isRequired && <span className='text-destructive'>*</span>}
+                  </Label>
+                  {renderAnswer(q)}
+                </div>
+              ))}
+          </CardContent>
+        </Card>
+      </div>
+      <div className='flex justify-end items-center pt-6 mt-4 gap-4 border-t'>
+        {isNewForm && (
+          <div className='flex items-center space-x-2 mr-auto'>
+            <Checkbox
+              id='save-template-preview'
+              checked={saveAsTemplate}
+              onCheckedChange={(checked) => setSaveAsTemplate(Boolean(checked))}
+            />
+            <label htmlFor='save-template-preview' className='text-sm font-medium leading-none'>
+              Save form as a template
+            </label>
+          </div>
+        )}
+        <Button type='button' variant='outline' onClick={onBack} className='rounded-full px-6'>
+          Back
         </Button>
-        <Button onClick={onSubmit} disabled={isLoading} className='px-8 bg-gray-900 text-white hover:bg-gray-800'>
-          {isLoading ? 'Sending...' : 'Confirm and Send Invite'}
+        <Button
+          onClick={() => onSubmit(isNewForm ? saveAsTemplate : false)}
+          disabled={isLoading}
+          className='rounded-full bg-black px-6 text-white hover:bg-gray-800'
+        >
+          {isLoading ? 'Sending...' : isNewForm && saveAsTemplate ? 'Send & Save' : 'Send Invite'}
         </Button>
       </div>
     </div>

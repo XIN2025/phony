@@ -1,120 +1,110 @@
 'use client';
 
-import { useForm, Controller, useWatch } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@repo/ui/components/button';
 import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';
 import { Checkbox } from '@repo/ui/components/checkbox';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@repo/ui/components/card';
+import { inviteClientSchema } from '@repo/shared-types/schemas';
+import { useInviteContext } from '@/context/InviteContext';
 
-const schema = z.object({
-  clientFirstName: z.string().min(1, 'First name is required'),
-  clientLastName: z.string().min(1, 'Last name is required'),
-  clientEmail: z.string().email('Invalid email address'),
-  includeIntakeForm: z.boolean(),
-});
-
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<typeof inviteClientSchema>;
 
 interface Props {
   onNext: (data: FormValues) => void;
   isLoading: boolean;
+  onCancel: () => void;
 }
 
-export function InviteClientDetailsForm({ onNext, isLoading }: Props) {
+export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) {
+  const { inviteData } = useInviteContext();
   const {
     handleSubmit,
     control,
+    watch,
     formState: { errors, isValid },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(inviteClientSchema),
     defaultValues: {
-      clientFirstName: '',
-      clientLastName: '',
-      clientEmail: '',
-      includeIntakeForm: false,
+      clientFirstName: inviteData.clientFirstName || '',
+      clientLastName: inviteData.clientLastName || '',
+      clientEmail: inviteData.clientEmail || '',
+      includeIntakeForm: inviteData.includeIntakeForm || false,
     },
     mode: 'onBlur',
   });
 
-  const includeIntakeForm = useWatch({
-    control,
-    name: 'includeIntakeForm',
-  });
-
-  const onSubmit = (data: FormValues) => {
-    onNext(data);
-  };
+  const includeIntakeForm = watch('includeIntakeForm');
 
   return (
-    <Card className='max-w-2xl mx-auto'>
-      <CardHeader>
-        <CardTitle>Invite Client</CardTitle>
-        <CardDescription>Enter the details of the client you want to invite.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className='space-y-8'>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-            <div className='space-y-2'>
-              <Label htmlFor='clientFirstName'>First Name</Label>
-              <Controller
-                name='clientFirstName'
-                control={control}
-                render={({ field }) => <Input id='clientFirstName' placeholder='Enter first name' {...field} />}
+    <form onSubmit={handleSubmit(onNext)} className='space-y-4'>
+      <div className='space-y-2'>
+        <Label htmlFor='clientFirstName' className='text-sm font-medium'>
+          First Name
+        </Label>
+        <Controller
+          name='clientFirstName'
+          control={control}
+          render={({ field }) => <Input id='clientFirstName' placeholder='Your first name' {...field} />}
+        />
+        {errors.clientFirstName && <p className='text-sm text-destructive'>{errors.clientFirstName.message}</p>}
+      </div>
+
+      <div className='space-y-2'>
+        <Label htmlFor='clientLastName' className='text-sm font-medium'>
+          Last Name
+        </Label>
+        <Controller
+          name='clientLastName'
+          control={control}
+          render={({ field }) => <Input id='clientLastName' placeholder='Your first name' {...field} />}
+        />
+        {errors.clientLastName && <p className='text-sm text-destructive'>{errors.clientLastName.message}</p>}
+      </div>
+
+      <div className='space-y-2'>
+        <Label htmlFor='clientEmail' className='text-sm font-medium'>
+          Email
+        </Label>
+        <Controller
+          name='clientEmail'
+          control={control}
+          render={({ field }) => <Input id='clientEmail' type='email' placeholder='Enter Email ID' {...field} />}
+        />
+        {errors.clientEmail && <p className='text-sm text-destructive'>{errors.clientEmail.message}</p>}
+      </div>
+
+      <div className='space-y-4'>
+        <Label className='text-base font-semibold'>Intake Form</Label>
+        <div className='flex items-center space-x-3'>
+          <Controller
+            name='includeIntakeForm'
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                id='includeIntakeForm'
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                className='h-5 w-5 rounded-sm border-gray-300'
               />
-              {errors.clientFirstName && <p className='text-sm text-destructive'>{errors.clientFirstName.message}</p>}
-            </div>
+            )}
+          />
+          <Label htmlFor='includeIntakeForm' className='font-normal text-gray-700'>
+            Include intake form for onboarding
+          </Label>
+        </div>
+      </div>
 
-            <div className='space-y-2'>
-              <Label htmlFor='clientLastName'>Last Name</Label>
-              <Controller
-                name='clientLastName'
-                control={control}
-                render={({ field }) => <Input id='clientLastName' placeholder='Enter last name' {...field} />}
-              />
-              {errors.clientLastName && <p className='text-sm text-destructive'>{errors.clientLastName.message}</p>}
-            </div>
-          </div>
-
-          <div className='space-y-2'>
-            <Label htmlFor='clientEmail'>Email</Label>
-            <Controller
-              name='clientEmail'
-              control={control}
-              render={({ field }) => <Input id='clientEmail' type='email' placeholder='Enter email' {...field} />}
-            />
-            {errors.clientEmail && <p className='text-sm text-destructive'>{errors.clientEmail.message}</p>}
-          </div>
-
-          <div className='flex items-center space-x-2 pt-4'>
-            <Controller
-              name='includeIntakeForm'
-              control={control}
-              render={({ field }) => (
-                <Checkbox id='includeIntakeForm' checked={field.value} onCheckedChange={field.onChange} />
-              )}
-            />
-            <Label htmlFor='includeIntakeForm' className='font-normal'>
-              Include intake form for onboarding
-            </Label>
-          </div>
-
-          <div className='flex justify-end items-center pt-8 gap-4'>
-            <Button type='button' variant='outline' onClick={() => (window.location.href = '/practitioner')}>
-              Cancel
-            </Button>
-            <Button
-              type='submit'
-              disabled={!isValid || isLoading}
-              className='px-8 bg-gray-900 text-white hover:bg-gray-800'
-            >
-              {isLoading ? 'Sending...' : includeIntakeForm ? 'Continue' : 'Send Invite'}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+      <div className='flex flex-col gap-4 pt-8 sm:flex-row sm:justify-between'>
+        <Button type='button' variant='outline' onClick={onCancel} className='w-full rounded-lg px-6 sm:w-auto'>
+          Cancel
+        </Button>
+        <Button type='submit' disabled={!isValid || isLoading} className='w-full rounded-lg px-6 sm:w-auto'>
+          {isLoading ? 'Sending...' : 'Continue'}
+        </Button>
+      </div>
+    </form>
   );
 }

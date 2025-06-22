@@ -46,6 +46,15 @@ export class PractitionerController {
     return this.practitionerService.getInvitations(practitionerId);
   }
 
+  @Post('invitations/:id/resend')
+  @ApiOperation({ summary: 'Resend a specific invitation' })
+  @ApiResponse({ status: 201, description: 'Invitation resent successfully' })
+  @ApiResponse({ status: 404, description: 'Invitation not found' })
+  async resendInvitation(@Request() req, @Param('id') invitationId: string) {
+    const practitionerId = req.user.id;
+    return this.practitionerService.resendInvitation(practitionerId, invitationId);
+  }
+
   @Delete('invitations/:id')
   @ApiOperation({ summary: 'Delete a specific invitation' })
   @ApiResponse({ status: 200, description: 'Invitation deleted successfully' })

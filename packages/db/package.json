@@ -5,7 +5,11 @@
   "main": "./generated/prisma/index.js",
   "types": "./generated/prisma/index.d.ts",
   "exports": {
-    ".": "./generated/prisma/index.js"
+    ".": "./generated/prisma/index.js",
+    "./question-type": {
+      "import": "./question-type.ts",
+      "require": "./question-type.ts"
+    }
   },
   "scripts": {
     "db:generate": "prisma generate",

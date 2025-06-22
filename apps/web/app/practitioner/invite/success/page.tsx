@@ -1,25 +1,40 @@
 'use client';
 
 import { Button } from '@repo/ui/components/button';
-import { Card, CardContent } from '@repo/ui/components/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useInviteContext } from '@/context/InviteContext';
 
 export default function InviteSuccessPage() {
+  const { resetInviteFlow } = useInviteContext();
+
+  useEffect(() => {
+    resetInviteFlow();
+  }, [resetInviteFlow]);
+
   return (
-    <div className='flex items-center justify-center min-h-[calc(100vh-200px)]'>
-      <Card className='w-full max-w-md p-6'>
-        <CardContent className='flex flex-col items-center justify-center p-10'>
-          <div className='bg-muted rounded-full p-4 mb-6'>
-            <CheckCircle2 className='w-16 h-16 text-green-500' />
-          </div>
-          <h1 className='text-3xl font-bold mb-2'>Invite Sent</h1>
-          <p className='text-muted-foreground mb-8 text-center'>
-            The invite has been sent to the client. They will receive an email shortly.
+    <div className='flex min-h-[80vh] items-center justify-center'>
+      <Card className='w-full max-w-md text-center shadow-lg'>
+        <CardHeader className='items-center'>
+          <CheckCircle2 className='h-16 w-16 text-green-500' />
+          <CardTitle className='mt-4 text-2xl font-semibold'>Invitation Sent!</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className='text-muted-foreground'>
+            Your client has been sent an invitation to join you on Continuum. You can track the status of your
+            invitation on your dashboard.
           </p>
-          <Link href='/practitioner'>
-            <Button className='px-8'>Go to Dashboard</Button>
-          </Link>
+          <div className='mt-6 flex justify-center gap-4'>
+            <Link href='/practitioner' passHref>
+              <Button>Go to Dashboard</Button>
+            </Link>
+            <Link href='/practitioner/invite' passHref>
+              <Button variant='outline'>Invite Another Client</Button>
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>

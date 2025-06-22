@@ -14,6 +14,8 @@ export interface InviteClientDto {
 export interface InvitationResponse {
   id: string;
   clientEmail: string;
+  clientFirstName: string;
+  clientLastName: string;
   status: 'pending' | 'accepted';
   createdAt: Date;
 }
@@ -116,6 +118,8 @@ export class PractitionerService {
       data: {
         practitionerId,
         clientEmail: normalizedEmail,
+        clientFirstName: normalizedFirstName,
+        clientLastName: normalizedLastName,
         token,
         expiresAt,
         intakeFormId,
@@ -161,8 +165,87 @@ export class PractitionerService {
     return {
       id: invitation.id,
       clientEmail: invitation.clientEmail,
+      clientFirstName: invitation.clientFirstName,
+      clientLastName: invitation.clientLastName,
       status: invitation.isAccepted ? 'accepted' : 'pending',
       createdAt: invitation.createdAt,
+    };
+  }
+
+  async resendInvitation(practitionerId: string, invitationId: string): Promise<InvitationResponse> {
+    // 1. Find the original invitation
+    const originalInvitation = await this.prisma.invitation.findFirst({
+      where: {
+        id: invitationId,
+        practitionerId,
+      },
+    });
+
+    if (!originalInvitation) {
+      throw new NotFoundException('Invitation not found or you do not have permission to access it.');
+    }
+
+    // 2. Gather details
+    const { clientEmail, clientFirstName, clientLastName, intakeFormId } = originalInvitation;
+
+    const practitioner = await this.prisma.user.findUnique({
+      where: { id: practitionerId },
+    });
+    if (!practitioner) {
+      throw new NotFoundException('Practitioner not found');
+    }
+
+    // 3. Delete the old invitation to invalidate the old token
+    await this.prisma.invitation.delete({
+      where: { id: invitationId },
+    });
+
+    // 4. Create a new invitation with a new token and expiry
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    const newInvitation = await this.prisma.invitation.create({
+      data: {
+        practitionerId,
+        clientEmail,
+        clientFirstName,
+        clientLastName,
+        token,
+        expiresAt,
+        intakeFormId,
+      },
+    });
+
+    let intakeFormTitle: string | undefined;
+    if (intakeFormId) {
+      const form = await this.prisma.intakeForm.findUnique({ where: { id: intakeFormId } });
+      intakeFormTitle = form?.title;
+    }
+
+    // 5. Send the new email
+    try {
+      const invitationLink = `${config.frontendUrl}/client/auth/signup?token=${encodeURIComponent(token)}`;
+      await this.mailService.sendClientInvitation({
+        to: clientEmail,
+        clientName: `${clientFirstName} ${clientLastName}`,
+        practitionerName: practitioner.name || 'Your Practitioner',
+        invitationLink,
+        intakeFormTitle,
+      });
+    } catch (error) {
+      // If email fails, roll back the new invitation to prevent a broken state
+      await this.prisma.invitation.delete({ where: { id: newInvitation.id } });
+      throw new BadRequestException('Failed to resend invitation email');
+    }
+
+    // 6. Return the new invitation's details
+    return {
+      id: newInvitation.id,
+      clientEmail: newInvitation.clientEmail,
+      clientFirstName: newInvitation.clientFirstName,
+      clientLastName: newInvitation.clientLastName,
+      status: 'pending',
+      createdAt: newInvitation.createdAt,
     };
   }
 
@@ -345,14 +428,24 @@ export class PractitionerService {
 
   async getInvitations(practitionerId: string): Promise<InvitationResponse[]> {
     const invitations = await this.prisma.invitation.findMany({
-      where: { practitionerId },
-      orderBy: { createdAt: 'desc' },
+      where: {
+        practitionerId,
+        isAccepted: false,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
 
     return invitations.map((invitation) => ({
       id: invitation.id,
       clientEmail: invitation.clientEmail,
-      status: invitation.isAccepted ? 'accepted' : 'pending',
+      clientFirstName: invitation.clientFirstName,
+      clientLastName: invitation.clientLastName,
+      status: 'pending',
       createdAt: invitation.createdAt,
     }));
   }
