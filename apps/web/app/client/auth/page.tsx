@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { Button } from '@repo/ui/components/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@repo/ui/components/form';
 import { Input } from '@repo/ui/components/input';
@@ -17,12 +17,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { emailSchema, otpSchema } from '@repo/shared-types/schemas';
 import { AuthService } from '@/services';
 import { useMutation } from '@tanstack/react-query';
+import { Logo } from '@repo/ui/components/logo';
 
-export default function LoginPage() {
+export default function ClientAuthPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [showOTP, setShowOTP] = React.useState(false);
   const [resendTimer, setResendTimer] = React.useState(0);
   const router = useRouter();
+  const { data: session, status } = useSession();
+
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useMutation({
     mutationFn: (email: string) => AuthService.sendOtp({ email }),
     onSuccess: () => {
@@ -76,6 +79,20 @@ export default function LoginPage() {
       toast.success('Logged in successfully');
     }
     setIsLoading(false);
+  }
+
+  if (status === 'loading') {
+    return (
+      <div className='flex min-h-screen flex-col items-center justify-center'>
+        <Logo className='h-10 w-10 animate-pulse' />
+      </div>
+    );
+  }
+
+  if (session) {
+    const targetDashboard = session.user.role === 'CLIENT' ? '/client' : '/practitioner';
+    router.replace(targetDashboard);
+    return null;
   }
 
   return (

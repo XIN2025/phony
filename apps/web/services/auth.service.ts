@@ -8,4 +8,13 @@ export class AuthService {
   static async sendOtp(data: SendOtpRequest) {
     return await ApiClient.post<boolean>('/api/auth/otp', data);
   }
+  static async signupPractitioner(data: {
+    email: string;
+    otp: string;
+    role: 'PRACTITIONER';
+    name: string;
+    profession: string;
+  }) {
+    return await ApiClient.post<LoginResponse>('/api/auth/practitioner/signup', data);
+  }
 }

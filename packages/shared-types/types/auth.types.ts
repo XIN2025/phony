@@ -6,6 +6,7 @@ export type User = {
   name: string | null;
   avatarUrl: string | null;
   role: string;
+  profession?: string | null;
 };
 
 export type LoginResponse = {
