@@ -50,7 +50,11 @@ export default function NewIntakeFormPage() {
         <span>Back to Forms</span>
       </Link>
       <h1 className='text-3xl font-bold mb-6'>Create New Intake Form</h1>
-      <IntakeFormBuilder onSubmit={handleSubmit} isLoading={mutation.isPending} />
+      <IntakeFormBuilder
+        onSubmit={handleSubmit}
+        onBack={() => router.push('/practitioner/intake-forms')}
+        isLoading={mutation.isPending}
+      />
     </div>
   );
 }

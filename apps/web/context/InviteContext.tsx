@@ -7,6 +7,7 @@ export type InviteData = {
   clientFirstName: string;
   clientLastName: string;
   clientEmail: string;
+  includeIntakeForm: boolean;
   intakeFormId: string | null;
 };
 
@@ -26,6 +27,7 @@ const initialState: InviteData = {
   clientFirstName: '',
   clientLastName: '',
   clientEmail: '',
+  includeIntakeForm: false,
   intakeFormId: null,
 };
 

@@ -1,118 +1,197 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Button } from '@repo/ui/components/button';
-import { Users, FileText, MessageSquare, Plus } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { ApiClient } from '@/lib/api-client';
+import { Users, Calendar, Mail, Eye, MessageSquare, Plus } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
+import { Badge } from '@repo/ui/components/badge';
+import Link from 'next/link';
 
-interface DashboardStats {
-  totalClients: number;
-  totalForms: number;
-  pendingInvitations: number;
-}
+const clients = [
+  {
+    name: 'Emma Chamberlin',
+    email: 'emma01@gmail.com',
+    lastSession: 'May 10, 2025',
+    engagement: 'Medium',
+    lastActive: 'May 10, 2025',
+    status: 'Joined',
+  },
+  {
+    name: 'Jiya',
+    email: 'emma01@gmail.com',
+    lastSession: 'May 10, 2025',
+    engagement: 'Low',
+    lastActive: 'May 10, 2025',
+    status: 'Joined',
+  },
+  {
+    name: 'Justin King',
+    email: 'emma01@gmail.com',
+    lastSession: 'May 10, 2025',
+    engagement: 'Medium',
+    lastActive: 'May 10, 2025',
+    status: 'Joined',
+  },
+  {
+    name: 'Henry Hugh',
+    email: 'emma01@gmail.com',
+    lastSession: 'May 10, 2025',
+    engagement: 'High',
+    lastActive: 'May 10, 2025',
+    status: 'Joined',
+  },
+  {
+    name: 'Fatima Wasim',
+    email: 'emma01@gmail.com',
+    lastSession: 'May 10, 2025',
+    engagement: 'High',
+    lastActive: 'May 10, 2025',
+    status: 'Joined',
+  },
+  {
+    name: 'Ana',
+    email: 'emma01@gmail.com',
+    lastSession: 'May 10, 2025',
+    engagement: 'Medium',
+    lastActive: 'May 10, 2025',
+    status: 'Pending',
+  },
+  {
+    name: 'Sheena Singh',
+    email: 'emma01@gmail.com',
+    lastSession: 'May 10, 2025',
+    engagement: 'Low',
+    lastActive: 'May 10, 2025',
+    status: 'Pending',
+  },
+  {
+    name: 'Quinn Taylor',
+    email: 'emma01@gmail.com',
+    lastSession: 'May 10, 2025',
+    engagement: 'High',
+    lastActive: 'May 10, 2025',
+    status: 'Pending',
+  },
+];
 
 export default function PractitionerDashboard() {
-  const router = useRouter();
-
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['dashboard-stats'],
-    queryFn: async () => {
-      const [clientsRes, formsRes, invitationsRes] = await Promise.all([
-        ApiClient.get<any[]>('/api/practitioner/clients'),
-        ApiClient.get<any[]>('/api/intake-forms'),
-        ApiClient.get<any[]>('/api/practitioner/invitations'),
-      ]);
-
-      return {
-        totalClients: clientsRes.length || 0,
-        totalForms: formsRes.length || 0,
-        pendingInvitations: invitationsRes.filter((inv: any) => inv.status === 'pending').length || 0,
-      };
-    },
-  });
+  const { data: session } = useSession();
 
   return (
-    <div className='container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6'>
-      <div className='space-y-2 sm:space-y-3'>
-        <h1 className='text-2xl sm:text-3xl lg:text-4xl font-bold'>Dashboard</h1>
-        <p className='text-sm sm:text-base text-muted-foreground'>Welcome back! Here's an overview of your practice.</p>
+    <div className='flex flex-col gap-8'>
+      <div className='flex items-center justify-between'>
+        <h1 className='text-3xl font-semibold'>Welcome Back, {session?.user?.name?.split(' ')[0] || 'Ana'}</h1>
+        <Link href='/practitioner/invite'>
+          <Button>
+            <Plus className='mr-2 h-4 w-4' /> Invite Client
+          </Button>
+        </Link>
       </div>
 
-      {/* Stats Cards */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4'>
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-xs sm:text-sm font-medium'>Total Clients</CardTitle>
-            <Users className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-xl sm:text-2xl font-bold'>{isLoading ? '...' : stats?.totalClients || 0}</div>
-            <p className='text-xs text-muted-foreground'>Active clients in your practice</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-xs sm:text-sm font-medium'>Intake Forms</CardTitle>
-            <FileText className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-xl sm:text-2xl font-bold'>{isLoading ? '...' : stats?.totalForms || 0}</div>
-            <p className='text-xs text-muted-foreground'>Forms available for clients</p>
-          </CardContent>
-        </Card>
-
-        <Card className='sm:col-span-2 lg:col-span-1'>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-xs sm:text-sm font-medium'>Pending Invitations</CardTitle>
-            <MessageSquare className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-xl sm:text-2xl font-bold'>{isLoading ? '...' : stats?.pendingInvitations || 0}</div>
-            <p className='text-xs text-muted-foreground'>Invitations awaiting response</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
-        <Card>
+      <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+        <Card className='border-neutral-200 dark:border-neutral-800'>
           <CardHeader>
-            <CardTitle className='text-base sm:text-lg'>Quick Actions</CardTitle>
-            <CardDescription className='text-sm'>Common tasks to get you started</CardDescription>
+            <CardTitle className='text-sm font-medium'>Total Clients</CardTitle>
           </CardHeader>
-          <CardContent className='space-y-3'>
-            <Button
-              className='w-full justify-start'
-              variant='outline'
-              onClick={() => router.push('/practitioner/clients')}
-            >
-              <Plus className='w-4 h-4 mr-2' />
-              Invite New Client
-            </Button>
-            <Button
-              className='w-full justify-start'
-              variant='outline'
-              onClick={() => router.push('/practitioner/intake-forms')}
-            >
-              <FileText className='w-4 h-4 mr-2' />
-              Create Intake Form
-            </Button>
+          <CardContent className='flex items-start justify-between'>
+            <div>
+              <div className='text-3xl font-bold'>14</div>
+              <p className='text-xs text-muted-foreground'>+2 from last month</p>
+            </div>
+            <Users className='h-10 w-10 text-muted-foreground' />
           </CardContent>
         </Card>
-
-        <Card>
+        <Card className='border-neutral-200 dark:border-neutral-800'>
           <CardHeader>
-            <CardTitle className='text-base sm:text-lg'>Recent Activity</CardTitle>
-            <CardDescription className='text-sm'>Latest updates from your practice</CardDescription>
+            <CardTitle className='text-sm font-medium'>Sessions this week</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className='text-sm text-muted-foreground'>No recent activity to display.</div>
+          <CardContent className='flex items-start justify-between'>
+            <div>
+              <div className='text-3xl font-bold'>42</div>
+              <p className='text-xs text-muted-foreground'>+3 from last week</p>
+            </div>
+            <Calendar className='h-10 w-10 text-muted-foreground' />
+          </CardContent>
+        </Card>
+        <Card className='border-neutral-200 dark:border-neutral-800'>
+          <CardHeader>
+            <CardTitle className='text-sm font-medium'>Unread Messages</CardTitle>
+          </CardHeader>
+          <CardContent className='flex items-start justify-between'>
+            <div className='text-3xl font-bold'>2</div>
+            <Mail className='h-10 w-10 text-muted-foreground' />
           </CardContent>
         </Card>
       </div>
+
+      <Card className='border-neutral-200 dark:border-neutral-800'>
+        <CardHeader>
+          <CardTitle>Last Active Clients</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className='overflow-x-auto'>
+            <table className='w-full'>
+              <thead className='text-sm text-muted-foreground'>
+                <tr className='border-b border-neutral-200 dark:border-neutral-800'>
+                  <th className='p-4 text-left font-medium'>Member</th>
+                  <th className='p-4 text-left font-medium'>Last Session</th>
+                  <th className='p-4 text-left font-medium'>Engagement</th>
+                  <th className='p-4 text-left font-medium'>Last Active</th>
+                  <th className='p-4 text-left font-medium'>Status</th>
+                  <th className='p-4 text-right font-medium'>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clients.map((client) => (
+                  <tr key={client.name} className='border-b border-neutral-200 dark:border-neutral-800'>
+                    <td className='p-4'>
+                      <div className='flex items-center gap-3'>
+                        <Avatar>
+                          <AvatarImage src={`/avatars/${client.name}.png`} alt={client.name} />
+                          <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className='font-medium'>{client.name}</p>
+                          <p className='text-sm text-muted-foreground'>{client.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className='p-4 text-muted-foreground'>
+                      <div className='flex items-center gap-2'>
+                        <Calendar className='h-5 w-5' />
+                        {client.lastSession}
+                      </div>
+                    </td>
+                    <td className='p-4'>
+                      <Badge variant='secondary' className='rounded-full px-3 py-1'>
+                        {client.engagement}
+                      </Badge>
+                    </td>
+                    <td className='p-4 text-muted-foreground'>
+                      <div className='flex items-center gap-2'>
+                        <Calendar className='h-5 w-5' />
+                        {client.lastActive}
+                      </div>
+                    </td>
+                    <td className='p-4 text-muted-foreground'>{client.status}</td>
+                    <td className='p-4 text-right'>
+                      <div className='flex items-center justify-end gap-2'>
+                        <Button variant='ghost' size='icon'>
+                          <MessageSquare className='h-5 w-5' />
+                        </Button>
+                        <Button variant='ghost' size='icon'>
+                          <Eye className='h-5 w-5' />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

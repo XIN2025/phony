@@ -65,7 +65,14 @@ export default function EditIntakeFormPage() {
         <span>Back to Forms</span>
       </Link>
       <h1 className='text-3xl font-bold mb-6'>Edit Intake Form</h1>
-      {form && <IntakeFormBuilder initialData={form} onSubmit={handleSubmit} isLoading={mutation.isPending} />}
+      {form && (
+        <IntakeFormBuilder
+          initialData={form}
+          onSubmit={handleSubmit}
+          onBack={() => router.push('/practitioner/intake-forms')}
+          isLoading={mutation.isPending}
+        />
+      )}
     </div>
   );
 }

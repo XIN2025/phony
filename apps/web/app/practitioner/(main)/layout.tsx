@@ -1,155 +1,116 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Users, MessageSquare, PanelLeft, Settings, LogOut, FileText } from 'lucide-react';
+import { Bell, Home, Menu, Users, File as FileIcon, MessageSquare } from 'lucide-react';
+
+import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/tooltip';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Sheet, SheetContent, SheetTrigger } from '@repo/ui/components/sheet';
+import { useSession } from 'next-auth/react';
+import { Avatar, AvatarFallback } from '@repo/ui/components/avatar';
 import { Logo } from '@repo/ui/components/logo';
-import { signOut, useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
-const navItems = [
-  { href: '/practitioner', icon: Home, label: 'Home' },
-  { href: '/practitioner/clients', icon: Users, label: 'Clients' },
-  { href: '/practitioner/intake-forms', icon: FileText, label: 'Intake Forms' },
-  { href: '/practitioner/messages', icon: MessageSquare, label: 'Messages' },
-];
-
-const SidebarNav = ({ isDesktop = false }) => (
-  <nav className={`flex ${isDesktop ? 'flex-col items-center gap-4 px-2 sm:py-5' : 'flex-col gap-2'}`}>
-    {navItems.map((item) =>
-      isDesktop ? (
-        <TooltipProvider key={item.label}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href={item.href}
-                className='flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8'
-              >
-                <item.icon className='h-5 w-5' />
-                <span className='sr-only'>{item.label}</span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side='right'>{item.label}</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      ) : (
-        <Link
-          key={item.label}
-          href={item.href}
-          className='flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground'
-        >
-          <item.icon className='h-5 w-5' />
-          {item.label}
-        </Link>
-      ),
-    )}
-  </nav>
-);
-
-const handleLogout = () => {
-  signOut({ callbackUrl: '/practitioner/auth' });
+// Helper to get initials for Avatars
+const getInitials = (name?: string | null) => {
+  if (!name) return '';
+  const names = name.split(' ');
+  if (names.length > 1) {
+    return `${names[0]?.[0] ?? ''}${names[names.length - 1]?.[0] ?? ''}`.toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
 };
 
-export default function PractitionerLayout({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+export default function PractitionerMainLayout({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession();
+  const userName = session?.user?.name ?? 'Ana Johnson';
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/practitioner/auth');
-    }
-  }, [status, router]);
+  const navLinks = (
+    <>
+      <Link
+        href='/practitioner'
+        className='flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary'
+      >
+        <Home className='h-4 w-4' />
+        Home
+      </Link>
+      <Link
+        href='/practitioner/clients'
+        className='flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary'
+      >
+        <Users className='h-4 w-4' />
+        Clients
+      </Link>
+      <Link
+        href='#'
+        className='flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary'
+      >
+        <MessageSquare className='h-4 w-4' />
+        Messages
+        <Badge className='ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full'>2</Badge>
+      </Link>
+      <Link
+        href='/practitioner/intake-forms'
+        className='flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary'
+      >
+        <FileIcon className='h-4 w-4' />
+        Forms
+      </Link>
+    </>
+  );
 
-  // Show loading while checking authentication
-  if (status === 'loading') {
-    return (
-      <div className='flex min-h-screen items-center justify-center'>
-        <div className='text-center'>
-          <p>Loading...</p>
+  return (
+    <div className='grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]'>
+      <div className='hidden border-r bg-white md:block'>
+        <div className='flex h-full max-h-screen flex-col gap-2'>
+          <div className='flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6'>
+            <Link href='/' className='flex items-center gap-2 font-semibold'>
+              <Logo />
+              <span className=''>Continuum</span>
+            </Link>
+          </div>
+          <div className='flex-1'>
+            <nav className='grid items-start px-2 text-sm font-medium lg:px-4'>{navLinks}</nav>
+          </div>
+
+          <div className='mt-auto border-t'>
+            <div className='flex items-center gap-3 p-4'>
+              <Avatar className='h-10 w-10 border'>
+                <AvatarFallback>{getInitials(userName)}</AvatarFallback>
+              </Avatar>
+              <div className='flex flex-col'>
+                <span className='font-semibold'>{userName}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    );
-  }
-
-  // Don't show sidebar for unauthenticated users
-  if (status === 'unauthenticated') {
-    return <>{children}</>;
-  }
-
-  // Only show sidebar for authenticated users
-  return (
-    <div className='flex min-h-screen w-full flex-col bg-muted/40'>
-      <aside className='fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex'>
-        <div className='flex h-14 items-center justify-center border-b px-2'>
-          <Link
-            href='/practitioner'
-            className='group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base'
-          >
-            <Logo className='h-4 w-4 transition-all group-hover:scale-110' />
-            <span className='sr-only'>Continuum</span>
-          </Link>
-        </div>
-        <SidebarNav isDesktop />
-        <nav className='mt-auto flex flex-col items-center gap-4 px-2 sm:py-5'>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  href='/practitioner/settings'
-                  className='flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8'
-                >
-                  <Settings className='h-5 w-5' />
-                  <span className='sr-only'>Settings</span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side='right'>Settings</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={handleLogout}
-                  variant='ghost'
-                  size='icon'
-                  className='h-9 w-9 text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8'
-                >
-                  <LogOut className='h-5 w-5' />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side='right'>Logout</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </nav>
-      </aside>
-      <div className='flex flex-col sm:gap-4 sm:py-4 sm:pl-14'>
-        <header className='sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6'>
+      <div className='flex flex-col bg-muted/40'>
+        <header className='flex h-14 items-center gap-4 border-b bg-white px-4 lg:h-[60px] lg:px-6'>
           <Sheet>
             <SheetTrigger asChild>
-              <Button size='icon' variant='outline' className='sm:hidden'>
-                <PanelLeft className='h-5 w-5' />
-                <span className='sr-only'>Toggle Menu</span>
+              <Button variant='outline' size='icon' className='shrink-0 md:hidden'>
+                <Menu className='h-5 w-5' />
+                <span className='sr-only'>Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side='left' className='sm:max-w-xs'>
-              <div className='flex h-14 items-center border-b px-2'>
-                <Link
-                  href='/practitioner'
-                  className='group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground'
-                >
-                  <Logo className='h-5 w-5' />
-                  <span className=''>Continuum</span>
+            <SheetContent side='left' className='flex flex-col'>
+              <nav className='grid gap-2 text-lg font-medium'>
+                <Link href='#' className='flex items-center gap-2 text-lg font-semibold'>
+                  <Logo />
+                  <span className='sr-only'>Continuum</span>
                 </Link>
-              </div>
-              <SidebarNav />
+                {navLinks}
+              </nav>
             </SheetContent>
           </Sheet>
-          {/* We can add breadcrumbs here later */}
+          <div className='w-full flex-1' />
+          <Button variant='outline' size='icon' className='ml-auto h-8 w-8'>
+            <Bell className='h-4 w-4' />
+            <span className='sr-only'>Toggle notifications</span>
+          </Button>
         </header>
-        {children}
+        <main className='flex-1 overflow-y-auto'>{children}</main>
       </div>
     </div>
   );

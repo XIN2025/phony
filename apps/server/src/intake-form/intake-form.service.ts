@@ -18,7 +18,7 @@ export class IntakeFormService {
           create: questions?.map((q) => ({
             text: q.text,
             type: q.type,
-            options: q.options || [],
+            options: q.options?.map((opt) => opt.text) || [],
             isRequired: q.isRequired,
             order: q.order,
           })),
@@ -69,7 +69,7 @@ export class IntakeFormService {
             formId,
             text: q.text,
             type: q.type,
-            options: q.options || [],
+            options: q.options?.map((opt) => opt.text) || [],
             isRequired: q.isRequired,
             order: q.order,
           })),
@@ -104,16 +104,27 @@ export class IntakeFormService {
     });
   }
 
-  findAllForPractitioner(practitionerId: string) {
-    return this.prisma.intakeForm.findMany({
+  async findAllForPractitioner(practitionerId: string) {
+    const forms = await this.prisma.intakeForm.findMany({
       where: { practitionerId },
       orderBy: { updatedAt: 'desc' },
       include: {
         _count: {
           select: { questions: true },
         },
+        questions: {
+          orderBy: { order: 'asc' },
+        },
       },
     });
+
+    return forms.map((form) => ({
+      ...form,
+      questions: form.questions.map((q) => ({
+        ...q,
+        options: q.options.map((opt) => ({ text: opt })),
+      })),
+    }));
   }
 
   async findOne(formId: string, practitionerId: string) {
@@ -134,6 +145,13 @@ export class IntakeFormService {
       throw new ForbiddenException('You do not have permission to view this form.');
     }
 
-    return form;
+    // This is a hack to satisfy the DTO. Prisma returns string[] for options.
+    // The DTO expects { text: string }[]
+    const mappedQuestions = form.questions.map((q) => ({
+      ...q,
+      options: q.options.map((opt) => ({ text: opt })),
+    }));
+
+    return { ...form, questions: mappedQuestions };
   }
 }

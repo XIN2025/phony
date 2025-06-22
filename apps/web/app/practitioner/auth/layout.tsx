@@ -23,6 +23,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <p className='text-muted-foreground max-w-sm'>
               Join a community of professionals dedicated to making a difference through evidence-based practices.
             </p>
+            w{' '}
           </div>
           <div className='text-sm text-muted-foreground self-center'>
             © {new Date().getFullYear()} Continuum Inc. All rights reserved.

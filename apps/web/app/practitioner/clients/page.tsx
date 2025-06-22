@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { Button } from '@repo/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Badge } from '@repo/ui/components/badge';
-import { Users, Mail, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Eye, MessageSquare } from 'lucide-react';
 import { ApiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -21,6 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@repo/ui/components/alert-dialog';
+import { Avatar, AvatarFallback } from '@repo/ui/components/avatar';
 
 interface Client {
   id: string;
@@ -36,6 +36,17 @@ interface Invitation {
   status: 'pending' | 'accepted';
   createdAt: string;
 }
+
+type ClientOrInvitation = (Client & { type: 'client' }) | (Invitation & { type: 'invitation' });
+
+const getInitials = (name?: string | null) => {
+  if (!name) return '??';
+  const names = name.split(' ');
+  if (names.length > 1) {
+    return `${names[0]?.[0] ?? ''}${names[names.length - 1]?.[0] ?? ''}`.toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
 
 export default function ClientsPage() {
   const router = useRouter();
@@ -65,134 +76,168 @@ export default function ClientsPage() {
 
   const isLoading = clientsLoading || invitationsLoading;
 
+  const combinedData: ClientOrInvitation[] = [
+    ...((clients as Client[]) || []).map((c) => ({ ...c, type: 'client' as const })),
+    ...((invitations?.filter((inv) => inv.status === 'pending') as Invitation[]) || []).map((inv) => ({
+      ...inv,
+      type: 'invitation' as const,
+    })),
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
   const handleDeleteInvitation = (invitationId: string) => {
     deleteInvitationMutation.mutate(invitationId);
   };
 
   return (
-    <div className='container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6'>
-      <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4'>
-        <div className='space-y-1 sm:space-y-2'>
-          <h1 className='text-2xl sm:text-3xl font-bold'>Clients</h1>
-          <p className='text-sm sm:text-base text-muted-foreground'>Manage your clients and view pending invitations</p>
+    <div className='flex flex-col gap-8 p-6 md:p-8'>
+      <div className='flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center'>
+        <div className='space-y-1'>
+          <h1 className='text-3xl font-bold text-gray-800'>Clients</h1>
+          <p className='text-muted-foreground'>Manage your clients and view pending invitations.</p>
         </div>
-        <Button onClick={() => router.push('/practitioner/invite')} className='w-full sm:w-auto'>
-          <Plus className='w-4 h-4 mr-2' />
-          Invite Client
+        <Button
+          onClick={() => router.push('/practitioner/invite')}
+          className='bg-gray-900 text-white hover:bg-gray-800'
+        >
+          <Plus className='mr-2 h-4 w-4' /> Invite Client
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2 text-base sm:text-lg'>
-            <Users className='w-4 h-4 sm:w-5 sm:h-5' />
-            Active Clients
-          </CardTitle>
-          <CardDescription className='text-sm'>Clients who have accepted your invitation.</CardDescription>
+          <CardTitle>All Clients</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className='space-y-2'>
-              <Skeleton className='h-12 w-full' />
-              <Skeleton className='h-12 w-full' />
-            </div>
-          ) : clients && clients.length > 0 ? (
-            <div className='space-y-3 sm:space-y-4'>
-              {clients.map((client) => (
-                <div
-                  key={client.id}
-                  className='flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2 sm:gap-0'
-                >
-                  <div className='space-y-1'>
-                    <h3 className='font-medium text-sm sm:text-base'>{client.name}</h3>
-                    <p className='text-xs sm:text-sm text-muted-foreground'>{client.email}</p>
-                  </div>
-                  <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3'>
-                    <Badge variant={client.isActive ? 'default' : 'secondary'} className='w-fit'>
-                      {client.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                    <span className='text-xs sm:text-sm text-muted-foreground'>
-                      Joined {new Date(client.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className='text-center py-8 text-muted-foreground text-sm sm:text-base'>No active clients yet.</div>
-          )}
-        </CardContent>
-      </Card>
+          <div className='overflow-x-auto'>
+            <div className='min-w-[800px]'>
+              <div className='grid grid-cols-12 gap-4 border-b pb-4 text-sm font-medium text-muted-foreground'>
+                <div className='col-span-4'>Client</div>
+                <div className='col-span-3'>Date Added</div>
+                <div className='col-span-2'>Status</div>
+                <div className='col-span-3 text-right'>Actions</div>
+              </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2 text-base sm:text-lg'>
-            <Mail className='w-4 h-4 sm:w-5 sm:h-5' />
-            Pending Invitations
-          </CardTitle>
-          <CardDescription className='text-sm'>Invitations that have been sent but not yet accepted.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className='space-y-2'>
-              <Skeleton className='h-12 w-full' />
-            </div>
-          ) : invitations && invitations.filter((inv) => inv.status === 'pending').length > 0 ? (
-            <div className='space-y-3 sm:space-y-4'>
-              {invitations
-                .filter((invitation) => invitation.status === 'pending')
-                .map((invitation) => (
-                  <div
-                    key={invitation.id}
-                    className='flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2 sm:gap-0'
-                  >
-                    <div className='space-y-1'>
-                      <h3 className='font-medium text-sm sm:text-base'>{invitation.clientEmail}</h3>
-                    </div>
-                    <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3'>
-                      <Badge variant='outline' className='w-fit'>
-                        Pending
-                      </Badge>
-                      <span className='text-xs sm:text-sm text-muted-foreground'>
-                        Sent {new Date(invitation.createdAt).toLocaleDateString()}
-                      </span>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            disabled={deleteInvitationMutation.isPending}
-                            className='text-destructive hover:text-destructive w-fit'
-                          >
-                            <Trash2 className='h-4 w-4' />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Invitation</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete the invitation sent to {invitation.clientEmail}? This
-                              action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteInvitation(invitation.id)}
-                              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+              <div className='flex flex-col'>
+                {isLoading ? (
+                  <>
+                    <Skeleton className='h-16 w-full border-b' />
+                    <Skeleton className='h-16 w-full border-b' />
+                    <Skeleton className='h-16 w-full border-b' />
+                  </>
+                ) : combinedData.length > 0 ? (
+                  combinedData.map((item) => {
+                    if (item.type === 'client') {
+                      return (
+                        <div
+                          key={item.id}
+                          className='grid grid-cols-12 items-center gap-4 border-b py-4 transition-colors hover:bg-gray-50'
+                        >
+                          <div className='col-span-4'>
+                            <div className='flex items-center gap-3'>
+                              <Avatar className='h-10 w-10'>
+                                <AvatarFallback className='bg-gray-200 text-gray-600'>
+                                  {getInitials(item.name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className='font-medium text-gray-800'>{item.name}</p>
+                                <p className='text-sm text-muted-foreground'>{item.email}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className='col-span-3 text-muted-foreground'>
+                            {new Date(item.createdAt).toLocaleDateString()}
+                          </div>
+                          <div className='col-span-2'>
+                            <Badge
+                              variant={item.isActive ? 'default' : 'secondary'}
+                              className='rounded-full px-3 py-1 font-normal capitalize'
                             >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                              {item.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </div>
+                          <div className='col-span-3 flex items-center justify-end gap-2'>
+                            <Button variant='ghost' size='icon' aria-label='Message Client'>
+                              <MessageSquare className='h-5 w-5' />
+                            </Button>
+                            <Button variant='ghost' size='icon' aria-label='View Client Details'>
+                              <Eye className='h-5 w-5' />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div
+                          key={item.id}
+                          className='grid grid-cols-12 items-center gap-4 border-b py-4 transition-colors hover:bg-gray-50'
+                        >
+                          <div className='col-span-4'>
+                            <div className='flex items-center gap-3'>
+                              <Avatar className='h-10 w-10'>
+                                <AvatarFallback className='bg-gray-200 text-gray-600'>
+                                  {getInitials(item.clientEmail)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className='font-medium text-gray-800'>{item.clientEmail}</p>
+                                <p className='text-sm text-muted-foreground'>Invitation sent</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className='col-span-3 text-muted-foreground'>
+                            {new Date(item.createdAt).toLocaleDateString()}
+                          </div>
+                          <div className='col-span-2'>
+                            <Badge variant='outline' className='rounded-full px-3 py-1 font-normal capitalize'>
+                              Pending
+                            </Badge>
+                          </div>
+                          <div className='col-span-3 flex items-center justify-end gap-2'>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant='ghost'
+                                  size='icon'
+                                  className='text-destructive hover:bg-destructive/10 hover:text-destructive'
+                                  disabled={deleteInvitationMutation.isPending}
+                                  aria-label='Delete Invitation'
+                                >
+                                  <Trash2 className='h-5 w-5' />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Invitation</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete the invitation sent to {item.clientEmail}? This
+                                    action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteInvitation(item.id)}
+                                    className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      );
+                    }
+                  })
+                ) : (
+                  <div className='col-span-12 py-10 text-center text-muted-foreground'>
+                    You have no clients or pending invitations.
                   </div>
-                ))}
+                )}
+              </div>
             </div>
-          ) : (
-            <div className='text-center py-8 text-muted-foreground text-sm sm:text-base'>No pending invitations.</div>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>
