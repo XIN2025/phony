@@ -224,7 +224,8 @@ describe('AuthService', () => {
   describe('handlePractitionerSignUp', () => {
     const signUpData: PractitionerSignUpDto = {
       email: 'test@example.com',
-      name: 'Test User',
+      firstName: 'Test',
+      lastName: 'User',
       profession: 'Doctor',
       otp: '123456',
       role: UserRole.PRACTITIONER,
@@ -233,7 +234,8 @@ describe('AuthService', () => {
     const mockUser = {
       id: 'user-id',
       email: 'test@example.com',
-      name: 'Test User',
+      firstName: 'Test',
+      lastName: 'User',
       role: UserRole.PRACTITIONER,
       isEmailVerified: true,
       avatarUrl: null,
@@ -259,7 +261,8 @@ describe('AuthService', () => {
         user: {
           id: 'user-id',
           email: 'test@example.com',
-          name: 'Test User',
+          firstName: 'Test',
+          lastName: 'User',
           avatarUrl: null,
           role: UserRole.PRACTITIONER,
           profession: 'Doctor',
@@ -284,7 +287,8 @@ describe('AuthService', () => {
         user: {
           id: 'user-id',
           email: 'test@example.com',
-          name: 'Test User',
+          firstName: 'Test',
+          lastName: 'User',
           avatarUrl: null,
           role: UserRole.PRACTITIONER,
           profession: 'Doctor',
@@ -318,7 +322,8 @@ describe('AuthService', () => {
   describe('handleClientSignUp', () => {
     const clientSignUpData = {
       email: 'client@example.com',
-      name: 'Client User',
+      firstName: 'Client',
+      lastName: 'User',
       invitationToken: 'valid-token',
     };
 
@@ -334,7 +339,8 @@ describe('AuthService', () => {
     const mockUser = {
       id: 'user-id',
       email: 'client@example.com',
-      name: 'Client User',
+      firstName: 'Client',
+      lastName: 'User',
       role: UserRole.CLIENT,
       isEmailVerified: true,
       avatarUrl: null,
@@ -355,7 +361,8 @@ describe('AuthService', () => {
         user: {
           id: 'user-id',
           email: 'client@example.com',
-          name: 'Client User',
+          firstName: 'Client',
+          lastName: 'User',
           avatarUrl: null,
           role: UserRole.CLIENT,
           profession: null,
