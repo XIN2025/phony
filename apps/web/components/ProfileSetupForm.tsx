@@ -1,5 +1,4 @@
-'use client';
-
+﻿'use client';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,15 +10,12 @@ import { Input } from '@repo/ui/components/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { getInitials } from '@/lib/utils';
-
 const profileSetupSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   profession: z.string().optional(),
 });
-
 type ProfileSetupForm = z.infer<typeof profileSetupSchema>;
-
 interface ProfileSetupFormProps {
   onSubmit: (data: ProfileSetupForm & { profileImage?: File }) => void;
   isPending?: boolean;
@@ -31,7 +27,6 @@ interface ProfileSetupFormProps {
   submitText?: string;
   hideTitle?: boolean;
 }
-
 export function ProfileSetupForm({
   onSubmit,
   isPending = false,
@@ -46,7 +41,6 @@ export function ProfileSetupForm({
   const [profileImage, setProfileImage] = React.useState<File | null>(null);
   const [imagePreview, setImagePreview] = React.useState<string>('');
   const [isFormInitialized, setIsFormInitialized] = React.useState(false);
-
   const form = useForm<ProfileSetupForm>({
     resolver: zodResolver(profileSetupSchema),
     defaultValues: {
@@ -55,7 +49,6 @@ export function ProfileSetupForm({
       profession: '',
     },
   });
-
   React.useEffect(() => {
     if (!isFormInitialized && defaultValues) {
       form.reset({
@@ -66,7 +59,6 @@ export function ProfileSetupForm({
       setIsFormInitialized(true);
     }
   }, [defaultValues, form, isFormInitialized]);
-
   const handleImageUpload = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -78,26 +70,22 @@ export function ProfileSetupForm({
       reader.readAsDataURL(file);
     }
   }, []);
-
   const removeImage = React.useCallback(() => {
     setProfileImage(null);
     setImagePreview('');
   }, []);
-
   const handleSubmit = React.useCallback(
     (data: ProfileSetupForm) => {
       onSubmit({ ...data, profileImage: profileImage || undefined });
     },
     [onSubmit, profileImage],
   );
-
   const firstName = form.watch('firstName');
   const lastName = form.watch('lastName');
   // Memoize the initials to prevent unnecessary re-renders
   const initials = React.useMemo(() => {
     return getInitials(`${firstName || ''} ${lastName || ''}`);
   }, [firstName, lastName]);
-
   return (
     <div className='space-y-6'>
       {!hideTitle && (
@@ -135,7 +123,6 @@ export function ProfileSetupForm({
               )}
             </div>
           </div>
-
           <div className='grid grid-cols-2 gap-4'>
             <FormField
               control={form.control}
@@ -164,7 +151,6 @@ export function ProfileSetupForm({
               )}
             />
           </div>
-
           {showProfession && (
             <FormField
               control={form.control}
@@ -191,7 +177,6 @@ export function ProfileSetupForm({
               )}
             />
           )}
-
           <Button type='submit' className='w-full' disabled={isPending}>
             {isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             {submitText}

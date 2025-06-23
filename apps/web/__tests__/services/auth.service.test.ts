@@ -162,10 +162,10 @@ describe('AuthService', () => {
         profession: '',
       };
 
-      const error = new Error('Name and profession are required');
+      const error = new Error('First name, last name and profession are required');
       mockApiClient.post.mockRejectedValue(error);
 
-      await expect(AuthService.signupPractitioner(incompleteData)).rejects.toThrow('Name and profession are required');
+      await expect(AuthService.signupPractitioner(incompleteData)).rejects.toThrow('First name, last name and profession are required');
     });
 
     it('should handle invalid OTP during signup', async () => {

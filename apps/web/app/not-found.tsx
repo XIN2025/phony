@@ -1,10 +1,9 @@
-'use client';
+﻿'use client';
 import React from 'react';
 import Link from 'next/link';
 import { Frown, Home, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Button } from '@repo/ui/components/button';
-
 const NotFoundPage = () => {
   return (
     <div className='bg-background flex min-h-screen items-center justify-center p-4'>
@@ -41,5 +40,4 @@ const NotFoundPage = () => {
     </div>
   );
 };
-
 export default NotFoundPage;

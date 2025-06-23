@@ -1,5 +1,4 @@
-'use client';
-
+﻿'use client';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { intakeFormSchema, CreateIntakeFormDto } from '@repo/shared-types/schemas';
@@ -12,13 +11,11 @@ import { QuestionType } from '@repo/db/question-type';
 import { useInviteContext } from '@/context/InviteContext';
 import { useEffect, useState } from 'react';
 import { Checkbox } from '@repo/ui/components/checkbox';
-
 function QuestionOptions({ questionIndex, control, register }: any) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: `questions.${questionIndex}.options`,
   });
-
   return (
     <div className='space-y-2 pt-4'>
       <Label>Choices</Label>
@@ -45,13 +42,11 @@ function QuestionOptions({ questionIndex, control, register }: any) {
     </div>
   );
 }
-
 interface IntakeFormBuilderProps {
   onSubmit: (data: CreateIntakeFormDto) => void;
   onBack?: () => void;
   isLoading?: boolean;
 }
-
 const questionTypeOptions = [
   { value: QuestionType.SHORT_ANSWER, label: 'Short Answer' },
   { value: QuestionType.LONG_ANSWER, label: 'Paragraph' },
@@ -64,11 +59,9 @@ const questionTypeOptions = [
   { value: QuestionType.MULTIPLE_CHOICE_GRID, label: 'Multiple choice grid' },
   { value: QuestionType.TICK_BOX_GRID, label: 'Tick box grid' },
 ];
-
 export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBuilderProps) {
   const { inviteData, setInviteData } = useInviteContext();
   const [saveAsTemplate, setSaveAsTemplate] = useState(true);
-
   const form = useForm<CreateIntakeFormDto>({
     resolver: zodResolver(intakeFormSchema),
     defaultValues:
@@ -87,18 +80,15 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
         ],
       } as CreateIntakeFormDto),
   });
-
   useEffect(() => {
     return () => {
       setInviteData({ newIntakeForm: form.getValues() });
     };
   }, [setInviteData, form]);
-
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'questions',
   });
-
   const addQuestion = () => {
     append({
       text: '',
@@ -108,7 +98,6 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
       options: [{ text: '' }],
     });
   };
-
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
       <div className='space-y-2'>
@@ -170,11 +159,9 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
                 />
               </div>
             </div>
-
             {form.watch(`questions.${index}.type`) === QuestionType.MULTIPLE_CHOICE && (
               <QuestionOptions questionIndex={index} control={form.control} register={form.register} />
             )}
-
             <div className='flex justify-end items-center gap-2 pt-4 mt-4'>
               <Button type='button' variant='ghost' size='icon'>
                 <Copy className='h-5 w-5' />
@@ -186,12 +173,10 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
           </div>
         ))}
       </div>
-
       <Button type='button' variant='link' onClick={addQuestion} className='p-0 h-auto font-semibold'>
         <Plus className='h-4 w-4 mr-2' />
         Add Question
       </Button>
-
       <div className='flex items-center space-x-2'>
         <Checkbox
           id='save-template'
@@ -205,7 +190,6 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
           Save form as a template
         </label>
       </div>
-
       <div className='flex flex-col-reverse gap-4 sm:flex-row sm:justify-between'>
         <Button type='button' variant='secondary' onClick={onBack} className='w-full sm:w-auto'>
           Cancel

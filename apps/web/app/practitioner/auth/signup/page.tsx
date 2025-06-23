@@ -1,5 +1,4 @@
-'use client';
-
+﻿'use client';
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -10,12 +9,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, Upload, User, CheckIcon } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-
 import { useMutation } from '@tanstack/react-query';
 import { AuthService } from '@/services';
 import { getInitials } from '@/lib/utils';
 import { ProfileSetupForm } from '@/components/ProfileSetupForm';
-
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Button } from '@repo/ui/components/button';
 import { Checkbox } from '@repo/ui/components/checkbox';
@@ -24,7 +21,6 @@ import { Input } from '@repo/ui/components/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input-otp';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
 import { Logo } from '@repo/ui/components/logo';
-
 const signUpSchema = z.object({
   email: z.string().email('Please enter a valid email address.'),
   otp: z.string().min(6, 'Your one-time password must be 6 characters.').optional(),
@@ -34,11 +30,8 @@ const signUpSchema = z.object({
   idProof: z.any().optional(),
   terms: z.boolean().optional(),
 });
-
 type SignUpFormValues = z.infer<typeof signUpSchema>;
-
 const professions = ['Therapist', 'Counselor', 'Psychologist', 'Social Worker'];
-
 export default function PractitionerSignUpPage() {
   const [step, setStep] = React.useState(1);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -53,13 +46,11 @@ export default function PractitionerSignUpPage() {
   const router = useRouter();
   const { status } = useSession();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
   React.useEffect(() => {
     if (status === 'authenticated') {
       router.push('/practitioner');
     }
   }, [status, router]);
-
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useMutation({
     mutationFn: (data: { email: string }) => AuthService.sendOtp(data),
     onSuccess: () => {
@@ -71,20 +62,16 @@ export default function PractitionerSignUpPage() {
       toast.error(error.message ?? 'Failed to send OTP. Please try again.');
     },
   });
-
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
   });
-
   const startResendTimer = () => {
     setResendTimer(60);
     const interval = setInterval(() => {
       setResendTimer((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
-
     return () => clearInterval(interval);
   };
-
   const completeSignUp = async () => {
     setIsLoading(true);
     const values = form.getValues();
@@ -97,14 +84,12 @@ export default function PractitionerSignUpPage() {
         lastName: profileData?.lastName || values.lastName!.trim(),
         profession: profileData?.profession || values.profession!,
       });
-
       await signIn('credentials', {
         email: values.email!.trim().toLowerCase(),
         otp: values.otp!.trim(),
         role: 'PRACTITIONER',
         redirect: false,
       });
-
       toast.success('Account created successfully!');
       router.push('/practitioner');
     } catch (error: any) {
@@ -113,10 +98,8 @@ export default function PractitionerSignUpPage() {
       setIsLoading(false);
     }
   };
-
   const onSubmit = async (values: SignUpFormValues) => {
     if (isLoading) return;
-
     switch (step) {
       case 1:
         handleSendOTP({ email: values.email.trim().toLowerCase() });
@@ -142,7 +125,6 @@ export default function PractitionerSignUpPage() {
         break;
     }
   };
-
   const handleProfileSubmit = (data: {
     firstName: string;
     lastName: string;
@@ -155,13 +137,11 @@ export default function PractitionerSignUpPage() {
       profession: data.profession || '',
       profileImage: data.profileImage,
     });
-
     form.setValue('firstName', data.firstName);
     form.setValue('lastName', data.lastName);
     form.setValue('profession', data.profession || '');
     setStep(4);
   };
-
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -357,7 +337,6 @@ export default function PractitionerSignUpPage() {
         return null;
     }
   };
-
   return (
     <>
       <div className='mb-8 text-center'>
@@ -374,7 +353,6 @@ export default function PractitionerSignUpPage() {
           {step === 4 && 'Upload your professional credentials and accept our terms.'}
         </p>
       </div>
-
       {step === 3 ? (
         <AnimatePresence mode='wait'>{renderStep()}</AnimatePresence>
       ) : (

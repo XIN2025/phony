@@ -16,19 +16,6 @@ interface ProfileUpdateBody {
   [key: string]: unknown;
 }
 
-interface UserValidationResult {
-  valid: boolean;
-  user?: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl: string | null;
-    role: UserRole;
-    profession: string | null;
-  };
-}
-
 interface ProfileUpdateData {
   firstName?: string;
   lastName?: string;
@@ -303,38 +290,6 @@ export class AuthService {
         validity: 10,
       },
     });
-  }
-
-  async validateUser(userId: string, email: string): Promise<UserValidationResult> {
-    try {
-      const user = await this.prismaService.user.findFirst({
-        where: {
-          id: userId,
-          email: email.toLowerCase().trim(),
-          isActive: true,
-        },
-      });
-
-      if (user) {
-        return {
-          valid: true,
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            avatarUrl: user.avatarUrl,
-            role: user.role,
-            profession: user.profession,
-          },
-        };
-      }
-
-      return { valid: false };
-    } catch (error) {
-      this.logger.error(`Failed to validate user ${userId}:`, error);
-      return { valid: false };
-    }
   }
 
   async updateProfile(userId: string, body: ProfileUpdateBody, file?: Express.Multer.File) {

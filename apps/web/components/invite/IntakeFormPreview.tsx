@@ -1,5 +1,4 @@
-'use client';
-
+﻿'use client';
 import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
@@ -9,7 +8,6 @@ import { Textarea } from '@repo/ui/components/textarea';
 import { RadioGroup, RadioGroupItem } from '@repo/ui/components/radio-group';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { useState } from 'react';
-
 interface Props {
   formData: CreateIntakeFormDto;
   onBack: () => void;
@@ -17,7 +15,6 @@ interface Props {
   isLoading: boolean;
   isNewForm: boolean;
 }
-
 export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNewForm }: Props) {
   const [saveAsTemplate, setSaveAsTemplate] = useState(true);
   const renderAnswer = (question: CreateIntakeFormDto['questions'][0]) => {
@@ -25,7 +22,6 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
       className: 'bg-gray-100 border-gray-300 rounded-md',
       disabled: true,
     };
-
     switch (question.type) {
       case 'SHORT_ANSWER':
         return <Input {...commonProps} placeholder='I have issues' />;
@@ -76,7 +72,6 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
         return null;
     }
   };
-
   return (
     <div className='flex flex-col h-full'>
       <div className='flex-grow overflow-y-auto'>

@@ -1,11 +1,9 @@
-'use client';
-
+﻿'use client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
-
 import { InviteClientDetailsForm } from '@/components/invite/InviteClientDetailsForm';
 import { IntakeFormSelector } from '@/components/invite/IntakeFormSelector';
 import { IntakeFormBuilder } from '@/components/invite/IntakeFormBuilder';
@@ -14,12 +12,10 @@ import { useInviteContext } from '@/context/InviteContext';
 import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
 import { Button } from '@repo/ui/components/button';
 import { ApiClient } from '@/lib/api-client';
-
 export default function InviteClientPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { step, inviteData, setInviteData, goToNextStep, goToPrevStep, goToStep, resetInviteFlow } = useInviteContext();
-
   const mutation = useMutation({
     mutationFn: (data: typeof inviteData) => ApiClient.post('/api/practitioner/invite-client', data),
     onSuccess: async () => {
@@ -32,7 +28,6 @@ export default function InviteClientPage() {
       toast.error(errorMessage);
     },
   });
-
   const handleDetailsSubmit = (data: {
     clientFirstName: string;
     clientLastName: string;
@@ -47,14 +42,12 @@ export default function InviteClientPage() {
       intakeFormId: null,
     };
     setInviteData(normalizedData);
-
     if (normalizedData.includeIntakeForm) {
       goToNextStep();
     } else {
       mutation.mutate(normalizedData);
     }
   };
-
   const handleFormSelect = async (formId: string | 'create-new') => {
     if (formId === 'create-new') {
       if (inviteData.intakeFormId) {
@@ -71,30 +64,24 @@ export default function InviteClientPage() {
       }
     }
   };
-
   const handleFormCreatePreview = (formData: CreateIntakeFormDto) => {
     setInviteData({ newIntakeForm: formData, intakeFormId: null });
     goToNextStep();
   };
-
   const handleFormSubmit = async (saveAsTemplate: boolean) => {
     if (!inviteData.newIntakeForm) return;
-
     try {
       let finalData = { ...inviteData };
-
       if (!finalData.intakeFormId && saveAsTemplate) {
         const newForm = await ApiClient.post<{ id: string }>('/api/intake-forms', inviteData.newIntakeForm);
         finalData = { ...finalData, intakeFormId: newForm.id };
       }
-
       setInviteData(finalData);
       mutation.mutate(finalData);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to create form.');
     }
   };
-
   const handleBack = () => {
     if (step === 1) {
       router.back();
@@ -102,7 +89,6 @@ export default function InviteClientPage() {
     }
     goToPrevStep();
   };
-
   const steps = useMemo(
     () => [
       {
@@ -138,9 +124,7 @@ export default function InviteClientPage() {
     ],
     [mutation.isPending, inviteData.newIntakeForm, inviteData.intakeFormId, handleBack],
   );
-
   const currentStepData = steps.find((s) => s.step === step);
-
   return (
     <div className='mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8'>
       <Button variant='ghost' size='sm' className='-ml-2 mb-4' onClick={handleBack}>

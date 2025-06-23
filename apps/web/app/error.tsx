@@ -1,15 +1,13 @@
-'use client';
+﻿'use client';
 import React from 'react';
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
 import Link from 'next/link';
 import { Button } from '@repo/ui/components/button';
-
 interface ErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
 }
-
 const ErrorPage: React.FC<ErrorProps> = ({ error, reset }) => {
   return (
     <div className='bg-background flex min-h-screen items-center justify-center p-4'>
@@ -26,7 +24,6 @@ const ErrorPage: React.FC<ErrorProps> = ({ error, reset }) => {
             <p className='text-muted-foreground text-sm break-words'>{error.message || 'An unknown error occurred'}</p>
             {error.digest && <p className='text-muted-foreground mt-2 text-xs'>Error ID: {error.digest}</p>}
           </div>
-
           <div className='flex justify-center space-x-4'>
             <Button variant='outline' className='w-full' onClick={() => reset()}>
               <RefreshCw className='mr-2 h-4 w-4' />
@@ -44,5 +41,4 @@ const ErrorPage: React.FC<ErrorProps> = ({ error, reset }) => {
     </div>
   );
 };
-
 export default ErrorPage;
