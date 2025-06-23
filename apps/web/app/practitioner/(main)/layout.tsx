@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { SidebarContent } from '@/components/practitioner/Sidebar';
 import { Sheet, SheetContent } from '@repo/ui/components/sheet';
 import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
+
 function PractitionerLayoutContent({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setSidebarOpen } = useSidebar();
   const pathname = usePathname();
@@ -27,6 +28,7 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
     </div>
   );
 }
+
 export default function PractitionerMainLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
