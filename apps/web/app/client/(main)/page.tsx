@@ -1,25 +1,50 @@
 'use client';
 
 import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { LogOut, User, Calendar, FileText, MessageCircle } from 'lucide-react';
+import { getUserDisplayName } from '@/lib/utils';
 
 const ClientPage = () => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.role === 'CLIENT') {
+      const hasBasicProfile = session.user.firstName && session.user.lastName;
+
+      if (!hasBasicProfile) {
+        router.push('/client/profile-setup');
+      }
+    }
+  }, [session, status, router]);
 
   const handleLogout = () => {
-    signOut({ callbackUrl: '/' });
+    signOut({ callbackUrl: '/client/auth' });
   };
+
+  if (status === 'loading') {
+    return <div className='flex h-screen items-center justify-center'>Loading...</div>;
+  }
+
+  if (status === 'authenticated' && session?.user?.role === 'CLIENT') {
+    const hasBasicProfile = session.user.firstName && session.user.lastName;
+    if (!hasBasicProfile) {
+      return <div className='flex h-screen items-center justify-center'>Redirecting to profile setup...</div>;
+    }
+  }
 
   return (
     <div className='bg-background p-6'>
       <div className='max-w-6xl mx-auto'>
-        {/* Header */}
+        {}
         <div className='flex justify-between items-center mb-8'>
           <div>
             <h1 className='text-3xl font-bold'>Client Dashboard</h1>
-            <p className='text-muted-foreground'>Welcome back, {session?.user?.name || session?.user?.email}</p>
+            <p className='text-muted-foreground'>Welcome back, {getUserDisplayName(session)}</p>
           </div>
           <Button onClick={handleLogout} variant='outline'>
             <LogOut className='w-4 h-4 mr-2' />
@@ -27,7 +52,7 @@ const ClientPage = () => {
           </Button>
         </div>
 
-        {/* Stats Cards */}
+        {}
         <div className='grid md:grid-cols-3 gap-6 mb-8'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
@@ -63,7 +88,7 @@ const ClientPage = () => {
           </Card>
         </div>
 
-        {/* Quick Actions */}
+        {}
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
@@ -99,7 +124,7 @@ const ClientPage = () => {
           </CardContent>
         </Card>
 
-        {/* Welcome Message */}
+        {}
         <Card className='mt-8'>
           <CardHeader>
             <CardTitle>Getting Started</CardTitle>

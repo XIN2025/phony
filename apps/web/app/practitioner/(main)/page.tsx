@@ -17,6 +17,7 @@ import {
   MessageSquare,
   RefreshCw,
   XCircle,
+  Loader2,
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -25,11 +26,11 @@ import { ApiClient } from '@/lib/api-client';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { Sheet, SheetContent, SheetTrigger } from '@repo/ui/components/sheet';
 import { usePathname } from 'next/navigation';
-import { SidebarContent, getInitials } from '@/components/practitioner/Sidebar';
+import { SidebarContent } from '@/components/practitioner/Sidebar';
+import { getUserDisplayName, getInitials } from '@/lib/utils';
 
 interface Client {
   id: string;
-
   clientFirstName: string;
   clientLastName: string;
   clientEmail: string;
@@ -59,7 +60,7 @@ const mockClients: Client[] = [
     clientEmail: 'emma01@gmail.com',
     status: 'JOINED',
     invited: 'May 12, 2025',
-    avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
+    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=emma01@gmail.com',
   },
   {
     id: '2',
@@ -68,16 +69,16 @@ const mockClients: Client[] = [
     clientEmail: 'jiya@gmail.com',
     status: 'JOINED',
     invited: 'May 12, 2025',
-    avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
+    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=jiya@gmail.com',
   },
   {
     id: '3',
-    clientFirstName: 'Ana',
+    clientFirstName: 'User',
     clientLastName: '',
-    clientEmail: 'ana@gmail.com',
+    clientEmail: 'user@gmail.com',
     status: 'PENDING',
     invited: 'May 12, 2025',
-    avatar: 'https://randomuser.me/api/portraits/women/3.jpg',
+    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=user@gmail.com',
   },
   {
     id: '4',
@@ -86,7 +87,7 @@ const mockClients: Client[] = [
     clientEmail: 'sheena@gmail.com',
     status: 'PENDING',
     invited: 'May 12, 2025',
-    avatar: 'https://randomuser.me/api/portraits/women/4.jpg',
+    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=sheena@gmail.com',
   },
   {
     id: '5',
@@ -95,7 +96,7 @@ const mockClients: Client[] = [
     clientEmail: 'quinn@gmail.com',
     status: 'PENDING',
     invited: 'May 12, 2025',
-    avatar: 'https://randomuser.me/api/portraits/women/5.jpg',
+    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=quinn@gmail.com',
   },
 ];
 
@@ -123,10 +124,44 @@ const StatCard = ({
 );
 
 export default function PractitionerDashboard() {
-  const { data: session } = useSession();
-  const practitionerName = session?.user?.name?.split(' ')[0] || 'Ana';
-  const userName = session?.user?.name ?? 'Ana Johnson';
+  const { data: session, status } = useSession();
+  const displayName = getUserDisplayName(session);
   const pathname = usePathname();
+
+  if (status === 'loading') {
+    return (
+      <div className='flex h-screen items-center justify-center'>
+        <div className='text-center'>
+          <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4' />
+          <p className='text-sm text-muted-foreground'>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className='flex h-screen items-center justify-center'>
+        <div className='text-center'>
+          <h2 className='text-xl font-semibold mb-2'>Authentication Required</h2>
+          <p className='text-muted-foreground mb-4'>Please log in to access the practitioner dashboard.</p>
+          <Button onClick={() => (window.location.href = '/practitioner/auth')}>Go to Login</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (session?.error) {
+    return (
+      <div className='flex h-screen items-center justify-center'>
+        <div className='text-center'>
+          <h2 className='text-xl font-semibold mb-2'>Session Error</h2>
+          <p className='text-muted-foreground mb-4'>Your session has expired. Please log in again.</p>
+          <Button onClick={() => (window.location.href = '/practitioner/auth')}>Go to Login</Button>
+        </div>
+      </div>
+    );
+  }
 
   const navLinks = [
     { href: '/practitioner', icon: Home, label: 'Home' },
@@ -143,8 +178,11 @@ export default function PractitionerDashboard() {
     isError,
   } = useQuery<Client[]>({
     queryKey: ['invitations'],
-    queryFn: () => ApiClient.get('/api/practitioner/invitations'),
-    enabled: !!session,
+    queryFn: async (): Promise<Client[]> => {
+      const result = await ApiClient.get('/api/practitioner/invitations');
+      return result as Client[];
+    },
+    enabled: status === 'authenticated' && !!session?.user?.id,
   });
 
   const { mutate: deleteInvitation, isPending: isDeleting } = useMutation({
@@ -181,10 +219,10 @@ export default function PractitionerDashboard() {
               </Button>
             </SheetTrigger>
             <SheetContent side='left' className='max-w-xs p-0'>
-              <SidebarContent navLinks={navLinks} pathname={pathname} userName={userName} />
+              <SidebarContent navLinks={navLinks} pathname={pathname} userName={displayName} />
             </SheetContent>
           </Sheet>
-          <h1 className='text-2xl font-semibold'>Welcome Back, Dr. {practitionerName}</h1>
+          <h1 className='text-2xl font-semibold'>Welcome Back, Dr. {displayName}</h1>
         </div>
         <Link href='/practitioner/invite'>
           <Button className='flex items-center gap-2'>

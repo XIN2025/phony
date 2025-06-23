@@ -18,16 +18,14 @@ export default function InviteSuccessPage() {
   return (
     <div className='flex min-h-[80vh] items-center justify-center'>
       <Card className='w-full max-w-md text-center shadow-lg'>
-        <CardHeader className='items-center'>
-          <CheckCircle2 className='h-16 w-16 text-green-500' />
-          <CardTitle className='mt-4 text-2xl font-semibold'>Invitation Sent!</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className='text-muted-foreground'>
+        <div className='flex flex-col items-center justify-center p-6'>
+          <CheckCircle2 className='h-16 w-16 text-green-500 mb-4' />
+          <h2 className='text-2xl font-semibold mb-4'>Invitation Sent!</h2>
+          <p className='text-muted-foreground mb-6'>
             Your client has been sent an invitation to join you on Continuum. You can track the status of your
             invitation on your dashboard.
           </p>
-          <div className='mt-6 flex justify-center gap-4'>
+          <div className='flex justify-center gap-4'>
             <Link href='/practitioner' passHref>
               <Button>Go to Dashboard</Button>
             </Link>
@@ -35,7 +33,7 @@ export default function InviteSuccessPage() {
               <Button variant='outline'>Invite Another Client</Button>
             </Link>
           </div>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

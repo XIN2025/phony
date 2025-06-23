@@ -10,38 +10,15 @@ const credentialsAuthProvider = CredentialsProvider({
     role: { label: 'Role', type: 'text' },
   },
   async authorize(credentials) {
-    const requestId = Math.random().toString(36).substring(7);
-    console.log(`[NextAuth:${requestId}] 🔐 Starting authorization process`);
-    console.log(`[NextAuth:${requestId}] 📝 Credentials received:`, {
-      hasEmail: !!credentials?.email,
-      hasOtp: !!credentials?.otp,
-      hasRole: !!credentials?.role,
-      email: credentials?.email,
-      role: credentials?.role,
-      otpLength: credentials?.otp?.length,
-    });
-
     try {
       if (!credentials?.email || !credentials?.otp) {
-        console.log(
-          `[NextAuth:${requestId}] ❌ Missing credentials: email=${!!credentials?.email}, otp=${!!credentials?.otp}`,
-        );
         throw new Error('Email and OTP required');
       }
 
-      console.log(`[NextAuth:${requestId}] 📡 Calling AuthService.verifyOtp...`);
       const res = await AuthService.verifyOtp({
         email: credentials.email,
         otp: credentials.otp,
         role: credentials.role as 'CLIENT' | 'PRACTITIONER',
-      });
-
-      console.log(`[NextAuth:${requestId}] ✅ AuthService.verifyOtp successful:`, {
-        hasUser: !!res.user,
-        hasToken: !!res.token,
-        userId: res.user?.id,
-        userEmail: res.user?.email,
-        userRole: res.user?.role,
       });
 
       const user: User = {
@@ -49,23 +26,14 @@ const credentialsAuthProvider = CredentialsProvider({
         email: res.user.email,
         token: res.token,
         role: res.user.role,
-        name: res.user.name ?? 'Unknown',
+        firstName: res.user.firstName ?? '',
+        lastName: res.user.lastName ?? '',
         avatarUrl: res.user.avatarUrl ?? '',
       };
 
-      console.log(`[NextAuth:${requestId}] 🎉 Authorization successful, returning user:`, {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        hasToken: !!user.token,
-      });
-
       return user;
     } catch (error) {
-      console.error(`[NextAuth:${requestId}] 💥 Authorization failed:`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-      });
+      console.error('Authorization failed:', error);
       throw new Error((error as Error)?.message || 'Invalid credentials');
     }
   },
@@ -77,70 +45,94 @@ export const authOptions: AuthOptions = {
   debug: process.env.NODE_ENV === 'development',
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      const callbackId = Math.random().toString(36).substring(7);
-      console.log(`[NextAuth:${callbackId}] 🔄 JWT callback triggered:`, {
-        trigger,
-        hasUser: !!user,
-        hasToken: !!token,
-        hasSession: !!session,
-      });
-
       if (trigger === 'update' && session?.user) {
-        console.log(`[NextAuth:${callbackId}] 🔄 JWT update trigger:`, {
-          sessionUser: session.user,
-        });
         return { ...token, ...session.user };
       }
 
       if (user) {
-        console.log(`[NextAuth:${callbackId}] 👤 JWT user data:`, {
-          userId: user.id,
-          userEmail: user.email,
-          userRole: user.role,
-          hasToken: !!user.token,
-        });
         token.id = user.id;
         token.email = user.email;
-        token.name = user.name;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
         token.role = user.role;
         token.profession = user.profession;
         token.avatarUrl = user.avatarUrl || '';
         token.token = user.token;
+
+        delete token.error;
+        delete token.lastValidation;
       }
 
-      console.log(`[NextAuth:${callbackId}] ✅ JWT callback completed`);
+      if (token.error) {
+        return token;
+      }
+
+      if (token.id && token.email && !user) {
+        const lastValidation = token.lastValidation as number;
+        const now = Date.now();
+        const validationCooldown = 5 * 60 * 1000;
+
+        if (!lastValidation || now - lastValidation > validationCooldown) {
+          try {
+            const response = await fetch(
+              `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/validate-session`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  userId: token.id,
+                  email: token.email,
+                }),
+              },
+            );
+
+            if (!response.ok) {
+              token.lastValidation = now;
+              return token;
+            }
+
+            const userExists = await response.json();
+            if (!userExists.valid) {
+              return { ...token, error: 'UserNotFound', lastValidation: now };
+            }
+
+            if (userExists.user) {
+              token.firstName = userExists.user.firstName;
+              token.lastName = userExists.user.lastName;
+              token.avatarUrl = userExists.user.avatarUrl;
+              token.profession = userExists.user.profession;
+            }
+
+            token.lastValidation = now;
+          } catch (error) {
+            console.error('Error validating user session:', error);
+
+            token.lastValidation = now;
+          }
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
-      const callbackId = Math.random().toString(36).substring(7);
-      console.log(`[NextAuth:${callbackId}] 🔄 Session callback triggered:`, {
-        hasSession: !!session,
-        hasToken: !!token,
-        tokenData: {
-          id: token.id,
-          email: token.email,
-          role: token.role,
-          hasToken: !!token.token,
-        },
-      });
+      if (token.error) {
+        return {
+          expires: new Date(0).toISOString(),
+          user: undefined,
+        };
+      }
 
       if (session.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
-        session.user.name = token.name as string;
+        session.user.firstName = token.firstName as string;
+        session.user.lastName = token.lastName as string;
         session.user.avatarUrl = token.avatarUrl as string;
         session.user.role = token.role as string;
         session.user.profession = token.profession as string;
         session.user.token = token.token as string;
-
-        console.log(`[NextAuth:${callbackId}] ✅ Session callback completed:`, {
-          sessionUser: {
-            id: session.user.id,
-            email: session.user.email,
-            role: session.user.role,
-            hasToken: !!session.user.token,
-          },
-        });
       }
       return session;
     },
@@ -148,5 +140,13 @@ export const authOptions: AuthOptions = {
   session: {
     strategy: 'jwt',
     maxAge: 7 * 24 * 60 * 60,
+  },
+  events: {
+    async signOut({ token }) {},
+    async session({ session, token }) {},
+  },
+  pages: {
+    signIn: '/client/auth',
+    error: '/auth/error',
   },
 };

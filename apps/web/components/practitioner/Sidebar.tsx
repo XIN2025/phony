@@ -2,15 +2,10 @@
 
 import Link from 'next/link';
 import { Avatar, AvatarFallback } from '@repo/ui/components/avatar';
-
-export const getInitials = (name: string) => {
-  if (!name) return '';
-  const names = name.split(' ');
-  if (names.length > 1) {
-    return `${names[0]?.[0] ?? ''}${names[names.length - 1]?.[0] ?? ''}`.toUpperCase();
-  }
-  return name.substring(0, 2).toUpperCase();
-};
+import { Button } from '@repo/ui/components/button';
+import { LogOut } from 'lucide-react';
+import { signOut } from 'next-auth/react';
+import { getInitials } from '@/lib/utils';
 
 const ContinuumIcon = () => (
   <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg' className='h-6 w-6'>
@@ -59,7 +54,7 @@ export const SidebarContent = ({
       </nav>
     </div>
     <div className='mt-auto p-4'>
-      <div className='flex items-center gap-3'>
+      <div className='flex items-center gap-3 mb-3'>
         <Avatar className='h-9 w-9 border'>
           <AvatarFallback>{getInitials(userName)}</AvatarFallback>
         </Avatar>
@@ -67,6 +62,15 @@ export const SidebarContent = ({
           <span className='font-semibold text-sm'>{userName}</span>
         </div>
       </div>
+      <Button
+        variant='outline'
+        size='sm'
+        className='w-full justify-start gap-2 text-gray-600 hover:text-black'
+        onClick={() => signOut({ callbackUrl: '/practitioner/auth' })}
+      >
+        <LogOut className='h-4 w-4' />
+        Sign Out
+      </Button>
     </div>
   </div>
 );

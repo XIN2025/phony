@@ -32,10 +32,9 @@ export class ApiClient {
 
       const isFormData = config.data instanceof FormData;
 
-      // Check if this is a public endpoint that doesn't need authorization
       const isPublicEndpoint =
         config.url?.includes('/invitations/token/') ||
-        config.url?.includes('/auth/') ||
+        (config.url?.includes('/auth/') && !config.url?.includes('/auth/profile')) ||
         config.url?.includes('/public/');
 
       console.log(`[ApiClient:${requestId}] 🔓 Endpoint classification:`, {
@@ -46,7 +45,7 @@ export class ApiClient {
 
       const client = axios.create({
         baseURL: envConfig.apiUrl,
-        timeout: 10000, // 10 second timeout
+        timeout: 10000,
         headers: {
           ...(config.data && !isFormData ? { 'Content-Type': 'application/json' } : {}),
           ...(session?.user?.token && !isPublicEndpoint ? { Authorization: `Bearer ${session.user.token}` } : {}),
@@ -89,19 +88,16 @@ export class ApiClient {
           },
         });
 
-        // Handle network errors
         if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
           console.error(`[ApiClient:${requestId}] 🌐 Network error: Cannot connect to server at ${envConfig.apiUrl}`);
           throw new Error(`Cannot connect to server at ${envConfig.apiUrl}. Please check if the server is running.`);
         }
 
-        // Handle timeout errors
         if (err.code === 'ECONNABORTED') {
           console.error(`[ApiClient:${requestId}] ⏰ Timeout error: Request took longer than 10 seconds`);
           throw new Error('Request timed out. Please try again.');
         }
 
-        // Handle HTTP errors
         if (err.response?.status) {
           const errorMessage = err.response?.data?.message || err.response?.statusText || 'Server error';
           console.error(`[ApiClient:${requestId}] 🔴 HTTP error: ${err.response.status} - ${errorMessage}`);

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { config } from 'src/common/config';
 import { Template, templates, TemplateContextMap } from './templates';
+import { clientInvitationTemplate } from './templates/client-invitation-template';
 
 /**
  * Service responsible for handling all email-related operations.
@@ -171,56 +172,26 @@ export class MailService {
     invitationLink: string;
     intakeFormTitle?: string;
   }): Promise<boolean> {
-    console.log(`[MailService] Attempting to send client invitation to ${options.to}`);
-    console.log(`[MailService] Mail config:`, {
-      host: config.mail.smtp.host,
-      port: config.mail.smtp.port,
-      user: config.mail.smtp.auth.user,
-      from: config.mail.defaults.from,
-      fromName: config.mail.defaults.fromName,
-    });
-
-    const subject = `Invitation from ${options.practitionerName} - Join Continuum`;
-
     try {
-      // Use the template system like OTP emails
-      const context: {
-        clientName: string;
-        practitionerName: string;
-        invitationLink: string;
-        intakeFormTitle: string;
-      } = {
+      const context = {
         clientName: options.clientName,
         practitionerName: options.practitionerName,
         invitationLink: options.invitationLink,
-        intakeFormTitle: '',
+        intakeFormTitle: options.intakeFormTitle || '',
       };
 
-      // Only add intake form title if it exists and is not empty
-      if (options.intakeFormTitle && options.intakeFormTitle.trim()) {
-        context.intakeFormTitle = `<p><strong>Intake Form:</strong> ${options.intakeFormTitle}</p>`;
-      } else {
-        context.intakeFormTitle = '';
-      }
+      const html = this.renderTemplate(clientInvitationTemplate, context);
 
-      const result = await this.sendTemplateMail({
+      const result = await this.mailerService.sendMail({
+        from: config.mail.defaults.from,
         to: options.to,
-        subject,
-        templateName: 'CLIENT_INVITATION',
-        context,
+        subject: `You're invited to join ${options.practitionerName}'s practice`,
+        html,
       });
 
-      if (result) {
-        console.log(`[MailService] Client invitation email sent successfully to ${options.to}`);
-      } else {
-        console.error(
-          `[MailService] Failed to send client invitation email to ${options.to} - sendTemplateMail returned false`
-        );
-      }
-
-      return result;
+      return !!result.messageId;
     } catch (error) {
-      console.error(`[MailService] Error sending client invitation email to ${options.to}:`, error);
+      console.error('Failed to send client invitation email:', error);
       return false;
     }
   }

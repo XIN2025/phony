@@ -10,13 +10,12 @@ import { Button } from '@repo/ui/components/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@repo/ui/components/form';
 import { Input } from '@repo/ui/components/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input-otp';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@repo/ui/components/card';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMutation } from '@tanstack/react-query';
 import { emailSchema, otpSchema } from '@repo/shared-types/schemas';
 import { AuthService } from '@/services';
-import { useMutation } from '@tanstack/react-query';
 import { Logo } from '@repo/ui/components/logo';
 
 export default function ClientAuthPage() {
@@ -24,7 +23,7 @@ export default function ClientAuthPage() {
   const [showOTP, setShowOTP] = React.useState(false);
   const [resendTimer, setResendTimer] = React.useState(0);
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useMutation({
     mutationFn: (email: string) => AuthService.sendOtp({ email }),
@@ -34,27 +33,19 @@ export default function ClientAuthPage() {
       setShowOTP(true);
     },
     onError: (error) => {
-      toast.error(error.message ?? 'Failed to send OTP');
+      toast.error(error instanceof Error ? error.message : 'Failed to send OTP');
     },
   });
 
   const form = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(showOTP ? otpSchema : emailSchema),
-    defaultValues: {
-      email: '',
-    },
+    defaultValues: { email: '' },
   });
 
   const startResendTimer = () => {
     setResendTimer(60);
     const interval = setInterval(() => {
-      setResendTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setResendTimer((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
   };
 
@@ -65,130 +56,121 @@ export default function ClientAuthPage() {
     }
 
     setIsLoading(true);
-    const res = await signIn('credentials', {
-      email: values.email,
-      otp: values.otp,
-      role: 'CLIENT',
-      redirect: false,
-    });
+    try {
+      const res = await signIn('credentials', {
+        email: values.email,
+        otp: values.otp,
+        role: 'CLIENT',
+        redirect: false,
+      });
 
-    if (res?.error) {
-      toast.error(res.error ?? 'Invalid OTP');
-    } else {
-      router.push('/client');
-      toast.success('Logged in successfully');
+      if (res?.error) {
+        toast.error(res.error ?? 'Invalid OTP');
+      } else {
+        router.push('/client/profile-setup');
+        toast.success('Logged in successfully');
+      }
+    } catch (error) {
+      toast.error('An error occurred during sign in');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }
 
-  if (status === 'loading') {
+  const renderContent = () => {
+    if (showOTP) {
+      return (
+        <motion.div key='otp' className='space-y-6'>
+          <FormField
+            control={form.control}
+            name='otp'
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <InputOTP {...field} maxLength={6}>
+                    <InputOTPGroup className='w-full justify-center gap-2'>
+                      {[...Array(6)].map((_, i) => (
+                        <InputOTPSlot key={i} index={i} />
+                      ))}
+                    </InputOTPGroup>
+                  </InputOTP>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className='flex justify-between text-sm'>
+            <Button type='button' variant='link' className='p-0' onClick={() => setShowOTP(false)}>
+              Change Email
+            </Button>
+            {resendTimer > 0 ? (
+              <span className='text-muted-foreground'>Resend code in {resendTimer}s</span>
+            ) : (
+              <Button
+                type='button'
+                variant='link'
+                className='p-0'
+                onClick={() => handleSendOTP(form.getValues('email'))}
+                disabled={isSendingOTP}
+              >
+                Resend code
+              </Button>
+            )}
+          </div>
+          <Button type='submit' className='w-full' disabled={isLoading}>
+            {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+            Sign In
+          </Button>
+        </motion.div>
+      );
+    }
+
     return (
-      <div className='flex flex-col items-center justify-center'>
-        <Logo className='h-10 w-10 animate-pulse' />
+      <motion.div key='email' className='space-y-6'>
+        <FormField
+          control={form.control}
+          name='email'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email Address</FormLabel>
+              <FormControl>
+                <Input placeholder='you@example.com' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type='submit' className='w-full' disabled={isSendingOTP}>
+          {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+          Continue with Email
+        </Button>
+      </motion.div>
+    );
+  };
+
+  if (status === 'loading')
+    return (
+      <div className='flex h-screen items-center justify-center'>
+        <Loader2 className='h-8 w-8 animate-spin' />
       </div>
     );
-  }
-
-  if (session) {
-    const targetDashboard = session.user.role === 'CLIENT' ? '/client' : '/practitioner';
-    router.replace(targetDashboard);
-    return null;
-  }
 
   return (
-    <motion.div
-      className='mx-auto w-full max-w-md'
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-    >
-      <Card className='w-full shadow-none'>
-        <CardHeader className='space-y-2 pb-4 sm:pb-6'>
-          <CardTitle className='text-center text-xl sm:text-2xl font-semibold'>Welcome back</CardTitle>
-          <CardDescription className='text-center text-sm'>
-            {showOTP ? 'Enter the verification code sent to your email' : 'Sign in to your account'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='p-4 sm:p-6'>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='email'
-                render={({ field }) => (
-                  <FormItem className='flex flex-col items-center space-y-2'>
-                    <FormLabel>Email address</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='name@example.com'
-                        {...field}
-                        disabled={showOTP}
-                        className='placeholder:text-center w-full'
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <AnimatePresence mode='wait'>
-                {showOTP && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className='space-y-4'
-                  >
-                    <FormField
-                      control={form.control}
-                      name='otp'
-                      render={({ field }) => (
-                        <FormItem className='flex flex-col items-center space-y-2'>
-                          <FormLabel className='mb-3'>Verification code</FormLabel>
-                          <FormControl>
-                            <InputOTP value={field.value} onChange={field.onChange} maxLength={6}>
-                              <InputOTPGroup className='gap-1 sm:gap-2'>
-                                <InputOTPSlot index={0} />
-                                <InputOTPSlot index={1} />
-                                <InputOTPSlot index={2} />
-                                <InputOTPSlot index={3} />
-                                <InputOTPSlot index={4} />
-                                <InputOTPSlot index={5} />
-                              </InputOTPGroup>
-                            </InputOTP>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className='text-center'>
-                      {resendTimer > 0 ? (
-                        <p className='text-muted-foreground text-sm'>Resend code in {resendTimer}s</p>
-                      ) : (
-                        <Button
-                          type='button'
-                          variant='link'
-                          className='h-auto p-0 text-sm'
-                          onClick={() => handleSendOTP(form.getValues('email'))}
-                          disabled={isLoading || isSendingOTP}
-                        >
-                          Resend verification code
-                        </Button>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <Button type='submit' className='w-full shadow-xs' disabled={isLoading || isSendingOTP}>
-                {(isLoading || isSendingOTP) && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-                {showOTP ? 'Verify code' : 'Continue with email'}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </motion.div>
+    <>
+      <div className='mb-8 text-center'>
+        <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10' />
+      </div>
+      <div className='flex flex-col space-y-2 text-left mb-8'>
+        <h1 className='text-2xl font-bold tracking-tight'>{showOTP ? 'Check your email' : 'Client Portal Login'}</h1>
+        <p className='text-muted-foreground'>
+          {showOTP ? `We've sent a code to ${form.getValues('email')}` : 'Please sign in to access your dashboard.'}
+        </p>
+      </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='w-full'>
+          <AnimatePresence mode='wait'>{renderContent()}</AnimatePresence>
+        </form>
+      </Form>
+    </>
   );
 }

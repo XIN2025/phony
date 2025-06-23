@@ -17,7 +17,7 @@ export default function LandingPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Header */}
+        {}
         <div className='text-center mb-8 sm:mb-12'>
           <motion.h1
             className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4'
@@ -37,9 +37,9 @@ export default function LandingPage() {
           </motion.p>
         </div>
 
-        {/* Role Selection Cards */}
+        {}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-2xl mx-auto px-4 sm:px-0'>
-          {/* Practitioner Card */}
+          {}
           <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
             <Card className='h-full hover:shadow-lg transition-shadow'>
               <CardHeader className='text-center pb-4'>
@@ -65,7 +65,7 @@ export default function LandingPage() {
             </Card>
           </motion.div>
 
-          {/* Client Card */}
+          {}
           <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
             <Card className='h-full hover:shadow-lg transition-shadow'>
               <CardHeader className='text-center pb-4'>
@@ -87,7 +87,7 @@ export default function LandingPage() {
           </motion.div>
         </div>
 
-        {/* Footer */}
+        {}
         <motion.div
           className='text-center mt-8 sm:mt-12 text-xs sm:text-sm text-muted-foreground px-4'
           initial={{ opacity: 0 }}

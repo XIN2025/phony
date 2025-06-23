@@ -15,7 +15,8 @@ import { useSession } from 'next-auth/react';
 import { Session } from 'next-auth';
 import { Sheet, SheetContent, SheetTrigger } from '@repo/ui/components/sheet';
 import { usePathname } from 'next/navigation';
-import { SidebarContent, getInitials } from '@/components/practitioner/Sidebar';
+import { SidebarContent } from '@/components/practitioner/Sidebar';
+import { getUserDisplayName, getInitials } from '@/lib/utils';
 
 interface Client {
   id: string;
@@ -42,11 +43,11 @@ const mockClients: Client[] = [
   },
   {
     id: '2',
-    firstName: 'Jiya',
+    firstName: 'User',
     lastName: '',
-    email: 'emma01@gmail.com',
+    email: 'user@gmail.com',
     status: 'JOINED',
-    engagement: 'Low',
+    engagement: 'Medium',
     lastSession: 'May 10, 2025',
     phone: '+91 9876543210',
   },
@@ -147,8 +148,8 @@ const renderSkeleton = () => (
 );
 
 export default function ClientsPage() {
-  const { data: session }: { data: Session | null } = useSession();
-  const userName = session?.user?.name ?? 'Ana Johnson';
+  const { data: session } = useSession();
+  const userName = getUserDisplayName(session);
   const pathname = usePathname();
 
   const navLinks = [
@@ -164,7 +165,6 @@ export default function ClientsPage() {
   } = useQuery<Client[]>({
     queryKey: ['clients'],
     queryFn: async () => {
-      // TODO: Replace with actual API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
       return mockClients;
     },
@@ -196,7 +196,9 @@ export default function ClientsPage() {
         </Link>
       </div>
       <div className='relative w-full max-w-md'>
-        <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground' />
+        <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
+          <Search className='h-5 w-5 text-muted-foreground' />
+        </div>
         <Input placeholder='Search Clients' className='pl-10 w-full' />
       </div>
       <Card>

@@ -3,6 +3,8 @@ import { PractitionerService, InviteClientDto } from './practitioner.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { CurrentUser } from '../auth/decorators/user.decorator';
+import { RequestUser } from '../auth/dto/request-user.dto';
 
 @ApiTags('practitioner')
 @Controller('practitioner')
@@ -20,14 +22,6 @@ export class PractitionerController {
     return this.practitionerService.getInvitationByToken(token);
   }
 
-  @Public()
-  @Get('invitations/debug/:token')
-  @ApiOperation({ summary: 'Debug invitation token (for troubleshooting)' })
-  @ApiResponse({ status: 200, description: 'Debug information about the token.' })
-  async debugInvitationToken(@Param('token') token: string) {
-    return this.practitionerService.debugInvitationToken(token);
-  }
-
   @Post('invite-client')
   @ApiOperation({ summary: 'Invite a client to the platform' })
   @ApiResponse({ status: 201, description: 'Client invitation sent successfully' })
@@ -41,18 +35,16 @@ export class PractitionerController {
   @Get('invitations')
   @ApiOperation({ summary: 'Get all invitations sent by the practitioner' })
   @ApiResponse({ status: 200, description: 'List of invitations retrieved successfully' })
-  async getInvitations(@Request() req) {
-    const practitionerId = req.user.id;
-    return this.practitionerService.getInvitations(practitionerId);
+  async getInvitations(@CurrentUser() user: RequestUser) {
+    return this.practitionerService.getInvitations(user.id);
   }
 
   @Post('invitations/:id/resend')
   @ApiOperation({ summary: 'Resend a specific invitation' })
   @ApiResponse({ status: 201, description: 'Invitation resent successfully' })
   @ApiResponse({ status: 404, description: 'Invitation not found' })
-  async resendInvitation(@Request() req, @Param('id') invitationId: string) {
-    const practitionerId = req.user.id;
-    return this.practitionerService.resendInvitation(practitionerId, invitationId);
+  async resendInvitation(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.practitionerService.resendInvitation(user.id, id);
   }
 
   @Delete('invitations/:id')
@@ -60,9 +52,8 @@ export class PractitionerController {
   @ApiResponse({ status: 200, description: 'Invitation deleted successfully' })
   @ApiResponse({ status: 404, description: 'Invitation not found' })
   @ApiResponse({ status: 403, description: 'Forbidden - invitation does not belong to practitioner' })
-  async deleteInvitation(@Request() req, @Param('id') invitationId: string) {
-    const practitionerId = req.user.id;
-    return this.practitionerService.deleteInvitation(practitionerId, invitationId);
+  async deleteInvitation(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.practitionerService.deleteInvitation(user.id, id);
   }
 
   @Get('clients')

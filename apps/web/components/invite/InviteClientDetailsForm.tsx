@@ -33,7 +33,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
       clientEmail: inviteData.clientEmail || '',
       includeIntakeForm: inviteData.includeIntakeForm || false,
     },
-    mode: 'onBlur',
+    mode: 'onChange',
   });
 
   const includeIntakeForm = watch('includeIntakeForm');

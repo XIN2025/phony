@@ -12,7 +12,8 @@ export class AuthService {
     email: string;
     otp: string;
     role: 'PRACTITIONER';
-    name: string;
+    firstName: string;
+    lastName: string;
     profession: string;
   }) {
     return await ApiClient.post<LoginResponse>('/api/auth/practitioner/signup', data);

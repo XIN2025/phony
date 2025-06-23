@@ -1,6 +1,5 @@
 import '@testing-library/jest-dom';
 
-// Mock next-auth modules to prevent ESM import issues
 jest.mock('next-auth', () => ({
   getServerSession: jest.fn(),
 }));
@@ -12,7 +11,6 @@ jest.mock('next-auth/react', () => ({
   useSession: jest.fn(),
 }));
 
-// Mock jose module
 jest.mock('jose', () => ({
   compactDecrypt: jest.fn(),
   compactEncrypt: jest.fn(),
@@ -20,7 +18,6 @@ jest.mock('jose', () => ({
   jwtEncrypt: jest.fn(),
 }));
 
-// Mock openid-client
 jest.mock('openid-client', () => ({
   Issuer: {
     discover: jest.fn(),
@@ -28,7 +25,6 @@ jest.mock('openid-client', () => ({
   Client: jest.fn(),
 }));
 
-// Mock axios properly
 const mockAxios: any = {
   create: jest.fn(() => mockAxios),
   get: jest.fn(),
@@ -41,7 +37,6 @@ const mockAxios: any = {
 
 jest.mock('axios', () => mockAxios);
 
-// Mock Next.js
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
@@ -55,7 +50,6 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/',
 }));
 
-// Mock Next.js Image component
 jest.mock('next/image', () => ({
   __esModule: true,
   default: (props: any) => {
@@ -63,7 +57,6 @@ jest.mock('next/image', () => ({
   },
 }));
 
-// Mock Next.js Link component
 jest.mock('next/link', () => ({
   __esModule: true,
   default: (props: any) => {
@@ -71,39 +64,34 @@ jest.mock('next/link', () => ({
   },
 }));
 
-// Mock environment variables
 process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
 
-// Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: jest.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
     dispatchEvent: jest.fn(),
   })),
 });
 
-// Mock ResizeObserver
 global.ResizeObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
 }));
 
-// Mock IntersectionObserver
 global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
 }));
 
-// Mock console methods to reduce noise in tests
 const originalError = console.error;
 const originalWarn = console.warn;
 

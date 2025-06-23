@@ -11,7 +11,9 @@ datasource db {
 model User {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   email           String   @unique
-  name            String?
+  firstName       String
+  lastName        String
+  idProofUrl      String?
   profession      String?
   avatarUrl       String?  @map("avatar_url")
   role            UserRole

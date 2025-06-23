@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import '@repo/ui/globals.css';
 import { inter } from '@/lib/fonts';
 import Providers from '@/app/providers';
+import { SessionErrorHandler } from '@/components/SessionErrorHandler';
 
 export const metadata: Metadata = {
   title: 'Continuum - Healthcare Practice Management',
@@ -23,7 +24,9 @@ export default function RootLayout({
   return (
     <html lang='en' suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <SessionErrorHandler>{children}</SessionErrorHandler>
+        </Providers>
       </body>
     </html>
   );

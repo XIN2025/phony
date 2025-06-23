@@ -144,7 +144,7 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
                   control={form.control}
                   name={`questions.${index}.type`}
                   render={({ field: selectField }) => (
-                    <Select value={selectField.value} onValueChange={selectField.onChange}>
+                    <Select value={selectField.value || ''} onValueChange={selectField.onChange}>
                       <SelectTrigger className='w-full'>
                         <SelectValue
                           placeholder={

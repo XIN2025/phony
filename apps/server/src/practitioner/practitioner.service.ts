@@ -16,7 +16,9 @@ export interface InvitationResponse {
   clientEmail: string;
   clientFirstName: string;
   clientLastName: string;
-  status: 'pending' | 'accepted';
+  status: 'PENDING' | 'JOINED';
+  invited?: string;
+  avatar?: string;
   createdAt: Date;
 }
 
@@ -28,92 +30,50 @@ export class PractitionerService {
   ) {}
 
   async inviteClient(practitionerId: string, inviteData: InviteClientDto): Promise<InvitationResponse> {
-    console.log(
-      `[PractitionerService] Starting invitation process for ${inviteData.clientEmail} by practitioner ${practitionerId}`
-    );
-    console.log(`[PractitionerService] Invite DTO:`, inviteData);
+    const { clientFirstName, clientLastName, clientEmail, intakeFormId } = inviteData;
 
-    // Normalize email
-    const normalizedEmail = inviteData.clientEmail.toLowerCase().trim();
-    const normalizedFirstName = inviteData.clientFirstName.trim();
-    const normalizedLastName = inviteData.clientLastName.trim();
+    if (!clientFirstName?.trim() || !clientLastName?.trim() || !clientEmail?.trim()) {
+      throw new BadRequestException('Client first name, last name, and email are required');
+    }
 
-    // Check if practitioner exists
+    const normalizedEmail = clientEmail.trim().toLowerCase();
+    const normalizedFirstName = clientFirstName.trim();
+    const normalizedLastName = clientLastName.trim();
+
     const practitioner = await this.prisma.user.findUnique({
       where: { id: practitionerId },
     });
 
     if (!practitioner) {
-      console.log(`[PractitionerService] Practitioner not found: ${practitionerId}`);
       throw new NotFoundException('Practitioner not found');
     }
 
-    // Check if client already exists
-    const existingClient = await this.prisma.user.findFirst({
-      where: {
-        email: normalizedEmail,
-        practitionerId,
-        role: 'CLIENT',
-      },
-    });
-
-    if (existingClient) {
-      console.log(`[PractitionerService] Client already exists: ${normalizedEmail}`);
-      throw new BadRequestException('A client with this email already exists in your practice.');
-    }
-
-    // Check if there's already an invitation for this practitioner and email
     const existingInvitation = await this.prisma.invitation.findFirst({
       where: {
         practitionerId,
         clientEmail: normalizedEmail,
+        isAccepted: false,
+        expiresAt: {
+          gt: new Date(),
+        },
       },
     });
 
     if (existingInvitation) {
-      console.log(`[PractitionerService] Invitation already exists for ${normalizedEmail}, updating...`);
-
-      // Check if the existing invitation is still valid (not expired)
-      const currentTime = new Date();
-      if (existingInvitation.expiresAt > currentTime && !existingInvitation.isAccepted) {
-        throw new BadRequestException(
-          'An invitation has already been sent to this email address and is still pending.'
-        );
-      }
-
-      // If expired or accepted, we can create a new invitation by deleting the old one
-      await this.prisma.invitation.delete({
-        where: { id: existingInvitation.id },
-      });
-      console.log(`[PractitionerService] Deleted expired/accepted invitation for ${normalizedEmail}`);
+      throw new BadRequestException('An active invitation already exists for this email');
     }
 
-    // Validate intake form if provided
-    const { intakeFormId } = inviteData;
-    let intakeFormTitle: string | undefined;
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
 
-    if (intakeFormId) {
-      const form = await this.prisma.intakeForm.findFirst({
-        where: { id: intakeFormId, practitionerId },
-      });
-      if (!form) {
-        console.log(`[PractitionerService] Intake form not found or doesn't belong to practitioner: ${intakeFormId}`);
-        throw new BadRequestException('The selected intake form does not exist or does not belong to you.');
-      }
-      intakeFormTitle = form.title;
+    if (existingUser) {
+      throw new BadRequestException('A user with this email already exists');
     }
 
-    // Generate secure token
     const token = randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    console.log(
-      `[PractitionerService] Creating invitation for ${normalizedEmail} with new token: ${token.substring(0, 8)}...`
-    );
-    console.log(`[PractitionerService] Generated token length: ${token.length}`);
-    console.log(`[PractitionerService] Full generated token: ${token}`);
-
-    // Create invitation
     const invitation = await this.prisma.invitation.create({
       data: {
         practitionerId,
@@ -126,36 +86,35 @@ export class PractitionerService {
       },
     });
 
-    console.log(`[PractitionerService] Invitation created in DB with ID: ${invitation.id}`);
-    console.log(`[PractitionerService] Stored token in DB: ${invitation.token.substring(0, 8)}...`);
+    let intakeFormTitle: string | undefined;
+    if (intakeFormId) {
+      const form = await this.prisma.intakeForm.findUnique({ where: { id: intakeFormId } });
+      intakeFormTitle = form?.title;
+    }
 
-    // Send invitation email
     try {
       const invitationLink = `${config.frontendUrl}/client/auth/signup?token=${encodeURIComponent(token)}`;
-      console.log(`[PractitionerService] Attempting to send email to ${normalizedEmail} with link: ${invitationLink}`);
-      console.log(`[PractitionerService] Encoded token in URL: ${encodeURIComponent(token)}`);
+
+      const practitionerName =
+        practitioner.firstName && practitioner.lastName
+          ? `${practitioner.firstName} ${practitioner.lastName}`
+          : 'Your Practitioner';
 
       const emailSent = await this.mailService.sendClientInvitation({
         to: normalizedEmail,
         clientName: `${normalizedFirstName} ${normalizedLastName}`,
-        practitionerName: practitioner.name || 'Your Practitioner',
+        practitionerName,
         invitationLink: invitationLink,
         intakeFormTitle,
       });
 
       if (!emailSent) {
-        console.error(`[PractitionerService] Email service returned false for ${normalizedEmail}`);
-        // If email fails, delete the invitation
         await this.prisma.invitation.delete({
           where: { id: invitation.id },
         });
         throw new BadRequestException('Failed to send invitation email');
       }
-
-      console.log(`[PractitionerService] Email sent successfully to ${normalizedEmail}`);
-    } catch (error) {
-      console.error(`[PractitionerService] Email sending failed for ${normalizedEmail}:`, error);
-      // If email fails, delete the invitation
+    } catch {
       await this.prisma.invitation.delete({
         where: { id: invitation.id },
       });
@@ -167,13 +126,18 @@ export class PractitionerService {
       clientEmail: invitation.clientEmail,
       clientFirstName: invitation.clientFirstName,
       clientLastName: invitation.clientLastName,
-      status: invitation.isAccepted ? 'accepted' : 'pending',
+      status: invitation.isAccepted ? 'JOINED' : 'PENDING',
+      invited: invitation.createdAt.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${invitation.clientEmail}`,
       createdAt: invitation.createdAt,
     };
   }
 
   async resendInvitation(practitionerId: string, invitationId: string): Promise<InvitationResponse> {
-    // 1. Find the original invitation
     const originalInvitation = await this.prisma.invitation.findFirst({
       where: {
         id: invitationId,
@@ -185,7 +149,6 @@ export class PractitionerService {
       throw new NotFoundException('Invitation not found or you do not have permission to access it.');
     }
 
-    // 2. Gather details
     const { clientEmail, clientFirstName, clientLastName, intakeFormId } = originalInvitation;
 
     const practitioner = await this.prisma.user.findUnique({
@@ -195,14 +158,12 @@ export class PractitionerService {
       throw new NotFoundException('Practitioner not found');
     }
 
-    // 3. Delete the old invitation to invalidate the old token
     await this.prisma.invitation.delete({
       where: { id: invitationId },
     });
 
-    // 4. Create a new invitation with a new token and expiry
     const token = randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     const newInvitation = await this.prisma.invitation.create({
       data: {
@@ -222,208 +183,76 @@ export class PractitionerService {
       intakeFormTitle = form?.title;
     }
 
-    // 5. Send the new email
     try {
       const invitationLink = `${config.frontendUrl}/client/auth/signup?token=${encodeURIComponent(token)}`;
+
+      const practitionerName =
+        practitioner.firstName && practitioner.lastName
+          ? `${practitioner.firstName} ${practitioner.lastName}`
+          : 'Your Practitioner';
+
       await this.mailService.sendClientInvitation({
         to: clientEmail,
         clientName: `${clientFirstName} ${clientLastName}`,
-        practitionerName: practitioner.name || 'Your Practitioner',
+        practitionerName,
         invitationLink,
         intakeFormTitle,
       });
-    } catch (error) {
-      // If email fails, roll back the new invitation to prevent a broken state
+    } catch {
       await this.prisma.invitation.delete({ where: { id: newInvitation.id } });
       throw new BadRequestException('Failed to resend invitation email');
     }
 
-    // 6. Return the new invitation's details
     return {
       id: newInvitation.id,
       clientEmail: newInvitation.clientEmail,
       clientFirstName: newInvitation.clientFirstName,
       clientLastName: newInvitation.clientLastName,
-      status: 'pending',
+      status: 'PENDING',
+      invited: newInvitation.createdAt.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${newInvitation.clientEmail}`,
       createdAt: newInvitation.createdAt,
     };
   }
 
   async getInvitationByToken(token: string) {
-    console.log(`[PractitionerService] Validating token: ${token.substring(0, 8)}...`);
-    console.log(`[PractitionerService] Token length: ${token.length}`);
-    console.log(`[PractitionerService] Full token: ${token}`);
-
-    // Clean the token - remove any potential URL encoding issues
     const cleanToken = token.trim();
 
-    // Try to find the invitation with the exact token
     let invitation = await this.prisma.invitation.findUnique({
       where: { token: cleanToken },
     });
 
-    // If not found, try with URL decoded version
     if (!invitation) {
       try {
         const decodedToken = decodeURIComponent(cleanToken);
-        console.log(`[PractitionerService] Trying decoded token: ${decodedToken.substring(0, 8)}...`);
         invitation = await this.prisma.invitation.findUnique({
           where: { token: decodedToken },
         });
-      } catch (error) {
-        console.log(`[PractitionerService] URL decode failed:`, error);
-      }
-    }
-
-    // If still not found, try to find by partial match (for debugging)
-    if (!invitation) {
-      console.log(`[PractitionerService] Token not found, searching for partial matches...`);
-      const allInvitations = await this.prisma.invitation.findMany({
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-      });
-
-      if (allInvitations && allInvitations.length > 0) {
-        console.log(
-          `[PractitionerService] Recent invitations:`,
-          allInvitations.map((inv) => ({
-            id: inv.id,
-            clientEmail: inv.clientEmail,
-            tokenStart: inv.token.substring(0, 8),
-            tokenLength: inv.token.length,
-            createdAt: inv.createdAt,
-            isAccepted: inv.isAccepted,
-            expiresAt: inv.expiresAt,
-          }))
-        );
-      } else {
-        console.log(`[PractitionerService] No recent invitations found`);
+      } catch {
+        // Token decoding failed, continue with null invitation
       }
     }
 
     const currentTime = new Date();
 
     if (!invitation) {
-      console.error(`[PractitionerService] Invitation not found for token: ${token.substring(0, 8)}...`);
       throw new NotFoundException('Invitation not found or has expired.');
     }
 
     const isExpired = invitation.expiresAt < currentTime;
 
-    console.log('[PractitionerService] Found invitation:', {
-      found: true,
-      isAccepted: invitation.isAccepted,
-      expiresAt: invitation.expiresAt,
-      expiresAtISO: invitation.expiresAt.toISOString(),
-      currentTime: currentTime,
-      currentTimeISO: currentTime.toISOString(),
-      isExpired: isExpired,
-      timeDifference: invitation.expiresAt.getTime() - currentTime.getTime(),
-      timeDifferenceHours: (invitation.expiresAt.getTime() - currentTime.getTime()) / (1000 * 3600),
-      timeDifferenceDays: (invitation.expiresAt.getTime() - currentTime.getTime()) / (1000 * 3600 * 24),
-    });
-
     if (isExpired) {
-      console.error(`[PractitionerService] Invitation is expired for token: ${token.substring(0, 8)}...`);
       throw new NotFoundException('Invitation not found or has expired.');
     }
-
-    console.log('[PractitionerService] Invitation is valid');
 
     return {
       clientEmail: invitation.clientEmail,
       isAccepted: invitation.isAccepted,
     };
-  }
-
-  async debugInvitationToken(token: string) {
-    console.log(`[PractitionerService] Debugging token: ${token.substring(0, 8)}...`);
-    console.log(`[PractitionerService] Debug token length: ${token.length}`);
-    console.log(`[PractitionerService] Debug full token: ${token}`);
-
-    // Try different token variations
-    const tokenVariations = [
-      token,
-      token.trim(),
-      decodeURIComponent(token.trim()),
-      token.replace(/\+/g, ' '), // Handle plus signs that might be URL encoded spaces
-    ];
-
-    console.log(
-      `[PractitionerService] Testing token variations:`,
-      tokenVariations.map((t) => ({
-        token: t.substring(0, 8) + '...',
-        length: t.length,
-        isHex: /^[0-9a-fA-F]+$/.test(t),
-      }))
-    );
-
-    // Try to find the invitation with each token variation
-    let foundInvitation: {
-      id: string;
-      clientEmail: string;
-      isAccepted: boolean;
-      expiresAt: Date;
-      createdAt: Date;
-      token: string;
-    } | null = null;
-    for (const tokenVar of tokenVariations) {
-      try {
-        const invitation = await this.prisma.invitation.findUnique({
-          where: { token: tokenVar },
-        });
-        if (invitation) {
-          foundInvitation = invitation;
-          console.log(`[PractitionerService] Found invitation with token variation: ${tokenVar.substring(0, 8)}...`);
-          break;
-        }
-      } catch (error) {
-        console.log(`[PractitionerService] Error testing token variation:`, error);
-      }
-    }
-
-    // Also try to find any invitation that might be similar
-    const allInvitations = await this.prisma.invitation.findMany({
-      take: 10,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const debugInfo = {
-      token: token.substring(0, 8) + '...',
-      tokenLength: token.length,
-      foundExactMatch: !!foundInvitation,
-      invitationDetails: foundInvitation
-        ? {
-            id: foundInvitation.id,
-            clientEmail: foundInvitation.clientEmail,
-            isAccepted: foundInvitation.isAccepted,
-            expiresAt: foundInvitation.expiresAt,
-            createdAt: foundInvitation.createdAt,
-            tokenStart: foundInvitation.token.substring(0, 8) + '...',
-            tokenLength: foundInvitation.token.length,
-          }
-        : null,
-      currentTime: new Date(),
-      tokenVariations: tokenVariations.map((t) => ({
-        token: t.substring(0, 8) + '...',
-        length: t.length,
-        isHex: /^[0-9a-fA-F]+$/.test(t),
-      })),
-      recentInvitations: allInvitations
-        ? allInvitations.map((inv) => ({
-            id: inv.id,
-            clientEmail: inv.clientEmail,
-            tokenStart: inv.token.substring(0, 8) + '...',
-            tokenLength: inv.token.length,
-            isAccepted: inv.isAccepted,
-            expiresAt: inv.expiresAt,
-            createdAt: inv.createdAt,
-          }))
-        : [],
-    };
-
-    console.log(`[PractitionerService] Debug info:`, debugInfo);
-    return debugInfo;
   }
 
   async getInvitations(practitionerId: string): Promise<InvitationResponse[]> {
@@ -445,7 +274,13 @@ export class PractitionerService {
       clientEmail: invitation.clientEmail,
       clientFirstName: invitation.clientFirstName,
       clientLastName: invitation.clientLastName,
-      status: 'pending',
+      status: invitation.isAccepted ? 'JOINED' : 'PENDING',
+      invited: invitation.createdAt.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${invitation.clientEmail}`,
       createdAt: invitation.createdAt,
     }));
   }
@@ -458,7 +293,8 @@ export class PractitionerService {
       },
       select: {
         id: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         email: true,
         isActive: true,
         createdAt: true,
@@ -469,21 +305,14 @@ export class PractitionerService {
   }
 
   async deleteInvitation(practitionerId: string, invitationId: string) {
-    console.log(
-      `[PractitionerService] Attempting to delete invitation ${invitationId} for practitioner ${practitionerId}`
-    );
-
-    // Check if practitioner exists
     const practitioner = await this.prisma.user.findUnique({
       where: { id: practitionerId },
     });
 
     if (!practitioner) {
-      console.log(`[PractitionerService] Practitioner not found: ${practitionerId}`);
       throw new NotFoundException('Practitioner not found');
     }
 
-    // Find the invitation and verify it belongs to this practitioner
     const invitation = await this.prisma.invitation.findFirst({
       where: {
         id: invitationId,
@@ -492,22 +321,16 @@ export class PractitionerService {
     });
 
     if (!invitation) {
-      console.log(`[PractitionerService] Invitation not found or doesn't belong to practitioner: ${invitationId}`);
       throw new NotFoundException('Invitation not found');
     }
 
-    // Check if invitation has already been accepted
     if (invitation.isAccepted) {
-      console.log(`[PractitionerService] Cannot delete accepted invitation: ${invitationId}`);
       throw new BadRequestException('Cannot delete an invitation that has already been accepted');
     }
 
-    // Delete the invitation
     await this.prisma.invitation.delete({
       where: { id: invitationId },
     });
-
-    console.log(`[PractitionerService] Successfully deleted invitation ${invitationId}`);
 
     return { message: 'Invitation deleted successfully' };
   }
