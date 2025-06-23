@@ -1,10 +1,8 @@
-import { type ClassValue, clsx } from 'clsx';
+﻿import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-
 export function getUserDisplayName(
   user:
     | {
@@ -29,7 +27,6 @@ export function getUserDisplayName(
 ): string;
 export function getUserDisplayName(input: any): string {
   if (!input) return 'User';
-
   if (input.user) {
     const user = input.user;
     if (user.firstName && user.lastName) {
@@ -41,10 +38,8 @@ export function getUserDisplayName(input: any): string {
     if (user.lastName) {
       return user.lastName;
     }
-
     return user.email?.split('@')[0] || 'User';
   }
-
   if (input.firstName && input.lastName) {
     return `${input.firstName} ${input.lastName}`;
   }
@@ -54,10 +49,8 @@ export function getUserDisplayName(input: any): string {
   if (input.lastName) {
     return input.lastName;
   }
-
   return input.email?.split('@')[0] || 'User';
 }
-
 export function getInitials(name: string): string {
   if (!name) return '';
   const names = name.split(' ');

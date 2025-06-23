@@ -1,5 +1,4 @@
-'use client';
-
+﻿'use client';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,15 +8,12 @@ import { Label } from '@repo/ui/components/label';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { inviteClientSchema } from '@repo/shared-types/schemas';
 import { useInviteContext } from '@/context/InviteContext';
-
 type FormValues = z.infer<typeof inviteClientSchema>;
-
 interface Props {
   onNext: (data: FormValues) => void;
   isLoading: boolean;
   onCancel: () => void;
 }
-
 export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) {
   const { inviteData } = useInviteContext();
   const {
@@ -35,9 +31,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
     },
     mode: 'onChange',
   });
-
   const includeIntakeForm = watch('includeIntakeForm');
-
   return (
     <form onSubmit={handleSubmit(onNext)} className='space-y-4'>
       <div className='space-y-2'>
@@ -51,7 +45,6 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
         />
         {errors.clientFirstName && <p className='text-sm text-destructive'>{errors.clientFirstName.message}</p>}
       </div>
-
       <div className='space-y-2'>
         <Label htmlFor='clientLastName' className='text-sm font-medium'>
           Last Name
@@ -63,7 +56,6 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
         />
         {errors.clientLastName && <p className='text-sm text-destructive'>{errors.clientLastName.message}</p>}
       </div>
-
       <div className='space-y-2'>
         <Label htmlFor='clientEmail' className='text-sm font-medium'>
           Email
@@ -75,7 +67,6 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
         />
         {errors.clientEmail && <p className='text-sm text-destructive'>{errors.clientEmail.message}</p>}
       </div>
-
       <div className='space-y-4'>
         <Label className='text-base font-semibold'>Intake Form</Label>
         <div className='flex items-center space-x-3'>
@@ -96,7 +87,6 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
           </Label>
         </div>
       </div>
-
       <div className='flex flex-col gap-4 pt-8 sm:flex-row sm:justify-between'>
         <Button type='button' variant='outline' onClick={onCancel} className='w-full rounded-lg px-6 sm:w-auto'>
           Cancel

@@ -1,5 +1,4 @@
-'use client';
-
+﻿'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
@@ -13,17 +12,14 @@ import {
   DropdownMenuTrigger,
 } from '@repo/ui/components/dropdown-menu';
 import { toast } from 'sonner';
-
 interface IntakeForm {
   id: string;
   title: string;
   updatedAt: string;
 }
-
 interface Props {
   onNext: (formId: string | 'create-new') => void;
 }
-
 export function IntakeFormSelector({ onNext }: Props) {
   const queryClient = useQueryClient();
   const {
@@ -34,7 +30,6 @@ export function IntakeFormSelector({ onNext }: Props) {
     queryKey: ['intake-forms'],
     queryFn: async () => ApiClient.get('/api/intake-forms'),
   });
-
   const deleteMutation = useMutation({
     mutationFn: (formId: string) => ApiClient.delete(`/api/intake-forms/${formId}`),
     onSuccess: () => {
@@ -45,7 +40,6 @@ export function IntakeFormSelector({ onNext }: Props) {
       toast.error('Failed to delete form.');
     },
   });
-
   return (
     <div className='space-y-6'>
       <Card className='rounded-xl'>
@@ -100,7 +94,6 @@ export function IntakeFormSelector({ onNext }: Props) {
           </div>
         </CardContent>
       </Card>
-
       <Card
         onClick={() => onNext('create-new')}
         className='rounded-xl border-2 border-dashed border-gray-700 flex flex-col items-center justify-center h-32 text-center cursor-pointer hover:bg-gray-50 transition-colors'

@@ -1,5 +1,4 @@
-'use client';
-
+﻿'use client';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { CheckCircle2 } from 'lucide-react';
@@ -7,14 +6,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useInviteContext } from '@/context/InviteContext';
-
 export default function InviteSuccessPage() {
   const { resetInviteFlow } = useInviteContext();
-
   useEffect(() => {
     resetInviteFlow();
   }, [resetInviteFlow]);
-
   return (
     <div className='flex min-h-[80vh] items-center justify-center'>
       <Card className='w-full max-w-md text-center shadow-lg'>

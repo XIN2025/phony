@@ -1,5 +1,4 @@
-'use client';
-
+﻿'use client';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,29 +17,19 @@ import { AuthService } from '@/services';
 import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Logo } from '@repo/ui/components/logo';
-
 export default function PractitionerAuthPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [showOTP, setShowOTP] = React.useState(false);
   const [resendTimer, setResendTimer] = React.useState(0);
-  const [shouldNavigate, setShouldNavigate] = React.useState(false);
   const router = useRouter();
   const { data: session, status } = useSession();
-
+  // If already authenticated, redirect to appropriate dashboard
   React.useEffect(() => {
-    if (session) {
+    if (status === 'authenticated' && session) {
       const targetDashboard = session.user.role === 'PRACTITIONER' ? '/practitioner' : '/client';
       router.replace(targetDashboard);
     }
-  }, [session, router]);
-
-  React.useEffect(() => {
-    if (shouldNavigate) {
-      router.push('/practitioner');
-      setShouldNavigate(false);
-    }
-  }, [shouldNavigate, router]);
-
+  }, [session, status, router]);
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useMutation({
     mutationFn: async (email: string) => {
       return await AuthService.sendOtp({ email });
@@ -52,17 +41,15 @@ export default function PractitionerAuthPage() {
     },
     onError: (error) => {
       console.error('Mutation error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to send OTP');
+      toast.error(error.message ?? 'Failed to send OTP');
     },
   });
-
   const form = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(showOTP ? otpSchema : emailSchema),
     defaultValues: {
       email: '',
     },
   });
-
   const startResendTimer = () => {
     setResendTimer(60);
     const interval = setInterval(() => {
@@ -75,15 +62,12 @@ export default function PractitionerAuthPage() {
       });
     }, 1000);
   };
-
   async function onSubmit(values: z.infer<typeof emailSchema>) {
     if (!showOTP) {
       handleSendOTP(values.email);
       return;
     }
-
     setIsLoading(true);
-
     try {
       const res = await signIn('credentials', {
         email: values.email,
@@ -91,12 +75,11 @@ export default function PractitionerAuthPage() {
         role: 'PRACTITIONER',
         redirect: false,
       });
-
       if (res?.error) {
         toast.error(res.error ?? 'Invalid OTP');
       } else {
-        setShouldNavigate(true);
         toast.success('Logged in successfully');
+        // Let the useEffect handle the redirect
       }
     } catch (error) {
       console.error('SignIn error:', error);
@@ -105,7 +88,6 @@ export default function PractitionerAuthPage() {
       setIsLoading(false);
     }
   }
-
   const renderContent = () => {
     if (showOTP) {
       return (
@@ -153,7 +135,6 @@ export default function PractitionerAuthPage() {
         </motion.div>
       );
     }
-
     return (
       <motion.div key='email' className='space-y-6'>
         <FormField
@@ -176,7 +157,6 @@ export default function PractitionerAuthPage() {
       </motion.div>
     );
   };
-
   if (status === 'loading') {
     return (
       <div className='flex flex-col items-center justify-center p-4'>
@@ -185,11 +165,9 @@ export default function PractitionerAuthPage() {
       </div>
     );
   }
-
   if (session) {
     return null;
   }
-
   return (
     <>
       <div className='mb-8 text-center'>

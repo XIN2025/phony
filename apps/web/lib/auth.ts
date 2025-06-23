@@ -1,7 +1,7 @@
-import { AuthOptions, User } from 'next-auth';
+﻿import { AuthOptions, User } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { AuthService } from '@/services';
-
+import { envConfig } from '@/config';
 const credentialsAuthProvider = CredentialsProvider({
   name: 'Credentials',
   credentials: {
@@ -14,13 +14,11 @@ const credentialsAuthProvider = CredentialsProvider({
       if (!credentials?.email || !credentials?.otp) {
         throw new Error('Email and OTP required');
       }
-
       const res = await AuthService.verifyOtp({
         email: credentials.email,
         otp: credentials.otp,
         role: credentials.role as 'CLIENT' | 'PRACTITIONER',
       });
-
       const user: User = {
         id: res.user.id,
         email: res.user.email,
@@ -29,27 +27,34 @@ const credentialsAuthProvider = CredentialsProvider({
         firstName: res.user.firstName ?? '',
         lastName: res.user.lastName ?? '',
         avatarUrl: res.user.avatarUrl ?? '',
+        profession: res.user.profession ?? null,
       };
-
       return user;
     } catch (error) {
       console.error('Authorization failed:', error);
-      throw new Error((error as Error)?.message || 'Invalid credentials');
+      // Handle specific error cases
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+        throw new Error('Invalid OTP. Please check your OTP and try again.');
+      }
+      if (errorMessage.includes('Invalid OTP')) {
+        throw new Error('Invalid OTP. Please check your OTP and try again.');
+      }
+      throw new Error(errorMessage || 'Invalid credentials');
     }
   },
 });
-
 export const authOptions: AuthOptions = {
   providers: [credentialsAuthProvider],
-  secret: process.env.NEXTAUTH_SECRET || 'dev-secret-key-change-in-production',
+  secret: envConfig.nextAuthSecret,
   debug: process.env.NODE_ENV === 'development',
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (trigger === 'update' && session?.user) {
         return { ...token, ...session.user };
       }
-
       if (user) {
+        // User just signed in
         token.id = user.id;
         token.email = user.email;
         token.firstName = user.firstName;
@@ -58,72 +63,22 @@ export const authOptions: AuthOptions = {
         token.profession = user.profession;
         token.avatarUrl = user.avatarUrl || '';
         token.token = user.token;
-
         delete token.error;
-        delete token.lastValidation;
-      }
-
-      if (token.error) {
         return token;
       }
-
-      if (token.id && token.email && !user) {
-        const lastValidation = token.lastValidation as number;
-        const now = Date.now();
-        const validationCooldown = 5 * 60 * 1000;
-
-        if (!lastValidation || now - lastValidation > validationCooldown) {
-          try {
-            const response = await fetch(
-              `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/validate-session`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  userId: token.id,
-                  email: token.email,
-                }),
-              },
-            );
-
-            if (!response.ok) {
-              token.lastValidation = now;
-              return token;
-            }
-
-            const userExists = await response.json();
-            if (!userExists.valid) {
-              return { ...token, error: 'UserNotFound', lastValidation: now };
-            }
-
-            if (userExists.user) {
-              token.firstName = userExists.user.firstName;
-              token.lastName = userExists.user.lastName;
-              token.avatarUrl = userExists.user.avatarUrl;
-              token.profession = userExists.user.profession;
-            }
-
-            token.lastValidation = now;
-          } catch (error) {
-            console.error('Error validating user session:', error);
-
-            token.lastValidation = now;
-          }
-        }
-      }
-
+      // For existing sessions, just return the token as-is
+      // Backend JWT strategy will handle validation when making API calls
       return token;
     },
     async session({ session, token }) {
-      if (token.error) {
+      // If token has a critical error, return an error session
+      if (token.error && (token.error === 'UserNotFound' || token.error === 'InvalidToken')) {
         return {
           expires: new Date(0).toISOString(),
           user: undefined,
+          error: token.error,
         };
       }
-
       if (session.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
@@ -139,11 +94,45 @@ export const authOptions: AuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 7 * 24 * 60 * 60,
+    maxAge: 7 * 24 * 60 * 60, // 7 days
+  },
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+      },
+    },
+    callbackUrl: {
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.callback-url' : 'next-auth.callback-url',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    csrfToken: {
+      name: process.env.NODE_ENV === 'production' ? '__Host-next-auth.csrf-token' : 'next-auth.csrf-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   events: {
-    async signOut({ token }) {},
-    async session({ session, token }) {},
+    async signOut({ token }) {
+      console.log('User signed out:', token?.email);
+    },
+    async session({ session, token }) {
+      console.log('Session updated:', session?.user?.email);
+    },
   },
   pages: {
     signIn: '/client/auth',

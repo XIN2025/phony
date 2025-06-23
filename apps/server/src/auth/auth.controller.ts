@@ -19,18 +19,18 @@ interface ProfileUpdateBody {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('otp')
-  @Public()
-  @ApiResponse({ type: Boolean, description: 'Whether the OTP was sent successfully' })
-  async otpAuth(@Body() body: OtpAuthDto): Promise<boolean> {
-    return this.authService.handleOtpAuth(body.email);
-  }
-
   @Post('otp/verify')
   @Public()
   @ApiResponse({ type: LoginResponseDto })
   async verifyOtp(@Body() body: VerifyOtpDto): Promise<LoginResponseDto> {
     return this.authService.verifyOtp(body.email, body.otp, body.role);
+  }
+
+  @Post('otp')
+  @Public()
+  @ApiResponse({ type: Boolean, description: 'Whether the OTP was sent successfully' })
+  async otpAuth(@Body() body: OtpAuthDto): Promise<boolean> {
+    return this.authService.handleOtpAuth(body.email);
   }
 
   @Post('practitioner/signup')
@@ -47,24 +47,6 @@ export class AuthController {
     @Body() body: { email: string; firstName: string; lastName: string; invitationToken: string }
   ): Promise<LoginResponseDto> {
     return this.authService.handleClientSignUp(body);
-  }
-
-  @Post('validate-user')
-  @Public()
-  @ApiResponse({ type: Object })
-  async validateUser(@Body() body: { userId: string; email: string }): Promise<{
-    valid: boolean;
-    user?: {
-      id: string;
-      email: string;
-      firstName: string;
-      lastName: string;
-      avatarUrl: string | null;
-      role: string;
-      profession: string | null;
-    };
-  }> {
-    return this.authService.validateUser(body.userId, body.email);
   }
 
   @Post('profile')

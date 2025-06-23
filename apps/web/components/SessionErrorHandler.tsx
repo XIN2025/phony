@@ -1,29 +1,14 @@
-'use client';
-
+﻿'use client';
 import { useSession } from 'next-auth/react';
 import { Button } from '@repo/ui/components/button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
-
+import { AlertTriangle } from 'lucide-react';
 interface SessionErrorHandlerProps {
   children: React.ReactNode;
-  fallback?: React.ReactNode;
 }
-
-export function SessionErrorHandler({ children, fallback }: SessionErrorHandlerProps) {
-  const { data: session, status } = useSession();
-
-  if (status === 'loading') {
-    return (
-      <div className='flex h-screen items-center justify-center'>
-        <div className='text-center'>
-          <RefreshCw className='h-8 w-8 animate-spin mx-auto mb-4' />
-          <p className='text-sm text-muted-foreground'>Loading session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (session?.error) {
+export function SessionErrorHandler({ children }: SessionErrorHandlerProps) {
+  const { data: session } = useSession();
+  // Only show error for critical session errors
+  if (session?.error && (session.error === 'UserNotFound' || session.error === 'InvalidToken')) {
     return (
       <div className='flex h-screen items-center justify-center'>
         <div className='text-center max-w-md mx-auto p-6'>
@@ -44,10 +29,6 @@ export function SessionErrorHandler({ children, fallback }: SessionErrorHandlerP
       </div>
     );
   }
-
-  if (fallback) {
-    return <>{fallback}</>;
-  }
-
+  // For all other cases, just render children
   return <>{children}</>;
 }
