@@ -4,7 +4,7 @@ export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   jwt: {
-    secret: process.env.JWT_SECRET!,
+    secret: process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'dev-secret-key-change-in-production',
     expiresIn: process.env.JWT_EXPIRES_IN ?? '10d',
   },
   google: {

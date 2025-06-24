@@ -1,283 +1,373 @@
-'use client';
-
+﻿'use client';
 import * as React from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Loader2, Upload, User, CheckIcon } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
+import { toast } from 'sonner';
+import { useMutation } from '@tanstack/react-query';
+import { AuthService } from '@/services';
+import { getInitials } from '@/lib/utils';
+import { ProfileSetupForm } from '@/components/ProfileSetupForm';
+import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Button } from '@repo/ui/components/button';
+import { Checkbox } from '@repo/ui/components/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@repo/ui/components/form';
 import { Input } from '@repo/ui/components/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input-otp';
-import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useMutation } from '@tanstack/react-query';
-import { AuthService } from '@/services';
-import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
 import { Logo } from '@repo/ui/components/logo';
-
 const signUpSchema = z.object({
-  firstName: z.string().min(2, 'First name is required.'),
-  lastName: z.string().min(2, 'Last name is required.'),
-  profession: z.string().min(2, 'Profession is required.'),
   email: z.string().email('Please enter a valid email address.'),
-  otp: z.string().optional(),
+  otp: z.string().min(6, 'Your one-time password must be 6 characters.').optional(),
+  firstName: z.string().min(1, 'First name is required').optional(),
+  lastName: z.string().min(1, 'Last name is required').optional(),
+  profession: z.string().min(2, 'Profession is required').optional(),
+  idProof: z.any().optional(),
+  terms: z.boolean().optional(),
 });
-
 type SignUpFormValues = z.infer<typeof signUpSchema>;
-
+const professions = ['Therapist', 'Counselor', 'Psychologist', 'Social Worker'];
 export default function PractitionerSignUpPage() {
-  const [showOTP, setShowOTP] = React.useState(false);
+  const [step, setStep] = React.useState(1);
   const [isLoading, setIsLoading] = React.useState(false);
   const [resendTimer, setResendTimer] = React.useState(0);
+  const [profileData, setProfileData] = React.useState<{
+    firstName: string;
+    lastName: string;
+    profession: string;
+    profileImage?: File;
+  } | null>(null);
+  const [idProofFileName, setIdProofFileName] = React.useState<string | null>(null);
   const router = useRouter();
-  const { data: session, status } = useSession();
-
+  const { status } = useSession();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/practitioner');
+    }
+  }, [status, router]);
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useMutation({
-    mutationFn: async (data: { email: string }) => AuthService.sendOtp(data),
+    mutationFn: (data: { email: string }) => AuthService.sendOtp(data),
     onSuccess: () => {
       toast.success('Verification code sent successfully.');
       startResendTimer();
-      setShowOTP(true);
+      setStep(2);
     },
     onError: (error: any) => {
       toast.error(error.message ?? 'Failed to send OTP. Please try again.');
     },
   });
-
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      profession: '',
-      email: '',
-      otp: '',
-    },
   });
-
   const startResendTimer = () => {
     setResendTimer(60);
     const interval = setInterval(() => {
-      setResendTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setResendTimer((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
+    return () => clearInterval(interval);
   };
-
-  async function onSubmit(values: SignUpFormValues) {
-    // Prevent duplicate submissions
-    if (isLoading || (showOTP && !values.otp?.trim())) {
-      console.log('Form submission already in progress or OTP missing');
-      return;
-    }
-
-    if (!showOTP) {
-      handleSendOTP({ email: values.email.trim().toLowerCase() });
-      return;
-    }
-
+  const completeSignUp = async () => {
     setIsLoading(true);
+    const values = form.getValues();
     try {
       await AuthService.signupPractitioner({
-        email: values.email.trim().toLowerCase(),
+        email: values.email!.trim().toLowerCase(),
         otp: values.otp!.trim(),
         role: 'PRACTITIONER',
-        name: `${values.firstName.trim()} ${values.lastName.trim()}`,
-        profession: values.profession.trim(),
+        firstName: profileData?.firstName || values.firstName!.trim(),
+        lastName: profileData?.lastName || values.lastName!.trim(),
+        profession: profileData?.profession || values.profession!,
       });
-
-      const res = await signIn('credentials', {
-        email: values.email.trim().toLowerCase(),
+      await signIn('credentials', {
+        email: values.email!.trim().toLowerCase(),
         otp: values.otp!.trim(),
         role: 'PRACTITIONER',
         redirect: false,
       });
-
-      if (res?.error) {
-        toast.error(res.error);
-        setIsLoading(false);
-        return;
-      }
-
-      toast.success('Account created and logged in!');
+      toast.success('Account created successfully!');
       router.push('/practitioner');
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || error.message || 'Sign up failed. Please check the details and try again.';
-      toast.error(errorMessage);
+      toast.error(error.response?.data?.message || 'Sign up failed.');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }
-
-  if (status === 'loading') {
-    return (
-      <div className='flex min-h-screen flex-col items-center justify-center'>
-        <Logo className='h-10 w-10 animate-pulse' />
-      </div>
-    );
-  }
-
-  if (session) {
-    const targetDashboard = session.user.role === 'PRACTITIONER' ? '/practitioner' : '/client';
-    router.replace(targetDashboard);
-    return null;
-  }
-
-  return (
-    <AnimatePresence mode='wait'>
-      <motion.div
-        key={showOTP ? 'otp' : 'form'}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3 }}
-      >
-        {showOTP ? (
-          <div>
-            <div className='text-left mb-8'>
-              <h1 className='text-2xl font-bold'>Enter Verification Code</h1>
-              <p className='text-muted-foreground'>A 6-digit code was sent to your email.</p>
-            </div>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
-                <FormField
-                  control={form.control}
-                  name='otp'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <InputOTP {...field} maxLength={6}>
-                          <InputOTPGroup className='w-full justify-between'>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                          </InputOTPGroup>
-                        </InputOTP>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type='submit' className='w-full' disabled={isLoading}>
-                  {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-                  Verify
-                </Button>
-              </form>
-            </Form>
-            <div className='mt-4 text-center text-sm'>
+  };
+  const onSubmit = async (values: SignUpFormValues) => {
+    if (isLoading) return;
+    switch (step) {
+      case 1:
+        handleSendOTP({ email: values.email.trim().toLowerCase() });
+        break;
+      case 2:
+        if (values.otp?.length === 6) {
+          setStep(3);
+        } else {
+          toast.error('Please enter the 6-digit OTP.');
+        }
+        break;
+      case 4:
+        if (!values.terms) {
+          form.setError('terms', {
+            type: 'manual',
+            message: 'You must agree to the terms and conditions.',
+          });
+          return;
+        }
+        await completeSignUp();
+        break;
+      default:
+        break;
+    }
+  };
+  const handleProfileSubmit = (data: {
+    firstName: string;
+    lastName: string;
+    profession?: string;
+    profileImage?: File;
+  }) => {
+    setProfileData({
+      firstName: data.firstName,
+      lastName: data.lastName,
+      profession: data.profession || '',
+      profileImage: data.profileImage,
+    });
+    form.setValue('firstName', data.firstName);
+    form.setValue('lastName', data.lastName);
+    form.setValue('profession', data.profession || '');
+    setStep(4);
+  };
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return (
+          <motion.div key='step1' className='space-y-6'>
+            <FormField
+              control={form.control}
+              name='email'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email ID</FormLabel>
+                  <FormControl>
+                    <Input placeholder='Your Email ID' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type='submit' className='w-full' disabled={isSendingOTP}>
+              {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+              Next
+            </Button>
+          </motion.div>
+        );
+      case 2:
+        return (
+          <motion.div key='step2' className='space-y-6'>
+            <FormField
+              control={form.control}
+              name='otp'
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <InputOTP {...field} maxLength={6}>
+                      <InputOTPGroup className='w-full justify-center gap-2'>
+                        {[...Array(6)].map((_, i) => (
+                          <InputOTPSlot key={i} index={i} />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className='flex justify-between text-sm'>
+              <Button type='button' variant='link' className='p-0' onClick={() => setStep(1)}>
+                Change email address
+              </Button>
               {resendTimer > 0 ? (
-                <p className='text-muted-foreground'>Resend code in {resendTimer}s</p>
+                <span className='text-muted-foreground'>Resend verification code in {resendTimer}s</span>
               ) : (
-                <p>
-                  Didn't receive code?{' '}
-                  <Button
-                    type='button'
-                    variant='link'
-                    className='p-0 h-auto'
-                    onClick={() => handleSendOTP({ email: form.getValues('email') })}
-                    disabled={isSendingOTP}
-                  >
-                    Resend Now
-                  </Button>
-                </p>
+                <Button
+                  type='button'
+                  variant='link'
+                  className='p-0'
+                  onClick={() => handleSendOTP({ email: form.getValues('email') })}
+                  disabled={isSendingOTP}
+                >
+                  Resend verification code
+                </Button>
               )}
             </div>
-          </div>
-        ) : (
-          <div>
-            <div className='text-left mb-8'>
-              <h1 className='text-2xl font-bold'>Create Your Account</h1>
-              <p className='text-muted-foreground'>
-                Already have an account?{' '}
-                <Link href='/practitioner/auth' className='text-primary hover:underline font-medium'>
-                  Login
-                </Link>
-              </p>
-            </div>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-                <FormField
-                  control={form.control}
-                  name='firstName'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder='John' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='lastName'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Doe' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='profession'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Profession</FormLabel>
-                      <FormControl>
-                        <Input placeholder='e.g., Therapist' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='email'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type='email' placeholder='john.doe@example.com' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type='submit' className='w-full' disabled={isSendingOTP}>
-                  {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-                  Sign Up
+            <Button type='submit' className='w-full'>
+              Next
+            </Button>
+          </motion.div>
+        );
+      case 3:
+        return (
+          <motion.div key='step3'>
+            <ProfileSetupForm
+              onSubmit={handleProfileSubmit}
+              showProfession={true}
+              professions={professions}
+              submitText='Next'
+              hideTitle={true}
+              defaultValues={{
+                firstName: form.getValues('firstName') || '',
+                lastName: form.getValues('lastName') || '',
+                profession: form.getValues('profession') || '',
+              }}
+            />
+          </motion.div>
+        );
+      case 4:
+        return (
+          <motion.div key='step4' className='space-y-6'>
+            <FormItem>
+              <div className='flex justify-between items-center'>
+                <FormLabel>Professional Verification</FormLabel>
+                <Button
+                  type='button'
+                  variant='link'
+                  size='sm'
+                  onClick={completeSignUp}
+                  className='text-muted-foreground'
+                >
+                  Skip for now
                 </Button>
-              </form>
-            </Form>
-            <p className='px-8 text-center text-sm text-muted-foreground mt-6'>
-              By signing up you agree to our{' '}
-              <Link href='/terms' className='underline underline-offset-4 hover:text-primary'>
-                Terms of Service
-              </Link>{' '}
-              and{' '}
-              <Link href='/privacy' className='underline underline-offset-4 hover:text-primary'>
-                Privacy Policy
-              </Link>
-              .
-            </p>
-          </div>
-        )}
-      </motion.div>
-    </AnimatePresence>
+              </div>
+              <FormControl>
+                <div className='flex items-center justify-center w-full'>
+                  <label
+                    htmlFor='dropzone-file'
+                    className='flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted'
+                  >
+                    <div className='flex flex-col items-center justify-center pt-5 pb-6'>
+                      {idProofFileName ? (
+                        <>
+                          <CheckIcon className='w-8 h-8 mb-2 text-green-500' />
+                          <p className='mb-2 text-sm text-center text-muted-foreground'>{idProofFileName}</p>
+                          <Button
+                            type='button'
+                            variant='link'
+                            size='sm'
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setIdProofFileName(null);
+                              form.resetField('idProof');
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className='w-8 h-8 mb-2 text-muted-foreground' />
+                          <p className='mb-2 text-sm text-muted-foreground'>
+                            Upload a government-issued ID for verification
+                          </p>
+                          <Button
+                            type='button'
+                            size='sm'
+                            onClick={(e) => {
+                              e.preventDefault();
+                              fileInputRef.current?.click();
+                            }}
+                          >
+                            Select Document
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    <Input
+                      id='dropzone-file'
+                      ref={fileInputRef}
+                      type='file'
+                      className='hidden'
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setIdProofFileName(file.name);
+                          form.setValue('idProof', file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </FormControl>
+            </FormItem>
+            <FormField
+              control={form.control}
+              name='terms'
+              render={({ field }) => (
+                <FormItem className='flex flex-row items-start space-x-3 space-y-0'>
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (checked) {
+                          form.clearErrors('terms');
+                        }
+                      }}
+                    />
+                  </FormControl>
+                  <div className='space-y-1 leading-none'>
+                    <FormLabel>I agree to Continuum's Terms of Service and Privacy Policy</FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+            <Button type='submit' className='w-full' disabled={isLoading || !form.watch('terms')}>
+              {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+              Complete Registration
+            </Button>
+          </motion.div>
+        );
+      default:
+        return null;
+    }
+  };
+  return (
+    <>
+      <div className='mb-8 text-center'>
+        <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10' />
+      </div>
+      <div className='flex flex-col space-y-2 text-left mb-8'>
+        <h1 className='text-2xl font-bold tracking-tight'>
+          {step <= 2 ? 'Create Your Practitioner Account' : 'Complete Your Profile'}
+        </h1>
+        <p className='text-muted-foreground'>
+          {step === 1 && 'Enter your email address to begin the registration process.'}
+          {step === 2 && `We've sent a verification code to ${form.getValues('email')}`}
+          {step === 3 && 'Please provide your professional information to complete your profile.'}
+          {step === 4 && 'Upload your professional credentials and accept our terms.'}
+        </p>
+      </div>
+      {step === 3 ? (
+        <AnimatePresence mode='wait'>{renderStep()}</AnimatePresence>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <AnimatePresence mode='wait'>{renderStep()}</AnimatePresence>
+          </form>
+        </Form>
+      )}
+      <div className='mt-6 text-center text-sm'>
+        Already have an account?{' '}
+        <Link href='/practitioner/auth' className='font-medium text-primary hover:underline'>
+          Login
+        </Link>
+      </div>
+    </>
   );
 }

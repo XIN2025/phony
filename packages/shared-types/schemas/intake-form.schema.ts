@@ -2,13 +2,24 @@ import { z } from 'zod';
 
 // Replicating the enum from schema.prisma to avoid a direct dependency
 // on the @repo/db package, which simplifies the dependency tree.
-export const questionTypeEnum = z.enum(['SHORT_ANSWER', 'LONG_ANSWER', 'MULTIPLE_CHOICE', 'CHECKBOXES', 'SCALE']);
+export const questionTypeEnum = z.enum([
+  'SHORT_ANSWER',
+  'LONG_ANSWER',
+  'MULTIPLE_CHOICE',
+  'CHECKBOXES',
+  'SCALE',
+  'DROPDOWN',
+  'FILE_UPLOAD',
+  'RATING',
+  'MULTIPLE_CHOICE_GRID',
+  'TICK_BOX_GRID',
+]);
 
 export const questionSchema = z.object({
   id: z.string().optional(),
   text: z.string().min(1, 'Question text cannot be empty'),
   type: questionTypeEnum,
-  options: z.array(z.string()).optional(),
+  options: z.array(z.object({ text: z.string() })).optional(),
   isRequired: z.boolean(),
   order: z.number().int(),
 });

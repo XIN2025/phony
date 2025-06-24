@@ -11,7 +11,9 @@ datasource db {
 model User {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   email           String   @unique
-  name            String?
+  firstName       String
+  lastName        String
+  idProofUrl      String?
   profession      String?
   avatarUrl       String?  @map("avatar_url")
   role            UserRole
@@ -40,6 +42,8 @@ model Invitation {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   practitionerId String   @db.ObjectId
   clientEmail    String
+  clientFirstName String
+  clientLastName  String
   token          String   @unique
   expiresAt      DateTime
   isAccepted     Boolean  @default(false)
@@ -76,6 +80,11 @@ enum QuestionType {
   MULTIPLE_CHOICE
   CHECKBOXES
   SCALE
+  DROPDOWN
+  FILE_UPLOAD
+  RATING
+  MULTIPLE_CHOICE_GRID
+  TICK_BOX_GRID
 }
 
 model IntakeForm {

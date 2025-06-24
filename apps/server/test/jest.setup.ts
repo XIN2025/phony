@@ -11,6 +11,28 @@ process.env.SMTP_PASSWORD = 'test-password';
 process.env.SMTP_FROM = 'test@test.com';
 process.env.SMTP_FROM_NAME = 'Continuum';
 
+// Suppress console output during tests for cleaner output
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+const originalConsoleInfo = console.info;
+
+beforeAll(() => {
+  // Suppress all console output during tests
+  console.log = jest.fn();
+  console.error = jest.fn();
+  console.warn = jest.fn();
+  console.info = jest.fn();
+});
+
+afterAll(() => {
+  // Restore console methods
+  console.log = originalConsoleLog;
+  console.error = originalConsoleError;
+  console.warn = originalConsoleWarn;
+  console.info = originalConsoleInfo;
+});
+
 // Mock PrismaClient while preserving enums
 jest.mock('@repo/db', () => {
   const originalModule = jest.requireActual('@repo/db');
@@ -25,6 +47,7 @@ jest.mock('@repo/db', () => {
         create: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
+        findMany: jest.fn(),
       },
       practitioner: {
         findUnique: jest.fn(),
@@ -41,6 +64,27 @@ jest.mock('@repo/db', () => {
         delete: jest.fn(),
         findMany: jest.fn(),
       },
+      otp: {
+        findFirst: jest.fn(),
+        upsert: jest.fn(),
+        findUnique: jest.fn(),
+        create: jest.fn(),
+        delete: jest.fn(),
+      },
+      invitation: {
+        findUnique: jest.fn(),
+        findFirst: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+        findMany: jest.fn(),
+      },
+      question: {
+        create: jest.fn(),
+        deleteMany: jest.fn(),
+        createMany: jest.fn(),
+      },
+      $transaction: jest.fn(),
     })),
   };
 });
@@ -56,4 +100,11 @@ jest.mock('@nestjs-modules/mailer', () => ({
   MailerService: jest.fn().mockImplementation(() => ({
     sendMail: jest.fn().mockResolvedValue(undefined),
   })),
+}));
+
+// Mock crypto for consistent token generation in tests
+jest.mock('crypto', () => ({
+  randomBytes: jest
+    .fn()
+    .mockReturnValue(Buffer.from('test-token-1234567890123456789012345678901234567890123456789012345678901234')),
 }));

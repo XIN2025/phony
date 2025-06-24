@@ -1,26 +1,36 @@
-import { Body, Controller, Post, Request } from '@nestjs/common';
+import { Body, Controller, Post, Request, UseGuards, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
 import { LoginResponseDto, OtpAuthDto, VerifyOtpDto, PractitionerSignUpDto } from './dto/auth.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+
+interface ProfileUpdateBody {
+  firstName?: string;
+  lastName?: string;
+  profession?: string;
+  [key: string]: unknown;
+}
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('otp')
-  @Public()
-  @ApiResponse({ type: Boolean, description: 'Whether the OTP was sent successfully' })
-  async otpAuth(@Body() body: OtpAuthDto): Promise<boolean> {
-    return this.authService.handleOtpAuth(body.email);
-  }
-
   @Post('otp/verify')
   @Public()
   @ApiResponse({ type: LoginResponseDto })
   async verifyOtp(@Body() body: VerifyOtpDto): Promise<LoginResponseDto> {
     return this.authService.verifyOtp(body.email, body.otp, body.role);
+  }
+
+  @Post('otp')
+  @Public()
+  @ApiResponse({ type: Boolean, description: 'Whether the OTP was sent successfully' })
+  async otpAuth(@Body() body: OtpAuthDto): Promise<boolean> {
+    return this.authService.handleOtpAuth(body.email);
   }
 
   @Post('practitioner/signup')
@@ -34,8 +44,41 @@ export class AuthController {
   @Public()
   @ApiResponse({ type: LoginResponseDto })
   async clientSignUp(
-    @Body() body: { email: string; name: string; invitationToken: string }
+    @Body() body: { email: string; firstName: string; lastName: string; invitationToken: string }
   ): Promise<LoginResponseDto> {
     return this.authService.handleClientSignUp(body);
+  }
+
+  @Post('profile')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('profileImage', {
+      storage: memoryStorage(),
+    })
+  )
+  async updateProfile(@Request() req, @Body() body: ProfileUpdateBody, @UploadedFile() file: Express.Multer.File) {
+    console.log('Profile update request:', {
+      userId: req.user?.id,
+      userEmail: req.user?.email,
+      hasFile: !!file,
+      fileInfo: file
+        ? {
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+            hasBuffer: !!file.buffer,
+            bufferLength: file.buffer?.length,
+          }
+        : null,
+      body: body,
+      contentType: req.headers['content-type'],
+    });
+
+    try {
+      return await this.authService.updateProfile(req.user.id, body, file);
+    } catch (error) {
+      console.error('Error in updateProfile:', error);
+      throw error;
+    }
   }
 }

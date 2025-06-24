@@ -1,4 +1,1 @@
-module.exports = {
-  getServerSession: jest.fn(),
-  NextAuth: jest.fn(),
-};
+module.exports = { getServerSession: jest.fn(), NextAuth: jest.fn() };

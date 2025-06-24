@@ -1,32 +1,26 @@
-'use client';
-
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+﻿'use client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@repo/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@repo/ui/components/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Skeleton } from '@repo/ui/components/skeleton';
+import { Plus, MoreVertical, Trash2 } from 'lucide-react';
 import { ApiClient } from '@/lib/api-client';
-import { useInviteContext } from '@/context/InviteContext';
-import { ArrowLeft, FilePlus2, FileText } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@repo/ui/components/dropdown-menu';
+import { toast } from 'sonner';
 interface IntakeForm {
   id: string;
   title: string;
-  description: string;
-  _count: {
-    questions: number;
-  };
+  updatedAt: string;
 }
-
 interface Props {
-  onNext: (data: { intakeFormId: string | null }) => void;
-  onBack: () => void;
-  isLoading: boolean;
+  onNext: (formId: string | 'create-new') => void;
 }
-
-export function IntakeFormSelector({ onNext, onBack, isLoading }: Props) {
-  const router = useRouter();
+export function IntakeFormSelector({ onNext }: Props) {
   const queryClient = useQueryClient();
   const {
     data: forms,
@@ -34,109 +28,84 @@ export function IntakeFormSelector({ onNext, onBack, isLoading }: Props) {
     error: formsError,
   } = useQuery<IntakeForm[]>({
     queryKey: ['intake-forms'],
-    queryFn: async (): Promise<IntakeForm[]> => {
-      console.log('Fetching intake forms...');
-      const response = await ApiClient.get('/api/intake-forms');
-      console.log('Intake forms response:', response);
-      return response as IntakeForm[];
+    queryFn: async () => ApiClient.get('/api/intake-forms'),
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (formId: string) => ApiClient.delete(`/api/intake-forms/${formId}`),
+    onSuccess: () => {
+      toast.success('Form deleted successfully.');
+      queryClient.invalidateQueries({ queryKey: ['intake-forms'] });
+    },
+    onError: () => {
+      toast.error('Failed to delete form.');
     },
   });
-  const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
-
-  // Debug logging
-  console.log('IntakeFormSelector - forms:', forms);
-  console.log('IntakeFormSelector - formsLoading:', formsLoading);
-  console.log('IntakeFormSelector - formsError:', formsError);
-  console.log('IntakeFormSelector - selectedFormId:', selectedFormId);
-
-  // When returning to this component, we want to make sure we have the latest forms
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['intake-forms'] });
-  }, []);
-
-  const handleSelectForm = (formId: string) => {
-    setSelectedFormId(formId);
-  };
-
-  const handleSendInvite = () => {
-    onNext({ intakeFormId: selectedFormId });
-  };
-
-  const handleSkip = () => {
-    onNext({ intakeFormId: null });
-  };
-
-  const handleCreateNew = () => {
-    router.push('/practitioner/intake-forms/new?redirect=/practitioner/invite');
-  };
-
   return (
-    <div>
-      <button onClick={onBack} className='flex items-center gap-2 text-sm text-muted-foreground mb-4 hover:underline'>
-        <ArrowLeft className='h-4 w-4' />
-        Back
-      </button>
-      <Card>
-        <CardHeader>
-          <CardTitle>Attach Intake Form (Optional)</CardTitle>
-          <CardDescription>
-            You can attach an existing intake form to this invitation or create a new one.
-          </CardDescription>
+    <div className='space-y-6'>
+      <Card className='rounded-xl'>
+        <CardHeader className='flex flex-row items-center justify-between'>
+          <CardTitle className='text-xl font-semibold'>Choose Existing Form</CardTitle>
+          <Button variant='link' className='text-sm font-semibold'>
+            See All
+          </Button>
         </CardHeader>
-        <CardContent className='space-y-6'>
-          <div>
-            <h3 className='mb-4 font-medium'>Choose Existing</h3>
-            {formsError ? (
-              <div className='text-center py-8 border-2 border-dashed rounded-lg border-destructive'>
-                <p className='text-destructive'>Error loading forms: {formsError.message}</p>
-              </div>
-            ) : formsLoading ? (
-              <div className='grid gap-4 sm:grid-cols-2'>
-                <Skeleton className='h-24 w-full' />
-                <Skeleton className='h-24 w-full' />
-              </div>
-            ) : forms && forms.length > 0 ? (
-              <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-                {forms.map((form) => (
-                  <button
-                    key={form.id}
-                    type='button'
-                    onClick={() => handleSelectForm(form.id)}
-                    className={`p-4 border rounded-lg text-left transition-colors ${selectedFormId === form.id ? 'border-primary bg-primary/10' : 'hover:bg-muted/50'}`}
-                  >
-                    <FileText className='h-6 w-6 mb-2' />
-                    <h4 className='font-semibold'>{form.title}</h4>
-                    <p className='text-sm text-muted-foreground'>{form._count.questions || 0} questions</p>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className='text-center py-8 border-2 border-dashed rounded-lg'>
-                <p className='text-muted-foreground'>No existing intake forms.</p>
-                <p className='text-xs text-muted-foreground mt-2'>Debug: forms={JSON.stringify(forms)}</p>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <h3 className='mb-4 font-medium'>Or Create a New One</h3>
-            <button
-              onClick={handleCreateNew}
-              className='w-full p-4 border-2 border-dashed rounded-lg flex flex-col items-center justify-center hover:border-primary transition-colors'
-            >
-              <FilePlus2 className='h-8 w-8 mb-2 text-muted-foreground' />
-              <span className='font-medium'>Create New Form</span>
-            </button>
+        <CardContent>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+            {formsLoading && Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className='h-40 rounded-lg' />)}
+            {formsError && <p className='text-destructive col-span-3'>Error loading forms.</p>}
+            {!formsLoading &&
+              !formsError &&
+              forms?.map((form) => (
+                <Card
+                  key={form.id}
+                  onClick={() => onNext(form.id)}
+                  className='rounded-xl p-4 flex flex-col justify-between h-40 cursor-pointer hover:shadow-md transition-shadow'
+                >
+                  <div className='bg-gray-200 h-20 rounded-md' />
+                  <div className='flex items-end justify-between mt-2'>
+                    <div>
+                      <p className='font-semibold text-base'>{form.title}</p>
+                      <p className='text-sm text-gray-500'>
+                        Last Updated: {new Date(form.updatedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant='ghost' size='icon' className='h-8 w-8' onClick={(e) => e.stopPropagation()}>
+                          <MoreVertical className='h-5 w-5' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteMutation.mutate(form.id);
+                          }}
+                          className='text-destructive'
+                        >
+                          <Trash2 className='mr-2 h-4 w-4' />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </Card>
+              ))}
           </div>
         </CardContent>
-        <CardFooter className='flex justify-between'>
-          <Button variant='ghost' onClick={handleSkip} disabled={isLoading}>
-            Skip & Send Invite
-          </Button>
-          <Button onClick={handleSendInvite} disabled={isLoading}>
-            Send Invite
-          </Button>
-        </CardFooter>
+      </Card>
+      <Card
+        onClick={() => onNext('create-new')}
+        className='rounded-xl border-2 border-dashed border-gray-700 flex flex-col items-center justify-center h-32 text-center cursor-pointer hover:bg-gray-50 transition-colors'
+      >
+        <div className='flex items-center justify-center h-10 w-10 rounded-full bg-gray-100 mb-2'>
+          <Plus className='h-6 w-6' />
+        </div>
+        <div>
+          <p className='font-semibold'>
+            Create New <span className='text-sm text-gray-500 font-normal'>- Start fresh with a new form</span>
+          </p>
+        </div>
       </Card>
     </div>
   );

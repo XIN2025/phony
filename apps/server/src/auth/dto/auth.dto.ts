@@ -44,7 +44,11 @@ export class PractitionerSignUpDto implements VerifyOtpRequest {
 
   @ApiProperty()
   @IsString()
-  name: string;
+  firstName: string;
+
+  @ApiProperty()
+  @IsString()
+  lastName: string;
 
   @ApiProperty()
   @IsString()
@@ -66,7 +70,15 @@ export class UserDto implements User {
   })
   @IsString()
   @IsOptional()
-  name: string | null;
+  firstName: string | null;
+
+  @ApiProperty({
+    type: 'string',
+    nullable: true,
+  })
+  @IsString()
+  @IsOptional()
+  lastName: string | null;
 
   @ApiProperty({
     type: 'string',

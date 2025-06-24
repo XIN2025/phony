@@ -7,8 +7,11 @@ import { SessionProvider } from 'next-auth/react';
 
 const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
-    <SessionProvider>
-      <ThemeProvider attribute='class' defaultTheme='system' disableTransitionOnChange>
+    <SessionProvider
+      refetchInterval={5 * 60} // Refetch session every 5 minutes
+      refetchOnWindowFocus={true} // Refetch when window gains focus
+    >
+      <ThemeProvider attribute='class' defaultTheme='light'>
         <ReactQueryClientProvider>
           <Toaster duration={2500} richColors closeButton position='top-right' />
           <TooltipProvider>{children}</TooltipProvider>

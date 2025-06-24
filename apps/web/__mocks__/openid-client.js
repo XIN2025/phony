@@ -1,6 +1,1 @@
-module.exports = {
-  Issuer: {
-    discover: jest.fn(),
-  },
-  Client: jest.fn(),
-};
+module.exports = { Issuer: { discover: jest.fn() }, Client: jest.fn() };

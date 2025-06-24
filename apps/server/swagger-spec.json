@@ -9,23 +9,6 @@
         "tags": ["App"]
       }
     },
-    "/api/auth/otp": {
-      "post": {
-        "operationId": "AuthController_otpAuth",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OtpAuthDto" } } }
-        },
-        "responses": {
-          "default": {
-            "description": "Whether the OTP was sent successfully",
-            "content": { "application/json": { "schema": { "type": "boolean" } } }
-          }
-        },
-        "tags": ["auth"]
-      }
-    },
     "/api/auth/otp/verify": {
       "post": {
         "operationId": "AuthController_verifyOtp",
@@ -38,6 +21,23 @@
           "default": {
             "description": "",
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponseDto" } } }
+          }
+        },
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/otp": {
+      "post": {
+        "operationId": "AuthController_otpAuth",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OtpAuthDto" } } }
+        },
+        "responses": {
+          "default": {
+            "description": "Whether the OTP was sent successfully",
+            "content": { "application/json": { "schema": { "type": "boolean" } } }
           }
         },
         "tags": ["auth"]
@@ -73,6 +73,14 @@
         "tags": ["auth"]
       }
     },
+    "/api/auth/profile": {
+      "post": {
+        "operationId": "AuthController_updateProfile",
+        "parameters": [],
+        "responses": { "201": { "description": "" } },
+        "tags": ["auth"]
+      }
+    },
     "/api/practitioner/invitations/token/{token}": {
       "get": {
         "operationId": "PractitionerController_getInvitationByToken",
@@ -83,16 +91,6 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Get invitation details by token",
-        "tags": ["practitioner"]
-      }
-    },
-    "/api/practitioner/invitations/debug/{token}": {
-      "get": {
-        "operationId": "PractitionerController_debugInvitationToken",
-        "parameters": [{ "name": "token", "required": true, "in": "path", "schema": { "type": "string" } }],
-        "responses": { "200": { "description": "Debug information about the token." } },
-        "security": [{ "bearer": [] }],
-        "summary": "Debug invitation token (for troubleshooting)",
         "tags": ["practitioner"]
       }
     },
@@ -117,6 +115,19 @@
         "responses": { "200": { "description": "List of invitations retrieved successfully" } },
         "security": [{ "bearer": [] }],
         "summary": "Get all invitations sent by the practitioner",
+        "tags": ["practitioner"]
+      }
+    },
+    "/api/practitioner/invitations/{id}/resend": {
+      "post": {
+        "operationId": "PractitionerController_resendInvitation",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": {
+          "201": { "description": "Invitation resent successfully" },
+          "404": { "description": "Invitation not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Resend a specific invitation",
         "tags": ["practitioner"]
       }
     },
@@ -207,7 +218,6 @@
   "components": {
     "securitySchemes": { "bearer": { "scheme": "bearer", "bearerFormat": "JWT", "type": "http" } },
     "schemas": {
-      "OtpAuthDto": { "type": "object", "properties": { "email": { "type": "string" } }, "required": ["email"] },
       "VerifyOtpDto": {
         "type": "object",
         "properties": {
@@ -222,28 +232,31 @@
         "properties": {
           "id": { "type": "string" },
           "email": { "type": "string" },
-          "name": { "type": "string", "nullable": true },
+          "firstName": { "type": "string", "nullable": true },
+          "lastName": { "type": "string", "nullable": true },
           "avatarUrl": { "type": "string", "nullable": true },
           "role": { "type": "string", "enum": ["PRACTITIONER", "CLIENT"] },
           "profession": { "type": "string", "nullable": true }
         },
-        "required": ["id", "email", "name", "avatarUrl", "role", "profession"]
+        "required": ["id", "email", "firstName", "lastName", "avatarUrl", "role", "profession"]
       },
       "LoginResponseDto": {
         "type": "object",
         "properties": { "token": { "type": "string" }, "user": { "$ref": "#/components/schemas/UserDto" } },
         "required": ["token", "user"]
       },
+      "OtpAuthDto": { "type": "object", "properties": { "email": { "type": "string" } }, "required": ["email"] },
       "PractitionerSignUpDto": {
         "type": "object",
         "properties": {
           "email": { "type": "string" },
           "otp": { "type": "string" },
           "role": { "type": "string", "enum": ["PRACTITIONER"], "default": "PRACTITIONER" },
-          "name": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
           "profession": { "type": "string" }
         },
-        "required": ["email", "otp", "role", "name", "profession"]
+        "required": ["email", "otp", "role", "firstName", "lastName", "profession"]
       }
     }
   }

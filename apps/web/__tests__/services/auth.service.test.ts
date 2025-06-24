@@ -25,7 +25,8 @@ describe('AuthService', () => {
       user: {
         id: 'user-id',
         email: 'test@example.com',
-        name: 'Test User',
+        firstName: 'Test',
+        lastName: 'User',
         avatarUrl: null,
         role: 'PRACTITIONER',
         profession: 'Doctor',
@@ -53,7 +54,8 @@ describe('AuthService', () => {
         user: {
           id: 'client-id',
           email: 'client@example.com',
-          name: 'Client User',
+          firstName: 'Client',
+          lastName: 'User',
           avatarUrl: null,
           role: 'CLIENT',
           profession: null,
@@ -123,7 +125,8 @@ describe('AuthService', () => {
       email: 'practitioner@example.com',
       otp: '123456',
       role: 'PRACTITIONER' as const,
-      name: 'Dr. Smith',
+      firstName: 'Dr.',
+      lastName: 'Smith',
       profession: 'Psychologist',
     };
 
@@ -132,7 +135,8 @@ describe('AuthService', () => {
       user: {
         id: 'practitioner-id',
         email: 'practitioner@example.com',
-        name: 'Dr. Smith',
+        firstName: 'Dr.',
+        lastName: 'Smith',
         avatarUrl: null,
         role: 'PRACTITIONER',
         profession: 'Psychologist',
@@ -153,14 +157,15 @@ describe('AuthService', () => {
         email: 'practitioner@example.com',
         otp: '123456',
         role: 'PRACTITIONER' as const,
-        name: '',
+        firstName: '',
+        lastName: '',
         profession: '',
       };
 
-      const error = new Error('Name and profession are required');
+      const error = new Error('First name, last name and profession are required');
       mockApiClient.post.mockRejectedValue(error);
 
-      await expect(AuthService.signupPractitioner(incompleteData)).rejects.toThrow('Name and profession are required');
+      await expect(AuthService.signupPractitioner(incompleteData)).rejects.toThrow('First name, last name and profession are required');
     });
 
     it('should handle invalid OTP during signup', async () => {
@@ -201,7 +206,8 @@ describe('AuthService', () => {
         email: 'practitioner@example.com',
         otp: '123456',
         role: 'PRACTITIONER' as const,
-        name: 'Dr. Smith',
+        firstName: 'Dr.',
+        lastName: 'Smith',
         profession: 'Psychologist',
       };
 
@@ -230,7 +236,8 @@ describe('AuthService', () => {
         user: {
           id: 'id',
           email: 'test@example.com',
-          name: 'Test',
+          firstName: 'Test',
+          lastName: 'User',
           avatarUrl: null,
           role: 'PRACTITIONER',
           profession: 'Doctor',

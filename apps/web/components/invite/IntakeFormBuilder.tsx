@@ -1,183 +1,201 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+﻿'use client';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { intakeFormSchema, CreateIntakeFormDto } from '@repo/shared-types/schemas';
 import { Button } from '@repo/ui/components/button';
 import { Input } from '@repo/ui/components/input';
-import { Textarea } from '@repo/ui/components/textarea';
 import { Label } from '@repo/ui/components/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@repo/ui/components/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
-import { Switch } from '@repo/ui/components/switch';
-import { Trash2, Plus, ArrowUp, ArrowDown } from 'lucide-react';
-import { QuestionType } from '@repo/db';
-
+import { Trash2, Plus, GripVertical, Copy } from 'lucide-react';
+import { QuestionType } from '@repo/db/question-type';
+import { useInviteContext } from '@/context/InviteContext';
+import { useEffect, useState } from 'react';
+import { Checkbox } from '@repo/ui/components/checkbox';
+function QuestionOptions({ questionIndex, control, register }: any) {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: `questions.${questionIndex}.options`,
+  });
+  return (
+    <div className='space-y-2 pt-4'>
+      <Label>Choices</Label>
+      {fields.map((field, optionIndex) => (
+        <div key={field.id} className='flex items-center gap-2'>
+          <Input
+            placeholder={`Option ${optionIndex + 1}`}
+            {...register(`questions.${questionIndex}.options.${optionIndex}.text`)}
+          />
+          <Button type='button' variant='ghost' size='icon' onClick={() => remove(optionIndex)} className='shrink-0'>
+            <Trash2 className='h-4 w-4' />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type='button'
+        variant='link'
+        className='p-0 h-auto text-sm font-semibold'
+        onClick={() => append({ text: '' })}
+      >
+        <Plus className='h-4 w-4 mr-1' />
+        Add Option
+      </Button>
+    </div>
+  );
+}
 interface IntakeFormBuilderProps {
-  initialData?: Partial<CreateIntakeFormDto>;
   onSubmit: (data: CreateIntakeFormDto) => void;
+  onBack?: () => void;
   isLoading?: boolean;
 }
-
-export function IntakeFormBuilder({ initialData, onSubmit, isLoading }: IntakeFormBuilderProps) {
+const questionTypeOptions = [
+  { value: QuestionType.SHORT_ANSWER, label: 'Short Answer' },
+  { value: QuestionType.LONG_ANSWER, label: 'Paragraph' },
+  { value: QuestionType.MULTIPLE_CHOICE, label: 'Multiple Choice' },
+  { value: QuestionType.CHECKBOXES, label: 'Checkboxes' },
+  { value: QuestionType.DROPDOWN, label: 'Drop-down' },
+  { value: QuestionType.FILE_UPLOAD, label: 'File upload' },
+  { value: QuestionType.SCALE, label: 'Linear Scale' },
+  { value: QuestionType.RATING, label: 'Rating' },
+  { value: QuestionType.MULTIPLE_CHOICE_GRID, label: 'Multiple choice grid' },
+  { value: QuestionType.TICK_BOX_GRID, label: 'Tick box grid' },
+];
+export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBuilderProps) {
+  const { inviteData, setInviteData } = useInviteContext();
+  const [saveAsTemplate, setSaveAsTemplate] = useState(true);
   const form = useForm<CreateIntakeFormDto>({
     resolver: zodResolver(intakeFormSchema),
-    defaultValues: {
-      title: initialData?.title || '',
-      description: initialData?.description || '',
-      questions: initialData?.questions || [],
-    },
+    defaultValues:
+      inviteData.newIntakeForm ||
+      ({
+        title: '',
+        description: '',
+        questions: [
+          {
+            text: '',
+            type: QuestionType.MULTIPLE_CHOICE,
+            isRequired: true,
+            order: 0,
+            options: [{ text: '' }],
+          },
+        ],
+      } as CreateIntakeFormDto),
   });
-
-  const { fields, append, remove, swap } = useFieldArray({
+  useEffect(() => {
+    return () => {
+      setInviteData({ newIntakeForm: form.getValues() });
+    };
+  }, [setInviteData, form]);
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'questions',
   });
-
-  const addQuestion = (type: QuestionType) => {
+  const addQuestion = () => {
     append({
       text: '',
-      type,
+      type: QuestionType.MULTIPLE_CHOICE,
       isRequired: true,
       order: fields.length,
-      options: type === 'MULTIPLE_CHOICE' || type === 'CHECKBOXES' ? [''] : undefined,
+      options: [{ text: '' }],
     });
   };
-
-  const removeQuestion = (index: number) => {
-    remove(index);
-  };
-
-  const moveQuestion = (index: number, direction: 'up' | 'down') => {
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex >= 0 && newIndex < fields.length) {
-      swap(index, newIndex);
-    }
-  };
-
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Form Details</CardTitle>
-          <CardDescription>Enter the title and description for your form.</CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='space-y-2'>
-            <Label htmlFor='title'>Title</Label>
-            <Input id='title' {...form.register('title')} placeholder='Client Intake Form' />
-            {form.formState.errors.title && (
-              <p className='text-sm text-destructive'>{form.formState.errors.title.message}</p>
-            )}
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='description'>Description (Optional)</Label>
-            <Textarea
-              id='description'
-              {...form.register('description')}
-              placeholder="A brief description of the form's purpose."
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className='space-y-4 mt-6'>
+    <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+      <div className='space-y-2'>
+        <Label htmlFor='form-title' className='text-lg font-semibold'>
+          Form Title
+        </Label>
+        <Input
+          id='form-title'
+          placeholder='Enter the form title'
+          {...form.register('title')}
+          className='text-xl border-gray-700'
+        />
+        {form.formState.errors.title && (
+          <p className='text-sm text-destructive'>{form.formState.errors.title.message}</p>
+        )}
+      </div>
+      <div className='space-y-4'>
         {fields.map((field, index) => (
-          <Card key={field.id}>
-            <CardHeader className='flex flex-row items-center justify-between'>
-              <CardTitle>Question {index + 1}</CardTitle>
-              <div className='flex items-center gap-2'>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => moveQuestion(index, 'up')}
-                  disabled={index === 0}
-                >
-                  <ArrowUp className='h-4 w-4' />
-                </Button>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => moveQuestion(index, 'down')}
-                  disabled={index === fields.length - 1}
-                >
-                  <ArrowDown className='h-4 w-4' />
-                </Button>
-                <Button type='button' variant='destructive' size='sm' onClick={() => removeQuestion(index)}>
-                  <Trash2 className='h-4 w-4' />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className='space-y-4'>
+          <div key={field.id} className='rounded-xl border border-gray-700 bg-card p-6 text-card-foreground'>
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <div className='space-y-2'>
-                <Label>Question Text</Label>
+                <Label htmlFor={`question-${index}`}>Question</Label>
                 <Input
+                  id={`question-${index}`}
+                  placeholder='Why do you want to begin therapy?'
                   {...form.register(`questions.${index}.text`)}
-                  placeholder='e.g., What are your primary health concerns?'
+                  className='text-base'
                 />
-                {form.formState.errors.questions?.[index]?.text && (
-                  <p className='text-sm text-destructive'>{form.formState.errors.questions[index]?.text?.message}</p>
-                )}
               </div>
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label>Question Type</Label>
-                  <Controller
-                    control={form.control}
-                    name={`questions.${index}.type`}
-                    render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Select a type' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='SHORT_ANSWER'>Short Answer</SelectItem>
-                          <SelectItem value='LONG_ANSWER'>Long Answer</SelectItem>
-                          <SelectItem value='MULTIPLE_CHOICE'>Multiple Choice</SelectItem>
-                          <SelectItem value='CHECKBOXES'>Checkboxes</SelectItem>
-                          <SelectItem value='SCALE'>Scale (1-5)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-                <div className='flex items-center space-x-2 pt-8'>
-                  <Controller
-                    control={form.control}
-                    name={`questions.${index}.isRequired`}
-                    render={({ field }) => (
-                      <Switch id={`isRequired-${index}`} checked={field.value} onCheckedChange={field.onChange} />
-                    )}
-                  />
-                  <Label htmlFor={`isRequired-${index}`}>Required</Label>
-                </div>
+              <div className='space-y-2'>
+                <Label htmlFor={`question-type-${index}`}>Type of question</Label>
+                <Controller
+                  control={form.control}
+                  name={`questions.${index}.type`}
+                  render={({ field: selectField }) => (
+                    <Select value={selectField.value || ''} onValueChange={selectField.onChange}>
+                      <SelectTrigger className='w-full'>
+                        <SelectValue
+                          placeholder={
+                            <div className='flex items-center gap-2 text-muted-foreground'>
+                              <GripVertical className='h-5 w-5' />
+                              <span>-- select --</span>
+                            </div>
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {questionTypeOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            <div className='flex items-center gap-2'>
+                              <GripVertical className='h-5 w-5 text-muted-foreground' />
+                              <span>{opt.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            {form.watch(`questions.${index}.type`) === QuestionType.MULTIPLE_CHOICE && (
+              <QuestionOptions questionIndex={index} control={form.control} register={form.register} />
+            )}
+            <div className='flex justify-end items-center gap-2 pt-4 mt-4'>
+              <Button type='button' variant='ghost' size='icon'>
+                <Copy className='h-5 w-5' />
+              </Button>
+              <Button type='button' variant='ghost' size='icon' onClick={() => remove(index)}>
+                <Trash2 className='h-5 w-5' />
+              </Button>
+            </div>
+          </div>
         ))}
       </div>
-
-      <div className='flex justify-between items-center mt-6'>
-        <div>
-          <Select onValueChange={(value) => addQuestion(value as QuestionType)}>
-            <SelectTrigger>
-              <Plus className='h-4 w-4 mr-2' />
-              Add Question
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='SHORT_ANSWER'>Short Answer</SelectItem>
-              <SelectItem value='LONG_ANSWER'>Long Answer</SelectItem>
-              <SelectItem value='MULTIPLE_CHOICE'>Multiple Choice</SelectItem>
-              <SelectItem value='CHECKBOXES'>Checkboxes</SelectItem>
-              <SelectItem value='SCALE'>Scale (1-5)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <Button type='submit' disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Save Form'}
+      <Button type='button' variant='link' onClick={addQuestion} className='p-0 h-auto font-semibold'>
+        <Plus className='h-4 w-4 mr-2' />
+        Add Question
+      </Button>
+      <div className='flex items-center space-x-2'>
+        <Checkbox
+          id='save-template'
+          checked={saveAsTemplate}
+          onCheckedChange={(checked) => setSaveAsTemplate(Boolean(checked))}
+        />
+        <label
+          htmlFor='save-template'
+          className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+        >
+          Save form as a template
+        </label>
+      </div>
+      <div className='flex flex-col-reverse gap-4 sm:flex-row sm:justify-between'>
+        <Button type='button' variant='secondary' onClick={onBack} className='w-full sm:w-auto'>
+          Cancel
+        </Button>
+        <Button type='submit' disabled={isLoading} className='w-full sm:w-auto'>
+          {isLoading ? 'Saving...' : 'Preview'}
         </Button>
       </div>
     </form>

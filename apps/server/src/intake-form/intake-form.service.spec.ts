@@ -168,7 +168,7 @@ describe('IntakeFormService', () => {
           {
             text: 'What is your gender?',
             type: 'MULTIPLE_CHOICE',
-            options: ['Male', 'Female', 'Other'],
+            options: [{ text: 'Male' }, { text: 'Female' }, { text: 'Other' }],
             isRequired: true,
             order: 1,
           },
@@ -189,7 +189,7 @@ describe('IntakeFormService', () => {
               {
                 text: 'What is your gender?',
                 type: 'MULTIPLE_CHOICE',
-                options: ['Male', 'Female', 'Other'],
+                options: [{ text: 'Male' }, { text: 'Female' }, { text: 'Other' }],
                 isRequired: true,
                 order: 1,
               },

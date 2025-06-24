@@ -18,7 +18,7 @@ export class IntakeFormService {
           create: questions?.map((q) => ({
             text: q.text,
             type: q.type,
-            options: q.options || [],
+            options: q.options?.map((opt) => opt.text) || [],
             isRequired: q.isRequired,
             order: q.order,
           })),
@@ -33,7 +33,6 @@ export class IntakeFormService {
   async update(formId: string, practitionerId: string, data: CreateIntakeFormDto) {
     const { title, description, questions } = data;
 
-    // First, verify the form exists and belongs to the practitioner
     const form = await this.prisma.intakeForm.findUnique({
       where: { id: formId },
     });
@@ -46,9 +45,7 @@ export class IntakeFormService {
       throw new ForbiddenException('You do not have permission to update this form.');
     }
 
-    // Now, update the form in a transaction
     return this.prisma.$transaction(async (tx) => {
-      // 1. Update the simple fields
       await tx.intakeForm.update({
         where: { id: formId },
         data: {
@@ -57,26 +54,23 @@ export class IntakeFormService {
         },
       });
 
-      // 2. Delete all existing questions for this form
       await tx.question.deleteMany({
         where: { formId },
       });
 
-      // 3. Create the new questions
       if (questions?.length) {
         await tx.question.createMany({
           data: questions.map((q) => ({
             formId,
             text: q.text,
             type: q.type,
-            options: q.options || [],
+            options: q.options?.map((opt) => opt.text) || [],
             isRequired: q.isRequired,
             order: q.order,
           })),
         });
       }
 
-      // Return the updated form with questions
       return tx.intakeForm.findUnique({
         where: { id: formId },
         include: { questions: { orderBy: { order: 'asc' } } },
@@ -85,7 +79,6 @@ export class IntakeFormService {
   }
 
   async delete(formId: string, practitionerId: string) {
-    // First, verify the form exists and belongs to the practitioner
     const form = await this.prisma.intakeForm.findUnique({
       where: { id: formId },
     });
@@ -98,22 +91,32 @@ export class IntakeFormService {
       throw new ForbiddenException('You do not have permission to delete this form.');
     }
 
-    // Deleting the form will cascade and delete the questions
     return this.prisma.intakeForm.delete({
       where: { id: formId },
     });
   }
 
-  findAllForPractitioner(practitionerId: string) {
-    return this.prisma.intakeForm.findMany({
+  async findAllForPractitioner(practitionerId: string) {
+    const forms = await this.prisma.intakeForm.findMany({
       where: { practitionerId },
       orderBy: { updatedAt: 'desc' },
       include: {
         _count: {
           select: { questions: true },
         },
+        questions: {
+          orderBy: { order: 'asc' },
+        },
       },
     });
+
+    return forms.map((form) => ({
+      ...form,
+      questions: form.questions.map((q) => ({
+        ...q,
+        options: q.options.map((opt) => ({ text: opt })),
+      })),
+    }));
   }
 
   async findOne(formId: string, practitionerId: string) {
@@ -134,6 +137,11 @@ export class IntakeFormService {
       throw new ForbiddenException('You do not have permission to view this form.');
     }
 
-    return form;
+    const mappedQuestions = form.questions.map((q) => ({
+      ...q,
+      options: q.options.map((opt) => ({ text: opt })),
+    }));
+
+    return { ...form, questions: mappedQuestions };
   }
 }

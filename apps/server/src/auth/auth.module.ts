@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { config } from 'src/common/config';
 import { MailModule } from 'src/mail/mail.module';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MailModule } from 'src/mail/mail.module';
       signOptions: { expiresIn: config.jwt.expiresIn },
     }),
     MailModule,
+    MulterModule.register({ dest: './uploads' }),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
