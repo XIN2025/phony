@@ -196,29 +196,9 @@ export class AuthService {
     lastName: string;
     invitationToken: string;
   }): Promise<LoginResponseDto> {
-    console.log('handleClientSignUp received data:', data);
-    console.log('Data types:', {
-      email: typeof data.email,
-      firstName: typeof data.firstName,
-      lastName: typeof data.lastName,
-      invitationToken: typeof data.invitationToken,
-    });
-    console.log('Trimmed values:', {
-      email: data.email?.trim(),
-      firstName: data.firstName?.trim(),
-      lastName: data.lastName?.trim(),
-      invitationToken: data.invitationToken?.trim(),
-    });
-
     const { email, firstName, lastName, invitationToken } = data;
 
     if (!email?.trim() || !firstName?.trim() || !lastName?.trim() || !invitationToken?.trim()) {
-      console.log('Validation failed:', {
-        emailValid: !!email?.trim(),
-        firstNameValid: !!firstName?.trim(),
-        lastNameValid: !!lastName?.trim(),
-        invitationTokenValid: !!invitationToken?.trim(),
-      });
       throw new BadRequestException('Email, first name, last name, and invitation token are required');
     }
 
@@ -342,28 +322,12 @@ export class AuthService {
   }
 
   async updateProfile(userId: string, body: ProfileUpdateBody, file?: Express.Multer.File) {
-    console.log('updateProfile called with:', {
-      userId,
-      body,
-      hasFile: !!file,
-      fileInfo: file
-        ? {
-            originalname: file.originalname,
-            mimetype: file.mimetype,
-            size: file.size,
-            hasBuffer: !!file.buffer,
-            bufferLength: file.buffer?.length,
-          }
-        : null,
-    });
-
     const updateData: ProfileUpdateData = {
       firstName: body.firstName,
       lastName: body.lastName,
     };
 
     if (file && file.buffer) {
-      console.log('Processing file upload...');
       const uploadsDir = path.join(process.cwd(), 'uploads');
       await fs.mkdir(uploadsDir, { recursive: true });
       const ext = path.extname(file.originalname);
@@ -372,9 +336,6 @@ export class AuthService {
       await fs.writeFile(filePath, file.buffer);
 
       updateData.avatarUrl = `/uploads/${fileName}`;
-      console.log('File saved to:', filePath);
-    } else {
-      console.log('No file or file.buffer is missing');
     }
 
     const user = await this.prismaService.user.update({

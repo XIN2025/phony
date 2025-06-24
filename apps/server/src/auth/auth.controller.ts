@@ -46,8 +46,6 @@ export class AuthController {
   async clientSignUp(
     @Body() body: { email: string; firstName: string; lastName: string; invitationToken: string }
   ): Promise<LoginResponseDto> {
-    console.log('clientSignUp controller received body:', body);
-    console.log('Body keys:', Object.keys(body));
     return this.authService.handleClientSignUp(body);
   }
 
@@ -59,23 +57,6 @@ export class AuthController {
     })
   )
   async updateProfile(@Request() req, @Body() body: ProfileUpdateBody, @UploadedFile() file: Express.Multer.File) {
-    console.log('Profile update request:', {
-      userId: req.user?.id,
-      userEmail: req.user?.email,
-      hasFile: !!file,
-      fileInfo: file
-        ? {
-            originalname: file.originalname,
-            mimetype: file.mimetype,
-            size: file.size,
-            hasBuffer: !!file.buffer,
-            bufferLength: file.buffer?.length,
-          }
-        : null,
-      body: body,
-      contentType: req.headers['content-type'],
-    });
-
     try {
       return await this.authService.updateProfile(req.user.id, body, file);
     } catch (error) {
@@ -89,21 +70,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user information' })
   @ApiResponse({ status: 200, description: 'User information retrieved successfully.' })
   async getCurrentUser(@Request() req) {
-    console.log('getCurrentUser called:', {
-      userId: req.user?.id,
-      userEmail: req.user?.email,
-      userRole: req.user?.role,
-      headers: req.headers,
-    });
-
     const user = await this.authService.getCurrentUser(req.user.id);
-
-    console.log('getCurrentUser response:', {
-      userId: user.id,
-      userEmail: user.email,
-      clientStatus: user.clientStatus,
-    });
-
     return user;
   }
 }

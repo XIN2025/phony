@@ -138,7 +138,7 @@ export const authOptions: AuthOptions = {
   },
   events: {
     async signOut({ token }) {
-      console.log('User signed out:', token?.email);
+      // User signed out successfully
     },
   },
   pages: {

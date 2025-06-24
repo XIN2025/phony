@@ -79,28 +79,6 @@ export default function ClientSignUpPage() {
       return;
     }
 
-    // Debug logging
-    console.log('Signup data:', {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: email!.trim().toLowerCase(),
-      invitationToken: token!,
-    });
-
-    console.log('Raw form values:', {
-      firstName,
-      lastName,
-      email,
-      token,
-    });
-
-    console.log('Validation checks:', {
-      firstNameValid: !!firstName.trim(),
-      lastNameValid: !!lastName.trim(),
-      emailValid: !!email?.trim(),
-      tokenValid: !!token?.trim(),
-    });
-
     setIsSubmitting(true);
     const toastId = toast.loading('Creating your account...');
     try {
@@ -111,11 +89,7 @@ export default function ClientSignUpPage() {
         invitationToken: token!,
       };
 
-      console.log('Sending signup data to API:', signupData);
-
       const response: unknown = await ApiClient.post('/api/auth/client/signup', signupData);
-
-      console.log('Signup response:', response);
 
       toast.success('Account created successfully! Please log in to continue.', { id: toastId });
 

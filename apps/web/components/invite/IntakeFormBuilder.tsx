@@ -67,10 +67,8 @@ const questionTypeOptions = [
 export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBuilderProps) {
   const { inviteData, setInviteData } = useInviteContext();
 
-  // Determine if this is a new form or editing an existing template
   const isNewForm = !inviteData.intakeFormId;
 
-  // Store the original form data to detect changes
   const [originalFormData, setOriginalFormData] = useState<CreateIntakeFormDto | null>(null);
 
   const form = useForm<CreateIntakeFormDto>({
@@ -92,14 +90,12 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
       } as CreateIntakeFormDto),
   });
 
-  // Initialize original form data when component mounts
   useEffect(() => {
     if (inviteData.intakeFormId && inviteData.newIntakeForm && !originalFormData) {
       setOriginalFormData(JSON.parse(JSON.stringify(inviteData.newIntakeForm)));
     }
   }, [inviteData.intakeFormId, inviteData.newIntakeForm, originalFormData]);
 
-  // Save form data when component unmounts
   useEffect(() => {
     return () => {
       const currentFormData = form.getValues();
@@ -125,18 +121,16 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
   };
 
   const handleFormSubmit = (formData: CreateIntakeFormDto) => {
-    // Check for changes when submitting
     let hasChanges = false;
     if (originalFormData && inviteData.intakeFormId) {
       hasChanges = JSON.stringify(formData) !== JSON.stringify(originalFormData);
     }
 
-    // Update hasChanges in context
     setInviteData({ hasChanges });
 
-    // Always pass false for saveAsTemplate from builder - this will be handled in preview
     onSubmit(formData);
   };
+
   return (
     <form onSubmit={form.handleSubmit(handleFormSubmit)} className='space-y-6 max-w-none'>
       <div className='space-y-2'>

@@ -26,7 +26,6 @@ export default function InviteClientPage() {
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ['invitations'] });
 
-      // Show success message with details about what was included
       const successMessage = inviteData.intakeFormId
         ? 'Invitation sent successfully! An intake form has been included for your client.'
         : 'Invitation sent successfully!';
@@ -41,14 +40,12 @@ export default function InviteClientPage() {
     onError: (error: any) => {
       let errorMessage = 'Failed to send invitation.';
 
-      // Extract error message from response
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
         errorMessage = error.message;
       }
 
-      // Provide specific guidance based on error type
       if (errorMessage.includes('already exists')) {
         errorMessage = `A client with the email "${inviteData.clientEmail}" already exists in the system. Please use a different email address or check if this client has already been invited.`;
       } else if (errorMessage.includes('Failed to send invitation email')) {
@@ -84,24 +81,21 @@ export default function InviteClientPage() {
   };
   const handleFormSelect = async (formId: string | 'create-new') => {
     if (formId === 'create-new') {
-      // Clear any existing form data when creating new
       setInviteData({
         intakeFormId: undefined,
         newIntakeForm: undefined,
-        saveAsTemplate: true, // Reset to default for new forms
-        hasChanges: false, // No changes for new forms
+        saveAsTemplate: true,
+        hasChanges: false,
       });
       goToNextStep();
     } else {
       try {
         const selectedForm = await ApiClient.get<CreateIntakeFormDto>(`/api/intake-forms/${formId}`);
-        // When selecting an existing template, set the form ID and form data
-        // This indicates we're using an existing template, not creating a new one
         setInviteData({
           newIntakeForm: selectedForm,
           intakeFormId: formId,
-          saveAsTemplate: true, // Existing templates are already saved
-          hasChanges: false, // No changes initially when selecting existing template
+          saveAsTemplate: true,
+          hasChanges: false,
         });
         goToNextStep();
       } catch (error) {
@@ -113,7 +107,7 @@ export default function InviteClientPage() {
     setInviteData({
       newIntakeForm: formData,
       intakeFormId: undefined,
-      hasChanges: false, // New forms have no changes initially
+      hasChanges: false,
     });
     goToNextStep();
   };
@@ -123,7 +117,6 @@ export default function InviteClientPage() {
       return;
     }
 
-    // Validate required data
     if (!inviteData.clientFirstName || !inviteData.clientLastName || !inviteData.clientEmail) {
       toast.error('Missing client information. Please go back and fill in all required fields.');
       return;
@@ -132,23 +125,17 @@ export default function InviteClientPage() {
     try {
       let finalData = { ...inviteData };
 
-      // Create or update form in database if user wants to save as template
       if (saveAsTemplate) {
         if (!finalData.intakeFormId) {
-          // Creating a new form
           const newForm = await ApiClient.post<{ id: string }>('/api/intake-forms', inviteData.newIntakeForm);
           finalData = { ...finalData, intakeFormId: newForm.id };
         } else if (finalData.hasChanges) {
-          // Updating existing form (only if changes were made)
           await ApiClient.put(`/api/intake-forms/${finalData.intakeFormId}`, inviteData.newIntakeForm);
-        } else {
-          // No changes made to existing form, use existing ID
         }
       }
 
       setInviteData(finalData);
 
-      // Prepare the data to send to the backend - only include the fields expected by InviteClientDto
       const invitationData = {
         clientFirstName: finalData.clientFirstName,
         clientLastName: finalData.clientLastName,
