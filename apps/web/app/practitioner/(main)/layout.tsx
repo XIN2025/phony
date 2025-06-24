@@ -15,7 +15,7 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
     { href: '/practitioner/forms', icon: FileIcon, label: 'Forms' },
   ];
   return (
-    <div className='grid h-screen w-full lg:grid-cols-[280px_1fr]'>
+    <div className='grid min-h-screen w-full lg:grid-cols-[280px_1fr]'>
       <div className='hidden bg-background lg:block'>
         <SidebarContent navLinks={navLinks} pathname={pathname} />
       </div>
@@ -24,7 +24,7 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
           <SidebarContent navLinks={navLinks} pathname={pathname} />
         </SheetContent>
       </Sheet>
-      <div className='flex flex-1 flex-col overflow-auto'>{children}</div>
+      <div className='flex flex-1 flex-col'>{children}</div>
     </div>
   );
 }

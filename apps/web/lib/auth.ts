@@ -11,14 +11,21 @@ const credentialsAuthProvider = CredentialsProvider({
   },
   async authorize(credentials) {
     try {
-      if (!credentials?.email || !credentials?.otp) {
-        throw new Error('Email and OTP required');
+      if (!credentials?.email) {
+        throw new Error('Email required');
       }
+
+      // Handle regular OTP verification
+      if (!credentials?.otp) {
+        throw new Error('OTP required');
+      }
+
       const res = await AuthService.verifyOtp({
         email: credentials.email,
         otp: credentials.otp,
         role: credentials.role as 'CLIENT' | 'PRACTITIONER',
       });
+
       const user: User = {
         id: res.user.id,
         email: res.user.email,
@@ -28,6 +35,7 @@ const credentialsAuthProvider = CredentialsProvider({
         lastName: res.user.lastName ?? '',
         avatarUrl: res.user.avatarUrl ?? '',
         profession: res.user.profession ?? null,
+        clientStatus: res.user.clientStatus,
       };
       return user;
     } catch (error) {
@@ -63,6 +71,7 @@ export const authOptions: AuthOptions = {
         token.profession = user.profession;
         token.avatarUrl = user.avatarUrl || '';
         token.token = user.token;
+        token.clientStatus = user.clientStatus;
         delete token.error;
         return token;
       }
@@ -88,6 +97,7 @@ export const authOptions: AuthOptions = {
         session.user.role = token.role as string;
         session.user.profession = token.profession as string;
         session.user.token = token.token as string;
+        session.user.clientStatus = token.clientStatus as string;
       }
       return session;
     },
@@ -129,9 +139,6 @@ export const authOptions: AuthOptions = {
   events: {
     async signOut({ token }) {
       console.log('User signed out:', token?.email);
-    },
-    async session({ session, token }) {
-      console.log('Session updated:', session?.user?.email);
     },
   },
   pages: {

@@ -18,4 +18,7 @@ export class AuthService {
   }) {
     return await ApiClient.post<LoginResponse>('/api/auth/practitioner/signup', data);
   }
+  static async clientSignup(data: { email: string; firstName: string; lastName: string; invitationToken: string }) {
+    return await ApiClient.post<LoginResponse>('/api/auth/client/signup', data);
+  }
 }

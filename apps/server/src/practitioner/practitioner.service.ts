@@ -48,21 +48,6 @@ export class PractitionerService {
       throw new NotFoundException('Practitioner not found');
     }
 
-    const existingInvitation = await this.prisma.invitation.findFirst({
-      where: {
-        practitionerId,
-        clientEmail: normalizedEmail,
-        isAccepted: false,
-        expiresAt: {
-          gt: new Date(),
-        },
-      },
-    });
-
-    if (existingInvitation) {
-      throw new BadRequestException('An active invitation already exists for this email');
-    }
-
     const existingUser = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
@@ -71,20 +56,47 @@ export class PractitionerService {
       throw new BadRequestException('A user with this email already exists');
     }
 
-    const token = randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-    const invitation = await this.prisma.invitation.create({
-      data: {
+    const existingInvitation = await this.prisma.invitation.findFirst({
+      where: {
         practitionerId,
         clientEmail: normalizedEmail,
-        clientFirstName: normalizedFirstName,
-        clientLastName: normalizedLastName,
-        token,
-        expiresAt,
-        intakeFormId,
       },
     });
+
+    let invitation;
+
+    if (existingInvitation) {
+      if (existingInvitation.isAccepted) {
+        throw new BadRequestException('This client has already been invited and accepted the invitation');
+      }
+
+      invitation = await this.prisma.invitation.update({
+        where: { id: existingInvitation.id },
+        data: {
+          clientFirstName: normalizedFirstName,
+          clientLastName: normalizedLastName,
+          intakeFormId,
+
+          token: randomBytes(32).toString('hex'),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+    } else {
+      const token = randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      invitation = await this.prisma.invitation.create({
+        data: {
+          practitionerId,
+          clientEmail: normalizedEmail,
+          clientFirstName: normalizedFirstName,
+          clientLastName: normalizedLastName,
+          token,
+          expiresAt,
+          intakeFormId,
+        },
+      });
+    }
 
     let intakeFormTitle: string | undefined;
     if (intakeFormId) {
@@ -93,7 +105,7 @@ export class PractitionerService {
     }
 
     try {
-      const invitationLink = `${config.frontendUrl}/client/auth/signup?token=${encodeURIComponent(token)}`;
+      const invitationLink = `${config.frontendUrl}/client/auth/signup?token=${encodeURIComponent(invitation.token)}`;
 
       const practitionerName =
         practitioner.firstName && practitioner.lastName
@@ -109,15 +121,9 @@ export class PractitionerService {
       });
 
       if (!emailSent) {
-        await this.prisma.invitation.delete({
-          where: { id: invitation.id },
-        });
         throw new BadRequestException('Failed to send invitation email');
       }
     } catch {
-      await this.prisma.invitation.delete({
-        where: { id: invitation.id },
-      });
       throw new BadRequestException('Failed to send invitation email');
     }
 
@@ -233,7 +239,7 @@ export class PractitionerService {
           where: { token: decodedToken },
         });
       } catch {
-        // Token decoding failed, continue with null invitation
+        // Token decoding failed, invitation remains null
       }
     }
 

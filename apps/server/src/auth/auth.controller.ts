@@ -1,8 +1,8 @@
-import { Body, Controller, Post, Request, UseGuards, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Post, Request, UseGuards, UploadedFile, UseInterceptors, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
 import { LoginResponseDto, OtpAuthDto, VerifyOtpDto, PractitionerSignUpDto } from './dto/auth.dto';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -46,6 +46,8 @@ export class AuthController {
   async clientSignUp(
     @Body() body: { email: string; firstName: string; lastName: string; invitationToken: string }
   ): Promise<LoginResponseDto> {
+    console.log('clientSignUp controller received body:', body);
+    console.log('Body keys:', Object.keys(body));
     return this.authService.handleClientSignUp(body);
   }
 
@@ -80,5 +82,28 @@ export class AuthController {
       console.error('Error in updateProfile:', error);
       throw error;
     }
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get current user information' })
+  @ApiResponse({ status: 200, description: 'User information retrieved successfully.' })
+  async getCurrentUser(@Request() req) {
+    console.log('getCurrentUser called:', {
+      userId: req.user?.id,
+      userEmail: req.user?.email,
+      userRole: req.user?.role,
+      headers: req.headers,
+    });
+
+    const user = await this.authService.getCurrentUser(req.user.id);
+
+    console.log('getCurrentUser response:', {
+      userId: user.id,
+      userEmail: user.email,
+      clientStatus: user.clientStatus,
+    });
+
+    return user;
   }
 }

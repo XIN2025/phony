@@ -1,13 +1,14 @@
 ﻿'use client';
+import { useInviteContext } from '@/context/InviteContext';
 import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
-import { Label } from '@repo/ui/components/label';
-import { Input } from '@repo/ui/components/input';
-import { Textarea } from '@repo/ui/components/textarea';
-import { RadioGroup, RadioGroupItem } from '@repo/ui/components/radio-group';
 import { Checkbox } from '@repo/ui/components/checkbox';
-import { useState } from 'react';
+import { Input } from '@repo/ui/components/input';
+import { Label } from '@repo/ui/components/label';
+import { RadioGroup, RadioGroupItem } from '@repo/ui/components/radio-group';
+import { Textarea } from '@repo/ui/components/textarea';
+
 interface Props {
   formData: CreateIntakeFormDto;
   onBack: () => void;
@@ -15,8 +16,21 @@ interface Props {
   isLoading: boolean;
   isNewForm: boolean;
 }
+
 export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNewForm }: Props) {
-  const [saveAsTemplate, setSaveAsTemplate] = useState(true);
+  const { inviteData, setInviteData } = useInviteContext();
+
+  const hasChanges = inviteData.hasChanges || false;
+  const shouldShowSaveOption = isNewForm || (inviteData.intakeFormId && hasChanges);
+
+  const saveAsTemplate = isNewForm ? (inviteData.saveAsTemplate ?? true) : true;
+
+  const handleSaveAsTemplateChange = (checked: boolean) => {
+    if (shouldShowSaveOption) {
+      setInviteData({ saveAsTemplate: checked });
+    }
+  };
+
   const renderAnswer = (question: CreateIntakeFormDto['questions'][0]) => {
     const commonProps = {
       className: 'bg-gray-100 border-gray-300 rounded-md',
@@ -72,6 +86,7 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
         return null;
     }
   };
+
   return (
     <div className='flex flex-col h-full'>
       <div className='flex-grow overflow-y-auto'>
@@ -92,12 +107,12 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
         </Card>
       </div>
       <div className='flex justify-end items-center pt-6 mt-4 gap-4 border-t'>
-        {isNewForm && (
+        {shouldShowSaveOption && (
           <div className='flex items-center space-x-2 mr-auto'>
             <Checkbox
               id='save-template-preview'
               checked={saveAsTemplate}
-              onCheckedChange={(checked) => setSaveAsTemplate(Boolean(checked))}
+              onCheckedChange={handleSaveAsTemplateChange}
             />
             <label htmlFor='save-template-preview' className='text-sm font-medium leading-none'>
               Save form as a template
@@ -108,11 +123,17 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
           Back
         </Button>
         <Button
-          onClick={() => onSubmit(isNewForm ? saveAsTemplate : false)}
+          onClick={() => onSubmit(shouldShowSaveOption ? saveAsTemplate : false)}
           disabled={isLoading}
           className='rounded-full bg-black px-6 text-white hover:bg-gray-800'
         >
-          {isLoading ? 'Sending...' : isNewForm && saveAsTemplate ? 'Send & Save' : 'Send Invite'}
+          {isLoading
+            ? shouldShowSaveOption && saveAsTemplate
+              ? 'Saving Form & Sending...'
+              : 'Sending Invitation...'
+            : shouldShowSaveOption && saveAsTemplate
+              ? 'Send & Save Template'
+              : 'Send Invitation'}
         </Button>
       </div>
     </div>

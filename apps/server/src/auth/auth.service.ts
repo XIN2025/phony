@@ -1,4 +1,11 @@
-import { Injectable, Logger, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  UnauthorizedException,
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { config } from 'src/common/config';
@@ -100,6 +107,7 @@ export class AuthService {
       lastName: user.lastName,
       role: user.role,
       profession: user.profession,
+      clientStatus: user.clientStatus ?? undefined,
       sub: user.id,
     };
 
@@ -117,6 +125,7 @@ export class AuthService {
         avatarUrl: user.avatarUrl,
         role: user.role,
         profession: user.profession,
+        clientStatus: user.clientStatus ?? undefined,
       },
     };
   }
@@ -187,9 +196,29 @@ export class AuthService {
     lastName: string;
     invitationToken: string;
   }): Promise<LoginResponseDto> {
+    console.log('handleClientSignUp received data:', data);
+    console.log('Data types:', {
+      email: typeof data.email,
+      firstName: typeof data.firstName,
+      lastName: typeof data.lastName,
+      invitationToken: typeof data.invitationToken,
+    });
+    console.log('Trimmed values:', {
+      email: data.email?.trim(),
+      firstName: data.firstName?.trim(),
+      lastName: data.lastName?.trim(),
+      invitationToken: data.invitationToken?.trim(),
+    });
+
     const { email, firstName, lastName, invitationToken } = data;
 
     if (!email?.trim() || !firstName?.trim() || !lastName?.trim() || !invitationToken?.trim()) {
+      console.log('Validation failed:', {
+        emailValid: !!email?.trim(),
+        firstNameValid: !!firstName?.trim(),
+        lastNameValid: !!lastName?.trim(),
+        invitationTokenValid: !!invitationToken?.trim(),
+      });
       throw new BadRequestException('Email, first name, last name, and invitation token are required');
     }
 
@@ -197,10 +226,24 @@ export class AuthService {
     const normalizedFirstName = firstName.trim();
     const normalizedLastName = lastName.trim();
 
-    const invitation = await this.prismaService.invitation.findUnique({
+    // Try to find invitation with the token, handling URL encoding
+    let invitation = await this.prismaService.invitation.findUnique({
       where: { token: invitationToken },
       include: { practitioner: true },
     });
+
+    // If not found, try with URL decoded token
+    if (!invitation) {
+      try {
+        const decodedToken = decodeURIComponent(invitationToken);
+        invitation = await this.prismaService.invitation.findUnique({
+          where: { token: decodedToken },
+          include: { practitioner: true },
+        });
+      } catch {
+        // Token decoding failed, continue with null invitation
+      }
+    }
 
     if (!invitation) {
       throw new UnauthorizedException('Invalid invitation token');
@@ -226,6 +269,9 @@ export class AuthService {
       throw new ConflictException('An account with this email already exists');
     }
 
+    // Determine client status based on whether intake form is attached
+    const clientStatus = invitation.intakeFormId ? 'NEEDS_INTAKE' : 'ACTIVE';
+
     user = await this.prismaService.user.create({
       data: {
         email: normalizedEmail,
@@ -234,6 +280,7 @@ export class AuthService {
         role: UserRole.CLIENT,
         practitionerId: invitation.practitionerId,
         isEmailVerified: true,
+        clientStatus,
       },
     });
 
@@ -250,6 +297,7 @@ export class AuthService {
       lastName: user.lastName,
       role: user.role,
       profession: user.profession,
+      clientStatus: user.clientStatus ?? undefined,
       sub: user.id,
     };
 
@@ -267,6 +315,7 @@ export class AuthService {
         avatarUrl: user.avatarUrl,
         role: user.role,
         profession: user.profession,
+        clientStatus: user.clientStatus ?? undefined,
       },
     };
   }
@@ -341,6 +390,27 @@ export class AuthService {
       avatarUrl: user.avatarUrl,
       role: user.role,
       profession: user.profession,
+    };
+  }
+
+  async getCurrentUser(userId: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatarUrl: user.avatarUrl,
+      role: user.role,
+      profession: user.profession,
+      clientStatus: user.clientStatus,
     };
   }
 }

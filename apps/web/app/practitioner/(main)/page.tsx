@@ -1,20 +1,7 @@
 ﻿'use client';
-import { useRouter } from 'next/navigation';
-import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
-import { Badge } from '@repo/ui/components/badge';
-import { Button } from '@repo/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
-import { Users, Plus, MessageSquare, Loader2, RefreshCw, Trash2, Eye, MessageCircle } from 'lucide-react';
-import { useSession } from 'next-auth/react';
-import Link from 'next/link';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { ApiClient } from '@/lib/api-client';
 import { getInitials } from '@/lib/utils';
-import { format, formatDistanceToNow } from 'date-fns';
-import { toast } from 'sonner';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/tooltip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +13,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@repo/ui/components/alert-dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
+import { Badge } from '@repo/ui/components/badge';
+import { Button } from '@repo/ui/components/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/tooltip';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Eye, Loader2, MessageCircle, MessageSquare, Plus, RefreshCw, Trash2, Users } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 interface Client {
   id: string;
   clientFirstName: string;
@@ -72,7 +71,7 @@ export default function PractitionerDashboard() {
       toast.error(`Failed to resend invitation: ${error.message}`);
     },
   });
-  // Show loading state while session is being determined
+
   if (status === 'loading') {
     return (
       <div className='flex h-screen items-center justify-center'>
@@ -80,30 +79,30 @@ export default function PractitionerDashboard() {
       </div>
     );
   }
-  // If not authenticated, redirect to auth page
+
   if (status === 'unauthenticated') {
-    window.location.href = '/practitioner/auth';
+    router.push('/practitioner/auth');
     return (
       <div className='flex h-screen items-center justify-center'>
         <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
       </div>
     );
   }
-  // If session has error, redirect to auth page
+
   if (session?.error) {
-    window.location.href = '/practitioner/auth';
+    router.push('/practitioner/auth');
     return (
       <div className='flex h-screen items-center justify-center'>
         <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
       </div>
     );
   }
-  // If authenticated but not a practitioner, redirect to appropriate page
+
   if (status === 'authenticated' && session?.user?.role !== 'PRACTITIONER') {
     if (session?.user?.role === 'CLIENT') {
-      window.location.href = '/client';
+      router.push('/client');
     } else {
-      window.location.href = '/practitioner/auth';
+      router.push('/practitioner/auth');
     }
     return (
       <div className='flex h-screen items-center justify-center'>
@@ -111,7 +110,7 @@ export default function PractitionerDashboard() {
       </div>
     );
   }
-  // Show loading state while data is loading
+
   if (isClientsLoading) {
     return (
       <div className='flex h-screen items-center justify-center'>

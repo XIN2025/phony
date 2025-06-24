@@ -17,15 +17,49 @@ export default function InviteClientPage() {
   const queryClient = useQueryClient();
   const { step, inviteData, setInviteData, goToNextStep, goToPrevStep, goToStep, resetInviteFlow } = useInviteContext();
   const mutation = useMutation({
-    mutationFn: (data: typeof inviteData) => ApiClient.post('/api/practitioner/invite-client', data),
+    mutationFn: (data: {
+      clientFirstName: string;
+      clientLastName: string;
+      clientEmail: string;
+      intakeFormId?: string;
+    }) => ApiClient.post('/api/practitioner/invite-client', data),
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ['invitations'] });
+
+      // Show success message with details about what was included
+      const successMessage = inviteData.intakeFormId
+        ? 'Invitation sent successfully! An intake form has been included for your client.'
+        : 'Invitation sent successfully!';
+
+      toast.success(successMessage, {
+        description: 'Your client will receive an email with instructions to join.',
+        duration: 4000,
+      });
+
       router.push('/practitioner/invite/success');
     },
     onError: (error: any) => {
-      console.error('Invitation error:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to send invitation.';
-      toast.error(errorMessage);
+      let errorMessage = 'Failed to send invitation.';
+
+      // Extract error message from response
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      // Provide specific guidance based on error type
+      if (errorMessage.includes('already exists')) {
+        errorMessage = `A client with the email "${inviteData.clientEmail}" already exists in the system. Please use a different email address or check if this client has already been invited.`;
+      } else if (errorMessage.includes('Failed to send invitation email')) {
+        errorMessage =
+          'The invitation email could not be sent. Please check the email address and try again, or contact support if the problem persists.';
+      }
+
+      toast.error(errorMessage, {
+        description: 'Please review the information and try again.',
+        duration: 5000,
+      });
     },
   });
   const handleDetailsSubmit = (data: {
@@ -39,7 +73,7 @@ export default function InviteClientPage() {
       clientEmail: data.clientEmail.trim().toLowerCase(),
       clientFirstName: data.clientFirstName.trim(),
       clientLastName: data.clientLastName.trim(),
-      intakeFormId: null,
+      intakeFormId: undefined,
     };
     setInviteData(normalizedData);
     if (normalizedData.includeIntakeForm) {
@@ -50,14 +84,25 @@ export default function InviteClientPage() {
   };
   const handleFormSelect = async (formId: string | 'create-new') => {
     if (formId === 'create-new') {
-      if (inviteData.intakeFormId) {
-        setInviteData({ intakeFormId: undefined, newIntakeForm: undefined });
-      }
+      // Clear any existing form data when creating new
+      setInviteData({
+        intakeFormId: undefined,
+        newIntakeForm: undefined,
+        saveAsTemplate: true, // Reset to default for new forms
+        hasChanges: false, // No changes for new forms
+      });
       goToNextStep();
     } else {
       try {
         const selectedForm = await ApiClient.get<CreateIntakeFormDto>(`/api/intake-forms/${formId}`);
-        setInviteData({ newIntakeForm: selectedForm, intakeFormId: formId });
+        // When selecting an existing template, set the form ID and form data
+        // This indicates we're using an existing template, not creating a new one
+        setInviteData({
+          newIntakeForm: selectedForm,
+          intakeFormId: formId,
+          saveAsTemplate: true, // Existing templates are already saved
+          hasChanges: false, // No changes initially when selecting existing template
+        });
         goToNextStep();
       } catch (error) {
         toast.error('Could not load form for editing. Please try again.');
@@ -65,21 +110,66 @@ export default function InviteClientPage() {
     }
   };
   const handleFormCreatePreview = (formData: CreateIntakeFormDto) => {
-    setInviteData({ newIntakeForm: formData, intakeFormId: null });
+    setInviteData({
+      newIntakeForm: formData,
+      intakeFormId: undefined,
+      hasChanges: false, // New forms have no changes initially
+    });
     goToNextStep();
   };
   const handleFormSubmit = async (saveAsTemplate: boolean) => {
-    if (!inviteData.newIntakeForm) return;
+    if (!inviteData.newIntakeForm) {
+      toast.error('No form data found. Please go back and create a form.');
+      return;
+    }
+
+    // Validate required data
+    if (!inviteData.clientFirstName || !inviteData.clientLastName || !inviteData.clientEmail) {
+      toast.error('Missing client information. Please go back and fill in all required fields.');
+      return;
+    }
+
     try {
       let finalData = { ...inviteData };
-      if (!finalData.intakeFormId && saveAsTemplate) {
-        const newForm = await ApiClient.post<{ id: string }>('/api/intake-forms', inviteData.newIntakeForm);
-        finalData = { ...finalData, intakeFormId: newForm.id };
+
+      // Create or update form in database if user wants to save as template
+      if (saveAsTemplate) {
+        if (!finalData.intakeFormId) {
+          // Creating a new form
+          const newForm = await ApiClient.post<{ id: string }>('/api/intake-forms', inviteData.newIntakeForm);
+          finalData = { ...finalData, intakeFormId: newForm.id };
+        } else if (finalData.hasChanges) {
+          // Updating existing form (only if changes were made)
+          await ApiClient.put(`/api/intake-forms/${finalData.intakeFormId}`, inviteData.newIntakeForm);
+        } else {
+          // No changes made to existing form, use existing ID
+        }
       }
+
       setInviteData(finalData);
-      mutation.mutate(finalData);
+
+      // Prepare the data to send to the backend - only include the fields expected by InviteClientDto
+      const invitationData = {
+        clientFirstName: finalData.clientFirstName,
+        clientLastName: finalData.clientLastName,
+        clientEmail: finalData.clientEmail,
+        intakeFormId: finalData.intakeFormId,
+      };
+
+      mutation.mutate(invitationData);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create form.');
+      let errorMessage = 'Failed to create form.';
+
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      toast.error(errorMessage, {
+        description: 'Please check your form data and try again.',
+        duration: 5000,
+      });
     }
   };
   const handleBack = () => {
@@ -126,12 +216,12 @@ export default function InviteClientPage() {
   );
   const currentStepData = steps.find((s) => s.step === step);
   return (
-    <div className='mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8'>
+    <div className='mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 sm:py-8 lg:py-10'>
       <Button variant='ghost' size='sm' className='-ml-2 mb-4' onClick={handleBack}>
         <ArrowLeft className='h-5 w-5' />
       </Button>
-      <div className='mb-8'>
-        <h1 className='text-3xl font-semibold tracking-tight'>{currentStepData?.title}</h1>
+      <div className='mb-6 sm:mb-8'>
+        <h1 className='text-2xl sm:text-3xl font-semibold tracking-tight'>{currentStepData?.title}</h1>
       </div>
       <div>{currentStepData?.component}</div>
     </div>

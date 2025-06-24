@@ -198,9 +198,26 @@ export class MailService {
 
   private renderTemplate<T extends Template>(template: string, context: TemplateContextMap[T]): string {
     let rendered = template;
+
+    rendered = this.renderConditionals(rendered, context);
+
     Object.entries(context).forEach(([key, value]) => {
       rendered = rendered.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
     });
+
     return rendered;
+  }
+
+  private renderConditionals(template: string, context: TemplateContextMap[Template]): string {
+    const ifElseRegex = /\{\{#if\s+(\w+)\}\}(.*?)\{\{else\}\}(.*?)\{\{\/if\}\}/gs;
+
+    return template.replace(ifElseRegex, (match, variable, ifContent, elseContent) => {
+      const value = context[variable];
+      if (value && value !== '') {
+        return ifContent;
+      } else {
+        return elseContent;
+      }
+    });
   }
 }

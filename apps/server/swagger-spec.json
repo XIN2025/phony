@@ -81,6 +81,15 @@
         "tags": ["auth"]
       }
     },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "AuthController_getCurrentUser",
+        "parameters": [],
+        "responses": { "200": { "description": "User information retrieved successfully." } },
+        "summary": "Get current user information",
+        "tags": ["auth"]
+      }
+    },
     "/api/practitioner/invitations/token/{token}": {
       "get": {
         "operationId": "PractitionerController_getInvitationByToken",
@@ -210,6 +219,36 @@
         "summary": "Delete an intake form",
         "tags": ["intake-forms"]
       }
+    },
+    "/api/client/intake-form": {
+      "get": {
+        "operationId": "ClientController_getIntakeForm",
+        "parameters": [],
+        "responses": { "200": { "description": "Intake form retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get intake form for the logged-in client",
+        "tags": ["client"]
+      }
+    },
+    "/api/client/intake-form/submit": {
+      "post": {
+        "operationId": "ClientController_submitIntakeForm",
+        "parameters": [],
+        "responses": { "200": { "description": "Intake form submitted successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Submit intake form answers",
+        "tags": ["client"]
+      }
+    },
+    "/api/client/fix-statuses": {
+      "post": {
+        "operationId": "ClientController_fixClientStatuses",
+        "parameters": [],
+        "responses": { "200": { "description": "Client statuses fixed successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Fix client statuses that are inconsistent with their submissions",
+        "tags": ["client"]
+      }
     }
   },
   "info": { "title": "NestJS API", "description": "API for NestJS", "version": "1.0", "contact": {} },
@@ -236,9 +275,10 @@
           "lastName": { "type": "string", "nullable": true },
           "avatarUrl": { "type": "string", "nullable": true },
           "role": { "type": "string", "enum": ["PRACTITIONER", "CLIENT"] },
-          "profession": { "type": "string", "nullable": true }
+          "profession": { "type": "string", "nullable": true },
+          "clientStatus": { "type": "string", "enum": ["ACTIVE", "NEEDS_INTAKE", "INTAKE_COMPLETED"], "nullable": true }
         },
-        "required": ["id", "email", "firstName", "lastName", "avatarUrl", "role", "profession"]
+        "required": ["id", "email", "firstName", "lastName", "avatarUrl", "role", "profession", "clientStatus"]
       },
       "LoginResponseDto": {
         "type": "object",

@@ -19,6 +19,7 @@ model User {
   role            UserRole
   isEmailVerified Boolean  @default(false) @map("is_email_verified")
   isActive        Boolean  @default(true) @map("is_active")
+  clientStatus    ClientStatus? @default(ACTIVE) @map("client_status")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @default(now()) @map("updated_at")
 
@@ -32,8 +33,11 @@ model User {
   // Relation for invitations sent by a practitioner
   sentInvitations Invitation[] @relation("PractitionerInvitations")
 
-  // Relation for intake forms created by a practitioner
+  // Relation for intake forms created by a practitioner (templates)
   intakeForms IntakeForm[]
+
+  // Relation for intake form submissions by clients
+  intakeFormSubmissions IntakeFormSubmission[]
 
   @@map("users")
 }
@@ -74,6 +78,12 @@ enum UserRole {
   CLIENT
 }
 
+enum ClientStatus {
+  ACTIVE
+  NEEDS_INTAKE
+  INTAKE_COMPLETED
+}
+
 enum QuestionType {
   SHORT_ANSWER
   LONG_ANSWER
@@ -87,6 +97,7 @@ enum QuestionType {
   TICK_BOX_GRID
 }
 
+// IntakeForm template - created by practitioner
 model IntakeForm {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   title          String
@@ -101,9 +112,13 @@ model IntakeForm {
   // Relation to invitations
   invitations Invitation[]
 
+  // Relation to submissions
+  submissions IntakeFormSubmission[]
+
   @@map("intake_forms")
 }
 
+// Question template - part of IntakeForm
 model Question {
   id         String       @id @default(auto()) @map("_id") @db.ObjectId
   formId     String       @db.ObjectId
@@ -116,4 +131,30 @@ model Question {
   form IntakeForm @relation(fields: [formId], references: [id], onDelete: Cascade)
 
   @@map("questions")
+}
+
+// IntakeFormSubmission - snapshot of when a client filled out a form
+model IntakeFormSubmission {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  clientId   String   @db.ObjectId
+  formId     String   @db.ObjectId
+  submittedAt DateTime @default(now())
+
+  client User         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  form   IntakeForm   @relation(fields: [formId], references: [id], onDelete: Cascade)
+  answers Answer[]
+
+  @@map("intake_form_submissions")
+}
+
+// Answer - individual response to a question
+model Answer {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  submissionId String   @db.ObjectId
+  questionId   String   @db.ObjectId
+  value        String   // Store as JSON string for complex answers
+
+  submission IntakeFormSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@map("answers")
 }

@@ -7,5 +7,6 @@ export interface RequestUser {
   lastName: string;
   avatarUrl?: string | null;
   role: UserRole;
+  clientStatus?: string;
   sub: string;
 }

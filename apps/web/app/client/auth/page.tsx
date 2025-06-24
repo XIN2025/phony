@@ -16,12 +16,25 @@ import { useMutation } from '@tanstack/react-query';
 import { emailSchema, otpSchema } from '@repo/shared-types/schemas';
 import { AuthService } from '@/services';
 import { Logo } from '@repo/ui/components/logo';
+
 export default function ClientAuthPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [showOTP, setShowOTP] = React.useState(false);
   const [resendTimer, setResendTimer] = React.useState(0);
   const router = useRouter();
-  const { status } = useSession();
+  const { status, data: session } = useSession();
+
+  // Redirect authenticated users to appropriate dashboard
+  React.useEffect(() => {
+    if (status === 'authenticated' && session) {
+      if (session.user.role === 'CLIENT') {
+        router.replace('/client');
+      } else if (session.user.role === 'PRACTITIONER') {
+        router.replace('/practitioner');
+      }
+    }
+  }, [status, session, router]);
+
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useMutation({
     mutationFn: (email: string) => AuthService.sendOtp({ email }),
     onSuccess: () => {
@@ -33,16 +46,19 @@ export default function ClientAuthPage() {
       toast.error(error.message ?? 'Failed to send OTP');
     },
   });
+
   const form = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(showOTP ? otpSchema : emailSchema),
     defaultValues: { email: '' },
   });
+
   const startResendTimer = () => {
     setResendTimer(60);
-    const interval = setInterval(() => {
+    setInterval(() => {
       setResendTimer((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
   };
+
   async function onSubmit(values: z.infer<typeof emailSchema>) {
     if (!showOTP) {
       handleSendOTP(values.email);
@@ -59,15 +75,16 @@ export default function ClientAuthPage() {
       if (res?.error) {
         toast.error(res.error ?? 'Invalid OTP');
       } else {
-        router.push('/client/profile-setup');
         toast.success('Logged in successfully');
+        router.push('/client');
       }
-    } catch (error) {
+    } catch {
       toast.error('An error occurred during sign in');
     } finally {
       setIsLoading(false);
     }
   }
+
   const renderContent = () => {
     if (showOTP) {
       return (
@@ -137,12 +154,24 @@ export default function ClientAuthPage() {
       </motion.div>
     );
   };
-  if (status === 'loading')
+
+  if (status === 'loading') {
     return (
       <div className='flex h-screen items-center justify-center'>
         <Loader2 className='h-8 w-8 animate-spin' />
       </div>
     );
+  }
+
+  // If already authenticated, show loading while redirecting
+  if (status === 'authenticated') {
+    return (
+      <div className='flex h-screen items-center justify-center'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    );
+  }
+
   return (
     <>
       <div className='mb-8 text-center'>
