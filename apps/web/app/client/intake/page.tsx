@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@repo/ui/components/button';
@@ -41,6 +41,32 @@ export default function ClientIntakePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
+  const loadIntakeForm = useCallback(async () => {
+    try {
+      const formData: IntakeForm = await ApiClient.get('/api/client/intake-form');
+      setForm(formData);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        const errorMessage = error.message;
+        if (errorMessage.includes('Client has already completed intake')) {
+          // Client has already completed intake, redirect to dashboard
+          toast.info('You have already completed your intake form.');
+          router.push('/client');
+          return;
+        } else if (errorMessage.includes('No invitation found') || errorMessage.includes('No intake form attached')) {
+          toast.error('No intake form found. Please contact your practitioner.');
+          router.push('/client');
+        } else {
+          toast.error('Failed to load intake form. Please contact your practitioner.');
+        }
+      } else {
+        toast.error('Failed to load intake form. Please contact your practitioner.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [router]);
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/client/auth');
@@ -62,34 +88,7 @@ export default function ClientIntakePage() {
 
       loadIntakeForm();
     }
-  }, [session, status, router]);
-
-  const loadIntakeForm = async () => {
-    try {
-      const formData: IntakeForm = await ApiClient.get('/api/client/intake-form');
-      setForm(formData);
-    } catch (error: unknown) {
-      console.error('Error loading intake form:', error);
-      if (error instanceof Error) {
-        const errorMessage = error.message;
-        if (errorMessage.includes('Client has already completed intake')) {
-          // Client has already completed intake, redirect to dashboard
-          toast.info('You have already completed your intake form.');
-          router.push('/client');
-          return;
-        } else if (errorMessage.includes('No invitation found') || errorMessage.includes('No intake form attached')) {
-          toast.error('No intake form found. Please contact your practitioner.');
-          router.push('/client');
-        } else {
-          toast.error('Failed to load intake form. Please contact your practitioner.');
-        }
-      } else {
-        toast.error('Failed to load intake form. Please contact your practitioner.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [session, status, router, loadIntakeForm]);
 
   const handleAnswerChange = (questionId: string, value: any) => {
     setAnswers((prev) => ({
@@ -164,7 +163,7 @@ export default function ClientIntakePage() {
     setHasSubmitted(true);
 
     try {
-      const response = await ApiClient.post('/api/client/intake-form/submit', {
+      await ApiClient.post('/api/client/intake-form/submit', {
         formId: form?.id,
         answers,
       });
@@ -177,8 +176,7 @@ export default function ClientIntakePage() {
         await update({
           user: updatedUser,
         });
-      } catch (updateError) {
-        console.error('Failed to update session:', updateError);
+      } catch {
         // Continue with redirect even if session update fails
       }
 
@@ -187,7 +185,6 @@ export default function ClientIntakePage() {
         router.push('/client');
       }, 500);
     } catch (error: unknown) {
-      console.error('Error submitting form:', error);
       setHasSubmitted(false);
       if (error instanceof Error) {
         const errorMessage = error.message;

@@ -40,7 +40,6 @@ export default function PractitionerAuthPage() {
       setShowOTP(true);
     },
     onError: (error) => {
-      console.error('Mutation error:', error);
       toast.error(error.message ?? 'Failed to send OTP');
     },
   });
@@ -48,6 +47,7 @@ export default function PractitionerAuthPage() {
     resolver: zodResolver(showOTP ? otpSchema : emailSchema),
     defaultValues: {
       email: '',
+      otp: '',
     },
   });
   const startResendTimer = () => {
@@ -82,7 +82,6 @@ export default function PractitionerAuthPage() {
         // Let the useEffect handle the redirect
       }
     } catch (error) {
-      console.error('SignIn error:', error);
       toast.error('An error occurred during sign in');
     } finally {
       setIsLoading(false);

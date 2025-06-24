@@ -1,8 +1,17 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { config } from '../common/config';
-import { randomBytes } from 'crypto';
+import {
+  normalizeEmail,
+  getPractitionerName,
+  getIntakeFormTitle,
+  formatDate,
+  throwAuthError,
+  validateRequiredFields,
+} from 'src/common/utils/user.utils';
+import { UserRole } from '@repo/db';
+import { QuestionType } from '@repo/db';
 
 export interface InviteClientDto {
   clientFirstName: string;
@@ -25,74 +34,51 @@ export interface InvitationResponse {
 @Injectable()
 export class PractitionerService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly prismaService: PrismaService,
     private readonly mailService: MailService
   ) {}
 
   async inviteClient(practitionerId: string, inviteData: InviteClientDto): Promise<InvitationResponse> {
+    validateRequiredFields(inviteData as unknown as Record<string, unknown>, [
+      'clientFirstName',
+      'clientLastName',
+      'clientEmail',
+    ]);
     const { clientFirstName, clientLastName, clientEmail, intakeFormId } = inviteData;
-
-    if (!clientFirstName?.trim() || !clientLastName?.trim() || !clientEmail?.trim()) {
-      throw new BadRequestException('Client first name, last name, and email are required');
-    }
-
-    const normalizedEmail = clientEmail.trim().toLowerCase();
+    const normalizedEmail = normalizeEmail(clientEmail);
     const normalizedFirstName = clientFirstName.trim();
     const normalizedLastName = clientLastName.trim();
 
-    const practitioner = await this.prisma.user.findUnique({
-      where: { id: practitionerId },
+    const practitioner = await this.prismaService.user.findUnique({ where: { id: practitionerId } });
+    if (!practitioner) throwAuthError('Practitioner not found', 'notFound');
+    const existingUser = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
+    if (existingUser) throwAuthError('A user with this email already exists', 'badRequest');
+    const existingInvitation = await this.prismaService.invitation.findFirst({
+      where: { practitionerId, clientEmail: normalizedEmail },
     });
-
-    if (!practitioner) {
-      throw new NotFoundException('Practitioner not found');
-    }
-
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: normalizedEmail },
-    });
-
-    if (existingUser) {
-      throw new BadRequestException('A user with this email already exists');
-    }
-
-    const existingInvitation = await this.prisma.invitation.findFirst({
-      where: {
-        practitionerId,
-        clientEmail: normalizedEmail,
-      },
-    });
-
     let invitation;
-
     if (existingInvitation) {
-      if (existingInvitation.isAccepted) {
-        throw new BadRequestException('This client has already been invited and accepted the invitation');
-      }
-
-      invitation = await this.prisma.invitation.update({
+      if (existingInvitation.isAccepted)
+        throwAuthError('This client has already been invited and accepted the invitation', 'badRequest');
+      invitation = await this.prismaService.invitation.update({
         where: { id: existingInvitation.id },
         data: {
           clientFirstName: normalizedFirstName,
           clientLastName: normalizedLastName,
           intakeFormId,
-
-          token: randomBytes(32).toString('hex'),
+          token: `${normalizedEmail}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         },
       });
     } else {
-      const token = randomBytes(32).toString('hex');
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-      invitation = await this.prisma.invitation.create({
+      invitation = await this.prismaService.invitation.create({
         data: {
           practitionerId,
           clientEmail: normalizedEmail,
           clientFirstName: normalizedFirstName,
           clientLastName: normalizedLastName,
-          token,
-          expiresAt,
+          token: `${normalizedEmail}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           intakeFormId,
         },
       });
@@ -100,78 +86,47 @@ export class PractitionerService {
 
     let intakeFormTitle: string | undefined;
     if (intakeFormId) {
-      const form = await this.prisma.intakeForm.findUnique({ where: { id: intakeFormId } });
-      intakeFormTitle = form?.title;
-    }
-
-    try {
-      const invitationLink = `${config.frontendUrl}/client/auth/signup?token=${encodeURIComponent(invitation.token)}`;
-
-      const practitionerName =
-        practitioner.firstName && practitioner.lastName
-          ? `${practitioner.firstName} ${practitioner.lastName}`
-          : 'Your Practitioner';
-
-      const emailSent = await this.mailService.sendClientInvitation({
-        to: normalizedEmail,
-        clientName: `${normalizedFirstName} ${normalizedLastName}`,
-        practitionerName,
-        invitationLink: invitationLink,
-        intakeFormTitle,
+      const form = await this.prismaService.intakeForm.findUnique({
+        where: { id: intakeFormId },
+        select: { title: true },
       });
-
-      if (!emailSent) {
-        throw new BadRequestException('Failed to send invitation email');
-      }
-    } catch {
-      throw new BadRequestException('Failed to send invitation email');
+      intakeFormTitle = form ? getIntakeFormTitle(form) : undefined;
     }
 
+    await this.sendInvitationEmail(
+      invitation,
+      practitioner,
+      normalizedEmail,
+      normalizedFirstName,
+      normalizedLastName,
+      intakeFormTitle
+    );
     return {
       id: invitation.id,
       clientEmail: invitation.clientEmail,
       clientFirstName: invitation.clientFirstName,
       clientLastName: invitation.clientLastName,
       status: invitation.isAccepted ? 'JOINED' : 'PENDING',
-      invited: invitation.createdAt.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }),
-      avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${invitation.clientEmail}`,
+      invited: formatDate(invitation.createdAt),
       createdAt: invitation.createdAt,
     };
   }
 
   async resendInvitation(practitionerId: string, invitationId: string): Promise<InvitationResponse> {
-    const originalInvitation = await this.prisma.invitation.findFirst({
-      where: {
-        id: invitationId,
-        practitionerId,
-      },
+    const originalInvitation = await this.prismaService.invitation.findFirst({
+      where: { id: invitationId, practitionerId },
     });
 
-    if (!originalInvitation) {
-      throw new NotFoundException('Invitation not found or you do not have permission to access it.');
-    }
-
+    if (!originalInvitation)
+      throwAuthError('Invitation not found or you do not have permission to access it.', 'notFound');
     const { clientEmail, clientFirstName, clientLastName, intakeFormId } = originalInvitation;
+    const practitioner = await this.prismaService.user.findUnique({ where: { id: practitionerId } });
+    if (!practitioner) throwAuthError('Practitioner not found', 'notFound');
 
-    const practitioner = await this.prisma.user.findUnique({
-      where: { id: practitionerId },
-    });
-    if (!practitioner) {
-      throw new NotFoundException('Practitioner not found');
-    }
-
-    await this.prisma.invitation.delete({
-      where: { id: invitationId },
-    });
-
-    const token = randomBytes(32).toString('hex');
+    await this.prismaService.invitation.delete({ where: { id: invitationId } });
+    const token = `${clientEmail}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-    const newInvitation = await this.prisma.invitation.create({
+    const newInvitation = await this.prismaService.invitation.create({
       data: {
         practitionerId,
         clientEmail,
@@ -185,94 +140,125 @@ export class PractitionerService {
 
     let intakeFormTitle: string | undefined;
     if (intakeFormId) {
-      const form = await this.prisma.intakeForm.findUnique({ where: { id: intakeFormId } });
-      intakeFormTitle = form?.title;
+      const form = await this.prismaService.intakeForm.findUnique({
+        where: { id: intakeFormId },
+        select: { title: true },
+      });
+      intakeFormTitle = form ? getIntakeFormTitle(form) : undefined;
     }
 
     try {
-      const invitationLink = `${config.frontendUrl}/client/auth/signup?token=${encodeURIComponent(token)}`;
-
-      const practitionerName =
-        practitioner.firstName && practitioner.lastName
-          ? `${practitioner.firstName} ${practitioner.lastName}`
-          : 'Your Practitioner';
-
-      await this.mailService.sendClientInvitation({
-        to: clientEmail,
-        clientName: `${clientFirstName} ${clientLastName}`,
-        practitionerName,
-        invitationLink,
-        intakeFormTitle,
-      });
+      await this.sendInvitationEmail(
+        newInvitation,
+        practitioner,
+        clientEmail,
+        clientFirstName,
+        clientLastName,
+        intakeFormTitle
+      );
     } catch {
-      await this.prisma.invitation.delete({ where: { id: newInvitation.id } });
-      throw new BadRequestException('Failed to resend invitation email');
+      await this.prismaService.invitation.delete({ where: { id: newInvitation.id } });
+      throwAuthError('Failed to resend invitation email', 'badRequest');
     }
-
     return {
       id: newInvitation.id,
       clientEmail: newInvitation.clientEmail,
       clientFirstName: newInvitation.clientFirstName,
       clientLastName: newInvitation.clientLastName,
-      status: 'PENDING',
-      invited: newInvitation.createdAt.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }),
-      avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${newInvitation.clientEmail}`,
+      status: newInvitation.isAccepted ? 'JOINED' : 'PENDING',
+      invited: formatDate(newInvitation.createdAt),
       createdAt: newInvitation.createdAt,
     };
   }
 
-  async getInvitationByToken(token: string) {
-    const cleanToken = token.trim();
+  private async sendInvitationEmail(
+    invitation: { token: string },
+    practitioner: { firstName: string; lastName: string; profession?: string | null },
+    email: string,
+    firstName: string,
+    lastName: string,
+    intakeFormTitle?: string
+  ): Promise<void> {
+    const invitationLink = `${config.frontendUrl}/client/auth/signup?token=${encodeURIComponent(invitation.token)}`;
+    const practitionerName = getPractitionerName(practitioner);
+    const clientName = `${firstName} ${lastName}`;
 
-    let invitation = await this.prisma.invitation.findUnique({
-      where: { token: cleanToken },
+    const emailSent = await this.mailService.sendClientInvitation({
+      to: email,
+      clientName,
+      practitionerName,
+      invitationLink,
+      intakeFormTitle,
     });
 
-    if (!invitation) {
-      try {
-        const decodedToken = decodeURIComponent(cleanToken);
-        invitation = await this.prisma.invitation.findUnique({
-          where: { token: decodedToken },
-        });
-      } catch {
-        // Token decoding failed, invitation remains null
-      }
-    }
+    if (!emailSent) throwAuthError('Failed to send invitation email', 'badRequest');
+  }
 
+  async getInvitationByToken(token: string) {
+    const cleanToken = token.trim();
+    let invitation = await this.prismaService.invitation.findUnique({ where: { token: cleanToken } });
+    if (!invitation) {
+      const decodedToken = Buffer.from(cleanToken, 'base64').toString('utf-8');
+      invitation = await this.prismaService.invitation.findUnique({ where: { token: decodedToken } });
+    }
     const currentTime = new Date();
-
-    if (!invitation) {
-      throw new NotFoundException('Invitation not found or has expired.');
-    }
-
+    if (!invitation) throwAuthError('Invitation not found or has expired.', 'notFound');
     const isExpired = invitation.expiresAt < currentTime;
-
-    if (isExpired) {
-      throw new NotFoundException('Invitation not found or has expired.');
-    }
-
+    if (isExpired) throwAuthError('Invitation not found or has expired.', 'notFound');
     return {
       clientEmail: invitation.clientEmail,
       isAccepted: invitation.isAccepted,
     };
   }
 
-  async getInvitations(practitionerId: string): Promise<InvitationResponse[]> {
-    const invitations = await this.prisma.invitation.findMany({
+  async getClients(practitionerId: string) {
+    const clients = await this.prismaService.user.findMany({
       where: {
-        practitionerId,
-        isAccepted: false,
-        expiresAt: {
-          gt: new Date(),
+        practitionerId: practitionerId,
+        role: UserRole.CLIENT,
+      },
+      include: {
+        _count: {
+          select: { intakeFormSubmissions: true },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return clients.map((client) => ({
+      id: client.id,
+      email: client.email,
+      firstName: client.firstName,
+      lastName: client.lastName,
+      clientStatus: client.clientStatus,
+      avatarUrl: client.avatarUrl,
+      createdAt: client.createdAt,
+      hasCompletedIntake: client._count.intakeFormSubmissions > 0,
+    }));
+  }
+
+  async deleteInvitation(practitionerId: string, invitationId: string) {
+    const invitation = await this.prismaService.invitation.findFirst({
+      where: { id: invitationId, practitionerId },
+    });
+
+    if (!invitation) {
+      throwAuthError('Invitation not found or you do not have permission to delete it.', 'notFound');
+    }
+
+    await this.prismaService.invitation.delete({ where: { id: invitationId } });
+    return { message: 'Invitation deleted successfully' };
+  }
+
+  async getInvitations(practitionerId: string) {
+    const invitations = await this.prismaService.invitation.findMany({
+      where: {
+        practitionerId: practitionerId,
       },
+      include: {
+        intakeForm: true,
+      },
+      orderBy: { createdAt: 'desc' },
     });
 
     return invitations.map((invitation) => ({
@@ -281,63 +267,145 @@ export class PractitionerService {
       clientFirstName: invitation.clientFirstName,
       clientLastName: invitation.clientLastName,
       status: invitation.isAccepted ? 'JOINED' : 'PENDING',
-      invited: invitation.createdAt.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }),
-      avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${invitation.clientEmail}`,
-      createdAt: invitation.createdAt,
+      invited: formatDate(invitation.createdAt),
+      expiresAt: formatDate(invitation.expiresAt),
+      intakeFormTitle: invitation.intakeForm ? getIntakeFormTitle(invitation.intakeForm) : undefined,
     }));
   }
 
-  async getClients(practitionerId: string) {
-    const clients = await this.prisma.user.findMany({
+  async getIntakeForms(practitionerId: string) {
+    const forms = await this.prismaService.intakeForm.findMany({
       where: {
-        practitionerId,
-        role: 'CLIENT',
+        practitionerId: practitionerId,
       },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        isActive: true,
-        createdAt: true,
+      include: {
+        questions: {
+          orderBy: { order: 'asc' },
+        },
+        _count: {
+          select: { submissions: true },
+        },
       },
+      orderBy: { createdAt: 'desc' },
     });
 
-    return clients;
+    return forms.map((form) => ({
+      id: form.id,
+      title: form.title,
+      description: form.description,
+      questionCount: form.questions.length,
+      submissionCount: form._count.submissions,
+      createdAt: form.createdAt,
+      updatedAt: form.updatedAt,
+    }));
   }
 
-  async deleteInvitation(practitionerId: string, invitationId: string) {
-    const practitioner = await this.prisma.user.findUnique({
+  async createIntakeForm(data: {
+    practitionerId: string;
+    title: string;
+    description?: string;
+    questions: Array<{
+      text: string;
+      type: QuestionType;
+      options?: string[];
+      isRequired: boolean;
+      order: number;
+    }>;
+  }) {
+    validateRequiredFields(data as unknown as Record<string, unknown>, ['practitionerId', 'title']);
+
+    const { practitionerId, title, description, questions } = data;
+    const normalizedTitle = title.trim();
+    const normalizedDescription = description?.trim() || '';
+
+    const practitioner = await this.prismaService.user.findUnique({
       where: { id: practitionerId },
     });
 
-    if (!practitioner) {
-      throw new NotFoundException('Practitioner not found');
+    if (!practitioner || practitioner.role !== UserRole.PRACTITIONER) {
+      throwAuthError('Practitioner not found', 'notFound');
     }
 
-    const invitation = await this.prisma.invitation.findFirst({
-      where: {
-        id: invitationId,
-        practitionerId,
+    const form = await this.prismaService.intakeForm.create({
+      data: {
+        practitionerId: practitionerId,
+        title: normalizedTitle,
+        description: normalizedDescription,
+        questions: {
+          create: questions.map((q) => ({
+            text: q.text.trim(),
+            type: q.type,
+            options: q.options || [],
+            isRequired: q.isRequired,
+            order: q.order,
+          })),
+        },
+      },
+      include: {
+        questions: {
+          orderBy: { order: 'asc' },
+        },
       },
     });
 
-    if (!invitation) {
-      throw new NotFoundException('Invitation not found');
-    }
+    return {
+      id: form.id,
+      title: form.title,
+      description: form.description,
+      questions: form.questions.map((q) => ({
+        id: q.id,
+        text: q.text,
+        type: q.type,
+        options: q.options,
+        isRequired: q.isRequired,
+        order: q.order,
+      })),
+      createdAt: form.createdAt,
+      updatedAt: form.updatedAt,
+    };
+  }
 
-    if (invitation.isAccepted) {
-      throw new BadRequestException('Cannot delete an invitation that has already been accepted');
-    }
-
-    await this.prisma.invitation.delete({
-      where: { id: invitationId },
+  async getIntakeFormSubmissions(practitionerId: string, formId: string) {
+    const form = await this.prismaService.intakeForm.findFirst({
+      where: {
+        id: formId,
+        practitionerId: practitionerId,
+      },
     });
 
-    return { message: 'Invitation deleted successfully' };
+    if (!form) {
+      throwAuthError('Intake form not found', 'notFound');
+    }
+
+    const submissions = await this.prismaService.intakeFormSubmission.findMany({
+      where: {
+        formId: formId,
+      },
+      include: {
+        client: true,
+        answers: {
+          include: {
+            submission: true,
+          },
+        },
+      },
+      orderBy: { submittedAt: 'desc' },
+    });
+
+    return submissions.map((submission) => ({
+      id: submission.id,
+      client: {
+        id: submission.client.id,
+        firstName: submission.client.firstName,
+        lastName: submission.client.lastName,
+        email: submission.client.email,
+      },
+      submittedAt: submission.submittedAt,
+      answers: submission.answers.map((answer) => ({
+        questionText: answer.questionId,
+        questionType: 'UNKNOWN',
+        answer: JSON.parse(answer.value),
+      })),
+    }));
   }
 }

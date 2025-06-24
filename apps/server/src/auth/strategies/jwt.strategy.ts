@@ -1,8 +1,18 @@
 import { Strategy, ExtractJwt } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { RequestUser } from '../dto/request-user.dto';
+import { Injectable } from '@nestjs/common';
 import { config } from 'src/common/config';
+import { throwAuthError } from 'src/common/utils/user.utils';
+
+interface JwtPayload {
+  sub: string;
+  email: string;
+  role: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string;
+  clientStatus?: string;
+}
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -14,20 +24,19 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  validate(user: RequestUser) {
-    if (!user.id || !user.email) {
-      console.error('JWT Strategy validation failed: Invalid token payload', user);
-      throw new UnauthorizedException('Invalid token payload');
+  validate(payload: JwtPayload) {
+    if (!payload.sub || !payload.email) {
+      throwAuthError('Invalid token payload', 'unauthorized');
     }
 
     const result = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      avatarUrl: user.avatarUrl,
-      clientStatus: user.clientStatus,
+      id: payload.sub,
+      email: payload.email,
+      role: payload.role,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      avatarUrl: payload.avatarUrl,
+      clientStatus: payload.clientStatus,
     };
 
     return result;

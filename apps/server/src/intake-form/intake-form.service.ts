@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
+import { throwAuthError } from 'src/common/utils/user.utils';
 
 @Injectable()
 export class IntakeFormService {
@@ -38,11 +39,11 @@ export class IntakeFormService {
     });
 
     if (!form) {
-      throw new NotFoundException('Intake form not found.');
+      throwAuthError('Intake form not found.', 'notFound');
     }
 
     if (form.practitionerId !== practitionerId) {
-      throw new ForbiddenException('You do not have permission to update this form.');
+      throwAuthError('You do not have permission to update this form.', 'unauthorized');
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -84,11 +85,11 @@ export class IntakeFormService {
     });
 
     if (!form) {
-      throw new NotFoundException('Intake form not found.');
+      throwAuthError('Intake form not found.', 'notFound');
     }
 
     if (form.practitionerId !== practitionerId) {
-      throw new ForbiddenException('You do not have permission to delete this form.');
+      throwAuthError('You do not have permission to delete this form.', 'unauthorized');
     }
 
     return this.prisma.intakeForm.delete({
@@ -130,11 +131,11 @@ export class IntakeFormService {
     });
 
     if (!form) {
-      throw new NotFoundException('Intake form not found.');
+      throwAuthError('Intake form not found.', 'notFound');
     }
 
     if (form.practitionerId !== practitionerId) {
-      throw new ForbiddenException('You do not have permission to view this form.');
+      throwAuthError('You do not have permission to view this form.', 'unauthorized');
     }
 
     const mappedQuestions = form.questions.map((q) => ({

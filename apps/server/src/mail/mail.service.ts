@@ -60,8 +60,7 @@ export class MailService {
         ...options,
       });
       return true;
-    } catch (error) {
-      console.error('Failed to send email:', error);
+    } catch {
       return false;
     }
   }
@@ -148,8 +147,7 @@ export class MailService {
         ...options,
       });
       return true;
-    } catch (error) {
-      console.error('Failed to send email with attachment:', error);
+    } catch {
       return false;
     }
   }
@@ -190,8 +188,7 @@ export class MailService {
       });
 
       return !!result.messageId;
-    } catch (error) {
-      console.error('Failed to send client invitation email:', error);
+    } catch {
       return false;
     }
   }

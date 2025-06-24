@@ -49,7 +49,10 @@ export default function ClientAuthPage() {
 
   const form = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(showOTP ? otpSchema : emailSchema),
-    defaultValues: { email: '' },
+    defaultValues: {
+      email: '',
+      otp: '',
+    },
   });
 
   const startResendTimer = () => {

@@ -1,11 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  UnauthorizedException,
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { config } from 'src/common/config';
@@ -13,8 +6,18 @@ import { generateOtp } from 'src/common/utils/auth.utils';
 import { MailService } from 'src/mail/mail.service';
 import { LoginResponseDto, PractitionerSignUpDto } from './dto/auth.dto';
 import { UserRole } from '@repo/db';
-import { promises as fs } from 'fs';
-import * as path from 'path';
+import {
+  normalizeEmail,
+  createUserResponse,
+  decodeInvitationToken,
+  throwAuthError,
+  validateRequiredFields,
+  generateJwtToken,
+  determineClientStatus,
+  validateFileUpload,
+  uploadFile,
+} from 'src/common/utils/user.utils';
+import { UPLOAD_CONSTANTS } from 'src/common/utils/constants';
 
 interface ProfileUpdateBody {
   firstName?: string;
@@ -40,115 +43,88 @@ export class AuthService {
   ) {}
 
   async handleOtpAuth(email: string): Promise<boolean> {
-    if (!email?.trim()) {
-      throw new BadRequestException('Email is required');
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
+    validateRequiredFields({ email }, ['email']);
+    const normalizedEmail = normalizeEmail(email);
     await this.generateAndSendOtp(normalizedEmail);
     return true;
   }
 
-  async verifyOtp(email: string, otp: string, role: UserRole): Promise<LoginResponseDto> {
-    if (!email?.trim() || !otp?.trim()) {
-      throw new BadRequestException('Email and OTP are required');
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
+  async verifyOtpForSignup(email: string, otp: string): Promise<boolean> {
+    validateRequiredFields({ email, otp }, ['email', 'otp']);
+    const normalizedEmail = normalizeEmail(email);
     const normalizedOtp = otp.trim();
 
-    const otpRecord = await this.prismaService.otp.findUnique({
-      where: { email: normalizedEmail },
-    });
+    const otpRecord = await this.prismaService.otp.findUnique({ where: { email: normalizedEmail } });
+    if (!otpRecord) throwAuthError('Invalid email or OTP', 'unauthorized');
+    if (otpRecord.otp !== normalizedOtp) throwAuthError('Invalid OTP', 'unauthorized');
+    if (otpRecord.expiresAt < new Date()) throwAuthError('OTP has expired', 'unauthorized');
 
-    if (!otpRecord) {
-      throw new UnauthorizedException('Invalid email or OTP');
-    }
+    // For signup - just verify OTP is correct
+    await this.prismaService.otp.delete({ where: { email: normalizedEmail } });
+    return true;
+  }
 
-    if (otpRecord.otp !== normalizedOtp) {
-      throw new UnauthorizedException('Invalid OTP');
-    }
+  async verifyOtp(email: string, otp: string, role: UserRole): Promise<LoginResponseDto> {
+    validateRequiredFields({ email, otp }, ['email', 'otp']);
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedOtp = otp.trim();
+    const otpRecord = await this.prismaService.otp.findUnique({ where: { email: normalizedEmail } });
+    if (!otpRecord) throwAuthError('Invalid email or OTP', 'unauthorized');
+    if (otpRecord.otp !== normalizedOtp) throwAuthError('Invalid OTP', 'unauthorized');
+    if (otpRecord.expiresAt < new Date()) throwAuthError('OTP has expired', 'unauthorized');
 
-    if (otpRecord.expiresAt < new Date()) {
-      throw new UnauthorizedException('OTP has expired');
-    }
+    const user = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
 
-    const user = await this.prismaService.user.findUnique({
-      where: { email: normalizedEmail },
-    });
-
+    // For login flow - user must exist
     if (!user) {
       if (role === UserRole.PRACTITIONER) {
-        throw new UnauthorizedException('Practitioner account not found. Please sign up first.');
+        throwAuthError('Account not found. Please sign up first or check your email.', 'unauthorized');
       }
-      throw new UnauthorizedException('User not found');
+      throwAuthError('Account not found. Please sign up first or check your email.', 'unauthorized');
     }
 
+    // Verify role matches
     if (user.role !== role) {
-      throw new UnauthorizedException(`Invalid role. Expected ${role}, got ${user.role}`);
+      throwAuthError(`Invalid role. Expected ${role}, got ${user.role}`, 'unauthorized');
     }
 
+    // Mark email as verified if not already
     if (!user.isEmailVerified) {
-      await this.prismaService.user.update({
-        where: { id: user.id },
-        data: { isEmailVerified: true },
-      });
+      await this.prismaService.user.update({ where: { id: user.id }, data: { isEmailVerified: true } });
     }
 
-    await this.prismaService.otp.delete({
-      where: { email: normalizedEmail },
-    });
-
-    const jwtPayload = {
-      id: user.id,
-      email: user.email,
-      avatarUrl: user.avatarUrl,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      profession: user.profession,
-      clientStatus: user.clientStatus ?? undefined,
-      sub: user.id,
-    };
-
-    const token = await this.jwtService.signAsync(jwtPayload, {
-      expiresIn: config.jwt.expiresIn,
-    });
-
-    return {
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        avatarUrl: user.avatarUrl,
-        role: user.role,
-        profession: user.profession,
-        clientStatus: user.clientStatus ?? undefined,
-      },
-    };
+    // Clean up OTP and generate token
+    await this.prismaService.otp.delete({ where: { email: normalizedEmail } });
+    const token = await generateJwtToken(this.jwtService, user, {}, config.jwt.expiresIn);
+    return { token, user: createUserResponse(user) };
   }
 
   async handlePractitionerSignUp(data: PractitionerSignUpDto): Promise<LoginResponseDto> {
-    const { email, firstName, lastName, profession } = data;
-
-    if (!email?.trim() || !firstName?.trim() || !lastName?.trim() || !profession?.trim()) {
-      throw new BadRequestException('Email, first name, last name, and profession are required');
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
+    validateRequiredFields(data as unknown as Record<string, unknown>, [
+      'email',
+      'otp',
+      'firstName',
+      'lastName',
+      'profession',
+    ]);
+    const { email, otp, firstName, lastName, profession } = data;
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedOtp = otp.trim();
     const normalizedFirstName = firstName.trim();
     const normalizedLastName = lastName.trim();
     const normalizedProfession = profession.trim();
 
-    const existingUser = await this.prismaService.user.findUnique({
-      where: { email: normalizedEmail },
-    });
+    // First verify the OTP
+    const otpRecord = await this.prismaService.otp.findUnique({ where: { email: normalizedEmail } });
+    if (!otpRecord) throwAuthError('Invalid email or OTP', 'unauthorized');
+    if (otpRecord.otp !== normalizedOtp) throwAuthError('Invalid OTP', 'unauthorized');
+    if (otpRecord.expiresAt < new Date()) throwAuthError('OTP has expired', 'unauthorized');
 
-    if (existingUser) {
-      throw new ConflictException('An account with this email already exists');
-    }
+    const existingUser = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
+    if (existingUser) throwAuthError('An account with this email already exists', 'conflict');
+
+    // Clean up OTP
+    await this.prismaService.otp.delete({ where: { email: normalizedEmail } });
 
     const user = await this.prismaService.user.create({
       data: {
@@ -161,33 +137,8 @@ export class AuthService {
       },
     });
 
-    const jwtPayload = {
-      id: user.id,
-      email: user.email,
-      avatarUrl: user.avatarUrl,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      profession: user.profession,
-      sub: user.id,
-    };
-
-    const token = await this.jwtService.signAsync(jwtPayload, {
-      expiresIn: config.jwt.expiresIn,
-    });
-
-    return {
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        avatarUrl: user.avatarUrl,
-        role: user.role,
-        profession: user.profession,
-      },
-    };
+    const token = await generateJwtToken(this.jwtService, user, {}, config.jwt.expiresIn);
+    return { token, user: createUserResponse(user) };
   }
 
   async handleClientSignUp(data: {
@@ -196,62 +147,30 @@ export class AuthService {
     lastName: string;
     invitationToken: string;
   }): Promise<LoginResponseDto> {
+    validateRequiredFields(data, ['email', 'firstName', 'lastName', 'invitationToken']);
     const { email, firstName, lastName, invitationToken } = data;
-
-    if (!email?.trim() || !firstName?.trim() || !lastName?.trim() || !invitationToken?.trim()) {
-      throw new BadRequestException('Email, first name, last name, and invitation token are required');
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeEmail(email);
     const normalizedFirstName = firstName.trim();
     const normalizedLastName = lastName.trim();
-
-    // Try to find invitation with the token, handling URL encoding
     let invitation = await this.prismaService.invitation.findUnique({
       where: { token: invitationToken },
       include: { practitioner: true },
     });
-
-    // If not found, try with URL decoded token
     if (!invitation) {
-      try {
-        const decodedToken = decodeURIComponent(invitationToken);
-        invitation = await this.prismaService.invitation.findUnique({
-          where: { token: decodedToken },
-          include: { practitioner: true },
-        });
-      } catch {
-        // Token decoding failed, continue with null invitation
-      }
+      const decodedToken = decodeInvitationToken(invitationToken);
+      invitation = await this.prismaService.invitation.findUnique({
+        where: { token: decodedToken },
+        include: { practitioner: true },
+      });
     }
-
-    if (!invitation) {
-      throw new UnauthorizedException('Invalid invitation token');
-    }
-
-    if (invitation.isAccepted) {
-      throw new UnauthorizedException('This invitation has already been used');
-    }
-
-    if (invitation.expiresAt < new Date()) {
-      throw new UnauthorizedException('This invitation has expired');
-    }
-
-    if (invitation.clientEmail.toLowerCase() !== normalizedEmail) {
-      throw new UnauthorizedException('Email does not match the invitation');
-    }
-
-    let user = await this.prismaService.user.findUnique({
-      where: { email: normalizedEmail },
-    });
-
-    if (user) {
-      throw new ConflictException('An account with this email already exists');
-    }
-
-    // Determine client status based on whether intake form is attached
-    const clientStatus = invitation.intakeFormId ? 'NEEDS_INTAKE' : 'ACTIVE';
-
+    if (!invitation) throwAuthError('Invalid invitation token', 'unauthorized');
+    if (invitation.isAccepted) throwAuthError('This invitation has already been used', 'unauthorized');
+    if (invitation.expiresAt < new Date()) throwAuthError('This invitation has expired', 'unauthorized');
+    if (invitation.clientEmail.toLowerCase() !== normalizedEmail)
+      throwAuthError('Email does not match the invitation', 'unauthorized');
+    let user = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
+    if (user) throwAuthError('An account with this email already exists', 'conflict');
+    const clientStatus = determineClientStatus(invitation.intakeFormId || undefined);
     user = await this.prismaService.user.create({
       data: {
         email: normalizedEmail,
@@ -260,49 +179,22 @@ export class AuthService {
         role: UserRole.CLIENT,
         practitionerId: invitation.practitionerId,
         isEmailVerified: true,
-        clientStatus,
+        clientStatus: clientStatus,
       },
     });
-
-    await this.prismaService.invitation.update({
-      where: { id: invitation.id },
-      data: { isAccepted: true },
-    });
-
-    const jwtPayload = {
-      id: user.id,
-      email: user.email,
-      avatarUrl: user.avatarUrl,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      profession: user.profession,
-      clientStatus: user.clientStatus ?? undefined,
-      sub: user.id,
-    };
-
-    const token = await this.jwtService.signAsync(jwtPayload, {
-      expiresIn: config.jwt.expiresIn,
-    });
-
-    return {
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        avatarUrl: user.avatarUrl,
-        role: user.role,
-        profession: user.profession,
-        clientStatus: user.clientStatus ?? undefined,
-      },
-    };
+    await this.prismaService.invitation.update({ where: { id: invitation.id }, data: { isAccepted: true } });
+    const token = await generateJwtToken(
+      this.jwtService,
+      user,
+      { clientStatus: user.clientStatus },
+      config.jwt.expiresIn
+    );
+    return { token, user: createUserResponse(user) };
   }
 
   private async generateAndSendOtp(email: string) {
     const otp = generateOtp();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + config.otp.expiryMs);
 
     await this.prismaService.otp.upsert({
       where: { email },
@@ -316,7 +208,7 @@ export class AuthService {
       templateName: 'OTP',
       context: {
         otp: otp,
-        validity: 10,
+        validity: config.otp.expiryMinutes,
       },
     });
   }
@@ -328,14 +220,8 @@ export class AuthService {
     };
 
     if (file && file.buffer) {
-      const uploadsDir = path.join(process.cwd(), 'uploads');
-      await fs.mkdir(uploadsDir, { recursive: true });
-      const ext = path.extname(file.originalname);
-      const fileName = `avatar_${userId}_${Date.now()}${ext}`;
-      const filePath = path.join(uploadsDir, fileName);
-      await fs.writeFile(filePath, file.buffer);
-
-      updateData.avatarUrl = `/uploads/${fileName}`;
+      validateFileUpload(file, [...UPLOAD_CONSTANTS.ALLOWED_IMAGE_TYPES], UPLOAD_CONSTANTS.MAX_FILE_SIZE);
+      updateData.avatarUrl = await uploadFile(file, userId, UPLOAD_CONSTANTS.UPLOAD_PATH, UPLOAD_CONSTANTS.UPLOAD_DIR);
     }
 
     const user = await this.prismaService.user.update({
@@ -343,15 +229,7 @@ export class AuthService {
       data: updateData,
     });
 
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      avatarUrl: user.avatarUrl,
-      role: user.role,
-      profession: user.profession,
-    };
+    return createUserResponse(user);
   }
 
   async getCurrentUser(userId: string) {
@@ -360,18 +238,9 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throwAuthError('User not found', 'notFound');
     }
 
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      avatarUrl: user.avatarUrl,
-      role: user.role,
-      profession: user.profession,
-      clientStatus: user.clientStatus,
-    };
+    return createUserResponse(user);
   }
 }

@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from '@repo/db';
+import { updateClientStatus, throwAuthError } from 'src/common/utils/user.utils';
 
 @Injectable()
 export class ClientService {
@@ -12,7 +13,7 @@ export class ClientService {
     });
 
     if (!client || client.role !== UserRole.CLIENT) {
-      throw new NotFoundException('Client not found');
+      throwAuthError('Client not found', 'notFound');
     }
 
     const invitation = await this.prismaService.invitation.findFirst({
@@ -24,20 +25,18 @@ export class ClientService {
       include: {
         intakeForm: {
           include: {
-            questions: {
-              orderBy: { order: 'asc' },
-            },
+            questions: { orderBy: { order: 'asc' } },
           },
         },
       },
     });
 
     if (!invitation) {
-      throw new NotFoundException('No invitation found for this client');
+      throwAuthError('No invitation found for this client', 'notFound');
     }
 
     if (!invitation.intakeForm) {
-      throw new NotFoundException('No intake form attached to this invitation');
+      throwAuthError('No intake form attached to this invitation', 'notFound');
     }
 
     const existingSubmission = await this.prismaService.intakeFormSubmission.findFirst({
@@ -47,25 +46,17 @@ export class ClientService {
       },
     });
 
-    if (existingSubmission) {
-      if (client.clientStatus !== 'INTAKE_COMPLETED') {
-        await this.prismaService.user.update({
-          where: { id: clientId },
-          data: {
-            clientStatus: 'INTAKE_COMPLETED',
-          },
-        });
-      }
-      throw new BadRequestException('Client has already completed intake');
-    }
+    const newStatus = updateClientStatus(client.clientStatus ?? 'ACTIVE', !!existingSubmission);
 
-    if (client.clientStatus === 'INTAKE_COMPLETED') {
+    if (client.clientStatus !== newStatus) {
       await this.prismaService.user.update({
         where: { id: clientId },
-        data: {
-          clientStatus: 'NEEDS_INTAKE',
-        },
+        data: { clientStatus: newStatus },
       });
+    }
+
+    if (existingSubmission) {
+      throwAuthError('Client has already completed intake', 'badRequest');
     }
 
     return {
@@ -84,130 +75,99 @@ export class ClientService {
   }
 
   async submitIntakeForm(clientId: string, formId: string, answers: Record<string, unknown>) {
-    const client = await this.prismaService.user.findUnique({
-      where: { id: clientId },
-    });
-
-    if (!client || client.role !== UserRole.CLIENT) {
-      throw new NotFoundException('Client not found');
-    }
-
-    const form = await this.prismaService.intakeForm.findFirst({
-      where: {
-        id: formId,
-        practitionerId: client.practitionerId || undefined,
-      },
-      include: {
-        questions: true,
-      },
-    });
-
-    if (!form) {
-      throw new NotFoundException('Intake form not found');
-    }
-
-    const existingSubmission = await this.prismaService.intakeFormSubmission.findFirst({
-      where: {
-        clientId: clientId,
-        formId: formId,
-      },
-    });
-
-    if (existingSubmission) {
-      if (client.clientStatus !== 'INTAKE_COMPLETED') {
-        await this.prismaService.user.update({
-          where: { id: clientId },
-          data: {
-            clientStatus: 'INTAKE_COMPLETED',
-          },
-        });
+    return await this.prismaService.$transaction(async (tx) => {
+      const client = await tx.user.findUnique({ where: { id: clientId } });
+      if (!client || client.role !== UserRole.CLIENT) {
+        throwAuthError('Client not found', 'notFound');
       }
-      throw new BadRequestException('You have already submitted this intake form');
-    }
 
-    if (client.clientStatus !== 'NEEDS_INTAKE') {
-      if (client.clientStatus === 'INTAKE_COMPLETED') {
-        await this.prismaService.user.update({
-          where: { id: clientId },
-          data: {
-            clientStatus: 'NEEDS_INTAKE',
-          },
-        });
-      } else {
-        throw new BadRequestException('Client is not in the correct status to submit intake form');
+      const form = await tx.intakeForm.findFirst({
+        where: { id: formId, practitionerId: client.practitionerId || undefined },
+        include: { questions: true },
+      });
+      if (!form) {
+        throwAuthError('Intake form not found', 'notFound');
       }
-    }
 
-    const submission = await this.prismaService.intakeFormSubmission.create({
-      data: {
-        clientId: clientId,
-        formId: formId,
-      },
-    });
+      const existingSubmission = await tx.intakeFormSubmission.findFirst({
+        where: { clientId: clientId, formId: formId },
+      });
 
-    const answerPromises = form.questions
-      .map((question) => {
-        const answer = answers[question.id];
-        if (answer !== undefined) {
-          return this.prismaService.answer.create({
-            data: {
+      if (existingSubmission) {
+        throwAuthError('You have already submitted this intake form', 'badRequest');
+      }
+
+      const submission = await tx.intakeFormSubmission.create({
+        data: { clientId: clientId, formId: formId },
+      });
+
+      const answerData = form.questions
+        .map((question) => {
+          const answer = answers[question.id];
+          if (answer !== undefined) {
+            return {
               submissionId: submission.id,
               questionId: question.id,
               value: JSON.stringify(answer),
-            },
-          });
-        }
-        return null;
-      })
-      .filter(Boolean);
+            };
+          }
+          return null;
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null);
 
-    await Promise.all(answerPromises);
+      if (answerData.length > 0) {
+        await tx.answer.createMany({ data: answerData });
+      }
 
-    await this.prismaService.user.update({
-      where: { id: clientId },
-      data: {
-        clientStatus: 'INTAKE_COMPLETED',
-      },
+      const newStatus = updateClientStatus(client.clientStatus ?? 'ACTIVE', true);
+      await tx.user.update({
+        where: { id: clientId },
+        data: { clientStatus: newStatus },
+      });
+
+      return {
+        message: 'Intake form submitted successfully',
+        clientStatus: newStatus,
+        submissionId: submission.id,
+      };
     });
-
-    return {
-      message: 'Intake form submitted successfully',
-      clientStatus: 'INTAKE_COMPLETED',
-      submissionId: submission.id,
-    };
   }
 
   async fixClientStatuses() {
-    const clientsWithCompletedStatus = await this.prismaService.user.findMany({
+    const clientsToFix = await this.prismaService.user.findMany({
       where: {
         role: UserRole.CLIENT,
         clientStatus: 'INTAKE_COMPLETED',
       },
+      include: {
+        _count: {
+          select: { intakeFormSubmissions: true },
+        },
+      },
     });
 
-    let fixedCount = 0;
+    const clientsWithoutSubmissions = clientsToFix.filter((client) => client._count.intakeFormSubmissions === 0);
 
-    for (const client of clientsWithCompletedStatus) {
-      const submission = await this.prismaService.intakeFormSubmission.findFirst({
-        where: {
-          clientId: client.id,
-        },
-      });
-
-      if (!submission) {
-        await this.prismaService.user.update({
-          where: { id: client.id },
-          data: {
-            clientStatus: 'NEEDS_INTAKE',
-          },
-        });
-        fixedCount++;
-      }
+    if (clientsWithoutSubmissions.length === 0) {
+      return {
+        message: 'No client statuses need fixing',
+        fixedCount: 0,
+      };
     }
 
+    const newStatus = updateClientStatus('INTAKE_COMPLETED', false);
+    await this.prismaService.user.updateMany({
+      where: {
+        id: { in: clientsWithoutSubmissions.map((c) => c.id) },
+      },
+      data: {
+        clientStatus: newStatus,
+      },
+    });
+
     return {
-      message: `Fixed ${fixedCount} client statuses`,
-      fixedCount,
+      message: `Fixed ${clientsWithoutSubmissions.length} client statuses`,
+      fixedCount: clientsWithoutSubmissions.length,
     };
   }
 }

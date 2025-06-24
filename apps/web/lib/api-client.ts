@@ -30,13 +30,6 @@ export class ApiClient {
       return response.data;
     } catch (err) {
       if (isAxiosError(err)) {
-        console.error('ApiClient error:', {
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          data: err.response?.data,
-          url: err.config?.url,
-        });
-
         if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
           throw new Error(`Cannot connect to server at ${envConfig.apiUrl}. Please check if the server is running.`);
         }
