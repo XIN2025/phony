@@ -9,11 +9,15 @@ export class ApiClient {
       const isServer = typeof window === 'undefined';
       const session = isServer ? await getServerSession(authOptions) : await getSession();
       const isFormData = config.data instanceof FormData;
+
       // Define public endpoints that don't require authentication
       const isPublicEndpoint =
         config.url?.includes('/invitations/token/') ||
-        (config.url?.includes('/auth/') && !config.url?.includes('/auth/profile')) ||
+        (config.url?.includes('/auth/') &&
+          !config.url?.includes('/auth/profile') &&
+          !config.url?.includes('/auth/me')) ||
         config.url?.includes('/public/');
+
       const client = axios.create({
         baseURL: envConfig.apiUrl,
         timeout: 10000,
@@ -26,6 +30,13 @@ export class ApiClient {
       return response.data;
     } catch (err) {
       if (isAxiosError(err)) {
+        console.error('ApiClient error:', {
+          status: err.response?.status,
+          statusText: err.response?.statusText,
+          data: err.response?.data,
+          url: err.config?.url,
+        });
+
         if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
           throw new Error(`Cannot connect to server at ${envConfig.apiUrl}. Please check if the server is running.`);
         }

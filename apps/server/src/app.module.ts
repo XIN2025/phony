@@ -10,6 +10,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { PractitionerModule } from './practitioner/practitioner.module';
 import { IntakeFormModule } from './intake-form/intake-form.module';
+import { ClientModule } from './client/client.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { IntakeFormModule } from './intake-form/intake-form.module';
     MailModule,
     PractitionerModule,
     IntakeFormModule,
+    ClientModule,
   ],
   controllers: [AppController],
   providers: [

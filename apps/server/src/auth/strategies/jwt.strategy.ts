@@ -16,15 +16,20 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   validate(user: RequestUser) {
     if (!user.id || !user.email) {
+      console.error('JWT Strategy validation failed: Invalid token payload', user);
       throw new UnauthorizedException('Invalid token payload');
     }
-    return {
+
+    const result = {
       id: user.id,
       email: user.email,
       role: user.role,
       firstName: user.firstName,
       lastName: user.lastName,
       avatarUrl: user.avatarUrl,
+      clientStatus: user.clientStatus,
     };
+
+    return result;
   }
 }

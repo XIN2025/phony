@@ -46,8 +46,6 @@ export default withAuth(
           '/favicon.ico',
           '/api/practitioner/invitations/token',
           '/api/practitioner/invitations',
-          '/debug-session', // Allow debug page
-          '/test-auth', // Allow test page
         ];
         const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route) || pathname === route);
         if (isPublicRoute) {

@@ -1,14 +1,15 @@
 ﻿'use client';
-import { createContext, useState, useContext, ReactNode, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
+import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
 export type InviteData = {
   clientFirstName: string;
   clientLastName: string;
   clientEmail: string;
   includeIntakeForm: boolean;
-  intakeFormId: string | null;
+  intakeFormId: string | undefined;
   newIntakeForm?: CreateIntakeFormDto;
+  saveAsTemplate?: boolean;
+  hasChanges?: boolean;
 };
 interface InviteContextType {
   step: number;
@@ -25,14 +26,15 @@ const initialState: InviteData = {
   clientLastName: '',
   clientEmail: '',
   includeIntakeForm: false,
-  intakeFormId: null,
+  intakeFormId: undefined,
   newIntakeForm: undefined,
+  saveAsTemplate: true,
+  hasChanges: false,
 };
 export function InviteContextProvider({ children }: { children: ReactNode }) {
   const [step, setStep] = useState(1);
   const [inviteData, setInviteDataState] = useState<InviteData>(initialState);
   const setInviteData = useCallback((data: Partial<InviteData>) => {
-    console.log('Updating invite data:', data);
     setInviteDataState((prev: InviteData) => ({ ...prev, ...data }));
   }, []);
   const goToNextStep = useCallback(() => setStep((s) => s + 1), []);

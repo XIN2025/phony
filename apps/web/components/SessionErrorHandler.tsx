@@ -1,13 +1,17 @@
 ﻿'use client';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@repo/ui/components/button';
 import { AlertTriangle } from 'lucide-react';
+
 interface SessionErrorHandlerProps {
   children: React.ReactNode;
 }
+
 export function SessionErrorHandler({ children }: SessionErrorHandlerProps) {
   const { data: session } = useSession();
-  // Only show error for critical session errors
+  const router = useRouter();
+
   if (session?.error && (session.error === 'UserNotFound' || session.error === 'InvalidToken')) {
     return (
       <div className='flex h-screen items-center justify-center'>
@@ -18,10 +22,10 @@ export function SessionErrorHandler({ children }: SessionErrorHandlerProps) {
             Your session has expired or encountered an error. Please log in again to continue.
           </p>
           <div className='space-y-2'>
-            <Button onClick={() => (window.location.href = '/practitioner/auth')} className='w-full'>
+            <Button onClick={() => router.push('/practitioner/auth')} className='w-full'>
               Practitioner Login
             </Button>
-            <Button variant='outline' onClick={() => (window.location.href = '/client/auth')} className='w-full'>
+            <Button variant='outline' onClick={() => router.push('/client/auth')} className='w-full'>
               Client Login
             </Button>
           </div>
@@ -29,6 +33,6 @@ export function SessionErrorHandler({ children }: SessionErrorHandlerProps) {
       </div>
     );
   }
-  // For all other cases, just render children
+
   return <>{children}</>;
 }

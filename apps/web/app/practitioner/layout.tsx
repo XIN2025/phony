@@ -7,7 +7,7 @@ export default function PractitionerSectionLayout({ children }: { children: Reac
   return (
     <SessionProvider>
       <InviteContextProvider>
-        <div className='h-screen w-screen'>{children}</div>
+        <div className='min-h-screen w-full'>{children}</div>
       </InviteContextProvider>
     </SessionProvider>
   );

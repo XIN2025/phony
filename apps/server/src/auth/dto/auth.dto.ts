@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 import { LoginResponse, SendOtpRequest, User, VerifyOtpRequest } from '@repo/shared-types/types';
-import { UserRole } from '@repo/db';
+import { UserRole, ClientStatus } from '@repo/db';
 
 export class OtpAuthDto implements SendOtpRequest {
   @ApiProperty()
@@ -102,7 +102,17 @@ export class UserDto implements User {
   @IsString()
   @IsOptional()
   profession: string | null;
+
+  @ApiProperty({
+    type: 'string',
+    enum: ClientStatus,
+    nullable: true,
+  })
+  @IsEnum(ClientStatus)
+  @IsOptional()
+  clientStatus?: ClientStatus;
 }
+
 export class LoginResponseDto implements LoginResponse {
   @ApiProperty()
   @IsString()

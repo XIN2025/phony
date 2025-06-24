@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@repo/ui/components/button';
 import { Input } from '@repo/ui/components/input';
@@ -10,10 +10,12 @@ import { useSession, signOut } from 'next-auth/react';
 import { Loader2, AlertTriangle, LogOut } from 'lucide-react';
 import { Logo } from '@repo/ui/components/logo';
 import { clearAllAuthData } from '@/lib/auth-utils';
+
 interface InvitationStatus {
   clientEmail: string;
   isAccepted: boolean;
 }
+
 export default function ClientSignUpPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -40,8 +42,8 @@ export default function ClientSignUpPage() {
           toast.info('This invitation has already been accepted. Please log in.');
           router.push(`/client/auth?email=${encodeURIComponent(invitationData.clientEmail)}`);
         }
-      } catch (err: any) {
-        const errorMessage = err.response?.data?.message || 'This invitation link is invalid or has expired.';
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'This invitation link is invalid or has expired.';
         setError(errorMessage);
         toast.error(errorMessage);
       } finally {
@@ -76,19 +78,28 @@ export default function ClientSignUpPage() {
       toast.error('Please enter your full name.');
       return;
     }
+
     setIsSubmitting(true);
     const toastId = toast.loading('Creating your account...');
     try {
-      await ApiClient.post('/api/auth/client/signup', {
+      const signupData = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email!.trim().toLowerCase(),
         invitationToken: token!,
-      });
+      };
+
+      const response: unknown = await ApiClient.post('/api/auth/client/signup', signupData);
+
       toast.success('Account created successfully! Please log in to continue.', { id: toastId });
-      router.push(`/client/auth?email=${encodeURIComponent(email!)}`);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'An unexpected error occurred.', { id: toastId });
+
+      // Redirect to login page with the email pre-filled
+      router.push(`/client/auth?email=${encodeURIComponent(email!.trim().toLowerCase())}`);
+    } catch (err: unknown) {
+      console.error('Signup error:', err);
+      console.error('Error response:', err);
+      console.error('Error message:', err instanceof Error ? err.message : 'Unknown error');
+      toast.error(err instanceof Error ? err.message : 'An unexpected error occurred.', { id: toastId });
       setIsSubmitting(false);
     }
   };

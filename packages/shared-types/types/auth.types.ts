@@ -1,4 +1,4 @@
-import { UserRole } from '@repo/db';
+import { UserRole, ClientStatus } from '@repo/db';
 
 export type User = {
   id: string;
@@ -8,6 +8,7 @@ export type User = {
   avatarUrl: string | null;
   role: string;
   profession?: string | null;
+  clientStatus?: ClientStatus;
 };
 
 export type LoginResponse = {
