@@ -1,4 +1,4 @@
-import { UserRole, ClientStatus } from '@repo/db';
+import { UserRole, User as PrismaUser } from '@repo/db';
 import { JwtService } from '@nestjs/jwt';
 import { config } from 'src/common/config';
 import { writeFile, mkdir } from 'fs/promises';
@@ -9,7 +9,7 @@ export function normalizeEmail(email: string): string {
   return email.toLowerCase().trim();
 }
 
-export function normalizeUserData(user: {
+export function normalizeUserData(user: PrismaUser): {
   id: string;
   email: string;
   firstName: string;
@@ -19,21 +19,7 @@ export function normalizeUserData(user: {
   avatarUrl?: string | null;
   isEmailVerified: boolean;
   practitionerId?: string | null;
-  clientStatus?: ClientStatus | null;
-  createdAt: Date;
-  updatedAt: Date;
-  [key: string]: unknown;
-}): {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  profession?: string | null;
-  avatarUrl?: string | null;
-  isEmailVerified: boolean;
-  practitionerId?: string | null;
-  clientStatus?: ClientStatus;
+  clientStatus?: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
   createdAt: Date;
   updatedAt: Date;
 } {
@@ -53,7 +39,7 @@ export function createUserResponse(user: {
   avatarUrl?: string | null;
   isEmailVerified: boolean;
   practitionerId?: string | null;
-  clientStatus?: ClientStatus;
+  clientStatus?: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
   createdAt: Date;
   updatedAt: Date;
 }) {
@@ -81,7 +67,7 @@ export function createJwtPayload(
     lastName: string;
     role: UserRole;
     practitionerId?: string | null;
-    clientStatus?: ClientStatus;
+    clientStatus?: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
   },
   additionalData?: Record<string, unknown>
 ) {
@@ -106,7 +92,7 @@ export function generateToken(
     lastName: string;
     role: UserRole;
     practitionerId?: string | null;
-    clientStatus?: ClientStatus;
+    clientStatus?: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
   },
   additionalData?: Record<string, unknown>,
   expiresIn?: string
@@ -118,7 +104,10 @@ export function generateToken(
   });
 }
 
-export function updateClientStatus(currentStatus: ClientStatus, submissionExists: boolean): ClientStatus {
+export function updateClientStatus(
+  currentStatus: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED',
+  submissionExists: boolean
+): 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED' {
   if (submissionExists) {
     return 'INTAKE_COMPLETED';
   }
@@ -198,7 +187,7 @@ export function validateRequiredFields(data: Record<string, unknown>, requiredFi
   }
 }
 
-export function determineClientStatus(intakeFormId?: string): ClientStatus {
+export function determineClientStatus(intakeFormId?: string): 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED' {
   return intakeFormId ? 'NEEDS_INTAKE' : 'ACTIVE';
 }
 
