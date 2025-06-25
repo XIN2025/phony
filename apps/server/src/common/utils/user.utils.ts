@@ -9,9 +9,6 @@ export function normalizeEmail(email: string): string {
   return email.toLowerCase().trim();
 }
 
-/**
- * Normalizes user data by handling optional clientStatus consistently
- */
 export function normalizeUserData(user: {
   id: string;
   email: string;
@@ -26,7 +23,20 @@ export function normalizeUserData(user: {
   createdAt: Date;
   updatedAt: Date;
   [key: string]: unknown;
-}) {
+}): {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  profession?: string | null;
+  avatarUrl?: string | null;
+  isEmailVerified: boolean;
+  practitionerId?: string | null;
+  clientStatus?: ClientStatus;
+  createdAt: Date;
+  updatedAt: Date;
+} {
   return {
     ...user,
     clientStatus: user.clientStatus ?? undefined,
