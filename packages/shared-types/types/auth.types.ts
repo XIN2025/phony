@@ -3,12 +3,16 @@ import { UserRole, ClientStatus } from '@repo/db';
 export type User = {
   id: string;
   email: string;
-  firstName: string | null;
-  lastName: string | null;
+  firstName: string;
+  lastName: string;
   avatarUrl: string | null;
   role: UserRole;
   profession?: string | null;
   clientStatus?: ClientStatus;
+  isEmailVerified?: boolean;
+  practitionerId?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type LoginResponse = {

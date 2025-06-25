@@ -64,21 +64,13 @@ export class UserDto implements User {
   @IsEmail()
   email: string;
 
-  @ApiProperty({
-    type: 'string',
-    nullable: true,
-  })
+  @ApiProperty()
   @IsString()
-  @IsOptional()
-  firstName: string | null;
+  firstName: string;
 
-  @ApiProperty({
-    type: 'string',
-    nullable: true,
-  })
+  @ApiProperty()
   @IsString()
-  @IsOptional()
-  lastName: string | null;
+  lastName: string;
 
   @ApiProperty({
     type: 'string',

@@ -12,7 +12,7 @@ import {
   decodeInvitationToken,
   throwAuthError,
   validateRequiredFields,
-  generateJwtToken,
+  generateToken,
   determineClientStatus,
   validateFileUpload,
   uploadFile,
@@ -46,7 +46,6 @@ export class AuthService {
     validateRequiredFields({ email }, ['email']);
     const normalizedEmail = normalizeEmail(email);
 
-    // Store OTP in database first
     const otp = generateOtp();
     const expiresAt = new Date(Date.now() + config.otp.expiryMs);
 
@@ -56,7 +55,6 @@ export class AuthService {
       create: { email: normalizedEmail, otp, expiresAt },
     });
 
-    // Send email asynchronously to avoid blocking the response
     this.sendOtpEmailAsync(normalizedEmail, otp).catch((error) => {
       this.logger.error(`Failed to send OTP email to ${normalizedEmail}:`, error);
     });
@@ -78,8 +76,6 @@ export class AuthService {
       this.logger.log(`OTP email sent successfully to ${email}`);
     } catch (error) {
       this.logger.error(`Failed to send OTP email to ${email}:`, error);
-      // Optionally, you could delete the OTP from database if email fails
-      // await this.prismaService.otp.delete({ where: { email } });
     }
   }
 
@@ -93,7 +89,6 @@ export class AuthService {
     if (otpRecord.otp !== normalizedOtp) throwAuthError('Invalid OTP', 'unauthorized');
     if (otpRecord.expiresAt < new Date()) throwAuthError('OTP has expired', 'unauthorized');
 
-    // For signup - just verify OTP is correct
     await this.prismaService.otp.delete({ where: { email: normalizedEmail } });
     return true;
   }
@@ -109,31 +104,29 @@ export class AuthService {
 
     const user = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
 
-    // For login flow - user must exist
     if (!user) {
-      if (role === UserRole.PRACTITIONER) {
-        throwAuthError('Account not found. Please sign up first or check your email.', 'unauthorized');
-      }
       throwAuthError('Account not found. Please sign up first or check your email.', 'unauthorized');
     }
 
-    // Verify role matches
     if (user.role !== role) {
       throwAuthError(`Invalid role. Expected ${role}, got ${user.role}`, 'unauthorized');
     }
 
-    // Mark email as verified if not already
     if (!user.isEmailVerified) {
       await this.prismaService.user.update({ where: { id: user.id }, data: { isEmailVerified: true } });
     }
 
-    // Clean up OTP and generate token
     await this.prismaService.otp.delete({ where: { email: normalizedEmail } });
-    const token = await generateJwtToken(this.jwtService, user, {}, config.jwt.expiresIn);
-    return { token, user: createUserResponse(user) };
+    const token = await generateToken(
+      this.jwtService,
+      { ...user, clientStatus: user.clientStatus ?? undefined },
+      {},
+      config.jwt.expiresIn
+    );
+    return { token, user: createUserResponse({ ...user, clientStatus: user.clientStatus ?? undefined }) };
   }
 
-  async handlePractitionerSignUp(data: PractitionerSignUpDto): Promise<LoginResponseDto> {
+  async handlePractitionerSignUp(data: PractitionerSignUpDto, file?: Express.Multer.File): Promise<LoginResponseDto> {
     validateRequiredFields(data as unknown as Record<string, unknown>, [
       'email',
       'otp',
@@ -148,7 +141,6 @@ export class AuthService {
     const normalizedLastName = lastName.trim();
     const normalizedProfession = profession.trim();
 
-    // First verify the OTP
     const otpRecord = await this.prismaService.otp.findUnique({ where: { email: normalizedEmail } });
     if (!otpRecord) throwAuthError('Invalid email or OTP', 'unauthorized');
     if (otpRecord.otp !== normalizedOtp) throwAuthError('Invalid OTP', 'unauthorized');
@@ -157,8 +149,13 @@ export class AuthService {
     const existingUser = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) throwAuthError('An account with this email already exists', 'conflict');
 
-    // Clean up OTP
     await this.prismaService.otp.delete({ where: { email: normalizedEmail } });
+
+    let avatarUrl: string | undefined = undefined;
+    if (file && file.buffer) {
+      validateFileUpload(file, [...UPLOAD_CONSTANTS.ALLOWED_IMAGE_TYPES], UPLOAD_CONSTANTS.MAX_FILE_SIZE);
+      avatarUrl = await uploadFile(file, normalizedEmail, UPLOAD_CONSTANTS.UPLOAD_PATH, UPLOAD_CONSTANTS.UPLOAD_DIR);
+    }
 
     const user = await this.prismaService.user.create({
       data: {
@@ -168,19 +165,28 @@ export class AuthService {
         role: UserRole.PRACTITIONER,
         profession: normalizedProfession,
         isEmailVerified: true,
+        avatarUrl: avatarUrl,
       },
     });
 
-    const token = await generateJwtToken(this.jwtService, user, {}, config.jwt.expiresIn);
-    return { token, user: createUserResponse(user) };
+    const token = await generateToken(
+      this.jwtService,
+      { ...user, clientStatus: user.clientStatus ?? undefined },
+      {},
+      config.jwt.expiresIn
+    );
+    return { token, user: createUserResponse({ ...user, clientStatus: user.clientStatus ?? undefined }) };
   }
 
-  async handleClientSignUp(data: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    invitationToken: string;
-  }): Promise<LoginResponseDto> {
+  async handleClientSignUp(
+    data: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      invitationToken: string;
+    },
+    file?: Express.Multer.File
+  ): Promise<LoginResponseDto> {
     validateRequiredFields(data, ['email', 'firstName', 'lastName', 'invitationToken']);
     const { email, firstName, lastName, invitationToken } = data;
     const normalizedEmail = normalizeEmail(email);
@@ -205,6 +211,13 @@ export class AuthService {
     let user = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
     if (user) throwAuthError('An account with this email already exists', 'conflict');
     const clientStatus = determineClientStatus(invitation.intakeFormId || undefined);
+
+    let avatarUrl: string | undefined = undefined;
+    if (file && file.buffer) {
+      validateFileUpload(file, [...UPLOAD_CONSTANTS.ALLOWED_IMAGE_TYPES], UPLOAD_CONSTANTS.MAX_FILE_SIZE);
+      avatarUrl = await uploadFile(file, normalizedEmail, UPLOAD_CONSTANTS.UPLOAD_PATH, UPLOAD_CONSTANTS.UPLOAD_DIR);
+    }
+
     user = await this.prismaService.user.create({
       data: {
         email: normalizedEmail,
@@ -214,16 +227,17 @@ export class AuthService {
         practitionerId: invitation.practitionerId,
         isEmailVerified: true,
         clientStatus: clientStatus,
+        avatarUrl: avatarUrl,
       },
     });
     await this.prismaService.invitation.update({ where: { id: invitation.id }, data: { isAccepted: true } });
-    const token = await generateJwtToken(
+    const token = await generateToken(
       this.jwtService,
-      user,
-      { clientStatus: user.clientStatus },
+      { ...user, clientStatus: user.clientStatus ?? undefined },
+      { clientStatus: user.clientStatus ?? undefined },
       config.jwt.expiresIn
     );
-    return { token, user: createUserResponse(user) };
+    return { token, user: createUserResponse({ ...user, clientStatus: user.clientStatus ?? undefined }) };
   }
 
   async updateProfile(userId: string, body: ProfileUpdateBody, file?: Express.Multer.File) {
@@ -242,7 +256,7 @@ export class AuthService {
       data: updateData,
     });
 
-    return createUserResponse(user);
+    return createUserResponse({ ...user, clientStatus: user.clientStatus ?? undefined });
   }
 
   async getCurrentUser(userId: string) {
@@ -254,6 +268,6 @@ export class AuthService {
       throwAuthError('User not found', 'notFound');
     }
 
-    return createUserResponse(user);
+    return createUserResponse({ ...user, clientStatus: user.clientStatus ?? undefined });
   }
 }

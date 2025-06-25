@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PractitionerService, InviteClientDto } from './practitioner.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
@@ -103,6 +102,7 @@ describe('PractitionerService', () => {
         status: 'PENDING',
         invited: expect.any(String),
         createdAt: mockInvitation.createdAt,
+        avatar: expect.any(String),
       });
       expect(mockPrismaService.invitation.create).toHaveBeenCalled();
       expect(mockMailService.sendClientInvitation).toHaveBeenCalled();
@@ -177,6 +177,7 @@ describe('PractitionerService', () => {
         status: 'PENDING',
         invited: expect.any(String),
         createdAt: existingInvitation.createdAt,
+        avatar: expect.any(String),
       });
     });
 
@@ -241,6 +242,7 @@ describe('PractitionerService', () => {
         status: 'PENDING',
         invited: expect.any(String),
         createdAt: mockInvitation.createdAt,
+        avatar: expect.any(String),
       });
     });
 
@@ -354,6 +356,7 @@ describe('PractitionerService', () => {
           invited: 'January 1, 2024',
           expiresAt: 'January 8, 2024',
           intakeFormTitle: undefined,
+          avatar: expect.any(String),
         },
         {
           id: 'invitation-2',
@@ -364,6 +367,7 @@ describe('PractitionerService', () => {
           invited: 'January 2, 2024',
           expiresAt: 'January 8, 2024',
           intakeFormTitle: undefined,
+          avatar: expect.any(String),
         },
       ]);
 

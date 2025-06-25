@@ -27,21 +27,18 @@ export const useVerifyOtpForSignup = () => {
 
 export const usePractitionerSignup = () => {
   return useMutation({
-    mutationFn: (data: {
-      email: string;
-      otp: string;
-      role: 'PRACTITIONER';
-      firstName: string;
-      lastName: string;
-      profession: string;
-    }) => ApiClient.post<LoginResponse>('/api/auth/practitioner/signup', data),
+    mutationFn: (formData: FormData) => ApiClient.post<LoginResponse>('/api/auth/practitioner/signup', formData),
   });
 };
 
 export const useClientSignup = () => {
   return useMutation({
-    mutationFn: (data: { email: string; firstName: string; lastName: string; invitationToken: string }) =>
-      ApiClient.post<LoginResponse>('/api/auth/client/signup', data),
+    mutationFn: (data: FormData) =>
+      ApiClient.post<LoginResponse>('/api/auth/client/signup', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }),
   });
 };
 
@@ -157,18 +154,20 @@ export const useGetInvitationByToken = (token: string) => {
 };
 
 // Intake Form API hooks
+export interface IntakeFormQuestion {
+  id: string;
+  text: string;
+  type: string;
+  options: string[];
+  isRequired: boolean;
+  order: number;
+}
+
 export interface IntakeForm {
   id: string;
   title: string;
   description?: string;
-  questions: Array<{
-    id: string;
-    text: string;
-    type: string;
-    options: Array<{ text: string }>;
-    isRequired: boolean;
-    order: number;
-  }>;
+  questions: IntakeFormQuestion[];
   questionCount?: number;
   submissionCount?: number;
   createdAt: Date;
@@ -232,14 +231,7 @@ export interface ClientIntakeForm {
   id: string;
   title: string;
   description?: string;
-  questions: Array<{
-    id: string;
-    text: string;
-    type: string;
-    options: string[];
-    isRequired: boolean;
-    order: number;
-  }>;
+  questions: IntakeFormQuestion[];
 }
 
 export const useGetClientIntakeForm = () => {

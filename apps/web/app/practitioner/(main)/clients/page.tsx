@@ -8,7 +8,7 @@ import { Input } from '@repo/ui/components/input';
 import { MessageCircle, Eye, Search, Plus } from 'lucide-react';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { useSession } from 'next-auth/react';
-import { getInitials } from '@/lib/utils';
+import { getInitials, getFullAvatarUrl } from '@/lib/utils';
 import { useState } from 'react';
 import Link from 'next/link';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
@@ -142,7 +142,7 @@ export default function ClientsPage() {
                         <TableCell>
                           <div className='flex items-center gap-3'>
                             <Avatar className='h-10 w-10'>
-                              <AvatarImage src={client.avatarUrl} />
+                              <AvatarImage src={getFullAvatarUrl(client.avatarUrl)} />
                               <AvatarFallback>{getInitials(getClientDisplayName(client))}</AvatarFallback>
                             </Avatar>
                             <span className='font-medium'>{getClientDisplayName(client)}</span>

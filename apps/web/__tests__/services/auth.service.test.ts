@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useSendOtp, useVerifyOtp, usePractitionerSignup } from '../../lib/hooks/use-api';
+import { useSendOtp, useVerifyOtp, usePractitionerSignup, useClientSignup } from '../../lib/hooks/use-api';
 import { LoginResponse, SendOtpRequest, VerifyOtpRequest } from '@repo/shared-types/types';
 
 // Mock ApiClient
@@ -117,14 +117,13 @@ describe('Auth hooks', () => {
   });
 
   describe('usePractitionerSignup', () => {
-    const signupData = {
-      email: 'practitioner@example.com',
-      otp: '123456',
-      role: 'PRACTITIONER' as const,
-      firstName: 'Dr.',
-      lastName: 'Smith',
-      profession: 'Psychologist',
-    };
+    const signupData = new FormData();
+    signupData.append('email', 'practitioner@example.com');
+    signupData.append('otp', '123456');
+    signupData.append('role', 'PRACTITIONER');
+    signupData.append('firstName', 'Dr.');
+    signupData.append('lastName', 'Smith');
+    signupData.append('profession', 'Psychologist');
     const mockLoginResponse: LoginResponse = {
       token: 'practitioner-jwt-token',
       user: {
@@ -163,6 +162,102 @@ describe('Auth hooks', () => {
           result.current.mutate(signupData, {
             onError: (err) => {
               expect(err).toBe(error);
+              resolve(null);
+            },
+          });
+        });
+      });
+    });
+  });
+
+  describe('useClientSignup', () => {
+    const signupData = new FormData();
+    signupData.append('email', 'client@example.com');
+    signupData.append('firstName', 'John');
+    signupData.append('lastName', 'Doe');
+    signupData.append('invitationToken', 'test-invitation-token');
+    
+    const mockLoginResponse: LoginResponse = {
+      token: 'client-jwt-token',
+      user: {
+        id: 'client-id',
+        email: 'client@example.com',
+        firstName: 'John',
+        lastName: 'Doe',
+        avatarUrl: null,
+        role: 'CLIENT',
+        clientStatus: 'ACTIVE',
+      },
+    };
+
+    it('should successfully sign up client and return login response', async () => {
+      ApiClient.post.mockResolvedValueOnce(mockLoginResponse);
+      const { result } = renderHook(() => useClientSignup(), { wrapper: getWrapper() });
+      await act(async () => {
+        await new Promise((resolve) => {
+          result.current.mutate(signupData, {
+            onSuccess: (data) => {
+              expect(data).toEqual(mockLoginResponse);
+              resolve(null);
+            },
+          });
+        });
+      });
+      expect(ApiClient.post).toHaveBeenCalledWith('/api/auth/client/signup', signupData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    });
+
+    it('should handle API errors during client signup', async () => {
+      const error = new Error('Invalid invitation token');
+      ApiClient.post.mockRejectedValueOnce(error);
+      const { result } = renderHook(() => useClientSignup(), { wrapper: getWrapper() });
+      await act(async () => {
+        await new Promise((resolve) => {
+          result.current.mutate(signupData, {
+            onError: (err) => {
+              expect(err).toBe(error);
+              resolve(null);
+            },
+          });
+        });
+      });
+    });
+
+    it('should handle client signup with profile image', async () => {
+      const signupDataWithImage = new FormData();
+      signupDataWithImage.append('email', 'client@example.com');
+      signupDataWithImage.append('firstName', 'John');
+      signupDataWithImage.append('lastName', 'Doe');
+      signupDataWithImage.append('invitationToken', 'test-invitation-token');
+      
+      // Mock a file
+      const mockFile = new File(['test'], 'profile.jpg', { type: 'image/jpeg' });
+      signupDataWithImage.append('profileImage', mockFile);
+
+      const mockResponseWithAvatar: LoginResponse = {
+        token: 'client-jwt-token',
+        user: {
+          id: 'client-id',
+          email: 'client@example.com',
+          firstName: 'John',
+          lastName: 'Doe',
+          avatarUrl: '/uploads/client-id-1234567890.jpg',
+          role: 'CLIENT',
+          clientStatus: 'ACTIVE',
+        },
+      };
+
+      ApiClient.post.mockResolvedValueOnce(mockResponseWithAvatar);
+      const { result } = renderHook(() => useClientSignup(), { wrapper: getWrapper() });
+      await act(async () => {
+        await new Promise((resolve) => {
+          result.current.mutate(signupDataWithImage, {
+            onSuccess: (data) => {
+              expect(data).toEqual(mockResponseWithAvatar);
+              expect(data.user.avatarUrl).toBe('/uploads/client-id-1234567890.jpg');
               resolve(null);
             },
           });

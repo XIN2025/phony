@@ -7,9 +7,10 @@ import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';
 import { toast } from 'sonner';
 import { useSession, signOut } from 'next-auth/react';
-import { Loader2, AlertTriangle, LogOut } from 'lucide-react';
+import { Loader2, AlertTriangle, LogOut, User } from 'lucide-react';
 import { clearAllAuthData } from '@/lib/auth-utils';
 import { useGetInvitationByToken, useClientSignup } from '@/lib/hooks/use-api';
+import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 
 export default function ClientSignUpPage() {
   const router = useRouter();
@@ -19,8 +20,9 @@ export default function ClientSignUpPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string>('');
 
   const { data: invitationData, isLoading, error } = useGetInvitationByToken(token || '');
   const { mutate: handleSignup, isPending: isSigningUp } = useClientSignup();
@@ -54,9 +56,17 @@ export default function ClientSignUpPage() {
       });
       // Force page reload to clear any cached session data
       window.location.href = `/client/auth/signup?token=${encodeURIComponent(token || '')}`;
-    } catch (_error: unknown) {
+    } catch {
       setIsLoggingOut(false);
       toast.error('Failed to log out. Please try again.');
+    }
+  };
+
+  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfileImage(file);
+      setProfileImagePreview(URL.createObjectURL(file));
     }
   };
 
@@ -67,25 +77,25 @@ export default function ClientSignUpPage() {
       return;
     }
 
-    setIsSubmitting(true);
     const toastId = toast.loading('Creating your account...');
 
-    const signupData = {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: email!.trim().toLowerCase(),
-      invitationToken: token!,
-    };
+    // Create FormData for multipart upload
+    const formData = new FormData();
+    formData.append('firstName', firstName.trim());
+    formData.append('lastName', lastName.trim());
+    formData.append('email', email!.trim().toLowerCase());
+    formData.append('invitationToken', token!);
+    if (profileImage) {
+      formData.append('profileImage', profileImage);
+    }
 
-    handleSignup(signupData, {
+    handleSignup(formData, {
       onSuccess: () => {
         toast.success('Account created successfully! Please log in to continue.', { id: toastId });
-        // Redirect to login page with the email pre-filled
         router.push(`/client/auth?email=${encodeURIComponent(email!.trim().toLowerCase())}`);
       },
       onError: (err: unknown) => {
         toast.error(err instanceof Error ? err.message : 'An unexpected error occurred.', { id: toastId });
-        setIsSubmitting(false);
       },
     });
   };
@@ -174,6 +184,34 @@ export default function ClientSignUpPage() {
           <p className='text-muted-foreground'>Please confirm your details to create your account.</p>
         </div>
         <form onSubmit={handleSignUp} className='space-y-4'>
+          <div className='flex justify-center'>
+            <div className='relative'>
+              <label htmlFor='profile-photo-upload' className='cursor-pointer'>
+                {profileImagePreview ? (
+                  <Avatar className='h-20 w-20'>
+                    <AvatarImage src={profileImagePreview} alt='Profile Photo' />
+                    <AvatarFallback>
+                      <User />
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <Avatar className='h-20 w-20 border border-dashed'>
+                    <AvatarFallback>
+                      <User />
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+                <input
+                  id='profile-photo-upload'
+                  type='file'
+                  accept='image/*'
+                  className='hidden'
+                  onChange={handleProfileImageChange}
+                />
+                <span className='block text-xs text-muted-foreground mt-2 text-center'>Profile Photo (Optional)</span>
+              </label>
+            </div>
+          </div>
           <div className='grid grid-cols-2 gap-4'>
             <div>
               <Label htmlFor='first-name'>First Name</Label>
@@ -203,8 +241,8 @@ export default function ClientSignUpPage() {
               This email was provided in your invitation and cannot be changed.
             </p>
           </div>
-          <Button type='submit' className='w-full' disabled={isSigningUp || isSubmitting}>
-            {(isSigningUp || isSubmitting) && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+          <Button type='submit' className='w-full' disabled={isSigningUp}>
+            {isSigningUp && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             Create Account
           </Button>
         </form>

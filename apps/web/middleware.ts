@@ -1,77 +1,46 @@
-﻿import { withAuth } from 'next-auth/middleware';
-import { NextResponse } from 'next/server';
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const pathname = req.nextUrl.pathname;
-    // Handle critical session errors that require immediate redirect
-    if (token?.error && (token.error === 'UserNotFound' || token.error === 'InvalidToken')) {
-      if (pathname.startsWith('/practitioner/') && !pathname.includes('/auth')) {
-        return NextResponse.redirect(new URL('/practitioner/auth', req.url));
-      } else if (pathname.startsWith('/client/') && !pathname.includes('/auth')) {
-        return NextResponse.redirect(new URL('/client/auth', req.url));
-      }
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
+
+export async function middleware(request: NextRequest) {
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const { pathname } = request.nextUrl;
+
+  if (token?.error && (token.error === 'UserNotFound' || token.error === 'InvalidToken')) {
+    return NextResponse.redirect(new URL('/client/auth', request.url));
+  }
+
+  if (pathname.startsWith('/practitioner') && !pathname.includes('/auth')) {
+    if (!token) {
+      return NextResponse.redirect(new URL('/practitioner/auth', request.url));
     }
-    // Handle role-based routing only for main dashboard routes
-    if (token?.role && (pathname === '/practitioner' || pathname === '/client')) {
-      const userRole = token.role as string;
-      if (pathname === '/client' && userRole !== 'CLIENT') {
-        if (userRole === 'PRACTITIONER') {
-          return NextResponse.redirect(new URL('/practitioner', req.url));
-        } else {
-          return NextResponse.redirect(new URL('/client/auth', req.url));
-        }
-      }
-      if (pathname === '/practitioner' && userRole !== 'PRACTITIONER') {
-        if (userRole === 'CLIENT') {
-          return NextResponse.redirect(new URL('/client', req.url));
-        } else {
-          return NextResponse.redirect(new URL('/practitioner/auth', req.url));
-        }
-      }
+    if (token.role !== 'PRACTITIONER') {
+      return NextResponse.redirect(new URL('/client/auth', request.url));
     }
-    return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        const pathname = req.nextUrl.pathname;
-        // Define public routes that don't require authentication
-        const publicRoutes = [
-          '/',
-          '/client/auth',
-          '/practitioner/auth',
-          '/api/auth',
-          '/_next',
-          '/favicon.ico',
-          '/api/practitioner/invitations/token',
-          '/api/practitioner/invitations',
-        ];
-        const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route) || pathname === route);
-        if (isPublicRoute) {
-          return true;
-        }
-        // For protected routes, require a valid token
-        // Backend JWT strategy will handle detailed validation
-        if (!token || !token.id || !token.email || !token.role) {
-          // For auth pages, allow access even without token (during login process)
-          if (pathname.includes('/auth')) {
-            return true;
-          }
-          // Redirect to appropriate auth page based on the route
-          if (pathname.startsWith('/practitioner/')) {
-            return false; // This will trigger redirect to /practitioner/auth
-          } else if (pathname.startsWith('/client/')) {
-            return false; // This will trigger redirect to /client/auth
-          } else {
-            return false; // Default to client auth
-          }
-        }
-        return true;
-      },
-    },
-  },
-);
+  }
+
+  if (pathname.startsWith('/client') && !pathname.includes('/auth')) {
+    if (!token) {
+      return NextResponse.redirect(new URL('/client/auth', request.url));
+    }
+    if (token.role !== 'CLIENT') {
+      return NextResponse.redirect(new URL('/practitioner/auth', request.url));
+    }
+  }
+
+  const publicRoutes = ['/', '/practitioner/auth', '/client/auth', '/api/auth', '/api/invitations/token'];
+
+  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+
+  if (!isPublicRoute && !token) {
+    if (pathname.startsWith('/practitioner')) {
+      return NextResponse.redirect(new URL('/practitioner/auth', request.url));
+    }
+    return NextResponse.redirect(new URL('/client/auth', request.url));
+  }
+
+  return NextResponse.next();
+}
+
 export const config = {
-  matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };

@@ -1,8 +1,8 @@
 ﻿'use client';
-import { Home, Users, File as FileIcon, MessageSquare, Menu, X, Plus } from 'lucide-react';
+import { Home, Users, File as FileIcon, MessageSquare } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { SidebarContent } from '@/components/practitioner/Sidebar';
-import { Sheet, SheetContent } from '@repo/ui/components/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/sheet';
 import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
 
 function PractitionerLayoutContent({ children }: { children: React.ReactNode }) {
@@ -21,6 +21,9 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
       </div>
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side='left' className='w-[280px] p-0'>
+          <SheetHeader className='sr-only'>
+            <SheetTitle>Navigation Menu</SheetTitle>
+          </SheetHeader>
           <SidebarContent navLinks={navLinks} pathname={pathname} />
         </SheetContent>
       </Sheet>

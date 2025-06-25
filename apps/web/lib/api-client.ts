@@ -12,12 +12,15 @@ export class ApiClient {
       const isFormData = config.data instanceof FormData;
 
       // Define public endpoints that don't require authentication
-      const isPublicEndpoint =
-        config.url?.includes('/invitations/token/') ||
-        (config.url?.includes('/auth/') &&
-          !config.url?.includes('/auth/profile') &&
-          !config.url?.includes('/auth/me')) ||
-        config.url?.includes('/public/');
+      const publicEndpoints = [
+        '/api/auth/otp/send',
+        '/api/auth/otp/verify',
+        '/api/auth/practitioner/signup',
+        '/api/auth/client/signup',
+        '/api/invitations/token/',
+      ];
+
+      const isPublicEndpoint = publicEndpoints.some((endpoint) => config.url?.includes(endpoint));
 
       // Use longer timeout for OTP requests
       const isOtpRequest = config.url?.includes('/auth/otp');
