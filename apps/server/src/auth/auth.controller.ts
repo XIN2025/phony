@@ -29,15 +29,17 @@ export class AuthController {
   @Post('otp/verify-signup')
   @Public()
   @ApiResponse({ type: Boolean, description: 'OTP verification for signup' })
-  async verifyOtpForSignup(@Body() body: { email: string; otp: string }): Promise<boolean> {
-    return this.authService.verifyOtpForSignup(body.email, body.otp);
+  async verifyOtpForSignup(@Body() body: { email: string; otp: string }): Promise<{ success: boolean }> {
+    const result = await this.authService.verifyOtpForSignup(body.email, body.otp);
+    return { success: result };
   }
 
   @Post('otp')
   @Public()
   @ApiResponse({ type: Boolean, description: 'Whether the OTP was sent successfully' })
-  async otpAuth(@Body() body: OtpAuthDto): Promise<boolean> {
-    return this.authService.handleOtpAuth(body.email);
+  async otpAuth(@Body() body: OtpAuthDto): Promise<{ success: boolean }> {
+    const result = await this.authService.handleOtpAuth(body.email);
+    return { success: result };
   }
 
   @Post('practitioner/signup')

@@ -78,6 +78,7 @@ describe('ApiClient', () => {
 
       expect(mockAxios.create).toHaveBeenCalledWith({
         baseURL: expect.any(String),
+        timeout: 10000,
         headers: {
           Authorization: 'Bearer test-token',
         },
@@ -106,6 +107,7 @@ describe('ApiClient', () => {
 
       expect(mockAxios.create).toHaveBeenCalledWith({
         baseURL: expect.any(String),
+        timeout: 10000,
         headers: {},
       });
     });
@@ -138,6 +140,27 @@ describe('ApiClient', () => {
       } as any);
 
       await expect(ApiClient.get('/api/test')).rejects.toThrow('An unknown error occurred');
+    });
+
+    it('should handle axios errors without response data', async () => {
+      const networkError = {
+        isAxiosError: true,
+        message: 'Network timeout',
+      };
+      mockAxios.create.mockReturnValue({
+        request: jest.fn().mockRejectedValue(networkError),
+      } as any);
+
+      await expect(ApiClient.get('/api/test')).rejects.toThrow('Network timeout');
+    });
+
+    it('should handle non-axios errors', async () => {
+      const unexpectedError = new Error('Unexpected error');
+      mockAxios.create.mockReturnValue({
+        request: jest.fn().mockRejectedValue(unexpectedError),
+      } as any);
+
+      await expect(ApiClient.get('/api/test')).rejects.toThrow('Unexpected error');
     });
   });
 
@@ -197,6 +220,7 @@ describe('ApiClient', () => {
 
       expect(mockAxios.create).toHaveBeenCalledWith({
         baseURL: expect.any(String),
+        timeout: 10000,
         headers: {},
       });
     });
@@ -337,26 +361,24 @@ describe('ApiClient', () => {
     });
 
     it('should handle axios errors without response data', async () => {
-      const mockAxiosError = {
+      const networkError = {
         isAxiosError: true,
-        response: undefined,
         message: 'Network timeout',
       };
-
       mockAxios.create.mockReturnValue({
-        request: jest.fn().mockRejectedValue(mockAxiosError),
+        request: jest.fn().mockRejectedValue(networkError),
       } as any);
 
-      await expect(ApiClient.get('/api/test')).rejects.toThrow('An unknown error occurred');
+      await expect(ApiClient.get('/api/test')).rejects.toThrow('Network timeout');
     });
 
     it('should handle non-axios errors', async () => {
-      const nonAxiosError = new Error('Unexpected error');
+      const unexpectedError = new Error('Unexpected error');
       mockAxios.create.mockReturnValue({
-        request: jest.fn().mockRejectedValue(nonAxiosError),
+        request: jest.fn().mockRejectedValue(unexpectedError),
       } as any);
 
-      await expect(ApiClient.get('/api/test')).rejects.toThrow('An unknown error occurred');
+      await expect(ApiClient.get('/api/test')).rejects.toThrow('Unexpected error');
     });
   });
 

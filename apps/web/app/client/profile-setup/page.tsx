@@ -3,15 +3,16 @@ import * as React from 'react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { useMutation } from '@tanstack/react-query';
-import { ApiClient } from '@/lib/api-client';
 import { Logo } from '@repo/ui/components/logo';
 import { ProfileSetupForm } from '@/components/ProfileSetupForm';
 import { Loader2 } from 'lucide-react';
+import { useUpdateProfile } from '@/lib/hooks/use-api';
+
 export default function ClientProfileSetupPage() {
   const router = useRouter();
   const { data: session, update } = useSession();
   const [showLoading, setShowLoading] = React.useState(false);
+
   const initialDefaultValues = React.useMemo(
     () => ({
       firstName: session?.user?.firstName || '',
@@ -19,35 +20,36 @@ export default function ClientProfileSetupPage() {
     }),
     [session?.user?.firstName, session?.user?.lastName],
   );
-  const { mutate: handleProfileSetup, isPending } = useMutation({
-    mutationFn: async (data: { firstName: string; lastName: string; profileImage?: File }) => {
-      const formData = new FormData();
-      formData.append('firstName', data.firstName);
-      formData.append('lastName', data.lastName);
-      if (data.profileImage) {
-        formData.append('profileImage', data.profileImage);
-      }
-      return await ApiClient.post('/api/auth/profile', formData);
-    },
-    onSuccess: async () => {
-      toast.success('Profile setup completed successfully!');
-      setShowLoading(true);
-      // Update session and navigate in parallel
-      await Promise.all([
-        update(),
-        new Promise((resolve) => setTimeout(resolve, 800)), // Slightly longer delay for smooth transition
-      ]);
-      router.push('/client');
-    },
-    onError: (error) => {
-      toast.error(error.message ?? 'Failed to complete profile setup');
-      setShowLoading(false);
-    },
-  });
+
+  const { mutate: handleProfileSetup, isPending } = useUpdateProfile();
+
   const onSubmit = (data: { firstName: string; lastName: string; profileImage?: File }) => {
     setShowLoading(true);
-    handleProfileSetup(data);
+    const formData = new FormData();
+    formData.append('firstName', data.firstName);
+    formData.append('lastName', data.lastName);
+    if (data.profileImage) {
+      formData.append('profileImage', data.profileImage);
+    }
+
+    handleProfileSetup(formData, {
+      onSuccess: async () => {
+        toast.success('Profile setup completed successfully!');
+        setShowLoading(true);
+        // Update session and navigate in parallel
+        await Promise.all([
+          update(),
+          new Promise((resolve) => setTimeout(resolve, 800)), // Slightly longer delay for smooth transition
+        ]);
+        router.push('/client');
+      },
+      onError: (error: Error) => {
+        toast.error(error.message ?? 'Failed to complete profile setup');
+        setShowLoading(false);
+      },
+    });
   };
+
   // Show loading state when either mutation is pending or we're in loading state
   if (isPending || showLoading) {
     return (
@@ -65,6 +67,7 @@ export default function ClientProfileSetupPage() {
       </div>
     );
   }
+
   return (
     <div className='min-h-screen bg-background flex items-center justify-center p-4 animate-in fade-in duration-300'>
       <div className='w-full max-w-md'>

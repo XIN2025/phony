@@ -1,6 +1,5 @@
 ﻿'use client';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
-import { ApiClient } from '@/lib/api-client';
 import { getInitials } from '@/lib/utils';
 import {
   AlertDialog,
@@ -19,58 +18,46 @@ import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/tooltip';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Eye, Loader2, MessageCircle, MessageSquare, Plus, RefreshCw, Trash2, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-interface Client {
-  id: string;
-  clientFirstName: string;
-  clientLastName: string;
-  clientEmail: string;
-  status: 'PENDING' | 'JOINED';
-  createdAt: string;
-  avatar?: string;
-}
-const getClientDisplayName = (client: Client): string => {
+import { useGetInvitations, useDeleteInvitation, useResendInvitation, InvitationResponse } from '@/lib/hooks/use-api';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+
+const getClientDisplayName = (client: InvitationResponse): string => {
   if (client.clientFirstName && client.clientLastName) {
     return `${client.clientFirstName} ${client.clientLastName}`;
   }
   return client.clientFirstName || client.clientLastName || client.clientEmail?.split('@')[0] || 'Client';
 };
+
 export default function PractitionerDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: clients = [], isLoading: isClientsLoading } = useQuery<Client[]>({
-    queryKey: ['invitations'],
-    queryFn: async () => {
-      return (await ApiClient.get('/api/practitioner/invitations')) as any[];
-    },
-    enabled: status === 'authenticated' && !!session?.user?.id,
-  });
-  const { mutate: deleteInvitation, isPending: isDeleting } = useMutation({
-    mutationFn: (invitationId: string) => ApiClient.delete(`/api/practitioner/invitations/${invitationId}`),
-    onSuccess: () => {
-      toast.success('Invitation deleted successfully.');
-      queryClient.invalidateQueries({ queryKey: ['invitations'] });
-    },
-    onError: (error) => {
-      toast.error(`Failed to delete invitation: ${error.message}`);
-    },
-  });
-  const { mutate: resendInvitation, isPending: isResending } = useMutation({
-    mutationFn: (invitationId: string) => ApiClient.post(`/api/practitioner/invitations/${invitationId}/resend`),
-    onSuccess: () => {
-      toast.success('Invitation resent successfully.');
-      queryClient.invalidateQueries({ queryKey: ['invitations'] });
-    },
-    onError: (error) => {
-      toast.error(`Failed to resend invitation: ${error.message}`);
-    },
-  });
+
+  const { data: clients = [], isLoading: isClientsLoading, refetch: refetchInvitations } = useGetInvitations();
+  const { mutate: deleteInvitation, isPending: isDeleting } = useDeleteInvitation();
+  const { mutate: resendInvitation, isPending: isResending } = useResendInvitation();
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refetchInvitations();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [refetchInvitations]);
+
+  const handleRefresh = () => {
+    refetchInvitations();
+    toast.success('Invitations refreshed');
+  };
 
   if (status === 'loading') {
     return (
@@ -118,8 +105,10 @@ export default function PractitionerDashboard() {
       </div>
     );
   }
+
   const joinedClients = clients.filter((c) => c.status === 'JOINED');
   const pendingClients = clients.filter((c) => c.status === 'PENDING');
+
   return (
     <>
       <header className='flex h-auto flex-col gap-4 border-b bg-background p-4 sm:h-auto sm:flex-row sm:items-center sm:justify-between sm:p-6'>
@@ -129,7 +118,15 @@ export default function PractitionerDashboard() {
             Welcome Back{session?.user?.firstName ? ` Dr. ${session.user.firstName}` : ''}
           </h1>
         </div>
-        <div className='flex justify-start sm:justify-end'>
+        <div className='flex justify-start sm:justify-end gap-2'>
+          <Button variant='outline' onClick={handleRefresh} disabled={isClientsLoading} className='w-full sm:w-auto'>
+            {isClientsLoading ? (
+              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+            ) : (
+              <RefreshCw className='mr-2 h-4 w-4' />
+            )}
+            Refresh
+          </Button>
           <Link href='/practitioner/invite'>
             <Button className='w-full sm:w-auto'>
               <Plus className='mr-2 h-4 w-4' />
@@ -198,24 +195,32 @@ export default function PractitionerDashboard() {
                               <div className='min-w-0 flex-1'>
                                 <p className='font-medium text-sm sm:text-base truncate'>{client.clientEmail}</p>
                                 <p className='text-xs sm:text-sm text-muted-foreground truncate'>
-                                  {client.clientFirstName && client.clientLastName
-                                    ? `${client.clientFirstName} ${client.clientLastName}`
-                                    : 'Name not provided'}
+                                  {getClientDisplayName(client)}
                                 </p>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className='text-sm'>{new Date(client.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell className='text-sm text-muted-foreground'>
+                            {new Date(client.createdAt).toLocaleDateString()}
+                          </TableCell>
                           <TableCell className='text-right'>
-                            <div className='flex justify-end gap-1 sm:gap-2'>
+                            <div className='flex items-center justify-end gap-2'>
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Button
                                       variant='ghost'
-                                      size='icon'
-                                      className='h-8 w-8'
-                                      onClick={() => resendInvitation(client.id)}
+                                      size='sm'
+                                      onClick={() =>
+                                        resendInvitation(client.id, {
+                                          onSuccess: () => {
+                                            toast.success('Invitation resent successfully.');
+                                          },
+                                          onError: (error: Error) => {
+                                            toast.error(`Failed to resend invitation: ${error.message}`);
+                                          },
+                                        })
+                                      }
                                       disabled={isResending}
                                     >
                                       {isResending ? (
@@ -229,48 +234,51 @@ export default function PractitionerDashboard() {
                                     <p>Resend invitation</p>
                                   </TooltipContent>
                                 </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <AlertDialog>
-                                      <AlertDialogTrigger asChild>
-                                        <Button
-                                          variant='ghost'
-                                          size='icon'
-                                          className='h-8 w-8 text-destructive hover:text-destructive'
-                                          disabled={isDeleting}
-                                        >
-                                          {isDeleting ? (
-                                            <Loader2 className='h-4 w-4 animate-spin' />
-                                          ) : (
-                                            <Trash2 className='h-4 w-4' />
-                                          )}
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>Delete Invitation</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            Are you sure you want to delete this invitation? This action cannot be
-                                            undone.
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction
-                                            onClick={() => deleteInvitation(client.id)}
-                                            className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                                          >
-                                            Delete
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Delete invitation</p>
-                                  </TooltipContent>
-                                </Tooltip>
                               </TooltipProvider>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button variant='ghost' size='sm'>
+                                          <Trash2 className='h-4 w-4' />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Delete invitation</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Invitation</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete this invitation? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() =>
+                                        deleteInvitation(client.id, {
+                                          onSuccess: () => {
+                                            toast.success('Invitation deleted successfully.');
+                                          },
+                                          onError: (error: Error) => {
+                                            toast.error(`Failed to delete invitation: ${error.message}`);
+                                          },
+                                        })
+                                      }
+                                      disabled={isDeleting}
+                                      className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                                    >
+                                      {isDeleting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </div>
                           </TableCell>
                         </TableRow>

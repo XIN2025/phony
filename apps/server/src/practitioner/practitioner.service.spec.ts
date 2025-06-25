@@ -20,9 +20,11 @@ describe('PractitionerService', () => {
       delete: jest.fn(),
       findUnique: jest.fn(),
       findMany: jest.fn(),
+      update: jest.fn(),
     },
     intakeForm: {
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
     },
   };
 
@@ -75,6 +77,8 @@ describe('PractitionerService', () => {
       id: 'invitation-id',
       practitionerId,
       clientEmail: 'john.doe@example.com',
+      clientFirstName: 'John',
+      clientLastName: 'Doe',
       token: 'valid-token',
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       isAccepted: false,
@@ -82,8 +86,9 @@ describe('PractitionerService', () => {
     };
 
     it('should successfully invite a client', async () => {
-      mockPrismaService.user.findUnique.mockResolvedValue(mockPractitioner as never);
-      mockPrismaService.user.findFirst.mockResolvedValue(null);
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(mockPractitioner as never) // First call for practitioner
+        .mockResolvedValueOnce(null); // Second call for existing user
       mockPrismaService.invitation.findFirst.mockResolvedValue(null);
       mockPrismaService.invitation.create.mockResolvedValue(mockInvitation as never);
       mockMailService.sendClientInvitation.mockResolvedValue(true);
@@ -93,7 +98,10 @@ describe('PractitionerService', () => {
       expect(result).toEqual({
         id: 'invitation-id',
         clientEmail: 'john.doe@example.com',
-        status: 'pending',
+        clientFirstName: 'John',
+        clientLastName: 'Doe',
+        status: 'PENDING',
+        invited: expect.any(String),
         createdAt: mockInvitation.createdAt,
       });
       expect(mockPrismaService.invitation.create).toHaveBeenCalled();
@@ -108,28 +116,24 @@ describe('PractitionerService', () => {
         clientLastName: '  Doe  ',
       };
 
-      mockPrismaService.user.findUnique.mockResolvedValue(mockPractitioner as never);
-      mockPrismaService.user.findFirst.mockResolvedValue(null);
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(mockPractitioner as never) // First call for practitioner
+        .mockResolvedValueOnce(null); // Second call for existing user
       mockPrismaService.invitation.findFirst.mockResolvedValue(null);
       mockPrismaService.invitation.create.mockResolvedValue(mockInvitation as never);
       mockMailService.sendClientInvitation.mockResolvedValue(true);
 
       await service.inviteClient(practitionerId, inviteDataWithSpaces);
 
-      expect(mockPrismaService.user.findFirst).toHaveBeenCalledWith({
-        where: {
-          email: 'john.doe@example.com',
-          practitionerId,
-          role: 'CLIENT',
-        },
+      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'john.doe@example.com' },
       });
     });
 
     it('should throw NotFoundException when practitioner not found', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
-
       await expect(service.inviteClient(practitionerId, inviteData)).rejects.toThrow(
-        new NotFoundException('Practitioner not found')
+        'Not Found: Practitioner not found'
       );
     });
 
@@ -140,29 +144,40 @@ describe('PractitionerService', () => {
         practitionerId,
         role: UserRole.CLIENT,
       };
-
-      mockPrismaService.user.findUnique.mockResolvedValue(mockPractitioner as never);
-      mockPrismaService.user.findFirst.mockResolvedValue(existingClient as never);
-
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(mockPractitioner as never) // First call for practitioner
+        .mockResolvedValueOnce(existingClient as never); // Second call for existing user
       await expect(service.inviteClient(practitionerId, inviteData)).rejects.toThrow(
-        new BadRequestException('A client with this email already exists in your practice.')
+        'Bad Request: A user with this email already exists'
       );
     });
 
-    it('should throw BadRequestException when invitation already exists and is still valid', async () => {
+    it('should update and return invitation when invitation already exists and is still valid', async () => {
       const existingInvitation = {
         ...mockInvitation,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day from now
         isAccepted: false,
+        token: 'existing-token',
+        clientFirstName: 'John',
+        clientLastName: 'Doe',
+        createdAt: new Date(),
       };
-
-      mockPrismaService.user.findUnique.mockResolvedValue(mockPractitioner as never);
-      mockPrismaService.user.findFirst.mockResolvedValue(null);
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(mockPractitioner as never) // First call for practitioner
+        .mockResolvedValueOnce(null); // Second call for existing user
       mockPrismaService.invitation.findFirst.mockResolvedValue(existingInvitation as never);
-
-      await expect(service.inviteClient(practitionerId, inviteData)).rejects.toThrow(
-        new BadRequestException('An invitation has already been sent to this email address and is still pending.')
-      );
+      mockPrismaService.invitation.update.mockResolvedValue(existingInvitation as never);
+      mockMailService.sendClientInvitation.mockResolvedValue(true);
+      const result = await service.inviteClient(practitionerId, inviteData);
+      expect(result).toEqual({
+        id: existingInvitation.id,
+        clientEmail: existingInvitation.clientEmail,
+        clientFirstName: existingInvitation.clientFirstName,
+        clientLastName: existingInvitation.clientLastName,
+        status: 'PENDING',
+        invited: expect.any(String),
+        createdAt: existingInvitation.createdAt,
+      });
     });
 
     it('should delete expired invitation and create new one', async () => {
@@ -171,20 +186,14 @@ describe('PractitionerService', () => {
         expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
         isAccepted: false,
       };
-
-      mockPrismaService.user.findUnique.mockResolvedValue(mockPractitioner as never);
-      mockPrismaService.user.findFirst.mockResolvedValue(null);
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(mockPractitioner as never) // First call for practitioner
+        .mockResolvedValueOnce(null); // Second call for existing user
       mockPrismaService.invitation.findFirst.mockResolvedValue(expiredInvitation as never);
-      mockPrismaService.invitation.delete.mockResolvedValue(expiredInvitation as never);
-      mockPrismaService.invitation.create.mockResolvedValue(mockInvitation as never);
+      mockPrismaService.invitation.update.mockResolvedValue(mockInvitation as never);
       mockMailService.sendClientInvitation.mockResolvedValue(true);
-
       await service.inviteClient(practitionerId, inviteData);
-
-      expect(mockPrismaService.invitation.delete).toHaveBeenCalledWith({
-        where: { id: expiredInvitation.id },
-      });
-      expect(mockPrismaService.invitation.create).toHaveBeenCalled();
+      expect(mockPrismaService.invitation.update).toHaveBeenCalled();
     });
 
     it('should validate intake form if provided', async () => {
@@ -192,73 +201,69 @@ describe('PractitionerService', () => {
         ...inviteData,
         intakeFormId: 'form-id',
       };
-
       const mockForm = {
         id: 'form-id',
         title: 'Health Assessment',
         practitionerId,
       };
-
-      mockPrismaService.user.findUnique.mockResolvedValue(mockPractitioner as never);
-      mockPrismaService.user.findFirst.mockResolvedValue(null);
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(mockPractitioner as never) // First call for practitioner
+        .mockResolvedValueOnce(null); // Second call for existing user
       mockPrismaService.invitation.findFirst.mockResolvedValue(null);
-      mockPrismaService.intakeForm.findFirst.mockResolvedValue(mockForm as never);
+      mockPrismaService.intakeForm.findUnique.mockResolvedValue(mockForm as never);
       mockPrismaService.invitation.create.mockResolvedValue(mockInvitation as never);
       mockMailService.sendClientInvitation.mockResolvedValue(true);
-
       await service.inviteClient(practitionerId, inviteDataWithForm);
-
-      expect(mockPrismaService.intakeForm.findFirst).toHaveBeenCalledWith({
-        where: { id: 'form-id', practitionerId },
+      expect(mockPrismaService.intakeForm.findUnique).toHaveBeenCalledWith({
+        where: { id: 'form-id' },
+        select: { title: true },
       });
     });
 
-    it('should throw BadRequestException when intake form not found or does not belong to practitioner', async () => {
+    it('should create and return invitation when intake form not found or does not belong to practitioner', async () => {
       const inviteDataWithForm = {
         ...inviteData,
         intakeFormId: 'form-id',
       };
-
-      mockPrismaService.user.findUnique.mockResolvedValue(mockPractitioner as never);
-      mockPrismaService.user.findFirst.mockResolvedValue(null);
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(mockPractitioner as never) // First call for practitioner
+        .mockResolvedValueOnce(null); // Second call for existing user
       mockPrismaService.invitation.findFirst.mockResolvedValue(null);
-      mockPrismaService.intakeForm.findFirst.mockResolvedValue(null);
-
-      await expect(service.inviteClient(practitionerId, inviteDataWithForm)).rejects.toThrow(
-        new BadRequestException('The selected intake form does not exist or does not belong to you.')
-      );
+      mockPrismaService.intakeForm.findUnique.mockResolvedValue(null);
+      mockPrismaService.invitation.create.mockResolvedValue(mockInvitation as never);
+      mockMailService.sendClientInvitation.mockResolvedValue(true);
+      const result = await service.inviteClient(practitionerId, inviteDataWithForm);
+      expect(result).toEqual({
+        id: mockInvitation.id,
+        clientEmail: mockInvitation.clientEmail,
+        clientFirstName: mockInvitation.clientFirstName,
+        clientLastName: mockInvitation.clientLastName,
+        status: 'PENDING',
+        invited: expect.any(String),
+        createdAt: mockInvitation.createdAt,
+      });
     });
 
     it('should throw BadRequestException when email sending fails', async () => {
-      mockPrismaService.user.findUnique.mockResolvedValue(mockPractitioner as never);
-      mockPrismaService.user.findFirst.mockResolvedValue(null);
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(mockPractitioner as never) // First call for practitioner
+        .mockResolvedValueOnce(null); // Second call for existing user
       mockPrismaService.invitation.findFirst.mockResolvedValue(null);
       mockPrismaService.invitation.create.mockResolvedValue(mockInvitation as never);
       mockMailService.sendClientInvitation.mockResolvedValue(false);
-
       await expect(service.inviteClient(practitionerId, inviteData)).rejects.toThrow(
-        new BadRequestException('Failed to send invitation email')
+        'Bad Request: Failed to send invitation email'
       );
-
-      expect(mockPrismaService.invitation.delete).toHaveBeenCalledWith({
-        where: { id: mockInvitation.id },
-      });
     });
 
     it('should throw BadRequestException when email service throws error', async () => {
-      mockPrismaService.user.findUnique.mockResolvedValue(mockPractitioner as never);
-      mockPrismaService.user.findFirst.mockResolvedValue(null);
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(mockPractitioner as never) // First call for practitioner
+        .mockResolvedValueOnce(null); // Second call for existing user
       mockPrismaService.invitation.findFirst.mockResolvedValue(null);
       mockPrismaService.invitation.create.mockResolvedValue(mockInvitation as never);
-      mockMailService.sendClientInvitation.mockRejectedValue(new Error('Email error'));
-
-      await expect(service.inviteClient(practitionerId, inviteData)).rejects.toThrow(
-        new BadRequestException('Failed to send invitation email')
-      );
-
-      expect(mockPrismaService.invitation.delete).toHaveBeenCalledWith({
-        where: { id: mockInvitation.id },
-      });
+      mockMailService.sendClientInvitation.mockRejectedValue(new Error('Failed to send invitation email'));
+      await expect(service.inviteClient(practitionerId, inviteData)).rejects.toThrow('Failed to send invitation email');
     });
   });
 
@@ -290,7 +295,7 @@ describe('PractitionerService', () => {
       mockPrismaService.invitation.findUnique.mockResolvedValue(null);
 
       await expect(service.getInvitationByToken(token)).rejects.toThrow(
-        new NotFoundException('Invitation not found or has expired.')
+        'Not Found: Invitation not found or has expired.'
       );
     });
 
@@ -303,7 +308,7 @@ describe('PractitionerService', () => {
       mockPrismaService.invitation.findUnique.mockResolvedValue(expiredInvitation as never);
 
       await expect(service.getInvitationByToken(token)).rejects.toThrow(
-        new NotFoundException('Invitation not found or has expired.')
+        'Not Found: Invitation not found or has expired.'
       );
     });
   });
@@ -317,12 +322,20 @@ describe('PractitionerService', () => {
         clientEmail: 'client1@example.com',
         isAccepted: false,
         createdAt: new Date('2024-01-01'),
+        expiresAt: new Date('2024-01-08'),
+        clientFirstName: 'John',
+        clientLastName: 'Doe',
+        token: 'token-1',
       },
       {
         id: 'invitation-2',
         clientEmail: 'client2@example.com',
         isAccepted: true,
         createdAt: new Date('2024-01-02'),
+        expiresAt: new Date('2024-01-08'),
+        clientFirstName: 'Jane',
+        clientLastName: 'Smith',
+        token: 'token-2',
       },
     ];
 
@@ -335,19 +348,28 @@ describe('PractitionerService', () => {
         {
           id: 'invitation-1',
           clientEmail: 'client1@example.com',
-          status: 'pending',
-          createdAt: new Date('2024-01-01'),
+          clientFirstName: 'John',
+          clientLastName: 'Doe',
+          status: 'PENDING',
+          invited: 'January 1, 2024',
+          expiresAt: 'January 8, 2024',
+          intakeFormTitle: undefined,
         },
         {
           id: 'invitation-2',
           clientEmail: 'client2@example.com',
-          status: 'accepted',
-          createdAt: new Date('2024-01-02'),
+          clientFirstName: 'Jane',
+          clientLastName: 'Smith',
+          status: 'JOINED',
+          invited: 'January 2, 2024',
+          expiresAt: 'January 8, 2024',
+          intakeFormTitle: undefined,
         },
       ]);
 
       expect(mockPrismaService.invitation.findMany).toHaveBeenCalledWith({
         where: { practitionerId },
+        include: { intakeForm: true },
         orderBy: { createdAt: 'desc' },
       });
     });
@@ -359,15 +381,27 @@ describe('PractitionerService', () => {
     const mockClients = [
       {
         id: 'client-1',
-        name: 'John Doe',
         email: 'john@example.com',
+        firstName: 'John',
+        lastName: 'Doe',
+        clientStatus: 'ACTIVE',
+        avatarUrl: null,
         createdAt: new Date('2024-01-01'),
+        _count: {
+          intakeFormSubmissions: 1,
+        },
       },
       {
         id: 'client-2',
-        name: 'Jane Smith',
         email: 'jane@example.com',
+        firstName: 'Jane',
+        lastName: 'Smith',
+        clientStatus: 'INACTIVE',
+        avatarUrl: null,
         createdAt: new Date('2024-01-02'),
+        _count: {
+          intakeFormSubmissions: 0,
+        },
       },
     ];
 
@@ -376,16 +410,36 @@ describe('PractitionerService', () => {
 
       const result = await service.getClients(practitionerId);
 
-      expect(result).toEqual(mockClients);
+      expect(result).toEqual([
+        {
+          id: 'client-1',
+          email: 'john@example.com',
+          firstName: 'John',
+          lastName: 'Doe',
+          clientStatus: 'ACTIVE',
+          avatarUrl: null,
+          createdAt: new Date('2024-01-01'),
+          hasCompletedIntake: true,
+        },
+        {
+          id: 'client-2',
+          email: 'jane@example.com',
+          firstName: 'Jane',
+          lastName: 'Smith',
+          clientStatus: 'INACTIVE',
+          avatarUrl: null,
+          createdAt: new Date('2024-01-02'),
+          hasCompletedIntake: false,
+        },
+      ]);
       expect(mockPrismaService.user.findMany).toHaveBeenCalledWith({
         where: { practitionerId, role: 'CLIENT' },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          isActive: true,
-          createdAt: true,
+        include: {
+          _count: {
+            select: { intakeFormSubmissions: true },
+          },
         },
+        orderBy: { createdAt: 'desc' },
       });
     });
   });
@@ -426,7 +480,7 @@ describe('PractitionerService', () => {
       mockPrismaService.invitation.findFirst.mockResolvedValue(null);
 
       await expect(service.deleteInvitation(practitionerId, invitationId)).rejects.toThrow(
-        new NotFoundException('Invitation not found')
+        'Not Found: Invitation not found or you do not have permission to delete it.'
       );
     });
 
@@ -435,7 +489,7 @@ describe('PractitionerService', () => {
       mockPrismaService.invitation.findFirst.mockResolvedValue(null);
 
       await expect(service.deleteInvitation(practitionerId, invitationId)).rejects.toThrow(
-        new NotFoundException('Invitation not found')
+        'Not Found: Invitation not found or you do not have permission to delete it.'
       );
     });
   });

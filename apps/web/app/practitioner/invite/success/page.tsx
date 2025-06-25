@@ -6,11 +6,23 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useInviteContext } from '@/context/InviteContext';
+import { useQueryClient } from '@tanstack/react-query';
+
 export default function InviteSuccessPage() {
   const { resetInviteFlow } = useInviteContext();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
   useEffect(() => {
     resetInviteFlow();
-  }, [resetInviteFlow]);
+    queryClient.invalidateQueries({ queryKey: ['invitations'] });
+  }, [resetInviteFlow, queryClient]);
+
+  const handleGoToDashboard = () => {
+    queryClient.invalidateQueries({ queryKey: ['invitations'] });
+    router.push('/practitioner');
+  };
+
   return (
     <div className='flex min-h-[80vh] items-center justify-center'>
       <Card className='w-full max-w-md text-center shadow-lg'>
@@ -22,9 +34,7 @@ export default function InviteSuccessPage() {
             invitation on your dashboard.
           </p>
           <div className='flex justify-center gap-4'>
-            <Link href='/practitioner' passHref>
-              <Button>Go to Dashboard</Button>
-            </Link>
+            <Button onClick={handleGoToDashboard}>Go to Dashboard</Button>
             <Link href='/practitioner/invite' passHref>
               <Button variant='outline'>Invite Another Client</Button>
             </Link>

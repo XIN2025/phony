@@ -2,7 +2,6 @@ import { UserRole } from '@repo/db';
 import { JwtService } from '@nestjs/jwt';
 import { config } from 'src/common/config';
 
-// Define ClientStatus as string literal union to avoid redundant type constituent errors
 type ClientStatus = 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
 
 export function normalizeEmail(email: string): string {

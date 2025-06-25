@@ -1,10 +1,8 @@
 ﻿'use client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { Plus, MoreVertical, Trash2 } from 'lucide-react';
-import { ApiClient } from '@/lib/api-client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,34 +10,17 @@ import {
   DropdownMenuTrigger,
 } from '@repo/ui/components/dropdown-menu';
 import { toast } from 'sonner';
-interface IntakeForm {
-  id: string;
-  title: string;
-  updatedAt: string;
-}
+import { useGetIntakeForms, useDeleteIntakeForm } from '@/lib/hooks/use-api';
+
 interface Props {
   onNext: (formId: string | 'create-new') => void;
 }
+
 export function IntakeFormSelector({ onNext }: Props) {
-  const queryClient = useQueryClient();
-  const {
-    data: forms,
-    isLoading: formsLoading,
-    error: formsError,
-  } = useQuery<IntakeForm[]>({
-    queryKey: ['intake-forms'],
-    queryFn: async () => ApiClient.get('/api/intake-forms'),
-  });
-  const deleteMutation = useMutation({
-    mutationFn: (formId: string) => ApiClient.delete(`/api/intake-forms/${formId}`),
-    onSuccess: () => {
-      toast.success('Form deleted successfully.');
-      queryClient.invalidateQueries({ queryKey: ['intake-forms'] });
-    },
-    onError: () => {
-      toast.error('Failed to delete form.');
-    },
-  });
+  const { data: forms, isLoading: formsLoading, error: formsError } = useGetIntakeForms();
+
+  const { mutate: deleteForm, isPending: isDeleting } = useDeleteIntakeForm();
+
   return (
     <div className='space-y-6'>
       <Card className='rounded-xl'>
@@ -79,9 +60,17 @@ export function IntakeFormSelector({ onNext }: Props) {
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteMutation.mutate(form.id);
+                            deleteForm(form.id, {
+                              onSuccess: () => {
+                                toast.success('Form deleted successfully.');
+                              },
+                              onError: () => {
+                                toast.error('Failed to delete form.');
+                              },
+                            });
                           }}
                           className='text-destructive'
+                          disabled={isDeleting}
                         >
                           <Trash2 className='mr-2 h-4 w-4' />
                           Delete

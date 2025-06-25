@@ -20,34 +20,26 @@ const ClientPage = () => {
       return;
     }
 
-    if (session?.error) {
+    if (!session?.user) {
       router.push('/client/auth');
       return;
     }
 
-    if (status === 'authenticated' && session?.user?.role !== 'CLIENT') {
-      if (session?.user?.role === 'PRACTITIONER') {
-        router.push('/practitioner');
-      } else {
-        router.push('/client/auth');
-      }
+    if (session.user.role !== 'CLIENT') {
+      router.push('/practitioner');
       return;
     }
 
-    if (status === 'authenticated' && session?.user?.role === 'CLIENT') {
-      const hasBasicProfile = session.user.firstName && session.user.lastName;
-      if (!hasBasicProfile) {
-        router.push('/client/profile-setup');
-        return;
-      }
-
-      // Check if client needs to complete intake form
-      if (session.user.clientStatus === 'NEEDS_INTAKE') {
-        router.push('/client/intake');
-        return;
-      }
+    if (!session.user.firstName || !session.user.lastName) {
+      router.push('/client/profile-setup');
+      return;
     }
-  }, [session, status, router]);
+
+    if (session.user.clientStatus === 'NEEDS_INTAKE') {
+      router.push('/client/intake');
+      return;
+    }
+  }, [status, session, router]);
 
   // Show loading only while session is being determined
   if (status === 'loading') {

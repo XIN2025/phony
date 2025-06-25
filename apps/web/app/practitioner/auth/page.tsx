@@ -13,16 +13,16 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { emailSchema, otpSchema } from '@repo/shared-types/schemas';
-import { AuthService } from '@/services';
-import { useMutation } from '@tanstack/react-query';
+import { useSendOtp } from '@/lib/hooks/use-api';
 import Link from 'next/link';
-import { Logo } from '@repo/ui/components/logo';
+
 export default function PractitionerAuthPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [showOTP, setShowOTP] = React.useState(false);
   const [resendTimer, setResendTimer] = React.useState(0);
   const router = useRouter();
   const { data: session, status } = useSession();
+
   // If already authenticated, redirect to appropriate dashboard
   React.useEffect(() => {
     if (status === 'authenticated' && session) {
@@ -30,19 +30,9 @@ export default function PractitionerAuthPage() {
       router.replace(targetDashboard);
     }
   }, [session, status, router]);
-  const { mutate: handleSendOTP, isPending: isSendingOTP } = useMutation({
-    mutationFn: async (email: string) => {
-      return await AuthService.sendOtp({ email });
-    },
-    onSuccess: () => {
-      toast.success('OTP sent successfully');
-      startResendTimer();
-      setShowOTP(true);
-    },
-    onError: (error) => {
-      toast.error(error.message ?? 'Failed to send OTP');
-    },
-  });
+
+  const { mutate: handleSendOTP, isPending: isSendingOTP } = useSendOtp();
+
   const form = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(showOTP ? otpSchema : emailSchema),
     defaultValues: {
@@ -50,6 +40,7 @@ export default function PractitionerAuthPage() {
       otp: '',
     },
   });
+
   const startResendTimer = () => {
     setResendTimer(60);
     const interval = setInterval(() => {
@@ -62,11 +53,31 @@ export default function PractitionerAuthPage() {
       });
     }, 1000);
   };
+
   async function onSubmit(values: z.infer<typeof emailSchema>) {
     if (!showOTP) {
-      handleSendOTP(values.email);
+      handleSendOTP(
+        { email: values.email },
+        {
+          onSuccess: () => {
+            toast.success('OTP sent successfully');
+            startResendTimer();
+            setShowOTP(true);
+          },
+          onError: (error: Error) => {
+            if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
+              toast.error('Request timed out. The OTP may have been sent. Please check your email and try again.');
+            } else if (error.message?.includes('network') || error.message?.includes('connection')) {
+              toast.error('Network error. Please check your connection and try again.');
+            } else {
+              toast.error(error.message ?? 'Failed to send OTP. Please try again.');
+            }
+          },
+        },
+      );
       return;
     }
+
     setIsLoading(true);
     try {
       const res = await signIn('credentials', {
@@ -81,12 +92,13 @@ export default function PractitionerAuthPage() {
         toast.success('Logged in successfully');
         // Let the useEffect handle the redirect
       }
-    } catch (error) {
+    } catch (_error: unknown) {
       toast.error('An error occurred during sign in');
     } finally {
       setIsLoading(false);
     }
   }
+
   const renderContent = () => {
     if (showOTP) {
       return (
@@ -120,7 +132,28 @@ export default function PractitionerAuthPage() {
                 type='button'
                 variant='link'
                 className='p-0'
-                onClick={() => handleSendOTP(form.getValues('email'))}
+                onClick={() =>
+                  handleSendOTP(
+                    { email: form.getValues('email') },
+                    {
+                      onSuccess: () => {
+                        toast.success('OTP resent successfully');
+                        startResendTimer();
+                      },
+                      onError: (error: Error) => {
+                        if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
+                          toast.error(
+                            'Request timed out. The OTP may have been sent. Please check your email and try again.',
+                          );
+                        } else if (error.message?.includes('network') || error.message?.includes('connection')) {
+                          toast.error('Network error. Please check your connection and try again.');
+                        } else {
+                          toast.error(error.message ?? 'Failed to resend OTP');
+                        }
+                      },
+                    },
+                  )
+                }
                 disabled={isSendingOTP}
               >
                 Resend code
@@ -156,23 +189,22 @@ export default function PractitionerAuthPage() {
       </motion.div>
     );
   };
+
   if (status === 'loading') {
     return (
-      <div className='flex flex-col items-center justify-center p-4'>
-        <Logo className='h-8 w-8 sm:h-10 sm:w-10 animate-pulse' />
-        <p className='text-sm text-muted-foreground mt-4'>Loading...</p>
+      <div className='flex items-center justify-center'>
+        <Loader2 className='h-8 w-8 animate-spin' />
       </div>
     );
   }
+
   if (session) {
     return null;
   }
+
   return (
     <>
-      <div className='mb-8 text-center'>
-        <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10' />
-      </div>
-      <div className='flex flex-col space-y-2 text-left mb-8'>
+      <div className='flex flex-col space-y-2 text-center'>
         <h1 className='text-2xl font-bold tracking-tight'>{showOTP ? 'Check your email' : 'Practitioner Login'}</h1>
         <p className='text-muted-foreground'>
           {showOTP
@@ -185,7 +217,7 @@ export default function PractitionerAuthPage() {
           <AnimatePresence mode='wait'>{renderContent()}</AnimatePresence>
         </form>
       </Form>
-      <div className='mt-6 text-center text-sm'>
+      <div className='text-center text-sm'>
         Don't have an account?{' '}
         <Link href='/practitioner/auth/signup' className='font-medium text-primary hover:underline'>
           Sign up

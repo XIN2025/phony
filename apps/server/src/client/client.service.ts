@@ -75,21 +75,23 @@ export class ClientService {
   }
 
   async submitIntakeForm(clientId: string, formId: string, answers: Record<string, unknown>) {
-    return await this.prismaService.$transaction(async (tx) => {
-      const client = await tx.user.findUnique({ where: { id: clientId } });
+    try {
+      const client = await this.prismaService.user.findUnique({ where: { id: clientId } });
+
       if (!client || client.role !== UserRole.CLIENT) {
         throwAuthError('Client not found', 'notFound');
       }
 
-      const form = await tx.intakeForm.findFirst({
+      const form = await this.prismaService.intakeForm.findFirst({
         where: { id: formId, practitionerId: client.practitionerId || undefined },
         include: { questions: true },
       });
+
       if (!form) {
         throwAuthError('Intake form not found', 'notFound');
       }
 
-      const existingSubmission = await tx.intakeFormSubmission.findFirst({
+      const existingSubmission = await this.prismaService.intakeFormSubmission.findFirst({
         where: { clientId: clientId, formId: formId },
       });
 
@@ -97,14 +99,14 @@ export class ClientService {
         throwAuthError('You have already submitted this intake form', 'badRequest');
       }
 
-      const submission = await tx.intakeFormSubmission.create({
+      const submission = await this.prismaService.intakeFormSubmission.create({
         data: { clientId: clientId, formId: formId },
       });
 
       const answerData = form.questions
         .map((question) => {
           const answer = answers[question.id];
-          if (answer !== undefined) {
+          if (answer !== undefined && answer !== null && answer !== '') {
             return {
               submissionId: submission.id,
               questionId: question.id,
@@ -116,21 +118,33 @@ export class ClientService {
         .filter((item): item is NonNullable<typeof item> => item !== null);
 
       if (answerData.length > 0) {
-        await tx.answer.createMany({ data: answerData });
+        await this.prismaService.answer.createMany({ data: answerData });
       }
 
       const newStatus = updateClientStatus(client.clientStatus ?? 'ACTIVE', true);
-      await tx.user.update({
+      await this.prismaService.user.update({
         where: { id: clientId },
         data: { clientStatus: newStatus },
       });
 
-      return {
+      const result = {
         message: 'Intake form submitted successfully',
         clientStatus: newStatus,
         submissionId: submission.id,
       };
-    });
+
+      return result;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Connection')) {
+        throwAuthError('Database connection error. Please try again.', 'badRequest');
+      }
+
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throwAuthError('Failed to submit intake form', 'badRequest');
+      }
+    }
   }
 
   async fixClientStatuses() {

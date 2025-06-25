@@ -279,15 +279,15 @@ describe('MailService', () => {
     };
 
     it('should successfully send client invitation email', async () => {
-      mockMailerService.sendMail.mockResolvedValue(undefined);
+      mockMailerService.sendMail.mockResolvedValue({ messageId: 'test-message-id' });
 
       const result = await service.sendClientInvitation(invitationOptions);
 
       expect(result).toBe(true);
       expect(mockMailerService.sendMail).toHaveBeenCalledWith({
-        from: `"${config.mail.defaults.fromName}" <${config.mail.defaults.from}>`,
+        from: config.mail.defaults.from,
         to: 'client@example.com',
-        subject: 'Invitation from Dr. Smith - Join Continuum',
+        subject: "You're invited to join Dr. Smith's practice",
         html: expect.stringContaining('John Doe'),
       });
     });
@@ -298,15 +298,15 @@ describe('MailService', () => {
         intakeFormTitle: undefined,
       };
 
-      mockMailerService.sendMail.mockResolvedValue(undefined);
+      mockMailerService.sendMail.mockResolvedValue({ messageId: 'test-message-id' });
 
       const result = await service.sendClientInvitation(invitationWithoutForm);
 
       expect(result).toBe(true);
       expect(mockMailerService.sendMail).toHaveBeenCalledWith({
-        from: `"${config.mail.defaults.fromName}" <${config.mail.defaults.from}>`,
+        from: config.mail.defaults.from,
         to: 'client@example.com',
-        subject: 'Invitation from Dr. Smith - Join Continuum',
+        subject: "You're invited to join Dr. Smith's practice",
         html: expect.stringContaining('John Doe'),
       });
     });
@@ -317,15 +317,15 @@ describe('MailService', () => {
         intakeFormTitle: '',
       };
 
-      mockMailerService.sendMail.mockResolvedValue(undefined);
+      mockMailerService.sendMail.mockResolvedValue({ messageId: 'test-message-id' });
 
       const result = await service.sendClientInvitation(invitationWithEmptyForm);
 
       expect(result).toBe(true);
       expect(mockMailerService.sendMail).toHaveBeenCalledWith({
-        from: `"${config.mail.defaults.fromName}" <${config.mail.defaults.from}>`,
+        from: config.mail.defaults.from,
         to: 'client@example.com',
-        subject: 'Invitation from Dr. Smith - Join Continuum',
+        subject: "You're invited to join Dr. Smith's practice",
         html: expect.stringContaining('John Doe'),
       });
     });
@@ -344,15 +344,15 @@ describe('MailService', () => {
         practitionerName: '',
       };
 
-      mockMailerService.sendMail.mockResolvedValue(undefined);
+      mockMailerService.sendMail.mockResolvedValue({ messageId: 'test-message-id' });
 
       const result = await service.sendClientInvitation(invitationWithFallback);
 
       expect(result).toBe(true);
       expect(mockMailerService.sendMail).toHaveBeenCalledWith({
-        from: `"${config.mail.defaults.fromName}" <${config.mail.defaults.from}>`,
+        from: config.mail.defaults.from,
         to: 'client@example.com',
-        subject: 'Invitation from  - Join Continuum',
+        subject: "You're invited to join 's practice",
         html: expect.stringContaining('John Doe'),
       });
     });

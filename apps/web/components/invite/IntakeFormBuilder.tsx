@@ -12,8 +12,15 @@ import { useInviteContext } from '@/context/InviteContext';
 import { useEffect, useState } from 'react';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { Textarea } from '@repo/ui/components/textarea';
+import { Control, UseFormRegister } from 'react-hook-form';
 
-function QuestionOptions({ questionIndex, control, register }: any) {
+interface QuestionOptionsProps {
+  questionIndex: number;
+  control: Control<CreateIntakeFormDto>;
+  register: UseFormRegister<CreateIntakeFormDto>;
+}
+
+function QuestionOptions({ questionIndex, control, register }: QuestionOptionsProps) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: `questions.${questionIndex}.options`,

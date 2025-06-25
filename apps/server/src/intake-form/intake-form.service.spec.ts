@@ -174,11 +174,8 @@ describe('IntakeFormService', () => {
           },
         ],
       };
-
       mockPrismaService.intakeForm.create.mockResolvedValue(mockCreatedForm as never);
-
       await service.create(practitionerId, createDataWithOptions);
-
       expect(mockPrismaService.intakeForm.create).toHaveBeenCalledWith({
         data: {
           title: 'Health Assessment',
@@ -189,7 +186,7 @@ describe('IntakeFormService', () => {
               {
                 text: 'What is your gender?',
                 type: 'MULTIPLE_CHOICE',
-                options: [{ text: 'Male' }, { text: 'Female' }, { text: 'Other' }],
+                options: ['Male', 'Female', 'Other'],
                 isRequired: true,
                 order: 1,
               },
@@ -268,22 +265,16 @@ describe('IntakeFormService', () => {
 
     it('should throw NotFoundException when form not found', async () => {
       mockPrismaService.intakeForm.findUnique.mockResolvedValue(null);
-
       await expect(service.update(formId, practitionerId, updateData)).rejects.toThrow(
-        new NotFoundException('Intake form not found.')
+        'Not Found: Intake form not found.'
       );
     });
 
     it('should throw ForbiddenException when form does not belong to practitioner', async () => {
-      const wrongForm = {
-        ...mockExistingForm,
-        practitionerId: 'different-practitioner-id',
-      };
-
+      const wrongForm = { ...mockExistingForm, practitionerId: 'other-id' };
       mockPrismaService.intakeForm.findUnique.mockResolvedValue(wrongForm as never);
-
       await expect(service.update(formId, practitionerId, updateData)).rejects.toThrow(
-        new ForbiddenException('You do not have permission to update this form.')
+        'Unauthorized: You do not have permission to update this form.'
       );
     });
 
@@ -334,22 +325,14 @@ describe('IntakeFormService', () => {
 
     it('should throw NotFoundException when form not found', async () => {
       mockPrismaService.intakeForm.findUnique.mockResolvedValue(null);
-
-      await expect(service.delete(formId, practitionerId)).rejects.toThrow(
-        new NotFoundException('Intake form not found.')
-      );
+      await expect(service.delete(formId, practitionerId)).rejects.toThrow('Not Found: Intake form not found.');
     });
 
     it('should throw ForbiddenException when form does not belong to practitioner', async () => {
-      const wrongForm = {
-        ...mockForm,
-        practitionerId: 'different-practitioner-id',
-      };
-
+      const wrongForm = { ...mockForm, practitionerId: 'other-id' };
       mockPrismaService.intakeForm.findUnique.mockResolvedValue(wrongForm as never);
-
       await expect(service.delete(formId, practitionerId)).rejects.toThrow(
-        new ForbiddenException('You do not have permission to delete this form.')
+        'Unauthorized: You do not have permission to delete this form.'
       );
     });
   });
@@ -365,6 +348,16 @@ describe('IntakeFormService', () => {
         practitionerId,
         updatedAt: new Date('2024-01-02'),
         _count: { questions: 5 },
+        questions: [
+          {
+            id: 'question-1',
+            text: 'What is your age?',
+            type: 'SHORT_ANSWER',
+            isRequired: true,
+            order: 1,
+            options: ['18-25', '26-35', '36-45', '46+'],
+          },
+        ],
       },
       {
         id: 'form-2',
@@ -373,6 +366,16 @@ describe('IntakeFormService', () => {
         practitionerId,
         updatedAt: new Date('2024-01-01'),
         _count: { questions: 3 },
+        questions: [
+          {
+            id: 'question-2',
+            text: 'How are you feeling today?',
+            type: 'LONG_ANSWER',
+            isRequired: false,
+            order: 1,
+            options: [],
+          },
+        ],
       },
     ];
 
@@ -381,13 +384,53 @@ describe('IntakeFormService', () => {
 
       const result = await service.findAllForPractitioner(practitionerId);
 
-      expect(result).toEqual(mockForms);
+      expect(result).toEqual([
+        {
+          id: 'form-1',
+          title: 'Health Assessment',
+          description: 'Comprehensive health assessment form',
+          practitionerId,
+          updatedAt: new Date('2024-01-02'),
+          _count: { questions: 5 },
+          questions: [
+            {
+              id: 'question-1',
+              text: 'What is your age?',
+              type: 'SHORT_ANSWER',
+              isRequired: true,
+              order: 1,
+              options: [{ text: '18-25' }, { text: '26-35' }, { text: '36-45' }, { text: '46+' }],
+            },
+          ],
+        },
+        {
+          id: 'form-2',
+          title: 'Mental Health Assessment',
+          description: 'Mental health evaluation form',
+          practitionerId,
+          updatedAt: new Date('2024-01-01'),
+          _count: { questions: 3 },
+          questions: [
+            {
+              id: 'question-2',
+              text: 'How are you feeling today?',
+              type: 'LONG_ANSWER',
+              isRequired: false,
+              order: 1,
+              options: [],
+            },
+          ],
+        },
+      ]);
       expect(mockPrismaService.intakeForm.findMany).toHaveBeenCalledWith({
         where: { practitionerId },
         orderBy: { updatedAt: 'desc' },
         include: {
           _count: {
             select: { questions: true },
+          },
+          questions: {
+            orderBy: { order: 'asc' },
           },
         },
       });
@@ -410,6 +453,7 @@ describe('IntakeFormService', () => {
           type: 'SHORT_ANSWER',
           isRequired: true,
           order: 1,
+          options: ['18-25', '26-35', '36-45', '46+'],
         },
         {
           id: 'question-2',
@@ -417,6 +461,7 @@ describe('IntakeFormService', () => {
           type: 'LONG_ANSWER',
           isRequired: false,
           order: 2,
+          options: [],
         },
       ],
     };
@@ -426,7 +471,30 @@ describe('IntakeFormService', () => {
 
       const result = await service.findOne(formId, practitionerId);
 
-      expect(result).toEqual(mockForm);
+      expect(result).toEqual({
+        id: formId,
+        title: 'Health Assessment',
+        description: 'Comprehensive health assessment form',
+        practitionerId,
+        questions: [
+          {
+            id: 'question-1',
+            text: 'What is your age?',
+            type: 'SHORT_ANSWER',
+            isRequired: true,
+            order: 1,
+            options: [{ text: '18-25' }, { text: '26-35' }, { text: '36-45' }, { text: '46+' }],
+          },
+          {
+            id: 'question-2',
+            text: 'Do you have any allergies?',
+            type: 'LONG_ANSWER',
+            isRequired: false,
+            order: 2,
+            options: [],
+          },
+        ],
+      });
       expect(mockPrismaService.intakeForm.findUnique).toHaveBeenCalledWith({
         where: { id: formId },
         include: {
@@ -439,22 +507,14 @@ describe('IntakeFormService', () => {
 
     it('should throw NotFoundException when form not found', async () => {
       mockPrismaService.intakeForm.findUnique.mockResolvedValue(null);
-
-      await expect(service.findOne(formId, practitionerId)).rejects.toThrow(
-        new NotFoundException('Intake form not found.')
-      );
+      await expect(service.findOne(formId, practitionerId)).rejects.toThrow('Not Found: Intake form not found.');
     });
 
     it('should throw ForbiddenException when form does not belong to practitioner', async () => {
-      const wrongForm = {
-        ...mockForm,
-        practitionerId: 'different-practitioner-id',
-      };
-
+      const wrongForm = { ...mockForm, practitionerId: 'other-id' };
       mockPrismaService.intakeForm.findUnique.mockResolvedValue(wrongForm as never);
-
       await expect(service.findOne(formId, practitionerId)).rejects.toThrow(
-        new ForbiddenException('You do not have permission to view this form.')
+        'Unauthorized: You do not have permission to view this form.'
       );
     });
   });

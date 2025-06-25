@@ -6,31 +6,21 @@ import { Card, CardContent } from '@repo/ui/components/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
 import { Input } from '@repo/ui/components/input';
 import { MessageCircle, Eye, Search, Plus } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { ApiClient } from '@/lib/api-client';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { useSession } from 'next-auth/react';
 import { getInitials } from '@/lib/utils';
 import { useState } from 'react';
 import Link from 'next/link';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
-interface Client {
-  id: string;
-  clientFirstName: string;
-  clientLastName: string;
-  clientEmail: string;
-  avatar?: string;
-  status: 'PENDING' | 'JOINED';
-  lastSession?: string;
-  engagement?: 'High' | 'Medium' | 'Low';
-  phone?: string;
-}
+import { useGetClients, Client } from '@/lib/hooks/use-api';
+
 const getClientDisplayName = (client: Client): string => {
-  if (client.clientFirstName && client.clientLastName) {
-    return `${client.clientFirstName} ${client.clientLastName}`;
+  if (client.firstName && client.lastName) {
+    return `${client.firstName} ${client.lastName}`;
   }
-  return client.clientFirstName || client.clientLastName || client.clientEmail?.split('@')[0] || 'Client';
+  return client.firstName || client.lastName || client.email?.split('@')[0] || 'Client';
 };
+
 const engagementBadgeVariant = (engagement?: string) => {
   switch (engagement?.toLowerCase()) {
     case 'high':
@@ -43,6 +33,7 @@ const engagementBadgeVariant = (engagement?: string) => {
       return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
   }
 };
+
 const renderSkeleton = () => (
   <>
     {Array.from({ length: 8 }).map((_, i) => (
@@ -75,30 +66,19 @@ const renderSkeleton = () => (
     ))}
   </>
 );
+
 export default function ClientsPage() {
   const { data: session } = useSession();
   const [searchTerm, setSearchTerm] = useState('');
-  const {
-    data: clients = [],
-    isLoading,
-    isError,
-  } = useQuery<Client[]>({
-    queryKey: ['clients'],
-    queryFn: async () => {
-      const invitations = await ApiClient.get('/api/practitioner/invitations?showAll=true');
-      return (invitations as any[]).map((inv) => ({
-        ...inv,
-        engagement: ['High', 'Medium', 'Low'][Math.floor(Math.random() * 3)] as 'High' | 'Medium' | 'Low',
-        lastSession: 'May 12, 2025',
-      }));
-    },
-    enabled: !!session,
-  });
+
+  const { data: clients = [], isLoading, isError } = useGetClients();
+
   const filteredClients = clients.filter(
     (client) =>
       getClientDisplayName(client).toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.clientEmail.toLowerCase().includes(searchTerm.toLowerCase()),
+      client.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
   return (
     <>
       <header className='flex flex-col gap-4 border-b bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6'>
@@ -135,9 +115,9 @@ export default function ClientsPage() {
                   <TableRow>
                     <TableHead>Member</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Activity</TableHead>
-                    <TableHead>Last Session</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Intake Status</TableHead>
+                    <TableHead>Joined</TableHead>
                     <TableHead className='text-right'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -162,26 +142,28 @@ export default function ClientsPage() {
                         <TableCell>
                           <div className='flex items-center gap-3'>
                             <Avatar className='h-10 w-10'>
-                              <AvatarImage src={client.avatar} />
+                              <AvatarImage src={client.avatarUrl} />
                               <AvatarFallback>{getInitials(getClientDisplayName(client))}</AvatarFallback>
                             </Avatar>
                             <span className='font-medium'>{getClientDisplayName(client)}</span>
                           </div>
                         </TableCell>
-                        <TableCell>{client.clientEmail}</TableCell>
-                        <TableCell>{client.phone || '-'}</TableCell>
+                        <TableCell>{client.email}</TableCell>
                         <TableCell>
-                          {client.status === 'PENDING' ? (
-                            <Badge variant='outline' className='border-blue-200 bg-blue-50 text-blue-700'>
-                              Invitation Pending
-                            </Badge>
+                          <Badge variant='outline' className='border-green-200 bg-green-50 text-green-700'>
+                            Active
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {client.hasCompletedIntake ? (
+                            <Badge className='bg-green-100 text-green-800 hover:bg-green-200'>Completed</Badge>
                           ) : (
-                            <Badge className={engagementBadgeVariant(client.engagement)}>
-                              {client.engagement || 'N/A'}
+                            <Badge variant='outline' className='border-yellow-200 bg-yellow-50 text-yellow-700'>
+                              Pending
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell>{client.lastSession || '-'}</TableCell>
+                        <TableCell>{new Date(client.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className='text-right'>
                           <div className='flex justify-end gap-2'>
                             <Button variant='ghost' size='icon'>
