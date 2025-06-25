@@ -10,11 +10,35 @@ const credentialsAuthProvider = CredentialsProvider({
     email: { label: 'Email', type: 'email' },
     otp: { label: 'OTP', type: 'text' },
     role: { label: 'Role', type: 'text' },
+    token: { label: 'Token', type: 'text' },
   },
   async authorize(credentials) {
     try {
       if (!credentials?.email) {
         throw new Error('Email required');
+      }
+
+      // Handle direct token-based authentication (for post-signup)
+      if (credentials?.token) {
+        // Verify the token and get user info
+        const res = await ApiClient.get<LoginResponse['user']>('/api/auth/me', {
+          headers: {
+            Authorization: `Bearer ${credentials.token}`,
+          },
+        });
+
+        const user: User = {
+          id: res.id,
+          email: res.email,
+          token: credentials.token,
+          role: res.role,
+          firstName: res.firstName ?? '',
+          lastName: res.lastName ?? '',
+          avatarUrl: res.avatarUrl ?? '',
+          profession: res.profession ?? null,
+          clientStatus: res.clientStatus,
+        };
+        return user;
       }
 
       // Handle regular OTP verification
@@ -60,7 +84,6 @@ const credentialsAuthProvider = CredentialsProvider({
 export const authOptions: AuthOptions = {
   providers: [credentialsAuthProvider],
   secret: envConfig.nextAuthSecret,
-  debug: process.env.NODE_ENV === 'development',
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (trigger === 'update' && session?.user) {

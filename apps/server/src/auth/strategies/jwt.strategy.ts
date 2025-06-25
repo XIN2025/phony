@@ -10,7 +10,7 @@ interface JwtPayload {
   role: string;
   firstName: string;
   lastName: string;
-  avatarUrl?: string;
+  avatarUrl: string;
   clientStatus?: string;
 }
 

@@ -98,16 +98,16 @@ describe('ApiClient', () => {
         request: mockRequest,
       } as any);
 
-      // Mock session with token
+    
       mockGetSession.mockResolvedValue({
         user: { token: 'test-token' },
       } as any);
 
-      await ApiClient.get('/api/auth/login');
+      await ApiClient.get('/api/auth/otp/send');
 
       expect(mockAxios.create).toHaveBeenCalledWith({
         baseURL: expect.any(String),
-        timeout: 10000,
+        timeout: 30000,
         headers: {},
       });
     });

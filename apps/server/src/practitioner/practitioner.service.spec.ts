@@ -103,6 +103,7 @@ describe('PractitionerService', () => {
         status: 'PENDING',
         invited: expect.any(String),
         createdAt: mockInvitation.createdAt,
+        avatar: expect.any(String),
       });
       expect(mockPrismaService.invitation.create).toHaveBeenCalled();
       expect(mockMailService.sendClientInvitation).toHaveBeenCalled();
@@ -177,6 +178,7 @@ describe('PractitionerService', () => {
         status: 'PENDING',
         invited: expect.any(String),
         createdAt: existingInvitation.createdAt,
+        avatar: expect.any(String),
       });
     });
 
@@ -241,6 +243,7 @@ describe('PractitionerService', () => {
         status: 'PENDING',
         invited: expect.any(String),
         createdAt: mockInvitation.createdAt,
+        avatar: expect.any(String),
       });
     });
 
@@ -354,6 +357,7 @@ describe('PractitionerService', () => {
           invited: 'January 1, 2024',
           expiresAt: 'January 8, 2024',
           intakeFormTitle: undefined,
+          avatar: expect.any(String),
         },
         {
           id: 'invitation-2',
@@ -364,6 +368,7 @@ describe('PractitionerService', () => {
           invited: 'January 2, 2024',
           expiresAt: 'January 8, 2024',
           intakeFormTitle: undefined,
+          avatar: expect.any(String),
         },
       ]);
 

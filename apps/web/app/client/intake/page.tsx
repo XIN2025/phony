@@ -1,22 +1,20 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import { Button } from '@repo/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';
+import { Textarea } from '@repo/ui/components/textarea';
 import { RadioGroup, RadioGroupItem } from '@repo/ui/components/radio-group';
 import { Checkbox } from '@repo/ui/components/checkbox';
-import { Textarea } from '@repo/ui/components/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
 import { Slider } from '@repo/ui/components/slider';
 import { Progress } from '@repo/ui/components/progress';
-import { Loader2, Upload, Star } from 'lucide-react';
+import { Loader2, Star, Upload } from 'lucide-react';
 import { Logo } from '@repo/ui/components/logo';
+import { toast } from 'sonner';
 import { useGetClientIntakeForm, useSubmitIntakeForm } from '@/lib/hooks/use-api';
-import React from 'react';
 
 interface Question {
   id: string;
@@ -27,19 +25,11 @@ interface Question {
   order: number;
 }
 
-interface IntakeForm {
-  id: string;
-  title: string;
-  description?: string;
-  questions: Question[];
-}
-
-export default function ClientIntakePage() {
-  const { data: session, status, update } = useSession();
+export default function IntakePage() {
   const router = useRouter();
+  const { status, data: session, update } = useSession();
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const isSubmittingRef = React.useRef(false);
 
   const { data: form, isLoading, error } = useGetClientIntakeForm();
   const { mutate: submitForm, isPending: isSubmitting } = useSubmitIntakeForm();
@@ -104,10 +94,10 @@ export default function ClientIntakePage() {
         const answer = answers[question.id];
 
         switch (question.type) {
-          case 'SHORT_ANSWER':
-          case 'LONG_ANSWER':
-          case 'MULTIPLE_CHOICE':
-          case 'DROPDOWN':
+          case 'TEXT':
+          case 'TEXTAREA':
+          case 'RADIO':
+          case 'CHECKBOX':
             if (!answer || (typeof answer === 'string' && answer.trim() === '')) {
               return false;
             }
@@ -152,7 +142,7 @@ export default function ClientIntakePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (hasSubmitted || isSubmitting || isSubmittingRef.current) {
+    if (hasSubmitted || isSubmitting) {
       return;
     }
 
@@ -163,7 +153,6 @@ export default function ClientIntakePage() {
       return;
     }
 
-    isSubmittingRef.current = true;
     setHasSubmitted(true);
 
     submitForm(
@@ -192,7 +181,6 @@ export default function ClientIntakePage() {
         },
         onError: async (error: Error) => {
           setHasSubmitted(false);
-          isSubmittingRef.current = false;
           toast.error(error.message || 'Failed to submit form. Please try again.');
         },
       },
@@ -203,7 +191,7 @@ export default function ClientIntakePage() {
     const currentAnswer = answers[question.id];
 
     switch (question.type) {
-      case 'SHORT_ANSWER':
+      case 'TEXT':
         return (
           <Input
             value={currentAnswer || ''}
@@ -213,7 +201,7 @@ export default function ClientIntakePage() {
           />
         );
 
-      case 'LONG_ANSWER':
+      case 'TEXTAREA':
         return (
           <Textarea
             value={currentAnswer || ''}
@@ -224,62 +212,48 @@ export default function ClientIntakePage() {
           />
         );
 
-      case 'MULTIPLE_CHOICE':
+      case 'RADIO':
         return (
           <RadioGroup
             value={currentAnswer || ''}
             onValueChange={(value) => handleAnswerChange(question.id, value)}
             className='mt-2'
           >
-            {question.options.map((option, index) => (
-              <div key={index} className='flex items-center space-x-2'>
-                <RadioGroupItem value={option} id={`${question.id}-${index}`} />
-                <Label htmlFor={`${question.id}-${index}`}>{option}</Label>
-              </div>
-            ))}
+            {Array.isArray(question.options) &&
+              question.options.map((option, index) => (
+                <div key={index} className='flex items-center space-x-2'>
+                  <RadioGroupItem value={option} id={`${question.id}-${index}`} />
+                  <Label htmlFor={`${question.id}-${index}`}>{option}</Label>
+                </div>
+              ))}
           </RadioGroup>
         );
 
-      case 'CHECKBOXES':
+      case 'CHECKBOX':
         return (
           <div className='mt-2 space-y-2'>
-            {question.options.map((option, index) => (
-              <div key={index} className='flex items-center space-x-2'>
-                <Checkbox
-                  id={`${question.id}-${index}`}
-                  checked={Array.isArray(currentAnswer) && currentAnswer.includes(option)}
-                  onCheckedChange={(checked) => {
-                    const currentArray = Array.isArray(currentAnswer) ? currentAnswer : [];
-                    if (checked) {
-                      handleAnswerChange(question.id, [...currentArray, option]);
-                    } else {
-                      handleAnswerChange(
-                        question.id,
-                        currentArray.filter((item) => item !== option),
-                      );
-                    }
-                  }}
-                />
-                <Label htmlFor={`${question.id}-${index}`}>{option}</Label>
-              </div>
-            ))}
+            {Array.isArray(question.options) &&
+              question.options.map((option, index) => (
+                <div key={index} className='flex items-center space-x-2'>
+                  <Checkbox
+                    id={`${question.id}-${index}`}
+                    checked={Array.isArray(currentAnswer) && currentAnswer.includes(option)}
+                    onCheckedChange={(checked) => {
+                      const currentArray = Array.isArray(currentAnswer) ? currentAnswer : [];
+                      if (checked) {
+                        handleAnswerChange(question.id, [...currentArray, option]);
+                      } else {
+                        handleAnswerChange(
+                          question.id,
+                          currentArray.filter((item) => item !== option),
+                        );
+                      }
+                    }}
+                  />
+                  <Label htmlFor={`${question.id}-${index}`}>{option}</Label>
+                </div>
+              ))}
           </div>
-        );
-
-      case 'DROPDOWN':
-        return (
-          <select
-            value={currentAnswer || ''}
-            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            className='mt-2 w-full p-2 border border-gray-300 rounded-md'
-          >
-            <option value=''>Select an option</option>
-            {question.options.map((option, index) => (
-              <option key={index} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
         );
 
       case 'SCALE':
@@ -287,7 +261,7 @@ export default function ClientIntakePage() {
           <div className='mt-2'>
             <Slider
               value={[currentAnswer || 0]}
-              onValueChange={(value) => handleAnswerChange(question.id, value[0])}
+              onValueChange={(value: number[]) => handleAnswerChange(question.id, value[0])}
               max={10}
               min={0}
               step={1}
@@ -377,7 +351,7 @@ export default function ClientIntakePage() {
     );
   }
 
-  if (!form) {
+  if (!form || !form.questions) {
     return (
       <div className='min-h-screen bg-background flex items-center justify-center p-4'>
         <div className='w-full max-w-2xl text-center'>
@@ -396,12 +370,33 @@ export default function ClientIntakePage() {
     );
   }
 
-  const completedQuestions = form.questions.filter((q) => {
-    const answer = answers[q.id];
-    return answer !== undefined && answer !== null && answer !== '';
-  }).length;
+  const completedQuestions =
+    form.questions && Array.isArray(form.questions)
+      ? form.questions.filter((q) => {
+          const answer = answers[q.id];
+          return answer !== undefined && answer !== null && answer !== '';
+        }).length
+      : 0;
 
-  const progress = (completedQuestions / form.questions.length) * 100;
+  const progress = form.questions && form.questions.length > 0 ? (completedQuestions / form.questions.length) * 100 : 0;
+
+  const renderQuestions =
+    form.questions && Array.isArray(form.questions)
+      ? form.questions.map((question, index) => (
+          <Card key={question.id}>
+            <CardHeader>
+              <CardTitle className='flex items-start gap-2'>
+                <span className='text-sm text-muted-foreground min-w-[2rem]'>{index + 1}.</span>
+                <span className='flex-1'>
+                  {question.text}
+                  {question.isRequired && <span className='text-red-500 ml-1'>*</span>}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>{renderQuestion(question)}</CardContent>
+          </Card>
+        ))
+      : null;
 
   return (
     <div className='min-h-screen bg-background p-4'>
@@ -416,27 +411,14 @@ export default function ClientIntakePage() {
           <div className='flex justify-between items-center mb-2'>
             <span className='text-sm font-medium'>Progress</span>
             <span className='text-sm text-muted-foreground'>
-              {completedQuestions} of {form.questions.length} questions completed
+              {completedQuestions} of {form.questions?.length || 0} questions completed
             </span>
           </div>
           <Progress value={progress} className='h-2' />
         </div>
 
         <form key='intake-form' onSubmit={handleSubmit} className='space-y-6'>
-          {form.questions.map((question, index) => (
-            <Card key={question.id}>
-              <CardHeader>
-                <CardTitle className='flex items-start gap-2'>
-                  <span className='text-sm text-muted-foreground min-w-[2rem]'>{index + 1}.</span>
-                  <span className='flex-1'>
-                    {question.text}
-                    {question.isRequired && <span className='text-red-500 ml-1'>*</span>}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>{renderQuestion(question)}</CardContent>
-            </Card>
-          ))}
+          {renderQuestions}
 
           <div className='flex justify-end gap-4 pt-6'>
             <Button

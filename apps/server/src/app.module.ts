@@ -32,7 +32,6 @@ import { ClientModule } from './client/client.module';
           ],
         },
         redact: ['req.headers', 'res.headers'],
-        level: 'debug',
       },
     }),
     ConfigModule.forRoot(),

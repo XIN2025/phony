@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar'
 import { Button } from '@repo/ui/components/button';
 import { LogOut } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
-import { getInitials, getUserDisplayName } from '@/lib/utils';
+import { getInitials, getUserDisplayName, getFullAvatarUrl } from '@/lib/utils';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { useSidebar } from '@/context/SidebarContext';
 const ContinuumIcon = () => (
@@ -41,10 +41,12 @@ export const SidebarContent = ({
     }
     const userName = getUserDisplayName(session);
     const userEmail = session?.user?.email;
+    const avatarUrl = getFullAvatarUrl(session?.user?.avatarUrl);
+
     return (
       <div className='flex items-center gap-3'>
         <Avatar className='h-9 w-9 border'>
-          <AvatarImage src={session?.user?.avatarUrl ?? undefined} />
+          <AvatarImage src={avatarUrl} alt={`${userName}'s avatar`} />
           <AvatarFallback>{getInitials(userName)}</AvatarFallback>
         </Avatar>
         <div className='flex flex-col'>

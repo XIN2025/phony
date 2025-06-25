@@ -6,9 +6,10 @@ export interface AuthUser {
   email: string;
   firstName: string;
   lastName: string;
-  avatarUrl: string;
+  avatarUrl?: string;
   role: string;
   profession: string | null;
+  clientStatus?: string;
   token: string;
 }
 export interface AuthSession {

@@ -1,6 +1,6 @@
 ﻿'use client';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
-import { getInitials } from '@/lib/utils';
+import { getInitials, getFullAvatarUrl } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,19 +13,23 @@ import {
   AlertDialogTrigger,
 } from '@repo/ui/components/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
-import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/tooltip';
-import { Eye, Loader2, MessageCircle, MessageSquare, Plus, RefreshCw, Trash2, Users } from 'lucide-react';
+import { Loader2, MessageSquare, Plus, Trash2, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useGetInvitations, useDeleteInvitation, useResendInvitation, InvitationResponse } from '@/lib/hooks/use-api';
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+
+const LoadingSpinner = () => (
+  <div className='flex h-screen items-center justify-center'>
+    <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+  </div>
+);
 
 const getClientDisplayName = (client: InvitationResponse): string => {
   if (client.clientFirstName && client.clientLastName) {
@@ -37,77 +41,49 @@ const getClientDisplayName = (client: InvitationResponse): string => {
 export default function PractitionerDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const queryClient = useQueryClient();
 
-  const { data: clients = [], isLoading: isClientsLoading, refetch: refetchInvitations } = useGetInvitations();
+  const { data: invitations = [], isLoading: isInvitationsLoading } = useGetInvitations();
   const { mutate: deleteInvitation, isPending: isDeleting } = useDeleteInvitation();
   const { mutate: resendInvitation, isPending: isResending } = useResendInvitation();
 
+  // Handle navigation for unauthenticated users
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        refetchInvitations();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [refetchInvitations]);
-
-  const handleRefresh = () => {
-    refetchInvitations();
-    toast.success('Invitations refreshed');
-  };
-
-  if (status === 'loading') {
-    return (
-      <div className='flex h-screen items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
-      </div>
-    );
-  }
-
-  if (status === 'unauthenticated') {
-    router.push('/practitioner/auth');
-    return (
-      <div className='flex h-screen items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
-      </div>
-    );
-  }
-
-  if (session?.error) {
-    router.push('/practitioner/auth');
-    return (
-      <div className='flex h-screen items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
-      </div>
-    );
-  }
-
-  if (status === 'authenticated' && session?.user?.role !== 'PRACTITIONER') {
-    if (session?.user?.role === 'CLIENT') {
-      router.push('/client');
-    } else {
+    if (status === 'unauthenticated') {
       router.push('/practitioner/auth');
     }
-    return (
-      <div className='flex h-screen items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
-      </div>
-    );
+  }, [status, router]);
+
+  // Handle navigation for users with errors
+  useEffect(() => {
+    if (session?.error) {
+      router.push('/practitioner/auth');
+    }
+  }, [session?.error, router]);
+
+  // Handle navigation for wrong role users
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.role !== 'PRACTITIONER') {
+      if (session?.user?.role === 'CLIENT') {
+        router.push('/client');
+      } else {
+        router.push('/practitioner/auth');
+      }
+    }
+  }, [status, session?.user?.role, router]);
+
+  if (
+    status === 'loading' ||
+    status === 'unauthenticated' ||
+    session?.error ||
+    (status === 'authenticated' && session?.user?.role !== 'PRACTITIONER') ||
+    isInvitationsLoading
+  ) {
+    return <LoadingSpinner />;
   }
 
-  if (isClientsLoading) {
-    return (
-      <div className='flex h-screen items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
-      </div>
-    );
-  }
-
-  const joinedClients = clients.filter((c) => c.status === 'JOINED');
-  const pendingClients = clients.filter((c) => c.status === 'PENDING');
+  const pendingInvitations = invitations.filter((inv) => inv.status === 'PENDING');
+  const joinedClients = invitations.filter((inv) => inv.status === 'JOINED');
+  const totalClients = invitations.length;
 
   return (
     <>
@@ -119,14 +95,6 @@ export default function PractitionerDashboard() {
           </h1>
         </div>
         <div className='flex justify-start sm:justify-end gap-2'>
-          <Button variant='outline' onClick={handleRefresh} disabled={isClientsLoading} className='w-full sm:w-auto'>
-            {isClientsLoading ? (
-              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-            ) : (
-              <RefreshCw className='mr-2 h-4 w-4' />
-            )}
-            Refresh
-          </Button>
           <Link href='/practitioner/invite'>
             <Button className='w-full sm:w-auto'>
               <Plus className='mr-2 h-4 w-4' />
@@ -144,7 +112,7 @@ export default function PractitionerDashboard() {
               <CardDescription className='text-sm'>All invited clients</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className='text-3xl font-bold sm:text-4xl'>{clients.length}</p>
+              <p className='text-3xl font-bold sm:text-4xl'>{totalClients}</p>
             </CardContent>
           </Card>
           <Card className='relative'>
@@ -162,7 +130,7 @@ export default function PractitionerDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Pending Invitations</CardTitle>
-              <CardDescription>You have {pendingClients.length} pending invitations.</CardDescription>
+              <CardDescription>You have {pendingInvitations.length} pending invitations.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className='overflow-x-auto'>
@@ -175,19 +143,19 @@ export default function PractitionerDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pendingClients.length === 0 ? (
+                    {pendingInvitations.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={3} className='text-center h-24 text-muted-foreground'>
                           No pending invitations.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      pendingClients.map((client) => (
+                      pendingInvitations.map((client) => (
                         <TableRow key={client.id}>
                           <TableCell>
                             <div className='flex items-center gap-3'>
                               <Avatar className='h-8 w-8 sm:h-9 sm:w-9'>
-                                <AvatarImage src={client.avatar} />
+                                <AvatarImage src={getFullAvatarUrl(client.avatar)} />
                                 <AvatarFallback className='text-xs sm:text-sm'>
                                   {getInitials(client.clientEmail)}
                                 </AvatarFallback>
@@ -226,7 +194,7 @@ export default function PractitionerDashboard() {
                                       {isResending ? (
                                         <Loader2 className='h-4 w-4 animate-spin' />
                                       ) : (
-                                        <RefreshCw className='h-4 w-4' />
+                                        <MessageSquare className='h-4 w-4' />
                                       )}
                                     </Button>
                                   </TooltipTrigger>
@@ -290,86 +258,6 @@ export default function PractitionerDashboard() {
             </CardContent>
           </Card>
         </div>
-        {joinedClients.length > 0 && (
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Clients</CardTitle>
-                <CardDescription>You have {joinedClients.length} active clients.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className='overflow-x-auto'>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className='w-[200px] sm:w-[250px]'>Client</TableHead>
-                        <TableHead>Joined Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className='text-right'>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {joinedClients.map((client) => (
-                        <TableRow key={client.id}>
-                          <TableCell>
-                            <div className='flex items-center gap-3'>
-                              <Avatar className='h-8 w-8 sm:h-9 sm:w-9'>
-                                <AvatarImage src={client.avatar} />
-                                <AvatarFallback className='text-xs sm:text-sm'>
-                                  {getInitials(getClientDisplayName(client))}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className='min-w-0 flex-1'>
-                                <p className='font-medium text-sm sm:text-base truncate'>
-                                  {getClientDisplayName(client)}
-                                </p>
-                                <p className='text-xs sm:text-sm text-muted-foreground truncate'>
-                                  {client.clientEmail}
-                                </p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className='text-sm'>{new Date(client.createdAt).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <Badge variant='default' className='font-normal'>
-                              Active
-                            </Badge>
-                          </TableCell>
-                          <TableCell className='text-right'>
-                            <div className='flex justify-end gap-1 sm:gap-2'>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant='ghost' size='icon' className='h-8 w-8'>
-                                      <MessageCircle className='h-4 w-4' />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Send message</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant='ghost' size='icon' className='h-8 w-8'>
-                                      <Eye className='h-4 w-4' />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>View profile</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </div>
     </>
   );

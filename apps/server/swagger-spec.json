@@ -284,8 +284,8 @@
         "properties": {
           "id": { "type": "string" },
           "email": { "type": "string" },
-          "firstName": { "type": "string", "nullable": true },
-          "lastName": { "type": "string", "nullable": true },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
           "avatarUrl": { "type": "string", "nullable": true },
           "role": { "type": "string", "enum": ["PRACTITIONER", "CLIENT"] },
           "profession": { "type": "string", "nullable": true },

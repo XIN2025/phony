@@ -12,7 +12,7 @@ import {
   decodeInvitationToken,
   throwAuthError,
   validateRequiredFields,
-  generateJwtToken,
+  generateToken,
   determineClientStatus,
   validateFileUpload,
   uploadFile,
@@ -78,8 +78,6 @@ export class AuthService {
       this.logger.log(`OTP email sent successfully to ${email}`);
     } catch (error) {
       this.logger.error(`Failed to send OTP email to ${email}:`, error);
-      // Optionally, you could delete the OTP from database if email fails
-      // await this.prismaService.otp.delete({ where: { email } });
     }
   }
 
@@ -111,9 +109,6 @@ export class AuthService {
 
     // For login flow - user must exist
     if (!user) {
-      if (role === UserRole.PRACTITIONER) {
-        throwAuthError('Account not found. Please sign up first or check your email.', 'unauthorized');
-      }
       throwAuthError('Account not found. Please sign up first or check your email.', 'unauthorized');
     }
 
@@ -129,11 +124,11 @@ export class AuthService {
 
     // Clean up OTP and generate token
     await this.prismaService.otp.delete({ where: { email: normalizedEmail } });
-    const token = await generateJwtToken(this.jwtService, user, {}, config.jwt.expiresIn);
+    const token = await generateToken(this.jwtService, user, {}, config.jwt.expiresIn);
     return { token, user: createUserResponse(user) };
   }
 
-  async handlePractitionerSignUp(data: PractitionerSignUpDto): Promise<LoginResponseDto> {
+  async handlePractitionerSignUp(data: PractitionerSignUpDto, file?: Express.Multer.File): Promise<LoginResponseDto> {
     validateRequiredFields(data as unknown as Record<string, unknown>, [
       'email',
       'otp',
@@ -160,6 +155,12 @@ export class AuthService {
     // Clean up OTP
     await this.prismaService.otp.delete({ where: { email: normalizedEmail } });
 
+    let avatarUrl: string | undefined = undefined;
+    if (file && file.buffer) {
+      validateFileUpload(file, [...UPLOAD_CONSTANTS.ALLOWED_IMAGE_TYPES], UPLOAD_CONSTANTS.MAX_FILE_SIZE);
+      avatarUrl = await uploadFile(file, normalizedEmail, UPLOAD_CONSTANTS.UPLOAD_PATH, UPLOAD_CONSTANTS.UPLOAD_DIR);
+    }
+
     const user = await this.prismaService.user.create({
       data: {
         email: normalizedEmail,
@@ -168,19 +169,23 @@ export class AuthService {
         role: UserRole.PRACTITIONER,
         profession: normalizedProfession,
         isEmailVerified: true,
+        avatarUrl: avatarUrl,
       },
     });
 
-    const token = await generateJwtToken(this.jwtService, user, {}, config.jwt.expiresIn);
+    const token = await generateToken(this.jwtService, user, {}, config.jwt.expiresIn);
     return { token, user: createUserResponse(user) };
   }
 
-  async handleClientSignUp(data: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    invitationToken: string;
-  }): Promise<LoginResponseDto> {
+  async handleClientSignUp(
+    data: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      invitationToken: string;
+    },
+    file?: Express.Multer.File
+  ): Promise<LoginResponseDto> {
     validateRequiredFields(data, ['email', 'firstName', 'lastName', 'invitationToken']);
     const { email, firstName, lastName, invitationToken } = data;
     const normalizedEmail = normalizeEmail(email);
@@ -205,6 +210,13 @@ export class AuthService {
     let user = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
     if (user) throwAuthError('An account with this email already exists', 'conflict');
     const clientStatus = determineClientStatus(invitation.intakeFormId || undefined);
+
+    let avatarUrl: string | undefined = undefined;
+    if (file && file.buffer) {
+      validateFileUpload(file, [...UPLOAD_CONSTANTS.ALLOWED_IMAGE_TYPES], UPLOAD_CONSTANTS.MAX_FILE_SIZE);
+      avatarUrl = await uploadFile(file, normalizedEmail, UPLOAD_CONSTANTS.UPLOAD_PATH, UPLOAD_CONSTANTS.UPLOAD_DIR);
+    }
+
     user = await this.prismaService.user.create({
       data: {
         email: normalizedEmail,
@@ -214,15 +226,11 @@ export class AuthService {
         practitionerId: invitation.practitionerId,
         isEmailVerified: true,
         clientStatus: clientStatus,
+        avatarUrl: avatarUrl,
       },
     });
     await this.prismaService.invitation.update({ where: { id: invitation.id }, data: { isAccepted: true } });
-    const token = await generateJwtToken(
-      this.jwtService,
-      user,
-      { clientStatus: user.clientStatus },
-      config.jwt.expiresIn
-    );
+    const token = await generateToken(this.jwtService, user, { clientStatus: user.clientStatus }, config.jwt.expiresIn);
     return { token, user: createUserResponse(user) };
   }
 

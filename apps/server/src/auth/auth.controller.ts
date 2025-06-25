@@ -44,18 +44,24 @@ export class AuthController {
 
   @Post('practitioner/signup')
   @Public()
+  @UseInterceptors(FileInterceptor('profileImage', { storage: memoryStorage() }))
   @ApiResponse({ type: LoginResponseDto })
-  async practitionerSignUp(@Body() body: PractitionerSignUpDto): Promise<LoginResponseDto> {
-    return this.authService.handlePractitionerSignUp(body);
+  async practitionerSignUp(
+    @Body() body: PractitionerSignUpDto,
+    @UploadedFile() file?: Express.Multer.File
+  ): Promise<LoginResponseDto> {
+    return this.authService.handlePractitionerSignUp(body, file);
   }
 
   @Post('client/signup')
   @Public()
+  @UseInterceptors(FileInterceptor('profileImage', { storage: memoryStorage() }))
   @ApiResponse({ type: LoginResponseDto })
   async clientSignUp(
-    @Body() body: { email: string; firstName: string; lastName: string; invitationToken: string }
+    @Body() body: { email: string; firstName: string; lastName: string; invitationToken: string },
+    @UploadedFile() file?: Express.Multer.File
   ): Promise<LoginResponseDto> {
-    return this.authService.handleClientSignUp(body);
+    return this.authService.handleClientSignUp(body, file);
   }
 
   @Post('profile')

@@ -361,7 +361,7 @@ export default function InviteClientPage() {
           id: q.id,
           text: q.text,
           type: mapQuestionType(q.type),
-          options: q.options,
+          options: q.options?.map((option) => ({ text: option })) || [],
           isRequired: q.isRequired,
           order: q.order,
         })),

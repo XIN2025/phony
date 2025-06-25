@@ -9,6 +9,7 @@ import {
   formatDate,
   throwAuthError,
   validateRequiredFields,
+  getAvatarUrl,
 } from 'src/common/utils/user.utils';
 import { UserRole } from '@repo/db';
 import { QuestionType } from '@repo/db';
@@ -109,6 +110,10 @@ export class PractitionerService {
       status: invitation.isAccepted ? 'JOINED' : 'PENDING',
       invited: formatDate(invitation.createdAt),
       createdAt: invitation.createdAt,
+      avatar: getAvatarUrl({
+        firstName: invitation.clientFirstName,
+        lastName: invitation.clientLastName,
+      }),
     };
   }
 
@@ -168,6 +173,10 @@ export class PractitionerService {
       status: newInvitation.isAccepted ? 'JOINED' : 'PENDING',
       invited: formatDate(newInvitation.createdAt),
       createdAt: newInvitation.createdAt,
+      avatar: getAvatarUrl({
+        firstName: newInvitation.clientFirstName,
+        lastName: newInvitation.clientLastName,
+      }),
     };
   }
 
@@ -261,16 +270,24 @@ export class PractitionerService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return invitations.map((invitation) => ({
-      id: invitation.id,
-      clientEmail: invitation.clientEmail,
-      clientFirstName: invitation.clientFirstName,
-      clientLastName: invitation.clientLastName,
-      status: invitation.isAccepted ? 'JOINED' : 'PENDING',
-      invited: formatDate(invitation.createdAt),
-      expiresAt: formatDate(invitation.expiresAt),
-      intakeFormTitle: invitation.intakeForm ? getIntakeFormTitle(invitation.intakeForm) : undefined,
-    }));
+    return invitations.map((invitation) => {
+      const avatar = getAvatarUrl({
+        firstName: invitation.clientFirstName,
+        lastName: invitation.clientLastName,
+      });
+
+      return {
+        id: invitation.id,
+        clientEmail: invitation.clientEmail,
+        clientFirstName: invitation.clientFirstName,
+        clientLastName: invitation.clientLastName,
+        status: invitation.isAccepted ? 'JOINED' : 'PENDING',
+        invited: formatDate(invitation.createdAt),
+        expiresAt: formatDate(invitation.expiresAt),
+        intakeFormTitle: invitation.intakeForm ? getIntakeFormTitle(invitation.intakeForm) : undefined,
+        avatar: avatar,
+      };
+    });
   }
 
   async getIntakeFormSubmissions(practitionerId: string, formId: string) {

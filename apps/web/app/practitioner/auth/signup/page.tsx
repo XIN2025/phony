@@ -87,26 +87,39 @@ export default function PractitionerSignUpPage() {
     setIsLoading(true);
     const values = form.getValues();
     try {
-      // Create the account with all required fields
-      handleSignup(
-        {
-          email: values.email!.trim().toLowerCase(),
-          otp: values.otp!.trim(),
-          role: 'PRACTITIONER',
-          firstName: profileData?.firstName || values.firstName!.trim(),
-          lastName: profileData?.lastName || values.lastName!.trim(),
-          profession: profileData?.profession || values.profession!,
-        },
-        {
-          onSuccess: () => {
-            toast.success('Account created successfully! Please log in.');
+      // Create FormData for multipart upload
+      const formData = new FormData();
+      formData.append('email', values.email!.trim().toLowerCase());
+      formData.append('otp', values.otp!.trim());
+      formData.append('role', 'PRACTITIONER');
+      formData.append('firstName', profileData?.firstName || values.firstName!.trim());
+      formData.append('lastName', profileData?.lastName || values.lastName!.trim());
+      formData.append('profession', profileData?.profession || values.profession!);
+      if (profileData?.profileImage || profileImage) {
+        formData.append('profileImage', profileData?.profileImage || profileImage!);
+      }
+      handleSignup(formData, {
+        onSuccess: async (response) => {
+          toast.success('Account created successfully!');
+          // Use the token from signup response for direct authentication
+          const result = await signIn('credentials', {
+            email: values.email!.trim().toLowerCase(),
+            token: response.token,
+            role: 'PRACTITIONER',
+            redirect: false,
+          });
+
+          if (result?.error) {
+            toast.error('Account created but login failed. Please log in manually.');
             router.push('/practitioner/auth');
-          },
-          onError: (error: Error) => {
-            toast.error(error.message || 'Sign up failed.');
-          },
+          } else {
+            router.push('/practitioner');
+          }
         },
-      );
+        onError: (error: Error) => {
+          toast.error(error.message || 'Sign up failed.');
+        },
+      });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Sign up failed.';
       toast.error(errorMessage);

@@ -1,8 +1,6 @@
-import { UserRole } from '@repo/db';
+import { UserRole, ClientStatus } from '@repo/db';
 import { JwtService } from '@nestjs/jwt';
 import { config } from 'src/common/config';
-
-type ClientStatus = 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
 
 export function normalizeEmail(email: string): string {
   return email.toLowerCase().trim();
@@ -30,9 +28,9 @@ export function createUserResponse(user: {
     role: user.role,
     profession: user.profession ?? null,
     avatarUrl: user.avatarUrl ?? null,
+    clientStatus: user.clientStatus ?? undefined,
     isEmailVerified: user.isEmailVerified,
     practitionerId: user.practitionerId ?? null,
-    clientStatus: user.clientStatus ?? undefined,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -163,27 +161,6 @@ export function validateRequiredFields(data: Record<string, unknown>, requiredFi
   }
 }
 
-export function generateJwtToken(
-  jwtService: JwtService,
-  user: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role: UserRole;
-    practitionerId?: string | null;
-    clientStatus?: ClientStatus | null;
-  },
-  additionalData?: Record<string, unknown>,
-  expiresIn?: string
-): Promise<string> {
-  const payload = createJwtPayload(user, additionalData);
-  return jwtService.signAsync(payload, {
-    secret: config.jwt.secret,
-    expiresIn: expiresIn || config.jwt.expiresIn,
-  });
-}
-
 export function determineClientStatus(intakeFormId?: string): ClientStatus {
   return intakeFormId ? 'NEEDS_INTAKE' : 'ACTIVE';
 }
@@ -213,10 +190,11 @@ export async function uploadFile(
   const path = await import('path');
 
   const fileName = `${userId}-${Date.now()}${path.extname(file.originalname)}`;
-  const filePath = path.join(uploadPath, uploadDir, fileName);
+  const filePath = path.join(uploadPath, fileName);
 
   try {
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    // Ensure the upload directory exists
+    await fs.mkdir(uploadPath, { recursive: true });
     await fs.writeFile(filePath, file.buffer);
     return `/${uploadDir}/${fileName}`;
   } catch {
