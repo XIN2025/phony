@@ -16,7 +16,7 @@ export function createUserResponse(user: {
   avatarUrl?: string | null;
   isEmailVerified: boolean;
   practitionerId?: string | null;
-  clientStatus?: ClientStatus | null;
+  clientStatus?: ClientStatus;
   createdAt: Date;
   updatedAt: Date;
 }) {
@@ -44,7 +44,7 @@ export function createJwtPayload(
     lastName: string;
     role: UserRole;
     practitionerId?: string | null;
-    clientStatus?: ClientStatus | null;
+    clientStatus?: ClientStatus;
   },
   additionalData?: Record<string, unknown>
 ) {
@@ -69,7 +69,7 @@ export function generateToken(
     lastName: string;
     role: UserRole;
     practitionerId?: string | null;
-    clientStatus?: ClientStatus | null;
+    clientStatus?: ClientStatus;
   },
   additionalData?: Record<string, unknown>,
   expiresIn?: string

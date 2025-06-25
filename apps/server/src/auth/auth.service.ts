@@ -46,7 +46,6 @@ export class AuthService {
     validateRequiredFields({ email }, ['email']);
     const normalizedEmail = normalizeEmail(email);
 
-    // Store OTP in database first
     const otp = generateOtp();
     const expiresAt = new Date(Date.now() + config.otp.expiryMs);
 
@@ -56,7 +55,6 @@ export class AuthService {
       create: { email: normalizedEmail, otp, expiresAt },
     });
 
-    // Send email asynchronously to avoid blocking the response
     this.sendOtpEmailAsync(normalizedEmail, otp).catch((error) => {
       this.logger.error(`Failed to send OTP email to ${normalizedEmail}:`, error);
     });
@@ -91,7 +89,6 @@ export class AuthService {
     if (otpRecord.otp !== normalizedOtp) throwAuthError('Invalid OTP', 'unauthorized');
     if (otpRecord.expiresAt < new Date()) throwAuthError('OTP has expired', 'unauthorized');
 
-    // For signup - just verify OTP is correct
     await this.prismaService.otp.delete({ where: { email: normalizedEmail } });
     return true;
   }
@@ -107,25 +104,26 @@ export class AuthService {
 
     const user = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
 
-    // For login flow - user must exist
     if (!user) {
       throwAuthError('Account not found. Please sign up first or check your email.', 'unauthorized');
     }
 
-    // Verify role matches
     if (user.role !== role) {
       throwAuthError(`Invalid role. Expected ${role}, got ${user.role}`, 'unauthorized');
     }
 
-    // Mark email as verified if not already
     if (!user.isEmailVerified) {
       await this.prismaService.user.update({ where: { id: user.id }, data: { isEmailVerified: true } });
     }
 
-    // Clean up OTP and generate token
     await this.prismaService.otp.delete({ where: { email: normalizedEmail } });
-    const token = await generateToken(this.jwtService, user, {}, config.jwt.expiresIn);
-    return { token, user: createUserResponse(user) };
+    const token = await generateToken(
+      this.jwtService,
+      { ...user, clientStatus: user.clientStatus ?? undefined },
+      {},
+      config.jwt.expiresIn
+    );
+    return { token, user: createUserResponse({ ...user, clientStatus: user.clientStatus ?? undefined }) };
   }
 
   async handlePractitionerSignUp(data: PractitionerSignUpDto, file?: Express.Multer.File): Promise<LoginResponseDto> {
@@ -143,7 +141,6 @@ export class AuthService {
     const normalizedLastName = lastName.trim();
     const normalizedProfession = profession.trim();
 
-    // First verify the OTP
     const otpRecord = await this.prismaService.otp.findUnique({ where: { email: normalizedEmail } });
     if (!otpRecord) throwAuthError('Invalid email or OTP', 'unauthorized');
     if (otpRecord.otp !== normalizedOtp) throwAuthError('Invalid OTP', 'unauthorized');
@@ -152,7 +149,6 @@ export class AuthService {
     const existingUser = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) throwAuthError('An account with this email already exists', 'conflict');
 
-    // Clean up OTP
     await this.prismaService.otp.delete({ where: { email: normalizedEmail } });
 
     let avatarUrl: string | undefined = undefined;
@@ -173,8 +169,13 @@ export class AuthService {
       },
     });
 
-    const token = await generateToken(this.jwtService, user, {}, config.jwt.expiresIn);
-    return { token, user: createUserResponse(user) };
+    const token = await generateToken(
+      this.jwtService,
+      { ...user, clientStatus: user.clientStatus ?? undefined },
+      {},
+      config.jwt.expiresIn
+    );
+    return { token, user: createUserResponse({ ...user, clientStatus: user.clientStatus ?? undefined }) };
   }
 
   async handleClientSignUp(
@@ -230,8 +231,13 @@ export class AuthService {
       },
     });
     await this.prismaService.invitation.update({ where: { id: invitation.id }, data: { isAccepted: true } });
-    const token = await generateToken(this.jwtService, user, { clientStatus: user.clientStatus }, config.jwt.expiresIn);
-    return { token, user: createUserResponse(user) };
+    const token = await generateToken(
+      this.jwtService,
+      { ...user, clientStatus: user.clientStatus ?? undefined },
+      { clientStatus: user.clientStatus ?? undefined },
+      config.jwt.expiresIn
+    );
+    return { token, user: createUserResponse({ ...user, clientStatus: user.clientStatus ?? undefined }) };
   }
 
   async updateProfile(userId: string, body: ProfileUpdateBody, file?: Express.Multer.File) {
@@ -250,7 +256,7 @@ export class AuthService {
       data: updateData,
     });
 
-    return createUserResponse(user);
+    return createUserResponse({ ...user, clientStatus: user.clientStatus ?? undefined });
   }
 
   async getCurrentUser(userId: string) {
@@ -262,6 +268,6 @@ export class AuthService {
       throwAuthError('User not found', 'notFound');
     }
 
-    return createUserResponse(user);
+    return createUserResponse({ ...user, clientStatus: user.clientStatus ?? undefined });
   }
 }
