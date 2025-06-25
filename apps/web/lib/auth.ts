@@ -1,7 +1,9 @@
 ﻿import { AuthOptions, User } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { AuthService } from '@/services';
+import { ApiClient } from '@/lib/api-client';
 import { envConfig } from '@/config';
+import { LoginResponse } from '@repo/shared-types/types';
+
 const credentialsAuthProvider = CredentialsProvider({
   name: 'Credentials',
   credentials: {
@@ -20,7 +22,7 @@ const credentialsAuthProvider = CredentialsProvider({
         throw new Error('OTP required');
       }
 
-      const res = await AuthService.verifyOtp({
+      const res = await ApiClient.post<LoginResponse>('/api/auth/otp/verify', {
         email: credentials.email,
         otp: credentials.otp,
         role: credentials.role as 'CLIENT' | 'PRACTITIONER',
@@ -54,6 +56,7 @@ const credentialsAuthProvider = CredentialsProvider({
     }
   },
 });
+
 export const authOptions: AuthOptions = {
   providers: [credentialsAuthProvider],
   secret: envConfig.nextAuthSecret,

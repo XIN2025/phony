@@ -12,10 +12,8 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMutation } from '@tanstack/react-query';
 import { emailSchema, otpSchema } from '@repo/shared-types/schemas';
-import { AuthService } from '@/services';
-import { Logo } from '@repo/ui/components/logo';
+import { useSendOtp } from '@/lib/hooks/use-api';
 
 export default function ClientAuthPage() {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -35,17 +33,7 @@ export default function ClientAuthPage() {
     }
   }, [status, session, router]);
 
-  const { mutate: handleSendOTP, isPending: isSendingOTP } = useMutation({
-    mutationFn: (email: string) => AuthService.sendOtp({ email }),
-    onSuccess: () => {
-      toast.success('OTP sent successfully');
-      startResendTimer();
-      setShowOTP(true);
-    },
-    onError: (error) => {
-      toast.error(error.message ?? 'Failed to send OTP');
-    },
-  });
+  const { mutate: handleSendOTP, isPending: isSendingOTP } = useSendOtp();
 
   const form = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(showOTP ? otpSchema : emailSchema),
@@ -64,7 +52,25 @@ export default function ClientAuthPage() {
 
   async function onSubmit(values: z.infer<typeof emailSchema>) {
     if (!showOTP) {
-      handleSendOTP(values.email);
+      handleSendOTP(
+        { email: values.email },
+        {
+          onSuccess: () => {
+            toast.success('OTP sent successfully');
+            startResendTimer();
+            setShowOTP(true);
+          },
+          onError: (error: Error) => {
+            if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
+              toast.error('Request timed out. The OTP may have been sent. Please check your email and try again.');
+            } else if (error.message?.includes('network') || error.message?.includes('connection')) {
+              toast.error('Network error. Please check your connection and try again.');
+            } else {
+              toast.error(error.message ?? 'Failed to send OTP. Please try again.');
+            }
+          },
+        },
+      );
       return;
     }
     setIsLoading(true);
@@ -121,7 +127,28 @@ export default function ClientAuthPage() {
                 type='button'
                 variant='link'
                 className='p-0'
-                onClick={() => handleSendOTP(form.getValues('email'))}
+                onClick={() =>
+                  handleSendOTP(
+                    { email: form.getValues('email') },
+                    {
+                      onSuccess: () => {
+                        toast.success('OTP resent successfully');
+                        startResendTimer();
+                      },
+                      onError: (error: Error) => {
+                        if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
+                          toast.error(
+                            'Request timed out. The OTP may have been sent. Please check your email and try again.',
+                          );
+                        } else if (error.message?.includes('network') || error.message?.includes('connection')) {
+                          toast.error('Network error. Please check your connection and try again.');
+                        } else {
+                          toast.error(error.message ?? 'Failed to resend OTP');
+                        }
+                      },
+                    },
+                  )
+                }
                 disabled={isSendingOTP}
               >
                 Resend code
@@ -160,7 +187,7 @@ export default function ClientAuthPage() {
 
   if (status === 'loading') {
     return (
-      <div className='flex h-screen items-center justify-center'>
+      <div className='flex items-center justify-center'>
         <Loader2 className='h-8 w-8 animate-spin' />
       </div>
     );
@@ -169,7 +196,7 @@ export default function ClientAuthPage() {
   // If already authenticated, show loading while redirecting
   if (status === 'authenticated') {
     return (
-      <div className='flex h-screen items-center justify-center'>
+      <div className='flex items-center justify-center'>
         <Loader2 className='h-8 w-8 animate-spin' />
       </div>
     );
@@ -177,10 +204,7 @@ export default function ClientAuthPage() {
 
   return (
     <>
-      <div className='mb-8 text-center'>
-        <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10' />
-      </div>
-      <div className='flex flex-col space-y-2 text-left mb-8'>
+      <div className='flex flex-col space-y-2 text-center'>
         <h1 className='text-2xl font-bold tracking-tight'>{showOTP ? 'Check your email' : 'Client Portal Login'}</h1>
         <p className='text-muted-foreground'>
           {showOTP ? `We've sent a code to ${form.getValues('email')}` : 'Please sign in to access your dashboard.'}

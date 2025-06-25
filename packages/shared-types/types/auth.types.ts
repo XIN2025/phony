@@ -6,7 +6,7 @@ export type User = {
   firstName: string | null;
   lastName: string | null;
   avatarUrl: string | null;
-  role: string;
+  role: UserRole;
   profession?: string | null;
   clientStatus?: ClientStatus;
 };

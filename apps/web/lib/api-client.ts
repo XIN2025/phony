@@ -3,6 +3,7 @@ import axios, { AxiosRequestConfig, AxiosResponse, isAxiosError } from 'axios';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getSession } from 'next-auth/react';
+
 export class ApiClient {
   static async request<T>(config: AxiosRequestConfig): Promise<T> {
     try {
@@ -18,14 +19,20 @@ export class ApiClient {
           !config.url?.includes('/auth/me')) ||
         config.url?.includes('/public/');
 
+      // Use longer timeout for OTP requests
+      const isOtpRequest = config.url?.includes('/auth/otp');
+      const timeout = isOtpRequest ? 30000 : 10000; // 30 seconds for OTP, 10 seconds for others
+
       const client = axios.create({
         baseURL: envConfig.apiUrl,
-        timeout: 10000,
+        timeout: timeout,
         headers: {
           ...(config.data && !isFormData ? { 'Content-Type': 'application/json' } : {}),
           ...(session?.user?.token && !isPublicEndpoint ? { Authorization: `Bearer ${session.user.token}` } : {}),
+          ...config.headers,
         },
       });
+
       const response: AxiosResponse<T> = await client.request(config);
       return response.data;
     } catch (err) {
@@ -45,18 +52,23 @@ export class ApiClient {
       throw new Error(err instanceof Error ? err.message : 'An unknown error occurred');
     }
   }
+
   static async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     return this.request<T>({ method: 'GET', url, ...config });
   }
-  static async post<T, D = unknown>(url: string, data?: D): Promise<T> {
-    return this.request<T>({ method: 'POST', url, data });
+
+  static async post<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<T> {
+    return this.request<T>({ method: 'POST', url, data, ...config });
   }
-  static async put<T, D = unknown>(url: string, data?: D): Promise<T> {
-    return this.request<T>({ method: 'PUT', url, data });
+
+  static async put<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<T> {
+    return this.request<T>({ method: 'PUT', url, data, ...config });
   }
-  static async patch<T, D = unknown>(url: string, data?: D): Promise<T> {
-    return this.request<T>({ method: 'PATCH', url, data });
+
+  static async patch<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<T> {
+    return this.request<T>({ method: 'PATCH', url, data, ...config });
   }
+
   static async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     return this.request<T>({ method: 'DELETE', url, ...config });
   }

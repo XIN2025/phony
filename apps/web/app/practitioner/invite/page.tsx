@@ -1,9 +1,9 @@
 ﻿'use client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { InviteClientDetailsForm } from '@/components/invite/InviteClientDetailsForm';
 import { IntakeFormSelector } from '@/components/invite/IntakeFormSelector';
 import { IntakeFormBuilder } from '@/components/invite/IntakeFormBuilder';
@@ -11,60 +11,34 @@ import { IntakeFormPreview } from '@/components/invite/IntakeFormPreview';
 import { useInviteContext } from '@/context/InviteContext';
 import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
 import { Button } from '@repo/ui/components/button';
-import { ApiClient } from '@/lib/api-client';
+import {
+  useInviteClient,
+  useCreateIntakeForm,
+  useUpdateIntakeForm,
+  useGetIntakeForm,
+  IntakeForm,
+} from '@/lib/hooks/use-api';
+import { useQueryClient } from '@tanstack/react-query';
+
 export default function InviteClientPage() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { step, inviteData, setInviteData, goToNextStep, goToPrevStep, goToStep, resetInviteFlow } = useInviteContext();
-  const mutation = useMutation({
-    mutationFn: (data: {
-      clientFirstName: string;
-      clientLastName: string;
-      clientEmail: string;
-      intakeFormId?: string;
-    }) => ApiClient.post('/api/practitioner/invite-client', data),
-    onSuccess: async () => {
-      await queryClient.refetchQueries({ queryKey: ['invitations'] });
+  const [submitting, setSubmitting] = React.useState(false);
+  const [selectedFormId, setSelectedFormId] = React.useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-      const successMessage = inviteData.intakeFormId
-        ? 'Invitation sent successfully! An intake form has been included for your client.'
-        : 'Invitation sent successfully!';
+  const { mutate: inviteClient, isPending: isInviting } = useInviteClient();
+  const { mutate: createIntakeForm, isPending: isCreatingForm } = useCreateIntakeForm();
+  const { mutate: updateIntakeForm, isPending: isUpdatingForm } = useUpdateIntakeForm();
+  const { data: selectedForm, isLoading: isLoadingForm } = useGetIntakeForm(selectedFormId || '');
 
-      toast.success(successMessage, {
-        description: 'Your client will receive an email with instructions to join.',
-        duration: 4000,
-      });
-
-      router.push('/practitioner/invite/success');
-    },
-    onError: (error: any) => {
-      let errorMessage = 'Failed to send invitation.';
-
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      if (errorMessage.includes('already exists')) {
-        errorMessage = `A client with the email "${inviteData.clientEmail}" already exists in the system. Please use a different email address or check if this client has already been invited.`;
-      } else if (errorMessage.includes('Failed to send invitation email')) {
-        errorMessage =
-          'The invitation email could not be sent. Please check the email address and try again, or contact support if the problem persists.';
-      }
-
-      toast.error(errorMessage, {
-        description: 'Please review the information and try again.',
-        duration: 5000,
-      });
-    },
-  });
   const handleDetailsSubmit = (data: {
     clientFirstName: string;
     clientLastName: string;
     clientEmail: string;
     includeIntakeForm: boolean;
   }) => {
+    setSubmitting(true);
     const normalizedData = {
       ...data,
       clientEmail: data.clientEmail.trim().toLowerCase(),
@@ -74,11 +48,36 @@ export default function InviteClientPage() {
     };
     setInviteData(normalizedData);
     if (normalizedData.includeIntakeForm) {
+      setSubmitting(false);
       goToNextStep();
     } else {
-      mutation.mutate(normalizedData);
+      inviteClient(normalizedData, {
+        onSuccess: () => {
+          // Invalidate invitations query after success
+          queryClient.invalidateQueries({ queryKey: ['invitations'] });
+          router.push('/practitioner/invite/success');
+        },
+        onError: (error: Error) => {
+          setSubmitting(false);
+          let errorMessage = 'Failed to send invitation.';
+          if (error.message) {
+            errorMessage = error.message;
+          }
+          if (errorMessage.includes('already exists')) {
+            errorMessage = `A client with the email "${inviteData.clientEmail}" already exists in the system. Please use a different email address or check if this client has already been invited.`;
+          } else if (errorMessage.includes('Failed to send invitation email')) {
+            errorMessage =
+              'The invitation email could not be sent. Please check the email address and try again, or contact support if the problem persists.';
+          }
+          toast.error(errorMessage, {
+            description: 'Please review the information and try again.',
+            duration: 5000,
+          });
+        },
+      });
     }
   };
+
   const handleFormSelect = async (formId: string | 'create-new') => {
     if (formId === 'create-new') {
       setInviteData({
@@ -89,20 +88,10 @@ export default function InviteClientPage() {
       });
       goToNextStep();
     } else {
-      try {
-        const selectedForm = await ApiClient.get<CreateIntakeFormDto>(`/api/intake-forms/${formId}`);
-        setInviteData({
-          newIntakeForm: selectedForm,
-          intakeFormId: formId,
-          saveAsTemplate: true,
-          hasChanges: false,
-        });
-        goToNextStep();
-      } catch (error) {
-        toast.error('Could not load form for editing. Please try again.');
-      }
+      setSelectedFormId(formId);
     }
   };
+
   const handleFormCreatePreview = (formData: CreateIntakeFormDto) => {
     setInviteData({
       newIntakeForm: formData,
@@ -111,6 +100,7 @@ export default function InviteClientPage() {
     });
     goToNextStep();
   };
+
   const handleFormSubmit = async (saveAsTemplate: boolean) => {
     if (!inviteData.newIntakeForm) {
       toast.error('No form data found. Please go back and create a form.');
@@ -127,10 +117,103 @@ export default function InviteClientPage() {
 
       if (saveAsTemplate) {
         if (!finalData.intakeFormId) {
-          const newForm = await ApiClient.post<{ id: string }>('/api/intake-forms', inviteData.newIntakeForm);
-          finalData = { ...finalData, intakeFormId: newForm.id };
+          createIntakeForm(inviteData.newIntakeForm, {
+            onSuccess: (newForm) => {
+              finalData = { ...finalData, intakeFormId: newForm.id };
+              setInviteData(finalData);
+
+              const invitationData = {
+                clientFirstName: finalData.clientFirstName,
+                clientLastName: finalData.clientLastName,
+                clientEmail: finalData.clientEmail,
+                intakeFormId: finalData.intakeFormId,
+              };
+
+              inviteClient(invitationData, {
+                onSuccess: () => {
+                  const successMessage = inviteData.intakeFormId
+                    ? 'Invitation sent successfully! An intake form has been included for your client.'
+                    : 'Invitation sent successfully!';
+                  toast.success(successMessage, {
+                    description: 'Your client will receive an email with instructions to join.',
+                    duration: 4000,
+                  });
+                  router.push('/practitioner/invite/success');
+                },
+                onError: (error: Error) => {
+                  let errorMessage = 'Failed to send invitation.';
+                  if (error.message) {
+                    errorMessage = error.message;
+                  }
+                  toast.error(errorMessage, {
+                    description: 'Please review the information and try again.',
+                    duration: 5000,
+                  });
+                },
+              });
+            },
+            onError: (error: Error) => {
+              let errorMessage = 'Failed to create form.';
+              if (error.message) {
+                errorMessage = error.message;
+              }
+              toast.error(errorMessage, {
+                description: 'Please check your form data and try again.',
+                duration: 5000,
+              });
+            },
+          });
+          return;
         } else if (finalData.hasChanges) {
-          await ApiClient.put(`/api/intake-forms/${finalData.intakeFormId}`, inviteData.newIntakeForm);
+          updateIntakeForm(
+            { id: finalData.intakeFormId!, data: inviteData.newIntakeForm },
+            {
+              onSuccess: () => {
+                setInviteData(finalData);
+
+                const invitationData = {
+                  clientFirstName: finalData.clientFirstName,
+                  clientLastName: finalData.clientLastName,
+                  clientEmail: finalData.clientEmail,
+                  intakeFormId: finalData.intakeFormId,
+                };
+
+                inviteClient(invitationData, {
+                  onSuccess: () => {
+                    const successMessage = inviteData.intakeFormId
+                      ? 'Invitation sent successfully! An intake form has been included for your client.'
+                      : 'Invitation sent successfully!';
+                    toast.success(successMessage, {
+                      description: 'Your client will receive an email with instructions to join.',
+                      duration: 4000,
+                    });
+                    router.push('/practitioner/invite/success');
+                  },
+                  onError: (error: Error) => {
+                    let errorMessage = 'Failed to send invitation.';
+                    if (error.message) {
+                      errorMessage = error.message;
+                    }
+                    toast.error(errorMessage, {
+                      description: 'Please review the information and try again.',
+                      duration: 5000,
+                    });
+                  },
+                });
+              },
+              onError: (error: Error) => {
+                let errorMessage = 'Failed to update form.';
+                if (error.message) {
+                  errorMessage = error.message;
+                }
+                toast.error(errorMessage, {
+                  description: 'Please check your form data and try again.',
+                  duration: 5000,
+                });
+              },
+            },
+          );
+          return;
         }
       }
 
@@ -143,22 +226,40 @@ export default function InviteClientPage() {
         intakeFormId: finalData.intakeFormId,
       };
 
-      mutation.mutate(invitationData);
-    } catch (error: any) {
-      let errorMessage = 'Failed to create form.';
-
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
+      inviteClient(invitationData, {
+        onSuccess: () => {
+          const successMessage = inviteData.intakeFormId
+            ? 'Invitation sent successfully! An intake form has been included for your client.'
+            : 'Invitation sent successfully!';
+          toast.success(successMessage, {
+            description: 'Your client will receive an email with instructions to join.',
+            duration: 4000,
+          });
+          router.push('/practitioner/invite/success');
+        },
+        onError: (error: Error) => {
+          let errorMessage = 'Failed to send invitation.';
+          if (error.message) {
+            errorMessage = error.message;
+          }
+          toast.error(errorMessage, {
+            description: 'Please review the information and try again.',
+            duration: 5000,
+          });
+        },
+      });
+    } catch (error: unknown) {
+      let errorMessage = 'Failed to process form.';
+      if (error instanceof Error && error.message) {
         errorMessage = error.message;
       }
-
       toast.error(errorMessage, {
         description: 'Please check your form data and try again.',
         duration: 5000,
       });
     }
   };
+
   const handleBack = () => {
     if (step === 1) {
       router.back();
@@ -166,13 +267,14 @@ export default function InviteClientPage() {
     }
     goToPrevStep();
   };
+
   const steps = useMemo(
     () => [
       {
         step: 1,
         title: 'Invite Client',
         component: (
-          <InviteClientDetailsForm onNext={handleDetailsSubmit} isLoading={mutation.isPending} onCancel={handleBack} />
+          <InviteClientDetailsForm onNext={handleDetailsSubmit} isLoading={isInviting} onCancel={handleBack} />
         ),
       },
       {
@@ -193,24 +295,118 @@ export default function InviteClientPage() {
             formData={inviteData.newIntakeForm}
             onBack={handleBack}
             onSubmit={handleFormSubmit}
-            isLoading={mutation.isPending}
+            isLoading={isInviting || isCreatingForm || isUpdatingForm}
             isNewForm={!inviteData.intakeFormId}
           />
         ) : null,
       },
     ],
-    [mutation.isPending, inviteData.newIntakeForm, inviteData.intakeFormId, handleBack],
+    [step, inviteData, isInviting, isCreatingForm, isUpdatingForm],
   );
-  const currentStepData = steps.find((s) => s.step === step);
+
+  // Handle form selection and transformation
+  React.useEffect(() => {
+    if (selectedForm && selectedFormId) {
+      // Map API question types to DTO question types
+      const mapQuestionType = (
+        apiType: string,
+      ):
+        | 'SHORT_ANSWER'
+        | 'LONG_ANSWER'
+        | 'MULTIPLE_CHOICE'
+        | 'CHECKBOXES'
+        | 'SCALE'
+        | 'DROPDOWN'
+        | 'FILE_UPLOAD'
+        | 'RATING'
+        | 'MULTIPLE_CHOICE_GRID'
+        | 'TICK_BOX_GRID' => {
+        const typeMap: Record<
+          string,
+          | 'SHORT_ANSWER'
+          | 'LONG_ANSWER'
+          | 'MULTIPLE_CHOICE'
+          | 'CHECKBOXES'
+          | 'SCALE'
+          | 'DROPDOWN'
+          | 'FILE_UPLOAD'
+          | 'RATING'
+          | 'MULTIPLE_CHOICE_GRID'
+          | 'TICK_BOX_GRID'
+        > = {
+          TEXT: 'SHORT_ANSWER',
+          TEXTAREA: 'LONG_ANSWER',
+          MULTIPLE_CHOICE: 'MULTIPLE_CHOICE',
+          SINGLE_CHOICE: 'MULTIPLE_CHOICE',
+          CHECKBOX: 'CHECKBOXES',
+          RADIO: 'MULTIPLE_CHOICE',
+          DATE: 'SHORT_ANSWER',
+          EMAIL: 'SHORT_ANSWER',
+          PHONE: 'SHORT_ANSWER',
+          NUMBER: 'SHORT_ANSWER',
+          SCALE: 'SCALE',
+          DROPDOWN: 'DROPDOWN',
+          FILE_UPLOAD: 'FILE_UPLOAD',
+          RATING: 'RATING',
+          MULTIPLE_CHOICE_GRID: 'MULTIPLE_CHOICE_GRID',
+          TICK_BOX_GRID: 'TICK_BOX_GRID',
+        };
+        return typeMap[apiType] || 'SHORT_ANSWER';
+      };
+
+      const transformedForm: CreateIntakeFormDto = {
+        title: selectedForm.title,
+        description: selectedForm.description,
+        questions: selectedForm.questions.map((q) => ({
+          id: q.id,
+          text: q.text,
+          type: mapQuestionType(q.type),
+          options: q.options,
+          isRequired: q.isRequired,
+          order: q.order,
+        })),
+      };
+
+      setInviteData({
+        newIntakeForm: transformedForm,
+        intakeFormId: selectedFormId,
+        saveAsTemplate: true,
+        hasChanges: false,
+      });
+      setSelectedFormId(null);
+      goToNextStep();
+    }
+  }, [selectedForm, selectedFormId, setInviteData, goToNextStep]);
+
   return (
-    <div className='mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 sm:py-8 lg:py-10'>
-      <Button variant='ghost' size='sm' className='-ml-2 mb-4' onClick={handleBack}>
-        <ArrowLeft className='h-5 w-5' />
-      </Button>
-      <div className='mb-6 sm:mb-8'>
-        <h1 className='text-2xl sm:text-3xl font-semibold tracking-tight'>{currentStepData?.title}</h1>
+    <div className='w-full min-h-screen bg-white flex flex-col items-center px-2 sm:px-6 py-8'>
+      {/* Back button at the very top left (fixed width container for alignment) */}
+      <div className='w-full max-w-2xl mx-auto'>
+        <button
+          type='button'
+          aria-label='Back'
+          onClick={handleBack}
+          className='mb-6 text-gray-700 hover:text-black focus:outline-none'
+          style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <ArrowLeft className='h-5 w-5' />
+        </button>
+        {/* Heading and step indicator */}
+        <div className='mb-8'>
+          <h1 className='text-2xl font-bold mb-1'>Invite Client</h1>
+          <p className='text-muted-foreground text-sm'>
+            Step {step} of {steps.length}
+          </p>
+        </div>
+        {/* Show spinner if submitting, otherwise show form */}
+        {submitting ? (
+          <div className='flex justify-center items-center h-40'>
+            <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+          </div>
+        ) : (
+          <div className='w-full max-w-xl mx-auto'>{steps[step - 1]?.component}</div>
+        )}
       </div>
-      <div>{currentStepData?.component}</div>
     </div>
   );
 }

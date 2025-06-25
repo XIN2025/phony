@@ -45,8 +45,42 @@ export class AuthService {
   async handleOtpAuth(email: string): Promise<boolean> {
     validateRequiredFields({ email }, ['email']);
     const normalizedEmail = normalizeEmail(email);
-    await this.generateAndSendOtp(normalizedEmail);
+
+    // Store OTP in database first
+    const otp = generateOtp();
+    const expiresAt = new Date(Date.now() + config.otp.expiryMs);
+
+    await this.prismaService.otp.upsert({
+      where: { email: normalizedEmail },
+      update: { otp, expiresAt },
+      create: { email: normalizedEmail, otp, expiresAt },
+    });
+
+    // Send email asynchronously to avoid blocking the response
+    this.sendOtpEmailAsync(normalizedEmail, otp).catch((error) => {
+      this.logger.error(`Failed to send OTP email to ${normalizedEmail}:`, error);
+    });
+
     return true;
+  }
+
+  private async sendOtpEmailAsync(email: string, otp: string): Promise<void> {
+    try {
+      await this.mailService.sendTemplateMail({
+        to: email,
+        subject: 'Your Verification Code for Continuum',
+        templateName: 'OTP',
+        context: {
+          otp: otp,
+          validity: config.otp.expiryMinutes,
+        },
+      });
+      this.logger.log(`OTP email sent successfully to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send OTP email to ${email}:`, error);
+      // Optionally, you could delete the OTP from database if email fails
+      // await this.prismaService.otp.delete({ where: { email } });
+    }
   }
 
   async verifyOtpForSignup(email: string, otp: string): Promise<boolean> {
@@ -190,27 +224,6 @@ export class AuthService {
       config.jwt.expiresIn
     );
     return { token, user: createUserResponse(user) };
-  }
-
-  private async generateAndSendOtp(email: string) {
-    const otp = generateOtp();
-    const expiresAt = new Date(Date.now() + config.otp.expiryMs);
-
-    await this.prismaService.otp.upsert({
-      where: { email },
-      update: { otp, expiresAt },
-      create: { email, otp, expiresAt },
-    });
-
-    await this.mailService.sendTemplateMail({
-      to: email,
-      subject: 'Your Verification Code for Continuum',
-      templateName: 'OTP',
-      context: {
-        otp: otp,
-        validity: config.otp.expiryMinutes,
-      },
-    });
   }
 
   async updateProfile(userId: string, body: ProfileUpdateBody, file?: Express.Multer.File) {
