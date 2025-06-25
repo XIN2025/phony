@@ -4,9 +4,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar'
 import { Button } from '@repo/ui/components/button';
 import { LogOut } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
-import { getInitials, getUserDisplayName, getFullAvatarUrl } from '@/lib/utils';
+import { getUserDisplayName, getAvatarUrl, getUserInitials } from '@/lib/utils';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { useSidebar } from '@/context/SidebarContext';
+
 const ContinuumIcon = () => (
   <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg' className='h-6 w-6'>
     <rect x='3' y='3' width='18' height='18' rx='2' ry='2' stroke='currentColor' strokeWidth='2' />
@@ -18,12 +19,15 @@ const ContinuumIcon = () => (
     />
   </svg>
 );
+
 export const SidebarContent = ({
   navLinks,
   pathname,
+  signOutCallbackUrl = '/practitioner/auth',
 }: {
   navLinks: Array<{ href: string; icon: React.ElementType; label: string }>;
   pathname: string;
+  signOutCallbackUrl?: string;
 }) => {
   const { setSidebarOpen } = useSidebar();
   const { data: session, status } = useSession();
@@ -39,15 +43,15 @@ export const SidebarContent = ({
         </div>
       );
     }
-    const userName = getUserDisplayName(session);
+    const userName = getUserDisplayName(session?.user);
     const userEmail = session?.user?.email;
-    const avatarUrl = getFullAvatarUrl(session?.user?.avatarUrl);
+    const avatarUrl = getAvatarUrl(session?.user?.avatarUrl, session?.user);
 
     return (
       <div className='flex items-center gap-3'>
         <Avatar className='h-9 w-9 border'>
           <AvatarImage src={avatarUrl} alt={`${userName}'s avatar`} />
-          <AvatarFallback>{getInitials(userName)}</AvatarFallback>
+          <AvatarFallback>{getUserInitials(session?.user)}</AvatarFallback>
         </Avatar>
         <div className='flex flex-col'>
           <span className='font-semibold text-sm leading-tight'>{userName}</span>
@@ -89,7 +93,7 @@ export const SidebarContent = ({
           variant='ghost'
           size='sm'
           className='w-full justify-start gap-2 text-muted-foreground hover:text-foreground'
-          onClick={() => signOut({ callbackUrl: '/practitioner/auth' })}
+          onClick={() => signOut({ callbackUrl: signOutCallbackUrl })}
         >
           <LogOut className='h-4 w-4' />
           Sign Out

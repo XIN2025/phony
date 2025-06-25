@@ -30,6 +30,7 @@ export default function IntakePage() {
   const { status, data: session, update } = useSession();
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const { data: form, isLoading, error } = useGetClientIntakeForm();
   const { mutate: submitForm, isPending: isSubmitting } = useSubmitIntakeForm();
@@ -52,7 +53,7 @@ export default function IntakePage() {
       return;
     }
 
-    if (session.user.clientStatus === 'COMPLETED') {
+    if (session.user.clientStatus === 'INTAKE_COMPLETED') {
       router.push('/client');
       return;
     }
@@ -64,20 +65,22 @@ export default function IntakePage() {
   }, [status, session, router]);
 
   useEffect(() => {
-    if (error) {
+    if (error && !isRedirecting) {
       const errorMessage = error.message;
       if (errorMessage.includes('Client has already completed intake')) {
+        setIsRedirecting(true);
         toast.info('You have already completed your intake form.');
         router.push('/client');
         return;
       } else if (errorMessage.includes('No invitation found') || errorMessage.includes('No intake form attached')) {
+        setIsRedirecting(true);
         toast.error('No intake form found. Please contact your practitioner.');
         router.push('/client');
       } else {
         toast.error('Failed to load intake form. Please contact your practitioner.');
       }
     }
-  }, [error, router]);
+  }, [error, router, isRedirecting]);
 
   const handleAnswerChange = (questionId: string, value: string | string[] | boolean | number | undefined) => {
     setAnswers((prev) => ({
@@ -142,7 +145,7 @@ export default function IntakePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (hasSubmitted || isSubmitting) {
+    if (hasSubmitted || isSubmitting || isRedirecting) {
       return;
     }
 
@@ -154,6 +157,7 @@ export default function IntakePage() {
     }
 
     setHasSubmitted(true);
+    setIsRedirecting(true);
 
     submitForm(
       {
@@ -172,16 +176,15 @@ export default function IntakePage() {
             });
 
             toast.success('Intake form submitted successfully!');
-            setTimeout(() => {
-              router.push('/client');
-            }, 1000);
-          } catch (_error: unknown) {
-            window.location.href = '/client';
+            router.push('/client');
+          } catch {
+            router.push('/client');
           }
         },
-        onError: async (error: Error) => {
+        onError: async () => {
           setHasSubmitted(false);
-          toast.error(error.message || 'Failed to submit form. Please try again.');
+          setIsRedirecting(false);
+          toast.error('Failed to submit form. Please try again.');
         },
       },
     );

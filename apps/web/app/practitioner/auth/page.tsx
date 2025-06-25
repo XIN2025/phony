@@ -64,14 +64,9 @@ export default function PractitionerAuthPage() {
             startResendTimer();
             setShowOTP(true);
           },
-          onError: (error: Error) => {
-            if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
-              toast.error('Request timed out. The OTP may have been sent. Please check your email and try again.');
-            } else if (error.message?.includes('network') || error.message?.includes('connection')) {
-              toast.error('Network error. Please check your connection and try again.');
-            } else {
-              toast.error(error.message ?? 'Failed to send OTP. Please try again.');
-            }
+          onError: () => {
+            setIsLoading(false);
+            toast.error('Failed to submit form. Please try again.');
           },
         },
       );
@@ -140,16 +135,8 @@ export default function PractitionerAuthPage() {
                         toast.success('OTP resent successfully');
                         startResendTimer();
                       },
-                      onError: (error: Error) => {
-                        if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
-                          toast.error(
-                            'Request timed out. The OTP may have been sent. Please check your email and try again.',
-                          );
-                        } else if (error.message?.includes('network') || error.message?.includes('connection')) {
-                          toast.error('Network error. Please check your connection and try again.');
-                        } else {
-                          toast.error(error.message ?? 'Failed to resend OTP');
-                        }
+                      onError: () => {
+                        toast.error('Failed to resend OTP');
                       },
                     },
                   )

@@ -1,71 +1,75 @@
 ﻿import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { envConfig } from '@/config';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function getUserDisplayName(
-  user:
-    | {
-        firstName?: string | null;
-        lastName?: string | null;
-        email?: string | null;
-      }
-    | null
-    | undefined,
-): string;
+export function getUserDisplayName(user: any): string {
+  if (!user) return 'Unknown User';
 
-export function getUserDisplayName(
-  session:
-    | {
-        user?: {
-          firstName?: string | null;
-          lastName?: string | null;
-          email?: string | null;
-        } | null;
-      }
-    | null
-    | undefined,
-): string;
-
-export function getUserDisplayName(input: unknown): string {
-  if (!input) return 'User';
-
-  // Check if it's a session object with user
-  if (typeof input === 'object' && input !== null && 'user' in input) {
-    const user = (
-      input as { user?: { firstName?: string | null; lastName?: string | null; email?: string | null } | null }
-    ).user;
-    if (user?.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`;
-    }
-    if (user?.firstName) {
-      return user.firstName;
-    }
-    if (user?.lastName) {
-      return user.lastName;
-    }
-    return user?.email?.split('@')[0] || 'User';
+  if (user.firstName && user.lastName) {
+    return `${user.firstName} ${user.lastName}`;
   }
 
-  // Check if it's a user object directly
-  if (typeof input === 'object' && input !== null && 'firstName' in input) {
-    const user = input as { firstName?: string | null; lastName?: string | null; email?: string | null };
-    if (user.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`;
-    }
-    if (user.firstName) {
-      return user.firstName;
-    }
-    if (user.lastName) {
-      return user.lastName;
-    }
-    return user.email?.split('@')[0] || 'User';
+  if (user.firstName) {
+    return user.firstName;
   }
 
-  return 'User';
+  if (user.lastName) {
+    return user.lastName;
+  }
+
+  if (user.email) {
+    return user.email.split('@')[0];
+  }
+
+  return 'Unknown User';
+}
+
+export function getUserInitials(user: any): string {
+  if (!user) return 'U';
+
+  const firstName = user.firstName || '';
+  const lastName = user.lastName || '';
+
+  if (firstName && lastName) {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  }
+
+  if (firstName) {
+    return firstName.charAt(0).toUpperCase();
+  }
+
+  if (lastName) {
+    return lastName.charAt(0).toUpperCase();
+  }
+
+  if (user.email) {
+    return user.email.charAt(0).toUpperCase();
+  }
+
+  return 'U';
+}
+
+export function getAvatarUrl(avatarUrl?: string | null, user?: { firstName?: string; lastName?: string }): string {
+  if (!avatarUrl) {
+    if (user?.firstName && user?.lastName) {
+      const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=random&size=128`;
+    }
+    return `https://ui-avatars.com/api/?name=U&background=random&size=128`;
+  }
+
+  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
+    return avatarUrl;
+  }
+
+  if (avatarUrl.startsWith('/')) {
+    return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${avatarUrl}`;
+  }
+
+  return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/uploads/${avatarUrl}`;
 }
 
 export function getInitials(
@@ -106,20 +110,4 @@ export function getInitials(
   }
 
   return 'U';
-}
-
-export function getFullAvatarUrl(avatarUrl?: string | null): string {
-  if (!avatarUrl) {
-    return '';
-  }
-
-  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
-    return avatarUrl;
-  }
-
-  if (avatarUrl.startsWith('/')) {
-    return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${avatarUrl}`;
-  }
-
-  return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/uploads/${avatarUrl}`;
 }

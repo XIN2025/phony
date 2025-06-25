@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Loader2, Upload, User, CheckIcon, X } from 'lucide-react';
+import { Loader2, Upload, User } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { useSendOtp, usePractitionerSignup } from '@/lib/hooks/use-api';
@@ -43,14 +43,10 @@ export default function PractitionerSignUpPage() {
     profession: string;
     profileImage?: File;
   } | null>(null);
-  const [idProofFileName, setIdProofFileName] = React.useState<string | null>(null);
   const [profileImagePreview, setProfileImagePreview] = React.useState<string>('');
   const router = useRouter();
   const { status } = useSession();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const profileImageRef = React.useRef<HTMLInputElement>(null);
   const [profileImage, setProfileImage] = React.useState<File | null>(null);
-  const [idProof, setIdProof] = React.useState<File | null>(null);
 
   React.useEffect(() => {
     if (status === 'authenticated') {
@@ -202,15 +198,6 @@ export default function PractitionerSignUpPage() {
       setProfileImage(file);
       setProfileImagePreview(URL.createObjectURL(file));
       form.setValue('profileImage', file);
-    }
-  };
-
-  // ID proof upload handler
-  const handleIdProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setIdProof(file);
-      form.setValue('idProof', file);
     }
   };
 
@@ -404,12 +391,11 @@ export default function PractitionerSignUpPage() {
                   type='file'
                   accept='.pdf,image/*'
                   className='hidden'
-                  onChange={handleIdProofChange}
+                  onChange={handleProfileImageChange}
                 />
                 <label htmlFor='id-proof-upload' className='btn btn-outline cursor-pointer'>
                   Choose File
                 </label>
-                {idProof && <span className='text-xs mt-2'>{idProof.name}</span>}
               </div>
             </div>
             <FormField

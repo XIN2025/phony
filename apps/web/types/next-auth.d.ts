@@ -10,6 +10,7 @@ declare module 'next-auth' {
     role: string;
     profession?: string | null;
     clientStatus?: string;
+    practitionerId?: string | null;
     token: string;
   }
   interface Session {
@@ -22,6 +23,7 @@ declare module 'next-auth' {
       role: string;
       profession?: string | null;
       clientStatus?: string;
+      practitionerId?: string | null;
       token: string;
     };
     error?: string;
@@ -36,6 +38,7 @@ declare module 'next-auth' {
     role: string;
     profession?: string | null;
     clientStatus?: string;
+    practitionerId?: string | null;
     token: string;
     error?: string;
   }

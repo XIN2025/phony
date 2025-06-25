@@ -18,13 +18,6 @@ export const useVerifyOtp = () => {
   });
 };
 
-export const useVerifyOtpForSignup = () => {
-  return useMutation({
-    mutationFn: (data: { email: string; otp: string }) =>
-      ApiClient.post<{ success: boolean }>('/api/auth/otp/verify-signup', data),
-  });
-};
-
 export const usePractitionerSignup = () => {
   return useMutation({
     mutationFn: (formData: FormData) => ApiClient.post<LoginResponse>('/api/auth/practitioner/signup', formData),
@@ -259,7 +252,31 @@ export const useSubmitIntakeForm = () => {
 };
 
 export const useFixClientStatuses = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: () => ApiClient.post<{ message: string; fixedCount: number }>('/api/client/fix-statuses'),
+    mutationFn: () => ApiClient.post<{ message: string }>('/api/practitioner/fix-client-statuses'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
   });
 };
+
+export interface UpdateIntakeFormDto {
+  title?: string;
+  description?: string;
+  questions?: Array<{
+    text: string;
+    type: string;
+    options: string[];
+    isRequired: boolean;
+    order: number;
+  }>;
+}
+
+export interface SubmitIntakeFormDto {
+  answers: Array<{
+    questionId: string;
+    value: string;
+  }>;
+}

@@ -11,7 +11,7 @@ import {
   validateRequiredFields,
   getAvatarUrl,
 } from 'src/common/utils/user.utils';
-import { UserRole, ClientStatus } from '@repo/db';
+import { UserRole } from '@repo/db';
 
 export interface InviteClientDto {
   clientFirstName: string;

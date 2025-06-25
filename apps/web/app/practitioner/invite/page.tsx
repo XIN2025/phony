@@ -10,19 +10,12 @@ import { IntakeFormBuilder } from '@/components/invite/IntakeFormBuilder';
 import { IntakeFormPreview } from '@/components/invite/IntakeFormPreview';
 import { useInviteContext } from '@/context/InviteContext';
 import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
-import { Button } from '@repo/ui/components/button';
-import {
-  useInviteClient,
-  useCreateIntakeForm,
-  useUpdateIntakeForm,
-  useGetIntakeForm,
-  IntakeForm,
-} from '@/lib/hooks/use-api';
+import { useInviteClient, useCreateIntakeForm, useUpdateIntakeForm, useGetIntakeForm } from '@/lib/hooks/use-api';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function InviteClientPage() {
   const router = useRouter();
-  const { step, inviteData, setInviteData, goToNextStep, goToPrevStep, goToStep, resetInviteFlow } = useInviteContext();
+  const { step, inviteData, setInviteData, goToNextStep, goToPrevStep } = useInviteContext();
   const [submitting, setSubmitting] = React.useState(false);
   const [selectedFormId, setSelectedFormId] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -30,7 +23,7 @@ export default function InviteClientPage() {
   const { mutate: inviteClient, isPending: isInviting } = useInviteClient();
   const { mutate: createIntakeForm, isPending: isCreatingForm } = useCreateIntakeForm();
   const { mutate: updateIntakeForm, isPending: isUpdatingForm } = useUpdateIntakeForm();
-  const { data: selectedForm, isLoading: isLoadingForm } = useGetIntakeForm(selectedFormId || '');
+  const { data: selectedForm } = useGetIntakeForm(selectedFormId || '');
 
   const handleDetailsSubmit = (data: {
     clientFirstName: string;
@@ -131,7 +124,7 @@ export default function InviteClientPage() {
 
               inviteClient(invitationData, {
                 onSuccess: () => {
-                  const successMessage = inviteData.intakeFormId
+                  const successMessage = finalData.intakeFormId
                     ? 'Invitation sent successfully! An intake form has been included for your client.'
                     : 'Invitation sent successfully!';
                   toast.success(successMessage, {
@@ -180,7 +173,7 @@ export default function InviteClientPage() {
 
                 inviteClient(invitationData, {
                   onSuccess: () => {
-                    const successMessage = inviteData.intakeFormId
+                    const successMessage = finalData.intakeFormId
                       ? 'Invitation sent successfully! An intake form has been included for your client.'
                       : 'Invitation sent successfully!';
                     toast.success(successMessage, {
@@ -228,7 +221,7 @@ export default function InviteClientPage() {
 
       inviteClient(invitationData, {
         onSuccess: () => {
-          const successMessage = inviteData.intakeFormId
+          const successMessage = finalData.intakeFormId
             ? 'Invitation sent successfully! An intake form has been included for your client.'
             : 'Invitation sent successfully!';
           toast.success(successMessage, {

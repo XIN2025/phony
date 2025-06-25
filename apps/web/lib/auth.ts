@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { ApiClient } from '@/lib/api-client';
 import { envConfig } from '@/config';
 import { LoginResponse } from '@repo/shared-types/types';
+import { createAuthError, validateAuthFields } from '@/lib/auth-utils';
 
 const credentialsAuthProvider = CredentialsProvider({
   name: 'Credentials',
@@ -14,13 +15,9 @@ const credentialsAuthProvider = CredentialsProvider({
   },
   async authorize(credentials) {
     try {
-      if (!credentials?.email) {
-        throw new Error('Email required');
-      }
+      validateAuthFields(credentials || {});
 
-      // Handle direct token-based authentication (for post-signup)
       if (credentials?.token) {
-        // Verify the token and get user info
         const res = await ApiClient.get<LoginResponse['user']>('/api/auth/me', {
           headers: {
             Authorization: `Bearer ${credentials.token}`,
@@ -37,11 +34,11 @@ const credentialsAuthProvider = CredentialsProvider({
           avatarUrl: res.avatarUrl ?? '',
           profession: res.profession ?? null,
           clientStatus: res.clientStatus,
+          practitionerId: res.practitionerId ?? null,
         };
         return user;
       }
 
-      // Handle regular OTP verification
       if (!credentials?.otp) {
         throw new Error('OTP required');
       }
@@ -62,21 +59,11 @@ const credentialsAuthProvider = CredentialsProvider({
         avatarUrl: res.user.avatarUrl ?? '',
         profession: res.user.profession ?? null,
         clientStatus: res.user.clientStatus,
+        practitionerId: res.user.practitionerId ?? null,
       };
       return user;
     } catch (error) {
-      // Handle specific error cases
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      if (errorMessage.includes('Account not found')) {
-        throw new Error('Account not found. Please sign up first.');
-      }
-      if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
-        throw new Error('Invalid OTP. Please check your OTP and try again.');
-      }
-      if (errorMessage.includes('Invalid OTP')) {
-        throw new Error('Invalid OTP. Please check your OTP and try again.');
-      }
-      throw new Error(errorMessage || 'Invalid credentials');
+      throw createAuthError(error);
     }
   },
 });
@@ -90,7 +77,6 @@ export const authOptions: AuthOptions = {
         return { ...token, ...session.user };
       }
       if (user) {
-        // User just signed in
         token.id = user.id;
         token.email = user.email;
         token.firstName = user.firstName;
@@ -100,15 +86,13 @@ export const authOptions: AuthOptions = {
         token.avatarUrl = user.avatarUrl || '';
         token.token = user.token;
         token.clientStatus = user.clientStatus;
+        token.practitionerId = user.practitionerId;
         delete token.error;
         return token;
       }
-      // For existing sessions, just return the token as-is
-      // Backend JWT strategy will handle validation when making API calls
       return token;
     },
     async session({ session, token }) {
-      // If token has a critical error, return an error session
       if (token.error && (token.error === 'UserNotFound' || token.error === 'InvalidToken')) {
         return {
           expires: new Date(0).toISOString(),
@@ -126,13 +110,14 @@ export const authOptions: AuthOptions = {
         session.user.profession = token.profession as string;
         session.user.token = token.token as string;
         session.user.clientStatus = token.clientStatus as string;
+        session.user.practitionerId = token.practitionerId as string;
       }
       return session;
     },
   },
   session: {
     strategy: 'jwt',
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    maxAge: 10 * 24 * 60 * 60,
   },
   cookies: {
     sessionToken: {
@@ -142,7 +127,7 @@ export const authOptions: AuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 7 * 24 * 60 * 60, // 7 days
+        maxAge: 10 * 24 * 60 * 60,
       },
     },
     callbackUrl: {
@@ -165,8 +150,8 @@ export const authOptions: AuthOptions = {
     },
   },
   events: {
-    async signOut({ token }) {
-      // User signed out successfully
+    async signOut() {
+      return;
     },
   },
   pages: {
