@@ -26,6 +26,19 @@
         "tags": ["auth"]
       }
     },
+    "/api/auth/otp/verify-signup": {
+      "post": {
+        "operationId": "AuthController_verifyOtpForSignup",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "OTP verification for signup",
+            "content": { "application/json": { "schema": { "type": "boolean" } } }
+          }
+        },
+        "tags": ["auth"]
+      }
+    },
     "/api/auth/otp": {
       "post": {
         "operationId": "AuthController_otpAuth",

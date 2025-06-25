@@ -39,9 +39,11 @@ const credentialsAuthProvider = CredentialsProvider({
       };
       return user;
     } catch (error) {
-      console.error('Authorization failed:', error);
       // Handle specific error cases
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (errorMessage.includes('Account not found')) {
+        throw new Error('Account not found. Please sign up first.');
+      }
       if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
         throw new Error('Invalid OTP. Please check your OTP and try again.');
       }

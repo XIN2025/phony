@@ -26,6 +26,13 @@ export class AuthController {
     return this.authService.verifyOtp(body.email, body.otp, body.role);
   }
 
+  @Post('otp/verify-signup')
+  @Public()
+  @ApiResponse({ type: Boolean, description: 'OTP verification for signup' })
+  async verifyOtpForSignup(@Body() body: { email: string; otp: string }): Promise<boolean> {
+    return this.authService.verifyOtpForSignup(body.email, body.otp);
+  }
+
   @Post('otp')
   @Public()
   @ApiResponse({ type: Boolean, description: 'Whether the OTP was sent successfully' })
@@ -57,12 +64,7 @@ export class AuthController {
     })
   )
   async updateProfile(@Request() req, @Body() body: ProfileUpdateBody, @UploadedFile() file: Express.Multer.File) {
-    try {
-      return await this.authService.updateProfile(req.user.id, body, file);
-    } catch (error) {
-      console.error('Error in updateProfile:', error);
-      throw error;
-    }
+    return await this.authService.updateProfile(req.user.id, body, file);
   }
 
   @Get('me')

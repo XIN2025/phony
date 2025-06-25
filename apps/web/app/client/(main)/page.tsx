@@ -1,13 +1,11 @@
 ﻿'use client';
 import React from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
-import { LogOut, User, Calendar, FileText, MessageCircle, CheckCircle, AlertCircle, Clock } from 'lucide-react';
-import { getUserDisplayName } from '@/lib/utils';
-import { toast } from 'sonner';
+import { User, Calendar, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
 const ClientPage = () => {
   const { data: session, status } = useSession();
@@ -50,10 +48,6 @@ const ClientPage = () => {
       }
     }
   }, [session, status, router]);
-
-  const handleLogout = () => {
-    signOut({ callbackUrl: '/client/auth' });
-  };
 
   // Show loading only while session is being determined
   if (status === 'loading') {

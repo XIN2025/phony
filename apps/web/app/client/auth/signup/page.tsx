@@ -67,7 +67,6 @@ export default function ClientSignUpPage() {
       // Force page reload to clear any cached session data
       window.location.href = `/client/auth/signup?token=${encodeURIComponent(token || '')}`;
     } catch (error) {
-      console.error('Logout error:', error);
       setIsLoggingOut(false);
       toast.error('Failed to log out. Please try again.');
     }
@@ -89,16 +88,13 @@ export default function ClientSignUpPage() {
         invitationToken: token!,
       };
 
-      const response: unknown = await ApiClient.post('/api/auth/client/signup', signupData);
+      await ApiClient.post('/api/auth/client/signup', signupData);
 
       toast.success('Account created successfully! Please log in to continue.', { id: toastId });
 
       // Redirect to login page with the email pre-filled
       router.push(`/client/auth?email=${encodeURIComponent(email!.trim().toLowerCase())}`);
     } catch (err: unknown) {
-      console.error('Signup error:', err);
-      console.error('Error response:', err);
-      console.error('Error message:', err instanceof Error ? err.message : 'Unknown error');
       toast.error(err instanceof Error ? err.message : 'An unexpected error occurred.', { id: toastId });
       setIsSubmitting(false);
     }

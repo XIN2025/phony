@@ -6,13 +6,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Loader2, Upload, User, CheckIcon } from 'lucide-react';
+import { Loader2, Upload, User, CheckIcon, X } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { useMutation } from '@tanstack/react-query';
 import { AuthService } from '@/services';
-import { getInitials } from '@/lib/utils';
-import { ProfileSetupForm } from '@/components/ProfileSetupForm';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Button } from '@repo/ui/components/button';
 import { Checkbox } from '@repo/ui/components/checkbox';
@@ -22,11 +20,12 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
 import { Logo } from '@repo/ui/components/logo';
 const signUpSchema = z.object({
-  email: z.string().email('Please enter a valid email address.'),
-  otp: z.string().min(6, 'Your one-time password must be 6 characters.').optional(),
-  firstName: z.string().min(1, 'First name is required').optional(),
-  lastName: z.string().min(1, 'Last name is required').optional(),
-  profession: z.string().min(2, 'Profession is required').optional(),
+  email: z.string().min(1, 'Email is required').email('Please enter a valid email address.'),
+  otp: z.string().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  profession: z.string().optional(),
+  profileImage: z.any().optional(),
   idProof: z.any().optional(),
   terms: z.boolean().optional(),
 });
@@ -43,9 +42,11 @@ export default function PractitionerSignUpPage() {
     profileImage?: File;
   } | null>(null);
   const [idProofFileName, setIdProofFileName] = React.useState<string | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = React.useState<string>('');
   const router = useRouter();
   const { status } = useSession();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const profileImageRef = React.useRef<HTMLInputElement>(null);
   React.useEffect(() => {
     if (status === 'authenticated') {
       router.push('/practitioner');
@@ -64,6 +65,16 @@ export default function PractitionerSignUpPage() {
   });
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      email: '',
+      otp: '',
+      firstName: '',
+      lastName: '',
+      profession: '',
+      profileImage: null,
+      terms: false,
+    },
+    mode: 'onBlur',
   });
   const startResendTimer = () => {
     setResendTimer(60);
@@ -76,6 +87,7 @@ export default function PractitionerSignUpPage() {
     setIsLoading(true);
     const values = form.getValues();
     try {
+      // Create the account with all required fields
       await AuthService.signupPractitioner({
         email: values.email!.trim().toLowerCase(),
         otp: values.otp!.trim(),
@@ -84,39 +96,61 @@ export default function PractitionerSignUpPage() {
         lastName: profileData?.lastName || values.lastName!.trim(),
         profession: profileData?.profession || values.profession!,
       });
-      await signIn('credentials', {
-        email: values.email!.trim().toLowerCase(),
-        otp: values.otp!.trim(),
-        role: 'PRACTITIONER',
-        redirect: false,
-      });
-      toast.success('Account created successfully!');
-      router.push('/practitioner');
+
+      toast.success('Account created successfully! Please log in.');
+      router.push('/practitioner/auth');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Sign up failed.');
     } finally {
       setIsLoading(false);
     }
   };
-  const onSubmit = async (values: SignUpFormValues) => {
+  const handleStepSubmit = async (values: SignUpFormValues) => {
     if (isLoading) return;
+
     switch (step) {
       case 1:
+        if (!values.email?.trim()) {
+          toast.error('Please enter a valid email address.');
+          return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
+          toast.error('Please enter a valid email address.');
+          return;
+        }
         handleSendOTP({ email: values.email.trim().toLowerCase() });
         break;
       case 2:
-        if (values.otp?.length === 6) {
-          setStep(3);
-        } else {
+        if (!values.otp?.trim() || values.otp.trim().length !== 6) {
           toast.error('Please enter the 6-digit OTP.');
+          return;
         }
+        setStep(3);
+        break;
+      case 3:
+        if (!values.firstName?.trim()) {
+          toast.error('First name is required.');
+          return;
+        }
+        if (!values.lastName?.trim()) {
+          toast.error('Last name is required.');
+          return;
+        }
+        if (!values.profession?.trim()) {
+          toast.error('Profession is required.');
+          return;
+        }
+        setProfileData({
+          firstName: values.firstName.trim(),
+          lastName: values.lastName.trim(),
+          profession: values.profession.trim(),
+          profileImage: values.profileImage,
+        });
+        setStep(4);
         break;
       case 4:
         if (!values.terms) {
-          form.setError('terms', {
-            type: 'manual',
-            message: 'You must agree to the terms and conditions.',
-          });
+          toast.error('You must agree to the terms and conditions.');
           return;
         }
         await completeSignUp();
@@ -124,23 +158,6 @@ export default function PractitionerSignUpPage() {
       default:
         break;
     }
-  };
-  const handleProfileSubmit = (data: {
-    firstName: string;
-    lastName: string;
-    profession?: string;
-    profileImage?: File;
-  }) => {
-    setProfileData({
-      firstName: data.firstName,
-      lastName: data.lastName,
-      profession: data.profession || '',
-      profileImage: data.profileImage,
-    });
-    form.setValue('firstName', data.firstName);
-    form.setValue('lastName', data.lastName);
-    form.setValue('profession', data.profession || '');
-    setStep(4);
   };
   const renderStep = () => {
     switch (step) {
@@ -212,19 +229,106 @@ export default function PractitionerSignUpPage() {
         );
       case 3:
         return (
-          <motion.div key='step3'>
-            <ProfileSetupForm
-              onSubmit={handleProfileSubmit}
-              showProfession={true}
-              professions={professions}
-              submitText='Next'
-              hideTitle={true}
-              defaultValues={{
-                firstName: form.getValues('firstName') || '',
-                lastName: form.getValues('lastName') || '',
-                profession: form.getValues('profession') || '',
-              }}
+          <motion.div key='step3' className='space-y-6'>
+            <div className='flex justify-center'>
+              <div className='relative'>
+                <Avatar className='h-24 w-24'>
+                  <AvatarImage src={profileImagePreview || '#'} alt='Profile' />
+                  <AvatarFallback>
+                    <User className='h-12 w-12 text-muted-foreground' />
+                  </AvatarFallback>
+                </Avatar>
+                <input
+                  type='file'
+                  accept='image/*'
+                  ref={profileImageRef}
+                  className='absolute inset-0 w-full h-full opacity-0 cursor-pointer'
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      form.setValue('profileImage', file);
+                      const reader = new FileReader();
+                      reader.onload = (e) => {
+                        setProfileImagePreview(e.target?.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+                {profileImagePreview && (
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='destructive'
+                    className='absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full'
+                    onClick={() => {
+                      setProfileImagePreview('');
+                      form.setValue('profileImage', null);
+                      if (profileImageRef.current) {
+                        profileImageRef.current.value = '';
+                      }
+                    }}
+                  >
+                    <X className='w-3 h-3' />
+                  </Button>
+                )}
+              </div>
+            </div>
+            <div className='grid grid-cols-2 gap-4'>
+              <FormField
+                control={form.control}
+                name='firstName'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Enter your first name' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='lastName'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Enter your last name' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name='profession'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Profession</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger className='w-full'>
+                        <SelectValue placeholder='-- Select --' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {professions.map((profession) => (
+                        <SelectItem key={profession} value={profession}>
+                          {profession}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
+            <Button type='submit' className='w-full'>
+              Next
+            </Button>
           </motion.div>
         );
       case 4:
@@ -353,15 +457,11 @@ export default function PractitionerSignUpPage() {
           {step === 4 && 'Upload your professional credentials and accept our terms.'}
         </p>
       </div>
-      {step === 3 ? (
-        <AnimatePresence mode='wait'>{renderStep()}</AnimatePresence>
-      ) : (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <AnimatePresence mode='wait'>{renderStep()}</AnimatePresence>
-          </form>
-        </Form>
-      )}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleStepSubmit)}>
+          <AnimatePresence mode='wait'>{renderStep()}</AnimatePresence>
+        </form>
+      </Form>
       <div className='mt-6 text-center text-sm'>
         Already have an account?{' '}
         <Link href='/practitioner/auth' className='font-medium text-primary hover:underline'>
