@@ -5,7 +5,11 @@
       "get": {
         "operationId": "AppController_getHello",
         "parameters": [],
-        "responses": { "200": { "description": "" } },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
         "tags": ["App"]
       }
     },
@@ -15,12 +19,43 @@
         "parameters": [],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VerifyOtpDto" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyOtpDto"
+              }
+            }
+          }
         },
         "responses": {
           "default": {
             "description": "",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponseDto" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/otp/verify-signup": {
+      "post": {
+        "operationId": "AuthController_verifyOtpForSignup",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "OTP verification for signup",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
           }
         },
         "tags": ["auth"]
@@ -32,12 +67,24 @@
         "parameters": [],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OtpAuthDto" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpAuthDto"
+              }
+            }
+          }
         },
         "responses": {
           "default": {
             "description": "Whether the OTP was sent successfully",
-            "content": { "application/json": { "schema": { "type": "boolean" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
           }
         },
         "tags": ["auth"]
@@ -49,12 +96,24 @@
         "parameters": [],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PractitionerSignUpDto" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PractitionerSignUpDto"
+              }
+            }
+          }
         },
         "responses": {
           "default": {
             "description": "",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponseDto" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": ["auth"]
@@ -67,7 +126,13 @@
         "responses": {
           "default": {
             "description": "",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponseDto" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": ["auth"]
@@ -77,7 +142,11 @@
       "post": {
         "operationId": "AuthController_updateProfile",
         "parameters": [],
-        "responses": { "201": { "description": "" } },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
         "tags": ["auth"]
       }
     },
@@ -85,7 +154,11 @@
       "get": {
         "operationId": "AuthController_getCurrentUser",
         "parameters": [],
-        "responses": { "200": { "description": "User information retrieved successfully." } },
+        "responses": {
+          "200": {
+            "description": "User information retrieved successfully."
+          }
+        },
         "summary": "Get current user information",
         "tags": ["auth"]
       }
@@ -93,12 +166,29 @@
     "/api/practitioner/invitations/token/{token}": {
       "get": {
         "operationId": "PractitionerController_getInvitationByToken",
-        "parameters": [{ "name": "token", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
-          "200": { "description": "Invitation details found." },
-          "404": { "description": "Invitation not found." }
+          "200": {
+            "description": "Invitation details found."
+          },
+          "404": {
+            "description": "Invitation not found."
+          }
         },
-        "security": [{ "bearer": [] }],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get invitation details by token",
         "tags": ["practitioner"]
       }
@@ -108,11 +198,21 @@
         "operationId": "PractitionerController_inviteClient",
         "parameters": [],
         "responses": {
-          "201": { "description": "Client invitation sent successfully" },
-          "400": { "description": "Bad request - client already exists or invitation already sent" },
-          "404": { "description": "Practitioner not found" }
+          "201": {
+            "description": "Client invitation sent successfully"
+          },
+          "400": {
+            "description": "Bad request - client already exists or invitation already sent"
+          },
+          "404": {
+            "description": "Practitioner not found"
+          }
         },
-        "security": [{ "bearer": [] }],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Invite a client to the platform",
         "tags": ["practitioner"]
       }
@@ -121,8 +221,16 @@
       "get": {
         "operationId": "PractitionerController_getInvitations",
         "parameters": [],
-        "responses": { "200": { "description": "List of invitations retrieved successfully" } },
-        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "List of invitations retrieved successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get all invitations sent by the practitioner",
         "tags": ["practitioner"]
       }
@@ -130,12 +238,29 @@
     "/api/practitioner/invitations/{id}/resend": {
       "post": {
         "operationId": "PractitionerController_resendInvitation",
-        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
-          "201": { "description": "Invitation resent successfully" },
-          "404": { "description": "Invitation not found" }
+          "201": {
+            "description": "Invitation resent successfully"
+          },
+          "404": {
+            "description": "Invitation not found"
+          }
         },
-        "security": [{ "bearer": [] }],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Resend a specific invitation",
         "tags": ["practitioner"]
       }
@@ -143,13 +268,32 @@
     "/api/practitioner/invitations/{id}": {
       "delete": {
         "operationId": "PractitionerController_deleteInvitation",
-        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
-          "200": { "description": "Invitation deleted successfully" },
-          "403": { "description": "Forbidden - invitation does not belong to practitioner" },
-          "404": { "description": "Invitation not found" }
+          "200": {
+            "description": "Invitation deleted successfully"
+          },
+          "403": {
+            "description": "Forbidden - invitation does not belong to practitioner"
+          },
+          "404": {
+            "description": "Invitation not found"
+          }
         },
-        "security": [{ "bearer": [] }],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Delete a specific invitation",
         "tags": ["practitioner"]
       }
@@ -158,8 +302,16 @@
       "get": {
         "operationId": "PractitionerController_getClients",
         "parameters": [],
-        "responses": { "200": { "description": "List of clients retrieved successfully" } },
-        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "List of clients retrieved successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get all clients of the practitioner",
         "tags": ["practitioner"]
       }
@@ -168,16 +320,32 @@
       "post": {
         "operationId": "IntakeFormController_create",
         "parameters": [],
-        "responses": { "201": { "description": "The form has been successfully created." } },
-        "security": [{ "bearer": [] }],
+        "responses": {
+          "201": {
+            "description": "The form has been successfully created."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Create a new intake form",
         "tags": ["intake-forms"]
       },
       "get": {
         "operationId": "IntakeFormController_findAll",
         "parameters": [],
-        "responses": { "200": { "description": "List of intake forms." } },
-        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "List of intake forms."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get all intake forms for the logged-in practitioner",
         "tags": ["intake-forms"]
       }
@@ -185,37 +353,94 @@
     "/api/intake-forms/{id}": {
       "get": {
         "operationId": "IntakeFormController_findOne",
-        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
-          "200": { "description": "The intake form." },
-          "403": { "description": "Forbidden." },
-          "404": { "description": "Form not found." }
+          "200": {
+            "description": "The intake form."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Form not found."
+          }
         },
-        "security": [{ "bearer": [] }],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get a specific intake form by ID",
         "tags": ["intake-forms"]
       },
       "put": {
         "operationId": "IntakeFormController_update",
-        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
-          "200": { "description": "The form has been successfully updated." },
-          "403": { "description": "Forbidden." },
-          "404": { "description": "Form not found." }
+          "200": {
+            "description": "The form has been successfully updated."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Form not found."
+          }
         },
-        "security": [{ "bearer": [] }],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Update an intake form",
         "tags": ["intake-forms"]
       },
       "delete": {
         "operationId": "IntakeFormController_remove",
-        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
-          "204": { "description": "The form has been successfully deleted." },
-          "403": { "description": "Forbidden." },
-          "404": { "description": "Form not found." }
+          "204": {
+            "description": "The form has been successfully deleted."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Form not found."
+          }
         },
-        "security": [{ "bearer": [] }],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Delete an intake form",
         "tags": ["intake-forms"]
       }
@@ -224,8 +449,16 @@
       "get": {
         "operationId": "ClientController_getIntakeForm",
         "parameters": [],
-        "responses": { "200": { "description": "Intake form retrieved successfully." } },
-        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Intake form retrieved successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get intake form for the logged-in client",
         "tags": ["client"]
       }
@@ -234,8 +467,16 @@
       "post": {
         "operationId": "ClientController_submitIntakeForm",
         "parameters": [],
-        "responses": { "200": { "description": "Intake form submitted successfully." } },
-        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Intake form submitted successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Submit intake form answers",
         "tags": ["client"]
       }
@@ -244,57 +485,347 @@
       "post": {
         "operationId": "ClientController_fixClientStatuses",
         "parameters": [],
-        "responses": { "200": { "description": "Client statuses fixed successfully." } },
-        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Client statuses fixed successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Fix client statuses that are inconsistent with their submissions",
         "tags": ["client"]
       }
+    },
+    "/api/users": {
+      "get": {
+        "operationId": "UsersController_getAllUsers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of all users."
+          }
+        },
+        "summary": "Get all users",
+        "tags": ["users"]
+      },
+      "post": {
+        "operationId": "UsersController_createUser",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The user has been successfully created."
+          }
+        },
+        "summary": "Create a new user",
+        "tags": ["users"]
+      }
+    },
+    "/api/users/practitioner": {
+      "get": {
+        "operationId": "UsersController_getAllPractioner",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of all practitioners."
+          }
+        },
+        "summary": "Get all practitioners",
+        "tags": ["users"]
+      }
+    },
+    "/api/users/clients": {
+      "get": {
+        "operationId": "UsersController_getAllClient",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of all clients."
+          }
+        },
+        "summary": "Get all clients",
+        "tags": ["users"]
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "operationId": "UsersController_getUserById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user."
+          },
+          "404": {
+            "description": "User not found."
+          }
+        },
+        "summary": "Get user by ID",
+        "tags": ["users"]
+      }
+    },
+    "/api/chats": {
+      "get": {
+        "operationId": "ChatController_getAllChats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of all chats."
+          }
+        },
+        "summary": "Get all chats",
+        "tags": ["chats"]
+      },
+      "post": {
+        "operationId": "ChatController_createChat",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Chat created."
+          }
+        },
+        "summary": "Create a new chat",
+        "tags": ["chats"]
+      }
+    },
+    "/api/chats/{id}": {
+      "get": {
+        "operationId": "ChatController_getChatById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chat by id."
+          }
+        },
+        "summary": "Get chat by id",
+        "tags": ["chats"]
+      }
+    },
+    "/api/chats/client/{id}": {
+      "get": {
+        "operationId": "ChatController_getChatByClientId",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chat by client id."
+          }
+        },
+        "summary": "Get chat by client id",
+        "tags": ["chats"]
+      }
+    },
+    "/api/chats/practitioner/{id}": {
+      "get": {
+        "operationId": "ChatController_getChatByPractitionerId",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chat by practitioner id."
+          }
+        },
+        "summary": "Get chat by practitioner id",
+        "tags": ["chats"]
+      }
+    },
+    "/api/chats/{id}/messages": {
+      "get": {
+        "operationId": "ChatController_getChatMessages",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chat messages."
+          }
+        },
+        "summary": "Get all chat messages",
+        "tags": ["chats"]
+      },
+      "post": {
+        "operationId": "ChatController_saveMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Message saved."
+          }
+        },
+        "summary": "create new message",
+        "tags": ["chats"]
+      }
     }
   },
-  "info": { "title": "NestJS API", "description": "API for NestJS", "version": "1.0", "contact": {} },
-  "tags": [{ "name": "API", "description": "" }],
+  "info": {
+    "title": "NestJS API",
+    "description": "API for NestJS",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "API",
+      "description": ""
+    }
+  ],
   "servers": [],
   "components": {
-    "securitySchemes": { "bearer": { "scheme": "bearer", "bearerFormat": "JWT", "type": "http" } },
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
     "schemas": {
       "VerifyOtpDto": {
         "type": "object",
         "properties": {
-          "email": { "type": "string" },
-          "otp": { "type": "string" },
-          "role": { "type": "string", "enum": ["PRACTITIONER", "CLIENT"] }
+          "email": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["PRACTITIONER", "CLIENT"]
+          }
         },
         "required": ["email", "otp", "role"]
       },
       "UserDto": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "email": { "type": "string" },
-          "firstName": { "type": "string" },
-          "lastName": { "type": "string" },
-          "avatarUrl": { "type": "string", "nullable": true },
-          "role": { "type": "string", "enum": ["PRACTITIONER", "CLIENT"] },
-          "profession": { "type": "string", "nullable": true },
-          "clientStatus": { "type": "string", "enum": ["ACTIVE", "NEEDS_INTAKE", "INTAKE_COMPLETED"], "nullable": true }
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "enum": ["PRACTITIONER", "CLIENT"]
+          },
+          "profession": {
+            "type": "string",
+            "nullable": true
+          },
+          "clientStatus": {
+            "type": "string",
+            "enum": ["ACTIVE", "NEEDS_INTAKE", "INTAKE_COMPLETED"],
+            "nullable": true
+          }
         },
         "required": ["id", "email", "firstName", "lastName", "avatarUrl", "role", "profession", "clientStatus"]
       },
       "LoginResponseDto": {
         "type": "object",
-        "properties": { "token": { "type": "string" }, "user": { "$ref": "#/components/schemas/UserDto" } },
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserDto"
+          }
+        },
         "required": ["token", "user"]
       },
-      "OtpAuthDto": { "type": "object", "properties": { "email": { "type": "string" } }, "required": ["email"] },
+      "OtpAuthDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": ["email"]
+      },
       "PractitionerSignUpDto": {
         "type": "object",
         "properties": {
-          "email": { "type": "string" },
-          "otp": { "type": "string" },
-          "role": { "type": "string", "enum": ["PRACTITIONER"], "default": "PRACTITIONER" },
-          "firstName": { "type": "string" },
-          "lastName": { "type": "string" },
-          "profession": { "type": "string" }
+          "email": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["PRACTITIONER"],
+            "default": "PRACTITIONER"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "profession": {
+            "type": "string"
+          }
         },
         "required": ["email", "otp", "role", "firstName", "lastName", "profession"]
       }

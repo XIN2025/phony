@@ -37,6 +37,14 @@ model User {
 
   clientGoals Goal[] @relation("GoalClient")
   practitionerGoals Goal[] @relation("GoalPractitioner")
+  // Relation for chats as practitioner
+  practitionerChats Chats[] @relation("PractitionerChats")
+
+  // Relation for chats as client
+  clientChats Chats[] @relation("ClientChats")
+
+  // Relation for sent messages
+  sentMessages Message[] @relation("SentMessages")
 
   @@map("users")
 }
@@ -187,4 +195,31 @@ model Task {
   goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
 
   @@map("tasks")
+model Chats {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  practitionerId String   @db.ObjectId
+  clientId       String   @db.ObjectId
+  createdAt      DateTime @default(now()) @db.Date
+  updatedAt      DateTime @updatedAt @db.Date
+
+  practitioner User    @relation("PractitionerChats", fields: [practitionerId], references: [id], onDelete: Cascade)
+  client       User    @relation("ClientChats", fields: [clientId], references: [id], onDelete: Cascade)
+  messages     Message[]
+
+  @@unique([practitionerId, clientId])
+  @@map("chats")
+}
+
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  chatId    String   @db.ObjectId
+  senderId  String   @db.ObjectId
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @db.Date
+
+  chat   Chats @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
 }
