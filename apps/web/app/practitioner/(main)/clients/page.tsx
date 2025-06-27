@@ -5,33 +5,20 @@ import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
 import { Input } from '@repo/ui/components/input';
-import { MessageCircle, Eye, Search, Plus } from 'lucide-react';
+import { Search, Plus, MessageCircle } from 'lucide-react';
 import { Skeleton } from '@repo/ui/components/skeleton';
-import { useSession } from 'next-auth/react';
-import { getInitials, getFullAvatarUrl } from '@/lib/utils';
+import { getInitials, getAvatarUrl } from '@/lib/utils';
 import { useState } from 'react';
 import Link from 'next/link';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { useGetClients, Client } from '@/lib/hooks/use-api';
+import { useRouter } from 'next/navigation';
 
 const getClientDisplayName = (client: Client): string => {
   if (client.firstName && client.lastName) {
     return `${client.firstName} ${client.lastName}`;
   }
   return client.firstName || client.lastName || client.email?.split('@')[0] || 'Client';
-};
-
-const engagementBadgeVariant = (engagement?: string) => {
-  switch (engagement?.toLowerCase()) {
-    case 'high':
-      return 'bg-green-100 text-green-800 hover:bg-green-200';
-    case 'medium':
-      return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
-    case 'low':
-      return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-    default:
-      return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-  }
 };
 
 const renderSkeleton = () => (
@@ -68,8 +55,8 @@ const renderSkeleton = () => (
 );
 
 export default function ClientsPage() {
-  const { data: session } = useSession();
   const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
 
   const { data: clients = [], isLoading, isError } = useGetClients();
 
@@ -138,11 +125,21 @@ export default function ClientsPage() {
                     </TableRow>
                   ) : (
                     filteredClients.map((client) => (
-                      <TableRow key={client.id}>
+                      <TableRow
+                        key={client.id}
+                        className='cursor-pointer hover:bg-accent focus:bg-accent outline-none'
+                        tabIndex={0}
+                        onClick={() => router.push(`/practitioner/clients/${client.id}/dashboard`)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            router.push(`/practitioner/clients/${client.id}/dashboard`);
+                          }
+                        }}
+                      >
                         <TableCell>
                           <div className='flex items-center gap-3'>
                             <Avatar className='h-10 w-10'>
-                              <AvatarImage src={getFullAvatarUrl(client.avatarUrl)} />
+                              <AvatarImage src={getAvatarUrl(client.avatarUrl)} />
                               <AvatarFallback>{getInitials(getClientDisplayName(client))}</AvatarFallback>
                             </Avatar>
                             <span className='font-medium'>{getClientDisplayName(client)}</span>
@@ -168,9 +165,6 @@ export default function ClientsPage() {
                           <div className='flex justify-end gap-2'>
                             <Button variant='ghost' size='icon'>
                               <MessageCircle className='h-4 w-4' />
-                            </Button>
-                            <Button variant='ghost' size='icon'>
-                              <Eye className='h-4 w-4' />
                             </Button>
                           </div>
                         </TableCell>

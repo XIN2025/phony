@@ -1,6 +1,6 @@
 ﻿'use client';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
-import { getInitials, getFullAvatarUrl } from '@/lib/utils';
+import { getInitials, getAvatarUrl } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,10 +20,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/
 import { Loader2, MessageSquare, Plus, Trash2, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useGetInvitations, useDeleteInvitation, useResendInvitation, InvitationResponse } from '@/lib/hooks/use-api';
-import { useEffect } from 'react';
 
 const LoadingSpinner = () => (
   <div className='flex h-screen items-center justify-center'>
@@ -39,46 +37,18 @@ const getClientDisplayName = (client: InvitationResponse): string => {
 };
 
 export default function PractitionerDashboard() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { data: session } = useSession();
 
   const { data: invitations = [], isLoading: isInvitationsLoading } = useGetInvitations();
   const { mutate: deleteInvitation, isPending: isDeleting } = useDeleteInvitation();
   const { mutate: resendInvitation, isPending: isResending } = useResendInvitation();
 
-  // Handle navigation for unauthenticated users
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/practitioner/auth');
-    }
-  }, [status, router]);
-
-  // Handle navigation for users with errors
-  useEffect(() => {
-    if (session?.error) {
-      router.push('/practitioner/auth');
-    }
-  }, [session?.error, router]);
-
-  // Handle navigation for wrong role users
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user?.role !== 'PRACTITIONER') {
-      if (session?.user?.role === 'CLIENT') {
-        router.push('/client');
-      } else {
-        router.push('/practitioner/auth');
-      }
-    }
-  }, [status, session?.user?.role, router]);
-
-  if (
-    status === 'loading' ||
-    status === 'unauthenticated' ||
-    session?.error ||
-    (status === 'authenticated' && session?.user?.role !== 'PRACTITIONER') ||
-    isInvitationsLoading
-  ) {
+  if (isInvitationsLoading) {
     return <LoadingSpinner />;
+  }
+
+  if (!session?.user) {
+    return null;
   }
 
   const pendingInvitations = invitations.filter((inv) => inv.status === 'PENDING');
@@ -138,7 +108,7 @@ export default function PractitionerDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className='w-[200px] sm:w-[250px]'>Client Email</TableHead>
-                      <TableHead>Sent Date</TableHead>
+                      <TableHead className='hidden sm:table-cell'>Sent Date</TableHead>
                       <TableHead className='text-right'>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -154,8 +124,8 @@ export default function PractitionerDashboard() {
                         <TableRow key={client.id}>
                           <TableCell>
                             <div className='flex items-center gap-3'>
-                              <Avatar className='h-8 w-8 sm:h-9 sm:w-9'>
-                                <AvatarImage src={getFullAvatarUrl(client.avatar)} />
+                              <Avatar className='h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0'>
+                                <AvatarImage src={getAvatarUrl(client.avatar)} />
                                 <AvatarFallback className='text-xs sm:text-sm'>
                                   {getInitials(client.clientEmail)}
                                 </AvatarFallback>
@@ -165,14 +135,17 @@ export default function PractitionerDashboard() {
                                 <p className='text-xs sm:text-sm text-muted-foreground truncate'>
                                   {getClientDisplayName(client)}
                                 </p>
+                                <p className='text-xs text-muted-foreground sm:hidden'>
+                                  {new Date(client.createdAt).toLocaleDateString()}
+                                </p>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className='text-sm text-muted-foreground'>
+                          <TableCell className='text-sm text-muted-foreground hidden sm:table-cell'>
                             {new Date(client.createdAt).toLocaleDateString()}
                           </TableCell>
                           <TableCell className='text-right'>
-                            <div className='flex items-center justify-end gap-2'>
+                            <div className='flex items-center justify-end gap-1 sm:gap-2'>
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -190,6 +163,7 @@ export default function PractitionerDashboard() {
                                         })
                                       }
                                       disabled={isResending}
+                                      className='h-8 w-8 sm:h-9 sm:w-9 p-0'
                                     >
                                       {isResending ? (
                                         <Loader2 className='h-4 w-4 animate-spin' />
@@ -208,7 +182,7 @@ export default function PractitionerDashboard() {
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <Button variant='ghost' size='sm'>
+                                        <Button variant='ghost' size='sm' className='h-8 w-8 sm:h-9 sm:w-9 p-0'>
                                           <Trash2 className='h-4 w-4' />
                                         </Button>
                                       </TooltipTrigger>
@@ -218,7 +192,7 @@ export default function PractitionerDashboard() {
                                     </Tooltip>
                                   </TooltipProvider>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent>
+                                <AlertDialogContent className='max-w-[95vw] mx-4'>
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Delete Invitation</AlertDialogTitle>
                                     <AlertDialogDescription>

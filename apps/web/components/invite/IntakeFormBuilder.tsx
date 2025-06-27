@@ -74,8 +74,6 @@ const questionTypeOptions = [
 export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBuilderProps) {
   const { inviteData, setInviteData } = useInviteContext();
 
-  const isNewForm = !inviteData.intakeFormId;
-
   const [originalFormData, setOriginalFormData] = useState<CreateIntakeFormDto | null>(null);
 
   const form = useForm<CreateIntakeFormDto>({

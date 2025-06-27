@@ -1,19 +1,12 @@
 import 'dotenv/config';
 
-// Constants for hardcoded values
 const OTP_EXPIRY_MINUTES = 10;
 const OTP_EXPIRY_MS = OTP_EXPIRY_MINUTES * 60 * 1000;
 
-// Validate required environment variables
 const requiredEnvVars = {
   JWT_SECRET: process.env.JWT_SECRET,
-  SMTP_HOST: process.env.SMTP_HOST,
-  SMTP_USER: process.env.SMTP_USER,
-  SMTP_PASSWORD: process.env.SMTP_PASSWORD,
-  SMTP_FROM: process.env.SMTP_FROM,
 };
 
-// Check for missing required environment variables
 const missingVars = Object.entries(requiredEnvVars)
   .filter(([, value]) => !value)
   .map(([key]) => key);
@@ -21,6 +14,17 @@ const missingVars = Object.entries(requiredEnvVars)
 if (missingVars.length > 0) {
   throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
 }
+
+const optionalEnvVars = {
+  SMTP_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
+  SMTP_USER: process.env.SMTP_USER || '',
+  SMTP_PASSWORD: process.env.SMTP_PASSWORD || '',
+  SMTP_FROM: process.env.SMTP_FROM || '',
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
+  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL || '',
+  DATABASE_URL: process.env.DATABASE_URL || 'mongodb://localhost:27017/continuum',
+};
 
 export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
@@ -30,21 +34,21 @@ export const config = {
     expiresIn: process.env.JWT_EXPIRES_IN ?? '10d',
   },
   google: {
-    clientId: process.env.GOOGLE_CLIENT_ID!,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    callbackUrl: process.env.GOOGLE_CALLBACK_URL!,
+    clientId: optionalEnvVars.GOOGLE_CLIENT_ID,
+    clientSecret: optionalEnvVars.GOOGLE_CLIENT_SECRET,
+    callbackUrl: optionalEnvVars.GOOGLE_CALLBACK_URL,
   },
   mail: {
     smtp: {
-      host: process.env.SMTP_HOST!,
+      host: optionalEnvVars.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '465', 10),
       auth: {
-        user: process.env.SMTP_USER!,
-        pass: process.env.SMTP_PASSWORD!,
+        user: optionalEnvVars.SMTP_USER,
+        pass: optionalEnvVars.SMTP_PASSWORD,
       },
     },
     defaults: {
-      from: process.env.SMTP_FROM!,
+      from: optionalEnvVars.SMTP_FROM,
       fromName: process.env.SMTP_FROM_NAME ?? 'Continuum',
     },
   },

@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { SidebarContent } from '@/components/practitioner/Sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/sheet';
 import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
+import PractitionerAuthWrapper from '@/components/PractitionerAuthWrapper';
 
 function PractitionerLayoutContent({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setSidebarOpen } = useSidebar();
@@ -15,20 +16,22 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
     { href: '/practitioner/forms', icon: FileIcon, label: 'Forms' },
   ];
   return (
-    <div className='grid min-h-screen w-full lg:grid-cols-[280px_1fr]'>
-      <div className='hidden bg-background lg:block'>
-        <SidebarContent navLinks={navLinks} pathname={pathname} />
-      </div>
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side='left' className='w-[280px] p-0'>
-          <SheetHeader className='sr-only'>
-            <SheetTitle>Navigation Menu</SheetTitle>
-          </SheetHeader>
+    <PractitionerAuthWrapper>
+      <div className='grid min-h-screen w-full lg:grid-cols-[280px_1fr]'>
+        <div className='hidden bg-background lg:block'>
           <SidebarContent navLinks={navLinks} pathname={pathname} />
-        </SheetContent>
-      </Sheet>
-      <div className='flex flex-1 flex-col'>{children}</div>
-    </div>
+        </div>
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetContent side='left' className='w-[280px] p-0'>
+            <SheetHeader className='sr-only'>
+              <SheetTitle>Navigation Menu</SheetTitle>
+            </SheetHeader>
+            <SidebarContent navLinks={navLinks} pathname={pathname} />
+          </SheetContent>
+        </Sheet>
+        <div className='flex flex-1 flex-col'>{children}</div>
+      </div>
+    </PractitionerAuthWrapper>
   );
 }
 

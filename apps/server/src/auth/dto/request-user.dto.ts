@@ -1,4 +1,4 @@
-import { UserRole } from '@repo/db';
+import { UserRole, ClientStatus } from '@repo/db';
 
 export interface RequestUser {
   id: string;
@@ -7,6 +7,6 @@ export interface RequestUser {
   lastName: string;
   avatarUrl?: string | null;
   role: UserRole;
-  clientStatus?: string;
-  sub: string;
+  clientStatus?: ClientStatus;
+  practitionerId?: string | null;
 }

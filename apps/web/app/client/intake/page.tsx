@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import ClientIntakeAuthWrapper from '@/components/ClientIntakeAuthWrapper';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Input } from '@repo/ui/components/input';
@@ -27,57 +28,31 @@ interface Question {
 
 export default function IntakePage() {
   const router = useRouter();
-  const { status, data: session, update } = useSession();
+  const { data: session, update } = useSession();
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const { data: form, isLoading, error } = useGetClientIntakeForm();
   const { mutate: submitForm, isPending: isSubmitting } = useSubmitIntakeForm();
 
   useEffect(() => {
-    if (status === 'loading') return;
-
-    if (status === 'unauthenticated') {
-      router.push('/client/auth');
-      return;
-    }
-
-    if (!session?.user) {
-      router.push('/client/auth');
-      return;
-    }
-
-    if (session.user.role !== 'CLIENT') {
-      router.push('/practitioner');
-      return;
-    }
-
-    if (session.user.clientStatus === 'COMPLETED') {
-      router.push('/client');
-      return;
-    }
-
-    if (session.user.clientStatus === 'PENDING' || session.user.clientStatus === 'ACTIVE') {
-      router.push('/client');
-      return;
-    }
-  }, [status, session, router]);
-
-  useEffect(() => {
-    if (error) {
+    if (error && !isRedirecting) {
       const errorMessage = error.message;
       if (errorMessage.includes('Client has already completed intake')) {
+        setIsRedirecting(true);
         toast.info('You have already completed your intake form.');
         router.push('/client');
         return;
       } else if (errorMessage.includes('No invitation found') || errorMessage.includes('No intake form attached')) {
+        setIsRedirecting(true);
         toast.error('No intake form found. Please contact your practitioner.');
         router.push('/client');
       } else {
         toast.error('Failed to load intake form. Please contact your practitioner.');
       }
     }
-  }, [error, router]);
+  }, [error, router, isRedirecting]);
 
   const handleAnswerChange = (questionId: string, value: string | string[] | boolean | number | undefined) => {
     setAnswers((prev) => ({
@@ -142,7 +117,7 @@ export default function IntakePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (hasSubmitted || isSubmitting) {
+    if (hasSubmitted || isSubmitting || isRedirecting) {
       return;
     }
 
@@ -154,6 +129,7 @@ export default function IntakePage() {
     }
 
     setHasSubmitted(true);
+    setIsRedirecting(true);
 
     submitForm(
       {
@@ -172,16 +148,15 @@ export default function IntakePage() {
             });
 
             toast.success('Intake form submitted successfully!');
-            setTimeout(() => {
-              router.push('/client');
-            }, 1000);
-          } catch (_error: unknown) {
-            window.location.href = '/client';
+            router.push('/client');
+          } catch {
+            router.push('/client');
           }
         },
-        onError: async (error: Error) => {
+        onError: async () => {
           setHasSubmitted(false);
-          toast.error(error.message || 'Failed to submit form. Please try again.');
+          setIsRedirecting(false);
+          toast.error('Failed to submit form. Please try again.');
         },
       },
     );
@@ -336,37 +311,41 @@ export default function IntakePage() {
 
   if (isLoading) {
     return (
-      <div className='min-h-screen bg-background flex items-center justify-center p-4'>
-        <div className='w-full max-w-2xl text-center'>
-          <div className='mb-8 text-center'>
-            <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10' />
-          </div>
-          <div className='bg-card rounded-lg shadow-lg p-8'>
-            <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4' />
-            <h2 className='text-xl font-semibold mb-2'>Loading your intake form...</h2>
-            <p className='text-muted-foreground'>Please wait while we load your personalized intake form.</p>
+      <ClientIntakeAuthWrapper>
+        <div className='min-h-screen bg-background flex items-center justify-center p-4'>
+          <div className='w-full max-w-2xl text-center'>
+            <div className='mb-8 text-center'>
+              <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10' />
+            </div>
+            <div className='bg-card rounded-lg shadow-lg p-8'>
+              <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4' />
+              <h2 className='text-xl font-semibold mb-2'>Loading your intake form...</h2>
+              <p className='text-muted-foreground'>Please wait while we load your personalized intake form.</p>
+            </div>
           </div>
         </div>
-      </div>
+      </ClientIntakeAuthWrapper>
     );
   }
 
   if (!form || !form.questions) {
     return (
-      <div className='min-h-screen bg-background flex items-center justify-center p-4'>
-        <div className='w-full max-w-2xl text-center'>
-          <div className='mb-8 text-center'>
-            <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10' />
-          </div>
-          <div className='bg-card rounded-lg shadow-lg p-8'>
-            <h2 className='text-xl font-semibold mb-2'>No Intake Form Available</h2>
-            <p className='text-muted-foreground mb-4'>
-              No intake form has been assigned to you. Please contact your practitioner.
-            </p>
-            <Button onClick={() => router.push('/client')}>Go to Dashboard</Button>
+      <ClientIntakeAuthWrapper>
+        <div className='min-h-screen bg-background flex items-center justify-center p-4'>
+          <div className='w-full max-w-2xl text-center'>
+            <div className='mb-8 text-center'>
+              <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10' />
+            </div>
+            <div className='bg-card rounded-lg shadow-lg p-8'>
+              <h2 className='text-xl font-semibold mb-2'>No Intake Form Available</h2>
+              <p className='text-muted-foreground mb-4'>
+                No intake form has been assigned to you. Please contact your practitioner.
+              </p>
+              <Button onClick={() => router.push('/client')}>Go to Dashboard</Button>
+            </div>
           </div>
         </div>
-      </div>
+      </ClientIntakeAuthWrapper>
     );
   }
 
@@ -399,43 +378,45 @@ export default function IntakePage() {
       : null;
 
   return (
-    <div className='min-h-screen bg-background p-4'>
-      <div className='max-w-4xl mx-auto'>
-        <div className='mb-8 text-center'>
-          <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10 mb-4' />
-          <h1 className='text-2xl font-bold mb-2'>{form.title}</h1>
-          {form.description && <p className='text-muted-foreground max-w-2xl mx-auto'>{form.description}</p>}
-        </div>
-
-        <div className='mb-6'>
-          <div className='flex justify-between items-center mb-2'>
-            <span className='text-sm font-medium'>Progress</span>
-            <span className='text-sm text-muted-foreground'>
-              {completedQuestions} of {form.questions?.length || 0} questions completed
-            </span>
+    <ClientIntakeAuthWrapper>
+      <div className='min-h-screen bg-background p-4'>
+        <div className='max-w-4xl mx-auto'>
+          <div className='mb-8 text-center'>
+            <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10 mb-4' />
+            <h1 className='text-2xl font-bold mb-2'>{form.title}</h1>
+            {form.description && <p className='text-muted-foreground max-w-2xl mx-auto'>{form.description}</p>}
           </div>
-          <Progress value={progress} className='h-2' />
-        </div>
 
-        <form key='intake-form' onSubmit={handleSubmit} className='space-y-6'>
-          {renderQuestions}
-
-          <div className='flex justify-end gap-4 pt-6'>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => router.push('/client')}
-              disabled={isSubmitting || hasSubmitted}
-            >
-              Cancel
-            </Button>
-            <Button type='submit' disabled={isSubmitting || hasSubmitted} key='submit-button'>
-              {isSubmitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-              {hasSubmitted ? 'Submitted' : 'Submit Form'}
-            </Button>
+          <div className='mb-6'>
+            <div className='flex justify-between items-center mb-2'>
+              <span className='text-sm font-medium'>Progress</span>
+              <span className='text-sm text-muted-foreground'>
+                {completedQuestions} of {form.questions?.length || 0} questions completed
+              </span>
+            </div>
+            <Progress value={progress} className='h-2' />
           </div>
-        </form>
+
+          <form key='intake-form' onSubmit={handleSubmit} className='space-y-6'>
+            {renderQuestions}
+
+            <div className='flex justify-end gap-4 pt-6'>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => router.push('/client')}
+                disabled={isSubmitting || hasSubmitted}
+              >
+                Cancel
+              </Button>
+              <Button type='submit' disabled={isSubmitting || hasSubmitted} key='submit-button'>
+                {isSubmitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                {hasSubmitted ? 'Submitted' : 'Submit Form'}
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </ClientIntakeAuthWrapper>
   );
 }

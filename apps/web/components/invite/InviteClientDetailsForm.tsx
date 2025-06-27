@@ -8,6 +8,8 @@ import { Label } from '@repo/ui/components/label';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { inviteClientSchema } from '@repo/shared-types/schemas';
 import { useInviteContext } from '@/context/InviteContext';
+import { useState } from 'react';
+
 type FormValues = z.infer<typeof inviteClientSchema>;
 interface Props {
   onNext: (data: FormValues) => void;
@@ -19,8 +21,8 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
   const {
     handleSubmit,
     control,
-    watch,
     formState: { errors, isValid },
+    watch,
   } = useForm<FormValues>({
     resolver: zodResolver(inviteClientSchema),
     defaultValues: {
@@ -31,7 +33,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
     },
     mode: 'onChange',
   });
-  const includeIntakeForm = watch('includeIntakeForm');
+
   return (
     <form onSubmit={handleSubmit(onNext)} className='space-y-4'>
       <div className='space-y-2'>

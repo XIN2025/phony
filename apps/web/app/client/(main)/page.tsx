@@ -1,84 +1,99 @@
 ﻿'use client';
-import React from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@repo/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
-import { User, Calendar, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
+import { Checkbox } from '@repo/ui/components/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@repo/ui/components/dialog';
+import { Textarea } from '@repo/ui/components/textarea';
+import { Label } from '@repo/ui/components/label';
+import { Star, Calendar, Target, Clock } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+interface ActionItem {
+  id: string;
+  description: string;
+  target: string;
+  frequency: string;
+  isCompleted: boolean;
+  category: string;
+}
+
+interface CompletionData {
+  rating: number;
+  journalEntry: string;
+  achievedValue: string;
+}
 
 const ClientPage = () => {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const [selectedTask, setSelectedTask] = useState<ActionItem | null>(null);
+  const [completionData, setCompletionData] = useState<CompletionData>({
+    rating: 0,
+    journalEntry: '',
+    achievedValue: '',
+  });
 
-  // Handle authentication and redirects
-  useEffect(() => {
-    if (status === 'loading') return;
+  const { data: todayTasks, isLoading } = useQuery({
+    queryKey: ['today-tasks'],
+    queryFn: async (): Promise<ActionItem[]> => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return [
+        {
+          id: '1',
+          description: 'Spend Time Outdoors',
+          target: '30 mins',
+          frequency: '2/day',
+          isCompleted: false,
+          category: 'daily',
+        },
+        {
+          id: '4',
+          description: 'Sleep Routine',
+          target: '8 hrs',
+          frequency: '1/day',
+          isCompleted: false,
+          category: 'consistent',
+        },
+      ];
+    },
+  });
 
-    if (status === 'unauthenticated') {
-      router.push('/client/auth');
+  const completeTaskMutation = useMutation({
+    mutationFn: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+      setSelectedTask(null);
+      setCompletionData({ rating: 0, journalEntry: '', achievedValue: '' });
+    },
+  });
+
+  const handleTaskToggle = (task: ActionItem) => {
+    if (task.isCompleted) {
       return;
     }
+    setSelectedTask(task);
+  };
 
-    if (!session?.user) {
-      router.push('/client/auth');
-      return;
-    }
+  const handleCompleteTask = () => {
+    if (!selectedTask) return;
 
-    if (session.user.role !== 'CLIENT') {
-      router.push('/practitioner');
-      return;
-    }
+    completeTaskMutation.mutate();
+  };
 
-    if (!session.user.firstName || !session.user.lastName) {
-      router.push('/client/profile-setup');
-      return;
-    }
-
-    if (session.user.clientStatus === 'NEEDS_INTAKE') {
-      router.push('/client/intake');
-      return;
-    }
-  }, [status, session, router]);
-
-  // Show loading only while session is being determined
-  if (status === 'loading') {
+  if (isLoading) {
     return (
       <div className='flex h-screen items-center justify-center'>
         <div className='text-center'>
           <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
-          <p className='text-sm text-muted-foreground'>Loading...</p>
+          <p className='text-sm text-muted-foreground'>Loading your daily plan...</p>
         </div>
       </div>
     );
-  }
-
-  // If not authenticated, redirect to auth page
-  if (status === 'unauthenticated') {
-    return <div className='flex h-screen items-center justify-center'>Redirecting...</div>;
-  }
-
-  // If session has error, redirect to auth page
-  if (session?.error) {
-    return <div className='flex h-screen items-center justify-center'>Redirecting...</div>;
-  }
-
-  // If authenticated but not a client, redirect to appropriate page
-  if (status === 'authenticated' && session?.user?.role !== 'CLIENT') {
-    return <div className='flex h-screen items-center justify-center'>Redirecting...</div>;
-  }
-
-  // If authenticated client but no basic profile, redirect to profile setup
-  if (status === 'authenticated' && session?.user?.role === 'CLIENT') {
-    const hasBasicProfile = session.user.firstName && session.user.lastName;
-    if (!hasBasicProfile) {
-      return <div className='flex h-screen items-center justify-center'>Redirecting to profile setup...</div>;
-    }
-
-    // Check if client needs to complete intake form
-    if (session.user.clientStatus === 'NEEDS_INTAKE') {
-      return <div className='flex h-screen items-center justify-center'>Redirecting to intake form...</div>;
-    }
   }
 
   if (!session?.user) {
@@ -86,132 +101,202 @@ const ClientPage = () => {
   }
 
   const user = session.user;
+  const completedTasks = todayTasks?.filter((task) => task.isCompleted).length || 0;
+  const totalTasks = todayTasks?.length || 0;
 
   return (
-    <div className='container mx-auto px-4 py-8'>
-      <div className='mb-8'>
-        <h1 className='text-3xl font-bold text-gray-900 dark:text-white'>Welcome back, {user.firstName}!</h1>
-        <p className='text-gray-600 dark:text-gray-400 mt-2'>Here&apos;s what&apos;s happening with your care.</p>
+    <div className='container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl'>
+      <div className='mb-6 sm:mb-8'>
+        <h1 className='text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white'>
+          Welcome back, {user.firstName}!
+        </h1>
+        <p className='text-gray-600 dark:text-gray-400 mt-2'>Here&apos;s your plan for today</p>
       </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        {/* Profile Status */}
+      <div className='mb-6'>
         <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Profile Status</CardTitle>
-            <User className='h-4 w-4 text-muted-foreground' />
+          <CardHeader className='pb-3 sm:pb-4'>
+            <CardTitle className='flex items-center gap-2 text-lg sm:text-xl'>
+              <Calendar className='h-5 w-5' />
+              Today&apos;s Progress
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>Complete</div>
-            <p className='text-xs text-muted-foreground'>Your profile is up to date</p>
-          </CardContent>
-        </Card>
-
-        {/* Next Appointment */}
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Next Appointment</CardTitle>
-            <Calendar className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>Not Scheduled</div>
-            <p className='text-xs text-muted-foreground'>Contact your practitioner to schedule</p>
-          </CardContent>
-        </Card>
-
-        {/* Intake Form Status */}
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Intake Form</CardTitle>
-            <FileText className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            {user.clientStatus === 'INTAKE_COMPLETED' ? (
-              <>
-                <div className='text-2xl font-bold text-green-600'>Completed</div>
-                <p className='text-xs text-muted-foreground'>Your intake form has been submitted</p>
-              </>
-            ) : user.clientStatus === 'NEEDS_INTAKE' ? (
-              <>
-                <div className='text-2xl font-bold text-orange-600'>Pending</div>
-                <p className='text-xs text-muted-foreground'>Please complete your intake form</p>
-                <Button className='mt-2' size='sm' onClick={() => router.push('/client/intake')}>
-                  Complete Form
-                </Button>
-              </>
-            ) : (
-              <>
-                <div className='text-2xl font-bold text-gray-600'>Not Required</div>
-                <p className='text-xs text-muted-foreground'>No intake form needed at this time</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent Activity */}
-        <Card className='md:col-span-2 lg:col-span-3'>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Your latest interactions and updates</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='space-y-4'>
-              <div className='flex items-center space-x-4'>
-                <div className='flex-shrink-0'>
-                  <CheckCircle className='h-5 w-5 text-green-500' />
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0'>
+              <div className='text-center sm:text-left'>
+                <div className='text-3xl sm:text-4xl font-bold'>
+                  {completedTasks}/{totalTasks}
                 </div>
-                <div className='flex-1 min-w-0'>
-                  <p className='text-sm font-medium text-gray-900 dark:text-white'>Account Created</p>
-                  <p className='text-sm text-gray-500 dark:text-gray-400'>
-                    Welcome to Continuum! Your account has been successfully created.
-                  </p>
-                </div>
-                <div className='flex-shrink-0 text-sm text-gray-500 dark:text-gray-400'>
-                  <Clock className='h-4 w-4 inline mr-1' />
-                  Just now
-                </div>
+                <div className='text-sm text-muted-foreground'>Tasks completed</div>
               </div>
-
-              {user.clientStatus === 'INTAKE_COMPLETED' && (
-                <div className='flex items-center space-x-4'>
-                  <div className='flex-shrink-0'>
-                    <CheckCircle className='h-5 w-5 text-green-500' />
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <p className='text-sm font-medium text-gray-900 dark:text-white'>Intake Form Completed</p>
-                    <p className='text-sm text-gray-500 dark:text-gray-400'>
-                      Your intake form has been submitted and reviewed.
-                    </p>
-                  </div>
-                  <div className='flex-shrink-0 text-sm text-gray-500 dark:text-gray-400'>
-                    <Clock className='h-4 w-4 inline mr-1' />
-                    Recently
-                  </div>
+              <div className='text-center sm:text-right'>
+                <div className='text-3xl sm:text-4xl font-bold'>
+                  {totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}%
                 </div>
-              )}
-
-              {user.clientStatus === 'NEEDS_INTAKE' && (
-                <div className='flex items-center space-x-4'>
-                  <div className='flex-shrink-0'>
-                    <AlertCircle className='h-5 w-5 text-orange-500' />
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <p className='text-sm font-medium text-gray-900 dark:text-white'>Intake Form Required</p>
-                    <p className='text-sm text-gray-500 dark:text-gray-400'>
-                      Please complete your intake form to continue.
-                    </p>
-                  </div>
-                  <div className='flex-shrink-0'>
-                    <Button size='sm' variant='outline' onClick={() => router.push('/client/intake')}>
-                      Complete Now
-                    </Button>
-                  </div>
-                </div>
-              )}
+                <div className='text-sm text-muted-foreground'>Completion rate</div>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <div className='space-y-6 sm:space-y-8'>
+        <div>
+          <h2 className='text-xl font-semibold mb-4'>Daily Tasks</h2>
+          <div className='space-y-3'>
+            {todayTasks
+              ?.filter((task) => task.category === 'daily')
+              .map((task) => (
+                <Card
+                  key={task.id}
+                  className={
+                    task.isCompleted ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' : ''
+                  }
+                >
+                  <CardContent className='p-4 sm:p-6'>
+                    <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0'>
+                      <div className='flex items-start gap-3 flex-1'>
+                        <Checkbox
+                          checked={task.isCompleted}
+                          onCheckedChange={() => handleTaskToggle(task)}
+                          disabled={task.isCompleted}
+                          className='mt-1'
+                        />
+                        <div className='flex-1 min-w-0'>
+                          <div className='font-medium text-base sm:text-lg'>{task.description}</div>
+                          <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1'>
+                            <span className='flex items-center gap-1'>
+                              <Target className='h-3 w-3 flex-shrink-0' />
+                              {task.target}
+                            </span>
+                            <span className='flex items-center gap-1'>
+                              <Clock className='h-3 w-3 flex-shrink-0' />
+                              {task.frequency}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      {task.isCompleted && (
+                        <div className='text-green-600 text-sm font-medium flex items-center gap-1 sm:ml-4'>
+                          <span className='text-lg'>✓</span>
+                          <span className='hidden sm:inline'>Completed</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+          </div>
+        </div>
+
+        <div>
+          <h2 className='text-xl font-semibold mb-4'>Consistent Goals</h2>
+          <div className='space-y-3'>
+            {todayTasks
+              ?.filter((task) => task.category === 'consistent')
+              .map((task) => (
+                <Card
+                  key={task.id}
+                  className={
+                    task.isCompleted ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' : ''
+                  }
+                >
+                  <CardContent className='p-4 sm:p-6'>
+                    <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0'>
+                      <div className='flex items-start gap-3 flex-1'>
+                        <Checkbox
+                          checked={task.isCompleted}
+                          onCheckedChange={() => handleTaskToggle(task)}
+                          disabled={task.isCompleted}
+                          className='mt-1'
+                        />
+                        <div className='flex-1 min-w-0'>
+                          <div className='font-medium text-base sm:text-lg'>{task.description}</div>
+                          <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1'>
+                            <span className='flex items-center gap-1'>
+                              <Target className='h-3 w-3 flex-shrink-0' />
+                              {task.target}
+                            </span>
+                            <span className='flex items-center gap-1'>
+                              <Clock className='h-3 w-3 flex-shrink-0' />
+                              {task.frequency}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      {task.isCompleted && (
+                        <div className='text-green-600 text-sm font-medium flex items-center gap-1 sm:ml-4'>
+                          <span className='text-lg'>✓</span>
+                          <span className='hidden sm:inline'>Completed</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+          </div>
+        </div>
+      </div>
+
+      <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
+        <DialogContent className='sm:max-w-md max-w-[95vw] mx-4'>
+          <DialogHeader>
+            <DialogTitle>How did that feel?</DialogTitle>
+            <DialogDescription>
+              Tell us about your experience completing &quot;{selectedTask?.description}&quot;
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4'>
+            <div>
+              <Label>How would you rate this experience?</Label>
+              <div className='flex gap-1 mt-2 justify-center sm:justify-start'>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setCompletionData((prev) => ({ ...prev, rating: star }))}
+                    className={`p-1 ${completionData.rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+                  >
+                    <Star className='h-6 w-6 fill-current' />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor='achieved'>What did you actually achieve?</Label>
+              <input
+                id='achieved'
+                type='text'
+                placeholder={selectedTask?.target}
+                value={completionData.achievedValue}
+                onChange={(e) => setCompletionData((prev) => ({ ...prev, achievedValue: e.target.value }))}
+                className='w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+              />
+            </div>
+
+            <div>
+              <Label htmlFor='journal'>How did it feel? (optional)</Label>
+              <Textarea
+                id='journal'
+                placeholder='Share your thoughts about this activity...'
+                value={completionData.journalEntry}
+                onChange={(e) => setCompletionData((prev) => ({ ...prev, journalEntry: e.target.value }))}
+                className='mt-1'
+                rows={3}
+              />
+            </div>
+
+            <div className='flex gap-2 pt-4'>
+              <Button variant='outline' onClick={() => setSelectedTask(null)} className='flex-1'>
+                Cancel
+              </Button>
+              <Button onClick={handleCompleteTask} disabled={completeTaskMutation.isPending} className='flex-1'>
+                {completeTaskMutation.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

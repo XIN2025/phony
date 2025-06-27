@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from '@repo/db';
+import { UserRole, GoalType } from '@repo/db';
 import { updateClientStatus, throwAuthError } from 'src/common/utils/user.utils';
 
 @Injectable()
@@ -183,5 +183,77 @@ export class ClientService {
       message: `Fixed ${clientsWithoutSubmissions.length} client statuses`,
       fixedCount: clientsWithoutSubmissions.length,
     };
+  }
+
+  async createGoal(clientId: string, data: { type: string; title: string; target: string; frequency: string }) {
+    const client = await this.prismaService.user.findUnique({ where: { id: clientId } });
+    if (!client || client.role !== UserRole.CLIENT) {
+      throwAuthError('Client not found', 'notFound');
+    }
+    if (!client.practitionerId) {
+      throwAuthError('Client does not have a practitioner', 'badRequest');
+    }
+    const goal = await this.prismaService.goal.create({
+      data: {
+        clientId,
+        practitionerId: client.practitionerId,
+        type: data.type as GoalType,
+        title: data.title,
+        target: data.target,
+        frequency: data.frequency,
+      },
+    });
+    return goal;
+  }
+
+  getGoals(clientId: string) {
+    return this.prismaService.goal.findMany({
+      where: { clientId },
+      orderBy: { createdAt: 'desc' },
+      include: { tasks: true },
+    });
+  }
+
+  async updateGoal(clientId: string, goalId: string, data: { title?: string; target?: string; frequency?: string }) {
+    const goal = await this.prismaService.goal.findUnique({ where: { id: goalId } });
+    if (!goal || goal.clientId !== clientId) {
+      throwAuthError('Goal not found or not owned by client', 'notFound');
+    }
+    return this.prismaService.goal.update({
+      where: { id: goalId },
+      data,
+    });
+  }
+
+  async createTask(clientId: string, data: { goalId: string; date: Date; feedback?: string; achieved?: string }) {
+    const goal = await this.prismaService.goal.findUnique({ where: { id: data.goalId } });
+    if (!goal || goal.clientId !== clientId) {
+      throwAuthError('Goal not found or not owned by client', 'notFound');
+    }
+    const existing = await this.prismaService.task.findFirst({ where: { goalId: data.goalId, date: data.date } });
+    if (existing) {
+      return this.prismaService.task.update({
+        where: { id: existing.id },
+        data: { feedback: data.feedback, achieved: data.achieved, completed: true },
+      });
+    }
+    return this.prismaService.task.create({
+      data: {
+        goalId: data.goalId,
+        date: data.date,
+        feedback: data.feedback,
+        achieved: data.achieved,
+        completed: true,
+      },
+    });
+  }
+
+  getTasks(clientId: string, goalId?: string) {
+    const where: { goal: { clientId: string }; goalId?: string } = { goal: { clientId } };
+    if (goalId) where.goalId = goalId;
+    return this.prismaService.task.findMany({
+      where,
+      orderBy: { date: 'desc' },
+    });
   }
 }

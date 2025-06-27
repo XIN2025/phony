@@ -26,14 +26,6 @@ export class AuthController {
     return this.authService.verifyOtp(body.email, body.otp, body.role);
   }
 
-  @Post('otp/verify-signup')
-  @Public()
-  @ApiResponse({ type: Boolean, description: 'OTP verification for signup' })
-  async verifyOtpForSignup(@Body() body: { email: string; otp: string }): Promise<{ success: boolean }> {
-    const result = await this.authService.verifyOtpForSignup(body.email, body.otp);
-    return { success: result };
-  }
-
   @Post('otp')
   @Public()
   @ApiResponse({ type: Boolean, description: 'Whether the OTP was sent successfully' })

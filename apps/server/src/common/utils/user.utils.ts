@@ -1,9 +1,32 @@
-import { UserRole, ClientStatus } from '@repo/db';
+import { UserRole, User as PrismaUser } from '@repo/db';
 import { JwtService } from '@nestjs/jwt';
 import { config } from 'src/common/config';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+import { UPLOAD_CONSTANTS } from './constants';
 
 export function normalizeEmail(email: string): string {
   return email.toLowerCase().trim();
+}
+
+export function normalizeUserData(user: PrismaUser): {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  profession?: string | null;
+  avatarUrl?: string | null;
+  isEmailVerified: boolean;
+  practitionerId?: string | null;
+  clientStatus?: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
+  createdAt: Date;
+  updatedAt: Date;
+} {
+  return {
+    ...user,
+    clientStatus: user.clientStatus ?? undefined,
+  };
 }
 
 export function createUserResponse(user: {
@@ -16,7 +39,7 @@ export function createUserResponse(user: {
   avatarUrl?: string | null;
   isEmailVerified: boolean;
   practitionerId?: string | null;
-  clientStatus?: ClientStatus;
+  clientStatus?: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
   createdAt: Date;
   updatedAt: Date;
 }) {
@@ -44,7 +67,7 @@ export function createJwtPayload(
     lastName: string;
     role: UserRole;
     practitionerId?: string | null;
-    clientStatus?: ClientStatus;
+    clientStatus?: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
   },
   additionalData?: Record<string, unknown>
 ) {
@@ -69,7 +92,7 @@ export function generateToken(
     lastName: string;
     role: UserRole;
     practitionerId?: string | null;
-    clientStatus?: ClientStatus;
+    clientStatus?: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
   },
   additionalData?: Record<string, unknown>,
   expiresIn?: string
@@ -81,7 +104,10 @@ export function generateToken(
   });
 }
 
-export function updateClientStatus(currentStatus: ClientStatus, submissionExists: boolean): ClientStatus {
+export function updateClientStatus(
+  currentStatus: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED',
+  submissionExists: boolean
+): 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED' {
   if (submissionExists) {
     return 'INTAKE_COMPLETED';
   }
@@ -161,43 +187,64 @@ export function validateRequiredFields(data: Record<string, unknown>, requiredFi
   }
 }
 
-export function determineClientStatus(intakeFormId?: string): ClientStatus {
+export function determineClientStatus(intakeFormId?: string): 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED' {
   return intakeFormId ? 'NEEDS_INTAKE' : 'ACTIVE';
 }
 
-export function validateFileUpload(file: Express.Multer.File, allowedTypes: string[], maxSize: number): void {
+export function validateFileUpload(file: Express.Multer.File): { isValid: boolean; error?: string } {
   if (!file) {
-    throwAuthError('No file provided', 'badRequest');
+    return { isValid: false, error: 'No file provided' };
   }
 
-  if (!allowedTypes.includes(file.mimetype)) {
-    throwAuthError(`Invalid file type. Allowed types: ${allowedTypes.join(', ')}`, 'badRequest');
+  if (
+    !UPLOAD_CONSTANTS.ALLOWED_FILE_TYPES.includes(file.mimetype as (typeof UPLOAD_CONSTANTS.ALLOWED_FILE_TYPES)[number])
+  ) {
+    return {
+      isValid: false,
+      error: `Invalid file type. Allowed types: ${UPLOAD_CONSTANTS.ALLOWED_FILE_TYPES.join(', ')}`,
+    };
   }
 
-  if (file.size > maxSize) {
-    const maxSizeMB = Math.round(maxSize / (1024 * 1024));
-    throwAuthError(`File too large. Maximum size: ${maxSizeMB}MB`, 'badRequest');
+  if (file.size > UPLOAD_CONSTANTS.MAX_FILE_SIZE) {
+    return {
+      isValid: false,
+      error: `File too large. Maximum size: ${UPLOAD_CONSTANTS.MAX_FILE_SIZE_MB}MB`,
+    };
+  }
+
+  return { isValid: true };
+}
+
+export async function saveFileToUploads(
+  file: Express.Multer.File,
+  filename: string,
+  uploadsDir: string = 'uploads'
+): Promise<string> {
+  const uploadPath = join(process.cwd(), uploadsDir);
+
+  try {
+    await mkdir(uploadPath, { recursive: true });
+  } catch {
+    throw new Error('Failed to create uploads directory');
+  }
+
+  const filePath = join(uploadPath, filename);
+
+  try {
+    await writeFile(filePath, file.buffer);
+    return filename;
+  } catch {
+    throw new Error('Failed to save file');
   }
 }
 
-export async function uploadFile(
-  file: Express.Multer.File,
-  userId: string,
-  uploadPath: string,
-  uploadDir: string
-): Promise<string> {
-  const fs = await import('fs/promises');
-  const path = await import('path');
+export function generateUniqueFilename(originalName: string): string {
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(2, 15);
+  const extension = originalName.split('.').pop();
+  return `${timestamp}-${randomString}.${extension}`;
+}
 
-  const fileName = `${userId}-${Date.now()}${path.extname(file.originalname)}`;
-  const filePath = path.join(uploadPath, fileName);
-
-  try {
-    // Ensure the upload directory exists
-    await fs.mkdir(uploadPath, { recursive: true });
-    await fs.writeFile(filePath, file.buffer);
-    return `/${uploadDir}/${fileName}`;
-  } catch {
-    throwAuthError('Failed to upload file', 'badRequest');
-  }
+export function trimUserInput(input: string): string {
+  return input.trim();
 }
