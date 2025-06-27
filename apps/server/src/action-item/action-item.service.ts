@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface CreateCompletionDto {
@@ -13,147 +13,33 @@ interface CreateCompletionDto {
 export class ActionItemService {
   constructor(private prisma: PrismaService) {}
 
-  async completeActionItem(data: CreateCompletionDto) {
-    return await this.prisma.actionItemCompletion.create({
-      data: {
-        actionItemId: data.actionItemId,
-        clientId: data.clientId,
-        rating: data.rating,
-        journalEntry: data.journalEntry,
-        achievedValue: data.achievedValue,
-      },
-      include: {
-        actionItem: {
-          select: {
-            id: true,
-            description: true,
-            category: true,
-            target: true,
-            frequency: true,
-          },
-        },
-      },
-    });
+  completeActionItem(_data: CreateCompletionDto) {
+    // TODO: Implement when ActionItem models are added to schema
+    throw new NotFoundException('ActionItem functionality not yet implemented - database schema pending');
   }
 
-  async getActionItemCompletions(actionItemId: string, clientId?: string) {
-    return await this.prisma.actionItemCompletion.findMany({
-      where: {
-        actionItemId,
-        ...(clientId && { clientId }),
-      },
-      include: {
-        client: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        actionItem: {
-          select: {
-            id: true,
-            description: true,
-            category: true,
-            target: true,
-            frequency: true,
-          },
-        },
-      },
-      orderBy: { completedAt: 'desc' },
-    });
+  getActionItemCompletions(_actionItemId: string, _clientId?: string) {
+    // TODO: Implement when ActionItem models are added to schema
+    return [];
   }
 
-  async getClientCompletions(clientId: string, planId?: string) {
-    return await this.prisma.actionItemCompletion.findMany({
-      where: {
-        clientId,
-        ...(planId && {
-          actionItem: {
-            planId: planId,
-          },
-        }),
-      },
-      include: {
-        actionItem: {
-          select: {
-            id: true,
-            description: true,
-            category: true,
-            target: true,
-            frequency: true,
-            planId: true,
-            plan: {
-              select: {
-                id: true,
-                session: {
-                  select: {
-                    recordedAt: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: { completedAt: 'desc' },
-    });
+  getClientCompletions(_clientId: string, _planId?: string) {
+    // TODO: Implement when ActionItem models are added to schema
+    return [];
   }
 
-  async updateCompletion(completionId: string, updateData: Partial<CreateCompletionDto>) {
-    return await this.prisma.actionItemCompletion.update({
-      where: { id: completionId },
-      data: {
-        rating: updateData.rating,
-        journalEntry: updateData.journalEntry,
-        achievedValue: updateData.achievedValue,
-      },
-      include: {
-        actionItem: {
-          select: {
-            id: true,
-            description: true,
-            category: true,
-            target: true,
-            frequency: true,
-          },
-        },
-      },
-    });
+  updateCompletion(_completionId: string, _updateData: Partial<CreateCompletionDto>) {
+    // TODO: Implement when ActionItem models are added to schema
+    throw new NotFoundException('ActionItem functionality not yet implemented - database schema pending');
   }
 
-  async deleteCompletion(completionId: string) {
-    return await this.prisma.actionItemCompletion.delete({
-      where: { id: completionId },
-    });
+  deleteCompletion(_completionId: string) {
+    // TODO: Implement when ActionItem models are added to schema
+    throw new NotFoundException('ActionItem functionality not yet implemented - database schema pending');
   }
 
-  async getActionItemById(actionItemId: string) {
-    return await this.prisma.actionItem.findUnique({
-      where: { id: actionItemId },
-      include: {
-        plan: {
-          select: {
-            id: true,
-            clientId: true,
-            practitionerId: true,
-            status: true,
-          },
-        },
-        resources: true,
-        completions: {
-          include: {
-            client: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-          orderBy: { completedAt: 'desc' },
-        },
-      },
-    });
+  getActionItemById(_actionItemId: string) {
+    // TODO: Implement when ActionItem models are added to schema
+    throw new NotFoundException('ActionItem functionality not yet implemented - database schema pending');
   }
 }
