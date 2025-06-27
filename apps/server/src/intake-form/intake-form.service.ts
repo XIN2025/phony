@@ -1,148 +1,234 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
-import { throwAuthError } from 'src/common/utils/user.utils';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { QuestionType as SharedQuestionType } from '@repo/shared-types/schemas';
+import { QuestionType as PrismaQuestionType } from '@repo/db';
+
+interface CreateIntakeFormData {
+  title: string;
+  description?: string;
+  questions: QuestionData[];
+}
+
+interface QuestionData {
+  title: string;
+  id: string;
+  type: SharedQuestionType;
+  required: boolean;
+  description?: string;
+  options?: { id: string; value: string; label: string }[];
+  validation?: {
+    minLength?: number;
+    maxLength?: number;
+    min?: number;
+    max?: number;
+    pattern?: string;
+  };
+  placeholder?: string;
+}
+
+interface AnswerData {
+  questionId: string;
+  value: string;
+}
+
+// Direct mapping since enums are now consistent
+function mapQuestionType(type: SharedQuestionType): PrismaQuestionType {
+  // Since we've aligned the enums, we can directly map the values
+  return type as PrismaQuestionType;
+}
 
 @Injectable()
 export class IntakeFormService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(practitionerId: string, data: CreateIntakeFormDto) {
-    const { title, description, questions } = data;
-
-    return this.prisma.intakeForm.create({
+  async createIntakeForm(practitionerId: string, data: CreateIntakeFormData) {
+    const form = await this.prisma.intakeForm.create({
       data: {
-        title,
-        description,
+        title: data.title,
+        description: data.description,
         practitionerId,
         questions: {
-          create: questions?.map((q) => ({
-            text: q.text,
-            type: q.type,
-            options: q.options?.map((opt) => opt.text) || [],
-            isRequired: q.isRequired,
-            order: q.order,
-          })),
+          create: data.questions.map((q: QuestionData, index: number) => {
+            const mappedOptions = q.options
+              ? q.options.map((opt) => {
+                  return opt.value || opt.label || '';
+                })
+              : [];
+
+            return {
+              text: q.title,
+              type: mapQuestionType(q.type),
+              isRequired: q.required,
+              order: index,
+              options: mappedOptions,
+            };
+          }),
         },
       },
       include: {
-        questions: true,
+        questions: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
+    });
+
+    return form;
+  }
+
+  async getIntakeFormsByPractitioner(practitionerId: string) {
+    return await this.prisma.intakeForm.findMany({
+      where: { practitionerId },
+      include: {
+        questions: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+        _count: {
+          select: {
+            questions: true,
+            submissions: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
   }
 
-  async update(formId: string, practitionerId: string, data: CreateIntakeFormDto) {
-    const { title, description, questions } = data;
+  async updateIntakeForm(formId: string, practitionerId: string, data: CreateIntakeFormData) {
+    const existingForm = await this.prisma.intakeForm.findFirst({
+      where: { id: formId, practitionerId },
+    });
 
-    const form = await this.prisma.intakeForm.findUnique({
+    if (!existingForm) {
+      throw new NotFoundException('Intake form not found');
+    }
+
+    await this.prisma.intakeForm.update({
       where: { id: formId },
+      data: {
+        questions: {
+          deleteMany: {},
+        },
+      },
+    });
+
+    const updatedForm = await this.prisma.intakeForm.update({
+      where: { id: formId },
+      data: {
+        title: data.title,
+        description: data.description,
+        questions: {
+          create: data.questions.map((q: QuestionData, index: number) => ({
+            text: q.title,
+            type: mapQuestionType(q.type),
+            isRequired: q.required,
+            order: index,
+            options: q.options ? q.options.map((opt) => opt.value || opt.label || '') : [],
+          })),
+        },
+      },
+      include: {
+        questions: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
+    });
+
+    return updatedForm;
+  }
+
+  async deleteIntakeForm(formId: string, practitionerId: string) {
+    const form = await this.prisma.intakeForm.findFirst({
+      where: { id: formId, practitionerId },
     });
 
     if (!form) {
-      throwAuthError('Intake form not found.', 'notFound');
+      throw new NotFoundException('Intake form not found');
     }
 
-    if (form.practitionerId !== practitionerId) {
-      throwAuthError('You do not have permission to update this form.', 'unauthorized');
+    await this.prisma.intakeForm.delete({
+      where: { id: formId },
+    });
+
+    return { success: true };
+  }
+
+  async getIntakeFormById(formId: string) {
+    const form = await this.prisma.intakeForm.findUnique({
+      where: { id: formId },
+      include: {
+        questions: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
+    });
+
+    if (!form) {
+      throw new NotFoundException('Intake form not found');
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      await tx.intakeForm.update({
-        where: { id: formId },
+    return form;
+  }
+
+  async submitIntakeForm(clientId: string, formId: string, answers: AnswerData[]) {
+    const submission = await this.prisma.$transaction(async (tx) => {
+      const newSubmission = await tx.intakeFormSubmission.create({
         data: {
-          title,
-          description,
+          clientId,
+          formId,
         },
       });
 
-      await tx.question.deleteMany({
-        where: { formId },
-      });
-
-      if (questions?.length) {
-        await tx.question.createMany({
-          data: questions.map((q) => ({
-            formId,
-            text: q.text,
-            type: q.type,
-            options: q.options?.map((opt) => opt.text) || [],
-            isRequired: q.isRequired,
-            order: q.order,
-          })),
+      for (const answer of answers) {
+        await tx.answer.create({
+          data: {
+            submissionId: newSubmission.id,
+            questionId: answer.questionId,
+            value: answer.value,
+          },
         });
       }
 
-      return tx.intakeForm.findUnique({
-        where: { id: formId },
-        include: { questions: { orderBy: { order: 'asc' } } },
-      });
+      return newSubmission;
     });
+
+    return submission;
   }
 
-  async delete(formId: string, practitionerId: string) {
-    const form = await this.prisma.intakeForm.findUnique({
-      where: { id: formId },
+  async getFormSubmissions(formId: string, practitionerId: string) {
+    const form = await this.prisma.intakeForm.findFirst({
+      where: { id: formId, practitionerId },
     });
 
     if (!form) {
-      throwAuthError('Intake form not found.', 'notFound');
+      throw new NotFoundException('Intake form not found');
     }
 
-    if (form.practitionerId !== practitionerId) {
-      throwAuthError('You do not have permission to delete this form.', 'unauthorized');
-    }
-
-    return this.prisma.intakeForm.delete({
-      where: { id: formId },
-    });
-  }
-
-  async findAllForPractitioner(practitionerId: string) {
-    const forms = await this.prisma.intakeForm.findMany({
-      where: { practitionerId },
-      orderBy: { updatedAt: 'desc' },
+    return await this.prisma.intakeFormSubmission.findMany({
+      where: { formId },
       include: {
-        _count: {
-          select: { questions: true },
+        client: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
         },
-        questions: {
-          orderBy: { order: 'asc' },
-        },
+        answers: true,
+      },
+      orderBy: {
+        submittedAt: 'desc',
       },
     });
-
-    return forms.map((form) => ({
-      ...form,
-      questions: form.questions.map((q) => ({
-        ...q,
-        options: q.options.map((opt) => ({ text: opt })),
-      })),
-    }));
-  }
-
-  async findOne(formId: string, practitionerId: string) {
-    const form = await this.prisma.intakeForm.findUnique({
-      where: { id: formId },
-      include: {
-        questions: {
-          orderBy: { order: 'asc' },
-        },
-      },
-    });
-
-    if (!form) {
-      throwAuthError('Intake form not found.', 'notFound');
-    }
-
-    if (form.practitionerId !== practitionerId) {
-      throwAuthError('You do not have permission to view this form.', 'unauthorized');
-    }
-
-    const mappedQuestions = form.questions.map((q) => ({
-      ...q,
-      options: q.options.map((opt) => ({ text: opt })),
-    }));
-
-    return { ...form, questions: mappedQuestions };
   }
 }

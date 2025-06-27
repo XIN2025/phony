@@ -1,52 +1,10 @@
 'use client';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { FileText, CheckCircle, Clock } from 'lucide-react';
 
 const ClientFormsPage = () => {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === 'loading') return;
-
-    if (status === 'unauthenticated' || !session?.user) {
-      router.push('/client/auth');
-      return;
-    }
-
-    if (session.user.role !== 'CLIENT') {
-      router.push('/practitioner');
-      return;
-    }
-
-    if (!session.user.firstName || !session.user.lastName) {
-      router.push('/client/profile-setup');
-      return;
-    }
-
-    if (session.user.clientStatus === 'NEEDS_INTAKE') {
-      router.push('/client/intake');
-      return;
-    }
-  }, [status, session, router]);
-
-  if (status === 'loading') {
-    return (
-      <div className='flex h-screen items-center justify-center'>
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
-          <p className='text-sm text-muted-foreground'>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!session?.user) {
-    return null;
-  }
+  const { data: session } = useSession();
 
   return (
     <div className='container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl'>
@@ -77,12 +35,12 @@ const ClientFormsPage = () => {
                   </div>
                 </div>
                 <div className='flex items-center gap-2'>
-                  {session.user.clientStatus === 'INTAKE_COMPLETED' ? (
+                  {session?.user?.clientStatus === 'INTAKE_COMPLETED' ? (
                     <>
                       <CheckCircle className='h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0' />
                       <span className='text-xs sm:text-sm text-green-600 font-medium'>Completed</span>
                     </>
-                  ) : session.user.clientStatus === 'NEEDS_INTAKE' ? (
+                  ) : session?.user?.clientStatus === 'NEEDS_INTAKE' ? (
                     <>
                       <Clock className='h-4 w-4 sm:h-5 sm:w-5 text-orange-500 flex-shrink-0' />
                       <span className='text-xs sm:text-sm text-orange-600 font-medium'>Pending</span>

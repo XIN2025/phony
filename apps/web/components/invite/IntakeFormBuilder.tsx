@@ -1,23 +1,21 @@
 ﻿'use client';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { intakeFormSchema, CreateIntakeFormDto } from '@repo/shared-types/schemas';
+import { intakeFormSchema, CreateIntakeFormDto, QuestionType } from '@repo/shared-types/schemas';
 import { Button } from '@repo/ui/components/button';
 import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
 import { Trash2, Plus, GripVertical, Copy } from 'lucide-react';
-import { QuestionType } from '@repo/db/question-type';
 import { useInviteContext } from '@/context/InviteContext';
 import { useEffect, useState } from 'react';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { Textarea } from '@repo/ui/components/textarea';
-import { Control, UseFormRegister } from 'react-hook-form';
 
 interface QuestionOptionsProps {
   questionIndex: number;
-  control: Control<CreateIntakeFormDto>;
-  register: UseFormRegister<CreateIntakeFormDto>;
+  control: any;
+  register: any;
 }
 
 function QuestionOptions({ questionIndex, control, register }: QuestionOptionsProps) {
@@ -25,14 +23,27 @@ function QuestionOptions({ questionIndex, control, register }: QuestionOptionsPr
     control,
     name: `questions.${questionIndex}.options`,
   });
+
   return (
     <div className='space-y-2 pt-4'>
       <Label>Choices</Label>
       {fields.map((field, optionIndex) => (
         <div key={field.id} className='flex items-center gap-2'>
-          <Input
-            placeholder={`Option ${optionIndex + 1}`}
-            {...register(`questions.${questionIndex}.options.${optionIndex}.text`)}
+          <Controller
+            control={control}
+            name={`questions.${questionIndex}.options.${optionIndex}.label`}
+            render={({ field: inputField }) => (
+              <Input
+                placeholder={`Option ${optionIndex + 1}`}
+                value={inputField.value || ''}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  inputField.onChange(newValue);
+                  // Also update the value field to match the label
+                  control.setValue(`questions.${questionIndex}.options.${optionIndex}.value`, newValue);
+                }}
+              />
+            )}
           />
           <Button type='button' variant='ghost' size='icon' onClick={() => remove(optionIndex)} className='shrink-0'>
             <Trash2 className='h-4 w-4' />
@@ -43,7 +54,10 @@ function QuestionOptions({ questionIndex, control, register }: QuestionOptionsPr
         type='button'
         variant='link'
         className='p-0 h-auto text-sm font-semibold'
-        onClick={() => append({ text: '' })}
+        onClick={() => {
+          const newId = crypto.randomUUID();
+          append({ id: newId, label: '', value: '' });
+        }}
       >
         <Plus className='h-4 w-4 mr-1' />
         Add Option
@@ -59,16 +73,18 @@ interface IntakeFormBuilderProps {
 }
 
 const questionTypeOptions = [
-  { value: QuestionType.SHORT_ANSWER, label: 'Short Answer' },
-  { value: QuestionType.LONG_ANSWER, label: 'Paragraph' },
+  { value: QuestionType.SHORT_TEXT, label: 'Short Answer' },
+  { value: QuestionType.LONG_TEXT, label: 'Paragraph' },
   { value: QuestionType.MULTIPLE_CHOICE, label: 'Multiple Choice' },
-  { value: QuestionType.CHECKBOXES, label: 'Checkboxes' },
-  { value: QuestionType.DROPDOWN, label: 'Drop-down' },
+  { value: QuestionType.CHECKBOX, label: 'Checkboxes' },
+  { value: QuestionType.SELECT, label: 'Drop-down' },
   { value: QuestionType.FILE_UPLOAD, label: 'File upload' },
-  { value: QuestionType.SCALE, label: 'Linear Scale' },
-  { value: QuestionType.RATING, label: 'Rating' },
-  { value: QuestionType.MULTIPLE_CHOICE_GRID, label: 'Multiple choice grid' },
-  { value: QuestionType.TICK_BOX_GRID, label: 'Tick box grid' },
+  { value: QuestionType.NUMBER, label: 'Number' },
+  { value: QuestionType.EMAIL, label: 'Email' },
+  { value: QuestionType.PHONE, label: 'Phone' },
+  { value: QuestionType.DATE, label: 'Date' },
+  { value: QuestionType.TIME, label: 'Time' },
+  { value: QuestionType.URL, label: 'URL' },
 ];
 
 export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBuilderProps) {
@@ -76,23 +92,22 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
 
   const [originalFormData, setOriginalFormData] = useState<CreateIntakeFormDto | null>(null);
 
-  const form = useForm<CreateIntakeFormDto>({
+  const form = useForm({
     resolver: zodResolver(intakeFormSchema),
-    defaultValues:
-      inviteData.newIntakeForm ||
-      ({
-        title: '',
-        description: '',
-        questions: [
-          {
-            text: '',
-            type: QuestionType.MULTIPLE_CHOICE,
-            isRequired: true,
-            order: 0,
-            options: [{ text: '' }],
-          },
-        ],
-      } as CreateIntakeFormDto),
+    mode: 'onChange', // Enable real-time validation
+    defaultValues: inviteData.newIntakeForm || {
+      title: '',
+      description: '',
+      questions: [
+        {
+          id: crypto.randomUUID(),
+          title: '',
+          type: QuestionType.MULTIPLE_CHOICE,
+          required: true,
+          options: [{ id: crypto.randomUUID(), label: '', value: '' }],
+        },
+      ],
+    },
   });
 
   useEffect(() => {
@@ -105,7 +120,7 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
     return () => {
       const currentFormData = form.getValues();
       setInviteData({
-        newIntakeForm: currentFormData,
+        newIntakeForm: currentFormData as CreateIntakeFormDto,
       });
     };
   }, [setInviteData, form]);
@@ -117,23 +132,57 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
 
   const addQuestion = () => {
     append({
-      text: '',
+      id: crypto.randomUUID(),
+      title: '',
       type: QuestionType.MULTIPLE_CHOICE,
-      isRequired: true,
-      order: fields.length,
-      options: [{ text: '' }],
+      required: true,
+      options: [{ id: crypto.randomUUID(), label: '', value: '' }],
     });
   };
 
-  const handleFormSubmit = (formData: CreateIntakeFormDto) => {
+  const handleFormSubmit = (formData: any) => {
+    // Basic validation
+    if (!formData.title || formData.title.trim() === '') {
+      alert('Please enter a form title');
+      return;
+    }
+
+    if (!formData.questions || formData.questions.length === 0) {
+      alert('Please add at least one question');
+      return;
+    }
+
+    // Check that all questions have titles
+    for (let i = 0; i < formData.questions.length; i++) {
+      const question = formData.questions[i];
+      if (!question.title || question.title.trim() === '') {
+        alert(`Please enter a title for question ${i + 1}`);
+        return;
+      }
+    }
+
+    // Ensure options have the value field populated
+    const processedFormData = {
+      ...formData,
+      questions: formData.questions.map((question: any) => ({
+        ...question,
+        options:
+          question.options?.map((option: any) => ({
+            id: option.id || crypto.randomUUID(),
+            label: option.label || '',
+            value: option.value || option.label || '',
+          })) || [],
+      })),
+    };
+
     let hasChanges = false;
     if (originalFormData && inviteData.intakeFormId) {
-      hasChanges = JSON.stringify(formData) !== JSON.stringify(originalFormData);
+      hasChanges = JSON.stringify(processedFormData) !== JSON.stringify(originalFormData);
     }
 
     setInviteData({ hasChanges });
 
-    onSubmit(formData);
+    onSubmit(processedFormData as CreateIntakeFormDto);
   };
 
   return (
@@ -149,7 +198,7 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
           className='text-xl border-gray-700'
         />
         {form.formState.errors.title && (
-          <p className='text-sm text-destructive'>{form.formState.errors.title.message}</p>
+          <p className='text-sm text-destructive'>{form.formState.errors.title?.message as string}</p>
         )}
       </div>
       <div className='space-y-2'>
@@ -164,7 +213,7 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
           rows={3}
         />
         {form.formState.errors.description && (
-          <p className='text-sm text-destructive'>{form.formState.errors.description.message}</p>
+          <p className='text-sm text-destructive'>{form.formState.errors.description?.message as string}</p>
         )}
       </div>
       <div className='space-y-4'>
@@ -176,9 +225,14 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
                 <Input
                   id={`question-${index}`}
                   placeholder='Why do you want to begin therapy?'
-                  {...form.register(`questions.${index}.text`)}
+                  {...form.register(`questions.${index}.title`)}
                   className='text-base'
                 />
+                {form.formState.errors.questions?.[index]?.title && (
+                  <p className='text-sm text-destructive'>
+                    {form.formState.errors.questions[index]?.title?.message as string}
+                  </p>
+                )}
               </div>
               <div className='space-y-2'>
                 <Label htmlFor={`question-type-${index}`}>Type of question</Label>
@@ -215,17 +269,17 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
             {form.watch(`questions.${index}.type`) === QuestionType.MULTIPLE_CHOICE && (
               <QuestionOptions questionIndex={index} control={form.control} register={form.register} />
             )}
-            {form.watch(`questions.${index}.type`) === QuestionType.CHECKBOXES && (
+            {form.watch(`questions.${index}.type`) === QuestionType.CHECKBOX && (
               <QuestionOptions questionIndex={index} control={form.control} register={form.register} />
             )}
-            {form.watch(`questions.${index}.type`) === QuestionType.DROPDOWN && (
+            {form.watch(`questions.${index}.type`) === QuestionType.SELECT && (
               <QuestionOptions questionIndex={index} control={form.control} register={form.register} />
             )}
             <div className='flex items-center space-x-2 pt-4'>
               <Checkbox
                 id={`required-${index}`}
-                checked={form.watch(`questions.${index}.isRequired`)}
-                onCheckedChange={(checked) => form.setValue(`questions.${index}.isRequired`, Boolean(checked))}
+                checked={form.watch(`questions.${index}.required`)}
+                onCheckedChange={(checked) => form.setValue(`questions.${index}.required`, Boolean(checked))}
               />
               <Label htmlFor={`required-${index}`} className='text-sm font-medium'>
                 Required question

@@ -1,22 +1,45 @@
-import * as path from 'path';
-
-// File upload constants
-export const UPLOAD_CONSTANTS = {
-  UPLOAD_DIR: 'uploads',
-  UPLOAD_PATH: path.join(process.cwd(), 'uploads'),
-  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
-  MAX_FILE_SIZE_MB: 5,
-  ALLOWED_FILE_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
-  MAX_FILES: 1,
+export const API_RESPONSES = {
+  SUCCESS: 'Success',
+  ERROR: 'Error',
+  VALIDATION_FAILED: 'Validation failed',
+  UNAUTHORIZED: 'Unauthorized',
+  NOT_FOUND: 'Not found',
+  INTERNAL_ERROR: 'Internal server error',
 } as const;
 
-// Avatar service constants
+export const TIMER_DURATIONS = {
+  OTP_RESEND: 60,
+  SESSION_TIMEOUT: 30 * 60,
+  FILE_UPLOAD_TIMEOUT: 300,
+} as const;
+
+export const VALIDATION_RULES = {
+  MIN_PASSWORD_LENGTH: 8,
+  MAX_EMAIL_LENGTH: 255,
+  MAX_NAME_LENGTH: 100,
+  OTP_LENGTH: 6,
+  MAX_FILE_SIZE: 10 * 1024 * 1024,
+} as const;
+
+export const DB_CONSTANTS = {
+  DEFAULT_PAGE_SIZE: 20,
+  MAX_PAGE_SIZE: 100,
+  DEFAULT_ORDER: 'desc',
+} as const;
+
+export const FILE_UPLOAD = {
+  ALLOWED_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'],
+  MAX_SIZE: VALIDATION_RULES.MAX_FILE_SIZE,
+  UPLOAD_PATH: './uploads',
+} as const;
+
+export type ApiResponse = (typeof API_RESPONSES)[keyof typeof API_RESPONSES];
+
 export const AVATAR_CONSTANTS = {
   DICEBEAR_BASE_URL: 'https://api.dicebear.com/7.x/adventurer/svg',
   UI_AVATARS_BASE_URL: 'https://ui-avatars.com/api',
 } as const;
 
-// Date formatting constants
 export const DATE_CONSTANTS = {
   DATE_FORMAT: 'MMM dd, yyyy',
   TIME_FORMAT: 'HH:mm',

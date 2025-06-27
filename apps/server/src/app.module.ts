@@ -12,6 +12,9 @@ import { PractitionerModule } from './practitioner/practitioner.module';
 import { IntakeFormModule } from './intake-form/intake-form.module';
 import { ClientModule } from './client/client.module';
 import { UsersModule } from './users/users.module';
+import { SessionModule } from './session/session.module';
+import { PlanModule } from './plan/plan.module';
+import { ActionItemModule } from './action-item/action-item.module';
 import { ChatModule } from './chat/chat.module';
 
 @Module({
@@ -44,6 +47,9 @@ import { ChatModule } from './chat/chat.module';
     IntakeFormModule,
     ClientModule,
     UsersModule,
+    SessionModule,
+    PlanModule,
+    ActionItemModule,
     ChatModule,
   ],
   controllers: [AppController],

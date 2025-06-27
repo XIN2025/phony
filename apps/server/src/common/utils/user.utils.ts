@@ -1,11 +1,15 @@
 import { UserRole, User as PrismaUser } from '@repo/db';
 import { JwtService } from '@nestjs/jwt';
-import { config } from 'src/common/config';
+import { UnauthorizedException, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { config } from '../config';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { UPLOAD_CONSTANTS } from './constants';
+import { FILE_UPLOAD } from './constants';
 
 export function normalizeEmail(email: string): string {
+  if (!email) {
+    return '';
+  }
   return email.toLowerCase().trim();
 }
 
@@ -169,13 +173,18 @@ export function decodeInvitationToken(token: string): string {
 }
 
 export function throwAuthError(message: string, type: 'unauthorized' | 'badRequest' | 'conflict' | 'notFound'): never {
-  const errorMap = {
-    unauthorized: new Error(`Unauthorized: ${message}`),
-    badRequest: new Error(`Bad Request: ${message}`),
-    conflict: new Error(`Conflict: ${message}`),
-    notFound: new Error(`Not Found: ${message}`),
-  };
-  throw errorMap[type];
+  switch (type) {
+    case 'unauthorized':
+      throw new UnauthorizedException(message);
+    case 'badRequest':
+      throw new BadRequestException(message);
+    case 'conflict':
+      throw new ConflictException(message);
+    case 'notFound':
+      throw new NotFoundException(message);
+    default:
+      throw new Error('Unknown error type');
+  }
 }
 
 export function validateRequiredFields(data: Record<string, unknown>, requiredFields: string[]): void {
@@ -196,19 +205,17 @@ export function validateFileUpload(file: Express.Multer.File): { isValid: boolea
     return { isValid: false, error: 'No file provided' };
   }
 
-  if (
-    !UPLOAD_CONSTANTS.ALLOWED_FILE_TYPES.includes(file.mimetype as (typeof UPLOAD_CONSTANTS.ALLOWED_FILE_TYPES)[number])
-  ) {
+  if (!FILE_UPLOAD.ALLOWED_TYPES.includes(file.mimetype as (typeof FILE_UPLOAD.ALLOWED_TYPES)[number])) {
     return {
       isValid: false,
-      error: `Invalid file type. Allowed types: ${UPLOAD_CONSTANTS.ALLOWED_FILE_TYPES.join(', ')}`,
+      error: `Invalid file type. Allowed types: ${FILE_UPLOAD.ALLOWED_TYPES.join(', ')}`,
     };
   }
 
-  if (file.size > UPLOAD_CONSTANTS.MAX_FILE_SIZE) {
+  if (file.size > FILE_UPLOAD.MAX_SIZE) {
     return {
       isValid: false,
-      error: `File too large. Maximum size: ${UPLOAD_CONSTANTS.MAX_FILE_SIZE_MB}MB`,
+      error: `File too large. Maximum size: ${Math.round(FILE_UPLOAD.MAX_SIZE / (1024 * 1024))}MB`,
     };
   }
 

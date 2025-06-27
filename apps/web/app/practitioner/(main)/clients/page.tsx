@@ -5,7 +5,7 @@ import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
 import { Input } from '@repo/ui/components/input';
-import { Search, Plus, MessageCircle } from 'lucide-react';
+import { Search, Plus, MessageCircle, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { getInitials, getAvatarUrl } from '@/lib/utils';
 import { useState } from 'react';
@@ -19,6 +19,25 @@ const getClientDisplayName = (client: Client): string => {
     return `${client.firstName} ${client.lastName}`;
   }
   return client.firstName || client.lastName || client.email?.split('@')[0] || 'Client';
+};
+
+const getClientStatus = (
+  client: Client,
+): { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } => {
+  if (!client.hasCompletedIntake) {
+    return { label: 'Pending Intake', variant: 'destructive' };
+  }
+
+  switch (client.clientStatus) {
+    case 'ACTIVE':
+      return { label: 'Active', variant: 'default' };
+    case 'NEEDS_INTAKE':
+      return { label: 'Needs Intake', variant: 'destructive' };
+    case 'COMPLETED_INTAKE':
+      return { label: 'Ready', variant: 'secondary' };
+    default:
+      return { label: 'Unknown', variant: 'outline' };
+  }
 };
 
 const renderSkeleton = () => (
@@ -54,11 +73,96 @@ const renderSkeleton = () => (
   </>
 );
 
+const ClientsTable = ({ clients, searchTerm }: { clients: Client[]; searchTerm: string }) => {
+  const filteredClients = clients.filter(
+    (client) =>
+      getClientDisplayName(client).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  if (filteredClients.length === 0) {
+    return (
+      <Card>
+        <CardContent className='flex flex-col items-center justify-center py-12'>
+          <p className='text-muted-foreground text-center'>
+            {searchTerm ? 'No clients found matching your search.' : 'No clients found.'}
+          </p>
+          {!searchTerm && (
+            <Link href='/practitioner/invite'>
+              <Button className='mt-4'>
+                <Plus className='h-4 w-4 mr-2' />
+                Invite Your First Client
+              </Button>
+            </Link>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Client</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Joined</TableHead>
+            <TableHead className='text-right'>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredClients.map((client) => {
+            const status = getClientStatus(client);
+            return (
+              <TableRow key={client.id}>
+                <TableCell>
+                  <div className='flex items-center gap-3'>
+                    <Avatar className='h-8 w-8'>
+                      <AvatarImage src={getAvatarUrl(client.avatarUrl)} />
+                      <AvatarFallback className='text-xs'>{getInitials(getClientDisplayName(client))}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className='font-medium'>{getClientDisplayName(client)}</p>
+                      <p className='text-sm text-muted-foreground'>{client.email}</p>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={status.variant}>{status.label}</Badge>
+                </TableCell>
+                <TableCell>
+                  <p className='text-sm'>{new Date(client.createdAt).toLocaleDateString()}</p>
+                </TableCell>
+                <TableCell className='text-right'>
+                  <div className='flex items-center justify-end gap-2'>
+                    <Link href={`/practitioner/clients/${client.id}/messages`}>
+                      <Button variant='outline' size='sm' className='flex items-center gap-2'>
+                        <MessageCircle className='h-4 w-4' />
+                        Message
+                      </Button>
+                    </Link>
+                    <Link href={`/practitioner/clients/${client.id}/dashboard`}>
+                      <Button variant='outline' size='sm'>
+                        View Dashboard
+                      </Button>
+                    </Link>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+};
+
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
 
-  const { data: clients = [], isLoading, isError } = useGetClients();
+  const { data: clients = [], isLoading, isError, refetch, isFetching } = useGetClients();
 
   const filteredClients = clients.filter(
     (client) =>
@@ -85,6 +189,10 @@ export default function ClientsPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          <Button variant='outline' onClick={() => refetch()} disabled={isFetching} className='flex items-center gap-2'>
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
           <Link href='/practitioner/invite'>
             <Button className='whitespace-nowrap'>
               <Plus className='mr-2 h-4 w-4' />
@@ -94,88 +202,29 @@ export default function ClientsPage() {
         </div>
       </header>
       <div className='p-4 sm:p-6 md:p-8'>
-        <Card>
-          <CardContent className='p-0'>
-            <div className='overflow-x-auto'>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Member</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Intake Status</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead className='text-right'>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    renderSkeleton()
-                  ) : isError ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className='text-center text-destructive py-8'>
-                        Failed to load clients. Please try again.
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredClients.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className='text-center text-muted-foreground py-8'>
-                        No clients found.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredClients.map((client) => (
-                      <TableRow
-                        key={client.id}
-                        className='cursor-pointer hover:bg-accent focus:bg-accent outline-none'
-                        tabIndex={0}
-                        onClick={() => router.push(`/practitioner/clients/${client.id}/dashboard`)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            router.push(`/practitioner/clients/${client.id}/dashboard`);
-                          }
-                        }}
-                      >
-                        <TableCell>
-                          <div className='flex items-center gap-3'>
-                            <Avatar className='h-10 w-10'>
-                              <AvatarImage src={getAvatarUrl(client.avatarUrl)} />
-                              <AvatarFallback>{getInitials(getClientDisplayName(client))}</AvatarFallback>
-                            </Avatar>
-                            <span className='font-medium'>{getClientDisplayName(client)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{client.email}</TableCell>
-                        <TableCell>
-                          <Badge variant='outline' className='border-green-200 bg-green-50 text-green-700'>
-                            Active
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {client.hasCompletedIntake ? (
-                            <Badge className='bg-green-100 text-green-800 hover:bg-green-200'>Completed</Badge>
-                          ) : (
-                            <Badge variant='outline' className='border-yellow-200 bg-yellow-50 text-yellow-700'>
-                              Pending
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>{new Date(client.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell className='text-right'>
-                          <div className='flex justify-end gap-2'>
-                            <Button variant='ghost' size='icon'>
-                              <MessageCircle className='h-4 w-4' />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+        {isLoading ? (
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead className='text-right'>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>{renderSkeleton()}</TableBody>
+            </Table>
+          </Card>
+        ) : isError ? (
+          <Card>
+            <CardContent className='text-center text-destructive py-8'>
+              Failed to load clients. Please try again.
+            </CardContent>
+          </Card>
+        ) : (
+          <ClientsTable clients={clients} searchTerm={searchTerm} />
+        )}
       </div>
     </>
   );

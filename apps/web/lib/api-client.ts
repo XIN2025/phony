@@ -31,6 +31,7 @@ export class ApiClient {
         headers: {
           ...(config.data && !isFormData ? { 'Content-Type': 'application/json' } : {}),
           ...(session?.user?.token && !isPublicEndpoint ? { Authorization: `Bearer ${session.user.token}` } : {}),
+          ...(session?.user?.id ? { 'x-user-id': session.user.id } : {}),
           ...config.headers,
         },
       });

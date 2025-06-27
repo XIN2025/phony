@@ -1,8 +1,8 @@
 import { Strategy, ExtractJwt } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
-import { config } from 'src/common/config';
-import { throwAuthError } from 'src/common/utils/user.utils';
+import { config } from '../../common/config';
+import { throwAuthError } from '../../common/utils/user.utils';
 import { UserRole, ClientStatus } from '@repo/db';
 
 interface JwtPayload {

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { MailService } from './mail.service';
-import { config } from 'src/common/config';
+import { config } from '../common/config';
 
 // Create transport configuration based on available credentials
 const createTransportConfig = () => {

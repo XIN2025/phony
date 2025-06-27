@@ -1,62 +1,71 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole, GoalType } from '@repo/db';
-import { updateClientStatus, throwAuthError } from 'src/common/utils/user.utils';
+import { PrismaService } from '../prisma/prisma.service';
+// import { InvitationStatus } from '@repo/db';
+
+import { updateClientStatus, throwAuthError } from '../common/utils/user.utils';
+
+interface SubmissionWhereClause {
+  clientId: string;
+  formId?: string;
+}
 
 @Injectable()
 export class ClientService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async getIntakeForm(clientId: string) {
-    const client = await this.prismaService.user.findUnique({
+  async getClientById(clientId: string) {
+    const user = await this.prismaService.user.findUnique({
       where: { id: clientId },
+      include: { clients: true },
     });
 
-    if (!client || client.role !== UserRole.CLIENT) {
+    if (!user) {
       throwAuthError('Client not found', 'notFound');
     }
 
+    return user;
+  }
+
+  async getIntakeFormForClient(clientId: string) {
+    // First, check if client has already completed intake
+    const existingSubmission = await this.prismaService.intakeFormSubmission.findFirst({
+      where: { clientId: clientId },
+    });
+
+    if (existingSubmission) {
+      throwAuthError('Client has already completed intake form', 'badRequest');
+    }
+
+    // Get client's email
+    const client = await this.prismaService.user.findUnique({
+      where: { id: clientId },
+      select: { email: true },
+    });
+
+    if (!client) {
+      throwAuthError('Client not found', 'notFound');
+    }
+
+    // Find the client's invitation with an attached intake form
     const invitation = await this.prismaService.invitation.findFirst({
       where: {
         clientEmail: client.email,
-        practitionerId: client.practitionerId || undefined,
-        isAccepted: true,
+        intakeFormId: { not: null },
       },
       include: {
         intakeForm: {
           include: {
-            questions: { orderBy: { order: 'asc' } },
+            questions: {
+              orderBy: { order: 'asc' },
+            },
           },
         },
       },
+      orderBy: { createdAt: 'desc' },
     });
 
-    if (!invitation) {
-      throwAuthError('No invitation found for this client', 'notFound');
-    }
-
-    if (!invitation.intakeForm) {
-      throwAuthError('No intake form attached to this invitation', 'notFound');
-    }
-
-    const existingSubmission = await this.prismaService.intakeFormSubmission.findFirst({
-      where: {
-        clientId: clientId,
-        formId: invitation.intakeForm.id,
-      },
-    });
-
-    const newStatus = updateClientStatus(client.clientStatus ?? 'ACTIVE', !!existingSubmission);
-
-    if (client.clientStatus !== newStatus) {
-      await this.prismaService.user.update({
-        where: { id: clientId },
-        data: { clientStatus: newStatus },
-      });
-    }
-
-    if (existingSubmission) {
-      throwAuthError('Client has already completed intake', 'badRequest');
+    if (!invitation || !invitation.intakeForm) {
+      throwAuthError('No intake form found for this client', 'notFound');
     }
 
     return {
@@ -67,7 +76,7 @@ export class ClientService {
         id: q.id,
         text: q.text,
         type: q.type,
-        options: q.options,
+        options: q.options || [],
         isRequired: q.isRequired,
         order: q.order,
       })),
@@ -76,184 +85,115 @@ export class ClientService {
 
   async submitIntakeForm(clientId: string, formId: string, answers: Record<string, unknown>) {
     try {
-      const client = await this.prismaService.user.findUnique({ where: { id: clientId } });
+      const result = await this.prismaService.$transaction(async (tx) => {
+        // Check if a submission already exists
+        const existingSubmission = await tx.intakeFormSubmission.findFirst({
+          where: {
+            clientId: clientId,
+            formId: formId,
+          },
+        });
 
-      if (!client || client.role !== UserRole.CLIENT) {
-        throwAuthError('Client not found', 'notFound');
-      }
+        if (existingSubmission) {
+          throwAuthError('Intake form has already been submitted for this client', 'badRequest');
+        }
 
-      const form = await this.prismaService.intakeForm.findFirst({
-        where: { id: formId, practitionerId: client.practitionerId || undefined },
-        include: { questions: true },
-      });
+        // Create new submission
+        const submission = await tx.intakeFormSubmission.create({
+          data: {
+            clientId: clientId,
+            formId: formId,
+          },
+        });
 
-      if (!form) {
-        throwAuthError('Intake form not found', 'notFound');
-      }
-
-      const existingSubmission = await this.prismaService.intakeFormSubmission.findFirst({
-        where: { clientId: clientId, formId: formId },
-      });
-
-      if (existingSubmission) {
-        throwAuthError('You have already submitted this intake form', 'badRequest');
-      }
-
-      const submission = await this.prismaService.intakeFormSubmission.create({
-        data: { clientId: clientId, formId: formId },
-      });
-
-      const answerData = form.questions
-        .map((question) => {
-          const answer = answers[question.id];
-          if (answer !== undefined && answer !== null && answer !== '') {
-            return {
+        // Create answers for each question
+        const answerPromises = Object.entries(answers).map(([questionId, value]) =>
+          tx.answer.create({
+            data: {
               submissionId: submission.id,
-              questionId: question.id,
-              value: JSON.stringify(answer),
-            };
-          }
-          return null;
-        })
-        .filter((item): item is NonNullable<typeof item> => item !== null);
+              questionId,
+              value: String(value),
+            },
+          })
+        );
 
-      if (answerData.length > 0) {
-        await this.prismaService.answer.createMany({ data: answerData });
-      }
+        await Promise.all(answerPromises);
 
-      const newStatus = updateClientStatus(client.clientStatus ?? 'ACTIVE', true);
-      await this.prismaService.user.update({
-        where: { id: clientId },
-        data: { clientStatus: newStatus },
+        // Update client status
+        const currentUser = await tx.user.findUnique({ where: { id: clientId } });
+        if (currentUser) {
+          const newStatus = updateClientStatus(currentUser.clientStatus || 'ACTIVE', true);
+          await tx.user.update({
+            where: { id: clientId },
+            data: { clientStatus: newStatus },
+          });
+
+          return { submission, clientStatus: newStatus };
+        }
+
+        return { submission, clientStatus: 'INTAKE_COMPLETED' };
       });
 
-      const result = {
-        message: 'Intake form submitted successfully',
-        clientStatus: newStatus,
-        submissionId: submission.id,
+      return {
+        success: true,
+        submissionId: result.submission.id,
+        clientStatus: result.clientStatus,
       };
-
-      return result;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Connection')) {
-        throwAuthError('Database connection error. Please try again.', 'badRequest');
-      }
-
-      if (error instanceof Error) {
+      if ((error as Error).message.includes('Intake form has already been submitted')) {
         throw error;
-      } else {
-        throwAuthError('Failed to submit intake form', 'badRequest');
       }
+      throwAuthError('Failed to submit intake form', 'badRequest');
     }
+  }
+
+  async getSubmissionsByClient(clientId: string, formId?: string) {
+    const whereClause: SubmissionWhereClause = {
+      clientId: clientId,
+    };
+
+    if (formId) {
+      whereClause.formId = formId;
+    }
+
+    return await this.prismaService.intakeFormSubmission.findMany({
+      where: whereClause,
+      include: {
+        form: true,
+        answers: true,
+      },
+      orderBy: {
+        submittedAt: 'desc',
+      },
+    });
   }
 
   async fixClientStatuses() {
-    const clientsToFix = await this.prismaService.user.findMany({
-      where: {
-        role: UserRole.CLIENT,
-        clientStatus: 'INTAKE_COMPLETED',
-      },
-      include: {
-        _count: {
-          select: { intakeFormSubmissions: true },
-        },
-      },
+    const users = await this.prismaService.user.findMany({
+      where: { role: 'CLIENT' },
+      include: { clients: true },
     });
 
-    const clientsWithoutSubmissions = clientsToFix.filter((client) => client._count.intakeFormSubmissions === 0);
-
-    if (clientsWithoutSubmissions.length === 0) {
-      return {
-        message: 'No client statuses need fixing',
-        fixedCount: 0,
-      };
-    }
-
-    const newStatus = updateClientStatus('INTAKE_COMPLETED', false);
-    await this.prismaService.user.updateMany({
-      where: {
-        id: { in: clientsWithoutSubmissions.map((c) => c.id) },
-      },
-      data: {
-        clientStatus: newStatus,
-      },
-    });
-
-    return {
-      message: `Fixed ${clientsWithoutSubmissions.length} client statuses`,
-      fixedCount: clientsWithoutSubmissions.length,
-    };
-  }
-
-  async createGoal(clientId: string, data: { type: string; title: string; target: string; frequency: string }) {
-    const client = await this.prismaService.user.findUnique({ where: { id: clientId } });
-    if (!client || client.role !== UserRole.CLIENT) {
-      throwAuthError('Client not found', 'notFound');
-    }
-    if (!client.practitionerId) {
-      throwAuthError('Client does not have a practitioner', 'badRequest');
-    }
-    const goal = await this.prismaService.goal.create({
-      data: {
-        clientId,
-        practitionerId: client.practitionerId,
-        type: data.type as GoalType,
-        title: data.title,
-        target: data.target,
-        frequency: data.frequency,
-      },
-    });
-    return goal;
-  }
-
-  getGoals(clientId: string) {
-    return this.prismaService.goal.findMany({
-      where: { clientId },
-      orderBy: { createdAt: 'desc' },
-      include: { tasks: true },
-    });
-  }
-
-  async updateGoal(clientId: string, goalId: string, data: { title?: string; target?: string; frequency?: string }) {
-    const goal = await this.prismaService.goal.findUnique({ where: { id: goalId } });
-    if (!goal || goal.clientId !== clientId) {
-      throwAuthError('Goal not found or not owned by client', 'notFound');
-    }
-    return this.prismaService.goal.update({
-      where: { id: goalId },
-      data,
-    });
-  }
-
-  async createTask(clientId: string, data: { goalId: string; date: Date; feedback?: string; achieved?: string }) {
-    const goal = await this.prismaService.goal.findUnique({ where: { id: data.goalId } });
-    if (!goal || goal.clientId !== clientId) {
-      throwAuthError('Goal not found or not owned by client', 'notFound');
-    }
-    const existing = await this.prismaService.task.findFirst({ where: { goalId: data.goalId, date: data.date } });
-    if (existing) {
-      return this.prismaService.task.update({
-        where: { id: existing.id },
-        data: { feedback: data.feedback, achieved: data.achieved, completed: true },
+    const updates: string[] = [];
+    for (const user of users) {
+      // Check if user has any submissions
+      const hasSubmissions = await this.prismaService.intakeFormSubmission.findFirst({
+        where: { clientId: user.id },
       });
+
+      const currentStatus = user.clientStatus || 'ACTIVE';
+      const correctStatus = updateClientStatus(currentStatus, !!hasSubmissions);
+
+      if (currentStatus !== correctStatus) {
+        await this.prismaService.user.update({
+          where: { id: user.id },
+          data: { clientStatus: correctStatus },
+        });
+        updates.push(user.id);
+      }
     }
-    return this.prismaService.task.create({
-      data: {
-        goalId: data.goalId,
-        date: data.date,
-        feedback: data.feedback,
-        achieved: data.achieved,
-        completed: true,
-      },
-    });
+    return { updated: updates.length };
   }
 
-  getTasks(clientId: string, goalId?: string) {
-    const where: { goal: { clientId: string }; goalId?: string } = { goal: { clientId } };
-    if (goalId) where.goalId = goalId;
-    return this.prismaService.task.findMany({
-      where,
-      orderBy: { date: 'desc' },
-    });
-  }
+  // Removed goal-related methods as they don't exist in the schema
 }

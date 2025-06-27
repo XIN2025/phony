@@ -25,6 +25,24 @@ export async function middleware(request: NextRequest) {
     if (token.role !== 'CLIENT') {
       return NextResponse.redirect(new URL('/practitioner/auth', request.url));
     }
+
+    // Handle client-specific redirects
+    if (
+      pathname.startsWith('/client') &&
+      !pathname.includes('/auth') &&
+      !pathname.includes('/profile-setup') &&
+      !pathname.includes('/intake')
+    ) {
+      // Check if profile setup is needed
+      if (!token.firstName || !token.lastName) {
+        return NextResponse.redirect(new URL('/client/profile-setup', request.url));
+      }
+
+      // Check if intake is needed
+      if (token.clientStatus === 'NEEDS_INTAKE') {
+        return NextResponse.redirect(new URL('/client/intake', request.url));
+      }
+    }
   }
 
   const publicRoutes = ['/', '/practitioner/auth', '/client/auth', '/auth', '/invitations/token'];

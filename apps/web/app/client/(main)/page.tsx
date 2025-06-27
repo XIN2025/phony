@@ -1,7 +1,6 @@
 ﻿'use client';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Checkbox } from '@repo/ui/components/checkbox';
@@ -27,8 +26,7 @@ interface CompletionData {
 }
 
 const ClientPage = () => {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [selectedTask, setSelectedTask] = useState<ActionItem | null>(null);
   const [completionData, setCompletionData] = useState<CompletionData>({
@@ -36,30 +34,6 @@ const ClientPage = () => {
     journalEntry: '',
     achievedValue: '',
   });
-
-  useEffect(() => {
-    if (status === 'loading') return;
-
-    if (status === 'unauthenticated' || !session?.user) {
-      router.push('/client/auth');
-      return;
-    }
-
-    if (session.user.role !== 'CLIENT') {
-      router.push('/practitioner');
-      return;
-    }
-
-    if (!session.user.firstName || !session.user.lastName) {
-      router.push('/client/profile-setup');
-      return;
-    }
-
-    if (session.user.clientStatus === 'NEEDS_INTAKE') {
-      router.push('/client/intake');
-      return;
-    }
-  }, [status, session, router]);
 
   const { data: todayTasks, isLoading } = useQuery({
     queryKey: ['today-tasks'],
@@ -100,7 +74,6 @@ const ClientPage = () => {
 
   const handleTaskToggle = (task: ActionItem) => {
     if (task.isCompleted) {
-      // If already completed, just uncheck
       return;
     }
     setSelectedTask(task);
@@ -112,7 +85,7 @@ const ClientPage = () => {
     completeTaskMutation.mutate();
   };
 
-  if (status === 'loading' || isLoading) {
+  if (isLoading) {
     return (
       <div className='flex h-screen items-center justify-center'>
         <div className='text-center'>
@@ -123,13 +96,13 @@ const ClientPage = () => {
     );
   }
 
-  if (status === 'unauthenticated' || !session?.user || session?.error || session.user.role !== 'CLIENT') {
-    return <div className='flex h-screen items-center justify-center'>Redirecting...</div>;
-  }
-
-  const user = session.user;
+  const user = session?.user;
   const completedTasks = todayTasks?.filter((task) => task.isCompleted).length || 0;
   const totalTasks = todayTasks?.length || 0;
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className='container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl'>

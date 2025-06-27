@@ -20,15 +20,27 @@ jest.mock('openid-client', () => ({
   },
   Client: jest.fn(),
 }));
-const mockAxios: any = {
+
+interface MockAxios {
+  create: jest.Mock;
+  get: jest.Mock;
+  post: jest.Mock;
+  put: jest.Mock;
+  delete: jest.Mock;
+  patch: jest.Mock;
+  isAxiosError: (err: { isAxiosError?: boolean }) => boolean;
+}
+
+const mockAxios: MockAxios = {
   create: jest.fn(() => mockAxios),
   get: jest.fn(),
   post: jest.fn(),
   put: jest.fn(),
   delete: jest.fn(),
   patch: jest.fn(),
-  isAxiosError: (err: any): boolean => err.isAxiosError === true,
+  isAxiosError: (err: { isAxiosError?: boolean }): boolean => err.isAxiosError === true,
 };
+
 jest.mock('axios', () => mockAxios);
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -42,18 +54,35 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
   usePathname: () => '/',
 }));
+
+interface ImageProps {
+  src?: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+  [key: string]: unknown;
+}
+
+interface LinkProps {
+  href?: string;
+  children?: React.ReactNode;
+  [key: string]: unknown;
+}
+
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props: any) => {
+  default: (props: ImageProps) => {
     return props;
   },
 }));
+
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: (props: any) => {
+  default: (props: LinkProps) => {
     return props;
   },
 }));
+
 process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -81,13 +110,13 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
 const originalError = console.error;
 const originalWarn = console.warn;
 beforeAll(() => {
-  console.error = (...args: any[]) => {
+  console.error = (...args: unknown[]) => {
     if (typeof args[0] === 'string' && args[0].includes('Warning: ReactDOM.render is no longer supported')) {
       return;
     }
     originalError.call(console, ...args);
   };
-  console.warn = (...args: any[]) => {
+  console.warn = (...args: unknown[]) => {
     if (typeof args[0] === 'string' && args[0].includes('Warning: componentWillReceiveProps has been renamed')) {
       return;
     }

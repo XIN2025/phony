@@ -9,7 +9,7 @@ import { IntakeFormSelector } from '@/components/invite/IntakeFormSelector';
 import { IntakeFormBuilder } from '@/components/invite/IntakeFormBuilder';
 import { IntakeFormPreview } from '@/components/invite/IntakeFormPreview';
 import { useInviteContext } from '@/context/InviteContext';
-import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
+import { CreateIntakeFormDto, QuestionType } from '@repo/shared-types/schemas';
 import { useInviteClient, useCreateIntakeForm, useUpdateIntakeForm, useGetIntakeForm } from '@/lib/hooks/use-api';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -29,7 +29,7 @@ export default function InviteClientPage() {
     clientFirstName: string;
     clientLastName: string;
     clientEmail: string;
-    includeIntakeForm: boolean;
+    intakeFormId?: string;
   }) => {
     setSubmitting(true);
     const normalizedData = {
@@ -37,16 +37,14 @@ export default function InviteClientPage() {
       clientEmail: data.clientEmail.trim().toLowerCase(),
       clientFirstName: data.clientFirstName.trim(),
       clientLastName: data.clientLastName.trim(),
-      intakeFormId: undefined,
     };
     setInviteData(normalizedData);
-    if (normalizedData.includeIntakeForm) {
+    if (normalizedData.intakeFormId) {
       setSubmitting(false);
       goToNextStep();
     } else {
       inviteClient(normalizedData, {
         onSuccess: () => {
-          // Invalidate invitations query after success
           queryClient.invalidateQueries({ queryKey: ['invitations'] });
           router.push('/practitioner/invite/success');
         },
@@ -301,50 +299,26 @@ export default function InviteClientPage() {
   React.useEffect(() => {
     if (selectedForm && selectedFormId) {
       // Map API question types to DTO question types
-      const mapQuestionType = (
-        apiType: string,
-      ):
-        | 'SHORT_ANSWER'
-        | 'LONG_ANSWER'
-        | 'MULTIPLE_CHOICE'
-        | 'CHECKBOXES'
-        | 'SCALE'
-        | 'DROPDOWN'
-        | 'FILE_UPLOAD'
-        | 'RATING'
-        | 'MULTIPLE_CHOICE_GRID'
-        | 'TICK_BOX_GRID' => {
-        const typeMap: Record<
-          string,
-          | 'SHORT_ANSWER'
-          | 'LONG_ANSWER'
-          | 'MULTIPLE_CHOICE'
-          | 'CHECKBOXES'
-          | 'SCALE'
-          | 'DROPDOWN'
-          | 'FILE_UPLOAD'
-          | 'RATING'
-          | 'MULTIPLE_CHOICE_GRID'
-          | 'TICK_BOX_GRID'
-        > = {
-          TEXT: 'SHORT_ANSWER',
-          TEXTAREA: 'LONG_ANSWER',
-          MULTIPLE_CHOICE: 'MULTIPLE_CHOICE',
-          SINGLE_CHOICE: 'MULTIPLE_CHOICE',
-          CHECKBOX: 'CHECKBOXES',
-          RADIO: 'MULTIPLE_CHOICE',
-          DATE: 'SHORT_ANSWER',
-          EMAIL: 'SHORT_ANSWER',
-          PHONE: 'SHORT_ANSWER',
-          NUMBER: 'SHORT_ANSWER',
-          SCALE: 'SCALE',
-          DROPDOWN: 'DROPDOWN',
-          FILE_UPLOAD: 'FILE_UPLOAD',
-          RATING: 'RATING',
-          MULTIPLE_CHOICE_GRID: 'MULTIPLE_CHOICE_GRID',
-          TICK_BOX_GRID: 'TICK_BOX_GRID',
+      const mapQuestionType = (apiType: string): QuestionType => {
+        const typeMap: Record<string, QuestionType> = {
+          TEXT: QuestionType.SHORT_TEXT,
+          TEXTAREA: QuestionType.LONG_TEXT,
+          MULTIPLE_CHOICE: QuestionType.MULTIPLE_CHOICE,
+          SINGLE_CHOICE: QuestionType.MULTIPLE_CHOICE,
+          CHECKBOX: QuestionType.CHECKBOX,
+          RADIO: QuestionType.MULTIPLE_CHOICE,
+          DATE: QuestionType.DATE,
+          EMAIL: QuestionType.EMAIL,
+          PHONE: QuestionType.PHONE,
+          NUMBER: QuestionType.NUMBER,
+          SCALE: QuestionType.NUMBER,
+          DROPDOWN: QuestionType.SELECT,
+          FILE_UPLOAD: QuestionType.FILE_UPLOAD,
+          RATING: QuestionType.NUMBER,
+          MULTIPLE_CHOICE_GRID: QuestionType.MULTIPLE_CHOICE,
+          TICK_BOX_GRID: QuestionType.CHECKBOX,
         };
-        return typeMap[apiType] || 'SHORT_ANSWER';
+        return typeMap[apiType] || QuestionType.SHORT_TEXT;
       };
 
       const transformedForm: CreateIntakeFormDto = {
@@ -352,10 +326,15 @@ export default function InviteClientPage() {
         description: selectedForm.description,
         questions: selectedForm.questions.map((q) => ({
           id: q.id,
-          text: q.text,
+          title: q.text,
           type: mapQuestionType(q.type),
-          options: q.options?.map((option) => ({ text: option })) || [],
-          isRequired: q.isRequired,
+          options:
+            q.options?.map((option, index) => ({
+              id: `option-${index}`,
+              value: option,
+              label: option,
+            })) || [],
+          required: q.isRequired,
           order: q.order,
         })),
       };

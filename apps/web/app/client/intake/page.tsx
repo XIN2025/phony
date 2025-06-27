@@ -20,15 +20,19 @@ interface Question {
   id: string;
   text: string;
   type: string;
-  options: string[];
+  options: (string | { id?: string; label?: string; value?: string })[];
   isRequired: boolean;
   order: number;
+}
+
+interface FormAnswers {
+  [questionId: string]: string | string[] | boolean | number | undefined;
 }
 
 export default function IntakePage() {
   const router = useRouter();
   const { status, data: session, update } = useSession();
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers] = useState<FormAnswers>({});
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
@@ -97,37 +101,43 @@ export default function IntakePage() {
         const answer = answers[question.id];
 
         switch (question.type) {
+          case 'SHORT_TEXT':
+          case 'LONG_TEXT':
           case 'TEXT':
           case 'TEXTAREA':
-          case 'RADIO':
-          case 'CHECKBOX':
+          case 'EMAIL':
+          case 'PHONE':
+          case 'URL':
+          case 'NUMBER':
             if (!answer || (typeof answer === 'string' && answer.trim() === '')) {
               return false;
             }
             break;
 
+          case 'MULTIPLE_CHOICE':
+          case 'SELECT':
+          case 'RADIO':
+            if (!answer || (typeof answer === 'string' && answer.trim() === '')) {
+              return false;
+            }
+            break;
+
+          case 'CHECKBOX':
           case 'CHECKBOXES':
             if (!Array.isArray(answer) || answer.length === 0) {
               return false;
             }
             break;
 
-          case 'SCALE':
-          case 'RATING':
-            if (answer === undefined || answer === null || answer === 0) {
+          case 'DATE':
+          case 'TIME':
+            if (!answer || (typeof answer === 'string' && answer.trim() === '')) {
               return false;
             }
             break;
 
           case 'FILE_UPLOAD':
             if (!answer || (typeof answer === 'string' && answer.trim() === '')) {
-              return false;
-            }
-            break;
-
-          case 'MULTIPLE_CHOICE_GRID':
-          case 'TICK_BOX_GRID':
-            if (!answer || Object.keys(answer).length === 0) {
               return false;
             }
             break;
@@ -165,7 +175,7 @@ export default function IntakePage() {
         answers: answers,
       },
       {
-        onSuccess: async (data: { clientStatus: string }) => {
+        onSuccess: async (data: { success: boolean; submissionId: string; clientStatus: string }) => {
           try {
             await update({
               ...session,
@@ -194,20 +204,22 @@ export default function IntakePage() {
     const currentAnswer = answers[question.id];
 
     switch (question.type) {
+      case 'SHORT_TEXT':
       case 'TEXT':
         return (
           <Input
-            value={currentAnswer || ''}
+            value={(currentAnswer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
             placeholder='Enter your answer'
             className='mt-2'
           />
         );
 
+      case 'LONG_TEXT':
       case 'TEXTAREA':
         return (
           <Textarea
-            value={currentAnswer || ''}
+            value={(currentAnswer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
             placeholder='Enter your detailed answer'
             className='mt-2'
@@ -215,20 +227,93 @@ export default function IntakePage() {
           />
         );
 
+      case 'EMAIL':
+        return (
+          <Input
+            type='email'
+            value={(currentAnswer as string) || ''}
+            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+            placeholder='Enter your email'
+            className='mt-2'
+          />
+        );
+
+      case 'PHONE':
+        return (
+          <Input
+            type='tel'
+            value={(currentAnswer as string) || ''}
+            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+            placeholder='Enter your phone number'
+            className='mt-2'
+          />
+        );
+
+      case 'NUMBER':
+        return (
+          <Input
+            type='number'
+            value={(currentAnswer as string) || ''}
+            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+            placeholder='Enter a number'
+            className='mt-2'
+          />
+        );
+
+      case 'DATE':
+        return (
+          <Input
+            type='date'
+            value={(currentAnswer as string) || ''}
+            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+            className='mt-2'
+          />
+        );
+
+      case 'TIME':
+        return (
+          <Input
+            type='time'
+            value={(currentAnswer as string) || ''}
+            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+            className='mt-2'
+          />
+        );
+
+      case 'URL':
+        return (
+          <Input
+            type='url'
+            value={(currentAnswer as string) || ''}
+            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+            placeholder='Enter a URL'
+            className='mt-2'
+          />
+        );
+
+      case 'MULTIPLE_CHOICE':
       case 'RADIO':
         return (
           <RadioGroup
-            value={currentAnswer || ''}
+            value={(currentAnswer as string) || ''}
             onValueChange={(value) => handleAnswerChange(question.id, value)}
             className='mt-2'
           >
             {Array.isArray(question.options) &&
-              question.options.map((option, index) => (
-                <div key={index} className='flex items-center space-x-2'>
-                  <RadioGroupItem value={option} id={`${question.id}-${index}`} />
-                  <Label htmlFor={`${question.id}-${index}`}>{option}</Label>
-                </div>
-              ))}
+              question.options.map((option, index) => {
+                // Handle both string options and object options
+                const optionValue =
+                  typeof option === 'string' ? option : option?.value || option?.label || String(option);
+                const optionLabel =
+                  typeof option === 'string' ? option : option?.label || option?.value || String(option);
+
+                return (
+                  <div key={index} className='flex items-center space-x-2'>
+                    <RadioGroupItem value={optionValue} id={`${question.id}-${index}`} />
+                    <Label htmlFor={`${question.id}-${index}`}>{optionLabel}</Label>
+                  </div>
+                );
+              })}
           </RadioGroup>
         );
 
@@ -236,69 +321,34 @@ export default function IntakePage() {
         return (
           <div className='mt-2 space-y-2'>
             {Array.isArray(question.options) &&
-              question.options.map((option, index) => (
-                <div key={index} className='flex items-center space-x-2'>
-                  <Checkbox
-                    id={`${question.id}-${index}`}
-                    checked={Array.isArray(currentAnswer) && currentAnswer.includes(option)}
-                    onCheckedChange={(checked) => {
-                      const currentArray = Array.isArray(currentAnswer) ? currentAnswer : [];
-                      if (checked) {
-                        handleAnswerChange(question.id, [...currentArray, option]);
-                      } else {
-                        handleAnswerChange(
-                          question.id,
-                          currentArray.filter((item) => item !== option),
-                        );
-                      }
-                    }}
-                  />
-                  <Label htmlFor={`${question.id}-${index}`}>{option}</Label>
-                </div>
-              ))}
-          </div>
-        );
+              question.options.map((option, index) => {
+                // Handle both string options and object options
+                const optionValue =
+                  typeof option === 'string' ? option : option?.value || option?.label || String(option);
+                const optionLabel =
+                  typeof option === 'string' ? option : option?.label || option?.value || String(option);
 
-      case 'SCALE':
-        return (
-          <div className='mt-2'>
-            <Slider
-              value={[currentAnswer || 0]}
-              onValueChange={(value: number[]) => handleAnswerChange(question.id, value[0])}
-              max={10}
-              min={0}
-              step={1}
-              className='w-full'
-            />
-            <div className='flex justify-between text-sm text-muted-foreground mt-1'>
-              <span>0</span>
-              <span>5</span>
-              <span>10</span>
-            </div>
-            <div className='text-center mt-2'>
-              <span className='text-lg font-semibold'>{currentAnswer || 0}</span>
-            </div>
-          </div>
-        );
-
-      case 'RATING':
-        return (
-          <div className='mt-2 flex space-x-1'>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                type='button'
-                onClick={() => handleAnswerChange(question.id, star)}
-                className={`p-1 ${
-                  currentAnswer >= star ? 'text-yellow-400' : 'text-gray-300'
-                } hover:text-yellow-400 transition-colors`}
-              >
-                <Star className='h-6 w-6 fill-current' />
-              </button>
-            ))}
-            <span className='ml-2 text-sm text-muted-foreground'>
-              {currentAnswer ? `${currentAnswer} star${currentAnswer > 1 ? 's' : ''}` : 'No rating'}
-            </span>
+                return (
+                  <div key={index} className='flex items-center space-x-2'>
+                    <Checkbox
+                      id={`${question.id}-${index}`}
+                      checked={Array.isArray(currentAnswer) && currentAnswer.includes(optionValue)}
+                      onCheckedChange={(checked) => {
+                        const currentArray = Array.isArray(currentAnswer) ? (currentAnswer as string[]) : [];
+                        if (checked) {
+                          handleAnswerChange(question.id, [...currentArray, optionValue]);
+                        } else {
+                          handleAnswerChange(
+                            question.id,
+                            currentArray.filter((item: string) => item !== optionValue),
+                          );
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`${question.id}-${index}`}>{optionLabel}</Label>
+                  </div>
+                );
+              })}
           </div>
         );
 
@@ -328,7 +378,7 @@ export default function IntakePage() {
       default:
         return (
           <Input
-            value={currentAnswer || ''}
+            value={(currentAnswer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
             placeholder='Enter your answer'
             className='mt-2'

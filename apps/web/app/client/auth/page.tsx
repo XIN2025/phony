@@ -1,10 +1,10 @@
 ﻿'use client';
-import * as React from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Loader2 } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@repo/ui/components/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@repo/ui/components/form';
 import { Input } from '@repo/ui/components/input';
@@ -14,15 +14,16 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { emailSchema, otpSchema } from '@repo/shared-types/schemas';
 import { useSendOtp } from '@/lib/hooks/use-api';
+import { handleLoginError } from '@/lib/auth-utils';
 
 export default function ClientAuthPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [showOTP, setShowOTP] = React.useState(false);
   const [resendTimer, setResendTimer] = React.useState(0);
+  const timerCleanupRef = React.useRef<(() => void) | null>(null);
   const router = useRouter();
   const { status, data: session } = useSession();
 
-  // Redirect authenticated users to appropriate dashboard
   React.useEffect(() => {
     if (status === 'authenticated' && session) {
       if (session.user.role === 'CLIENT') {
@@ -44,11 +45,35 @@ export default function ClientAuthPage() {
   });
 
   const startResendTimer = () => {
+    // Clear any existing timer
+    if (timerCleanupRef.current) {
+      timerCleanupRef.current();
+    }
+
     setResendTimer(60);
-    setInterval(() => {
-      setResendTimer((prev) => (prev <= 1 ? 0 : prev - 1));
+    const interval = setInterval(() => {
+      setResendTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          timerCleanupRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
+
+    // Store cleanup function for proper memory management
+    timerCleanupRef.current = () => clearInterval(interval);
   };
+
+  // Cleanup timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (timerCleanupRef.current) {
+        timerCleanupRef.current();
+      }
+    };
+  }, []);
 
   async function onSubmit(values: z.infer<typeof emailSchema>) {
     if (!showOTP) {
@@ -61,13 +86,7 @@ export default function ClientAuthPage() {
             setShowOTP(true);
           },
           onError: (error: Error) => {
-            if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
-              toast.error('Request timed out. The OTP may have been sent. Please check your email and try again.');
-            } else if (error.message?.includes('network') || error.message?.includes('connection')) {
-              toast.error('Network error. Please check your connection and try again.');
-            } else {
-              toast.error(error.message ?? 'Failed to send OTP. Please try again.');
-            }
+            toast.error(error.message ?? 'Failed to send verification code.');
           },
         },
       );
@@ -82,7 +101,8 @@ export default function ClientAuthPage() {
         redirect: false,
       });
       if (res?.error) {
-        toast.error(res.error ?? 'Invalid OTP');
+        const errorMessage = handleLoginError(res.error, 'CLIENT');
+        toast.error(errorMessage);
       } else {
         toast.success('Logged in successfully');
         router.push('/client');
@@ -136,15 +156,7 @@ export default function ClientAuthPage() {
                         startResendTimer();
                       },
                       onError: (error: Error) => {
-                        if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
-                          toast.error(
-                            'Request timed out. The OTP may have been sent. Please check your email and try again.',
-                          );
-                        } else if (error.message?.includes('network') || error.message?.includes('connection')) {
-                          toast.error('Network error. Please check your connection and try again.');
-                        } else {
-                          toast.error(error.message ?? 'Failed to resend OTP');
-                        }
+                        toast.error(error.message ?? 'Failed to resend verification code');
                       },
                     },
                   )
@@ -193,7 +205,6 @@ export default function ClientAuthPage() {
     );
   }
 
-  // If already authenticated, show loading while redirecting
   if (status === 'authenticated') {
     return (
       <div className='flex items-center justify-center'>

@@ -23,7 +23,6 @@ export function AuthLayout({ children, image }: AuthLayoutProps) {
   );
 }
 
-// Simple Logo component for the sidebar
 function Logo({ className }: { className?: string }) {
   return (
     <svg

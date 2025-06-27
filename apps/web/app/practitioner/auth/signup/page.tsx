@@ -47,12 +47,22 @@ export default function PractitionerSignUpPage() {
   const router = useRouter();
   const { status } = useSession();
   const [profileImage, setProfileImage] = React.useState<File | null>(null);
+  const timerCleanupRef = React.useRef<(() => void) | null>(null);
 
   React.useEffect(() => {
     if (status === 'authenticated') {
       router.push('/practitioner');
     }
   }, [status, router]);
+
+  // Cleanup timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (timerCleanupRef.current) {
+        timerCleanupRef.current();
+      }
+    };
+  }, []);
 
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useSendOtp();
   const { mutate: handleSignup, isPending: isSigningUp } = usePractitionerSignup();
@@ -72,18 +82,31 @@ export default function PractitionerSignUpPage() {
   });
 
   const startResendTimer = () => {
+    // Clear any existing timer
+    if (timerCleanupRef.current) {
+      timerCleanupRef.current();
+    }
+
     setResendTimer(60);
     const interval = setInterval(() => {
-      setResendTimer((prev) => (prev <= 1 ? 0 : prev - 1));
+      setResendTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          timerCleanupRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
-    return () => clearInterval(interval);
+
+    // Store cleanup function for proper memory management
+    timerCleanupRef.current = () => clearInterval(interval);
   };
 
   const completeSignUp = async () => {
     setIsLoading(true);
     const values = form.getValues();
     try {
-      // Create FormData for multipart upload
       const formData = new FormData();
       formData.append('email', values.email!.trim().toLowerCase());
       formData.append('otp', values.otp!.trim());
@@ -97,7 +120,7 @@ export default function PractitionerSignUpPage() {
       handleSignup(formData, {
         onSuccess: async (response) => {
           toast.success('Account created successfully!');
-          // Use the token from signup response for direct authentication
+
           const result = await signIn('credentials', {
             email: values.email!.trim().toLowerCase(),
             token: response.token,
@@ -146,7 +169,7 @@ export default function PractitionerSignUpPage() {
               setStep(2);
             },
             onError: (error: Error) => {
-              toast.error(error.message ?? 'Failed to send OTP. Please try again.');
+              toast.error(error.message ?? 'Failed to send verification code.');
             },
           },
         );
@@ -191,7 +214,6 @@ export default function PractitionerSignUpPage() {
     }
   };
 
-  // Profile image upload handler
   const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -266,7 +288,7 @@ export default function PractitionerSignUpPage() {
                           startResendTimer();
                         },
                         onError: (error: Error) => {
-                          toast.error(error.message ?? 'Failed to resend OTP. Please try again.');
+                          toast.error(error.message ?? 'Failed to resend verification code.');
                         },
                       },
                     )

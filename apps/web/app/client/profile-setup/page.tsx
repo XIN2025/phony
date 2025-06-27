@@ -1,57 +1,15 @@
 ﻿'use client';
 import * as React from 'react';
-import { useSession } from 'next-auth/react';
+
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Logo } from '@repo/ui/components/logo';
 import { ProfileSetupForm } from '@/components/ProfileSetupForm';
 import { Loader2 } from 'lucide-react';
-import { useUpdateProfile } from '@/lib/hooks/use-api';
-
 export default function ClientProfileSetupPage() {
   const router = useRouter();
-  const { data: session, update } = useSession();
-  const [showLoading, setShowLoading] = React.useState(false);
 
-  const initialDefaultValues = React.useMemo(
-    () => ({
-      firstName: session?.user?.firstName || '',
-      lastName: session?.user?.lastName || '',
-    }),
-    [session?.user?.firstName, session?.user?.lastName],
-  );
-
-  const { mutate: handleProfileSetup, isPending } = useUpdateProfile();
-
-  const onSubmit = (data: { firstName: string; lastName: string; profileImage?: File }) => {
-    setShowLoading(true);
-    const formData = new FormData();
-    formData.append('firstName', data.firstName);
-    formData.append('lastName', data.lastName);
-    if (data.profileImage) {
-      formData.append('profileImage', data.profileImage);
-    }
-
-    handleProfileSetup(formData, {
-      onSuccess: async () => {
-        toast.success('Profile setup completed successfully!');
-        setShowLoading(true);
-        // Update session and navigate in parallel
-        await Promise.all([
-          update(),
-          new Promise((resolve) => setTimeout(resolve, 800)), // Slightly longer delay for smooth transition
-        ]);
-        router.push('/client');
-      },
-      onError: (error: Error) => {
-        toast.error(error.message ?? 'Failed to complete profile setup');
-        setShowLoading(false);
-      },
-    });
-  };
-
-  // Show loading state when either mutation is pending or we're in loading state
-  if (isPending || showLoading) {
+  if (false) {
     return (
       <div className='min-h-screen bg-background flex items-center justify-center p-4 animate-in fade-in duration-300'>
         <div className='w-full max-w-md text-center'>
@@ -76,12 +34,10 @@ export default function ClientProfileSetupPage() {
         </div>
         <div className='bg-card rounded-lg shadow-lg p-8'>
           <ProfileSetupForm
-            onSubmit={onSubmit}
-            isPending={isPending}
-            defaultValues={initialDefaultValues}
-            title='Complete Your Profile'
-            subtitle="Let's get to know you better"
-            submitText='Complete Setup'
+            onSuccess={() => {
+              toast.success('Profile setup completed successfully!');
+              router.push('/client');
+            }}
           />
         </div>
       </div>

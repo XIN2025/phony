@@ -1,18 +1,13 @@
 import { Body, Controller, Post, Request, UseGuards, UploadedFile, UseInterceptors, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
-import { LoginResponseDto, OtpAuthDto, VerifyOtpDto, PractitionerSignUpDto } from './dto/auth.dto';
+import { LoginResponseDto, OtpAuthDto, VerifyOtpDto, PractitionerSignUpDto, ProfileUpdateBody } from './dto/auth.dto';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 
-interface ProfileUpdateBody {
-  firstName?: string;
-  lastName?: string;
-  profession?: string;
-  [key: string]: unknown;
-}
+// Moved ProfileUpdateBody to shared DTOs
 
 @ApiTags('auth')
 @Controller('auth')
@@ -30,8 +25,7 @@ export class AuthController {
   @Public()
   @ApiResponse({ type: Boolean, description: 'Whether the OTP was sent successfully' })
   async otpAuth(@Body() body: OtpAuthDto): Promise<{ success: boolean }> {
-    const result = await this.authService.handleOtpAuth(body.email);
-    return { success: result };
+    return await this.authService.sendOtp(body.email);
   }
 
   @Post('practitioner/signup')

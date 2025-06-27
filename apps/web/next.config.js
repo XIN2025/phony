@@ -3,7 +3,6 @@ const nextConfig = {
   reactStrictMode: false,
   images: { remotePatterns: [{ protocol: 'https', hostname: '*' }] },
   webpack: (config, { isServer }) => {
-    // Fix for Node.js 22 compatibility with webpack hash functions
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -13,7 +12,6 @@ const nextConfig = {
       };
     }
 
-    // Use a more compatible hash function for Node.js 22
     config.output.hashFunction = 'md4';
     config.output.hashDigest = 'hex';
 

@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar'
 import { Button } from '@repo/ui/components/button';
 import { LogOut } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
-import { getUserDisplayName, getAvatarUrl, getUserInitials } from '@/lib/utils';
+import { getUserDisplayName, getAvatarUrl, getInitials } from '@/lib/utils';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { useSidebar } from '@/context/SidebarContext';
 
@@ -51,7 +51,9 @@ export const SidebarContent = ({
       <div className='flex items-center gap-3'>
         <Avatar className='h-9 w-9 border'>
           <AvatarImage src={avatarUrl} alt={`${userName}'s avatar`} />
-          <AvatarFallback>{getUserInitials(session?.user)}</AvatarFallback>
+          <AvatarFallback>
+            {getInitials({ firstName: session?.user?.firstName, lastName: session?.user?.lastName })}
+          </AvatarFallback>
         </Avatar>
         <div className='flex flex-col'>
           <span className='font-semibold text-sm leading-tight'>{userName}</span>

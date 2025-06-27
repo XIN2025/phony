@@ -1,10 +1,10 @@
 ﻿'use client';
-import * as React from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Loader2 } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@repo/ui/components/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@repo/ui/components/form';
 import { Input } from '@repo/ui/components/input';
@@ -12,18 +12,19 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { emailSchema, otpSchema } from '@repo/shared-types/schemas';
 import { useSendOtp } from '@/lib/hooks/use-api';
-import Link from 'next/link';
+import { handleLoginError } from '@/lib/auth-utils';
 
 export default function PractitionerAuthPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [showOTP, setShowOTP] = React.useState(false);
   const [resendTimer, setResendTimer] = React.useState(0);
+  const timerCleanupRef = React.useRef<(() => void) | null>(null);
   const router = useRouter();
   const { data: session, status } = useSession();
 
-  // If already authenticated, redirect to appropriate dashboard
   React.useEffect(() => {
     if (status === 'authenticated' && session) {
       const targetDashboard = session.user.role === 'PRACTITIONER' ? '/practitioner' : '/client';
@@ -42,17 +43,35 @@ export default function PractitionerAuthPage() {
   });
 
   const startResendTimer = () => {
+    // Clear any existing timer
+    if (timerCleanupRef.current) {
+      timerCleanupRef.current();
+    }
+
     setResendTimer(60);
     const interval = setInterval(() => {
       setResendTimer((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
+          timerCleanupRef.current = null;
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
+
+    // Store cleanup function for proper memory management
+    timerCleanupRef.current = () => clearInterval(interval);
   };
+
+  // Cleanup timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (timerCleanupRef.current) {
+        timerCleanupRef.current();
+      }
+    };
+  }, []);
 
   async function onSubmit(values: z.infer<typeof emailSchema>) {
     if (!showOTP) {
@@ -64,9 +83,9 @@ export default function PractitionerAuthPage() {
             startResendTimer();
             setShowOTP(true);
           },
-          onError: () => {
+          onError: (error: Error) => {
             setIsLoading(false);
-            toast.error('Failed to submit form. Please try again.');
+            toast.error(error.message ?? 'Failed to send verification code.');
           },
         },
       );
@@ -82,10 +101,10 @@ export default function PractitionerAuthPage() {
         redirect: false,
       });
       if (res?.error) {
-        toast.error(res.error ?? 'Invalid OTP');
+        const errorMessage = handleLoginError(res.error, 'PRACTITIONER');
+        toast.error(errorMessage);
       } else {
         toast.success('Logged in successfully');
-        // Let the useEffect handle the redirect
       }
     } catch (_error: unknown) {
       toast.error('An error occurred during sign in');
@@ -135,8 +154,8 @@ export default function PractitionerAuthPage() {
                         toast.success('OTP resent successfully');
                         startResendTimer();
                       },
-                      onError: () => {
-                        toast.error('Failed to resend OTP');
+                      onError: (error: Error) => {
+                        toast.error(error.message ?? 'Failed to resend verification code');
                       },
                     },
                   )

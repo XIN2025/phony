@@ -8,7 +8,6 @@ import { Label } from '@repo/ui/components/label';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { inviteClientSchema } from '@repo/shared-types/schemas';
 import { useInviteContext } from '@/context/InviteContext';
-import { useState } from 'react';
 
 type FormValues = z.infer<typeof inviteClientSchema>;
 interface Props {
@@ -22,14 +21,13 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
     handleSubmit,
     control,
     formState: { errors, isValid },
-    watch,
   } = useForm<FormValues>({
     resolver: zodResolver(inviteClientSchema),
     defaultValues: {
       clientFirstName: inviteData.clientFirstName || '',
       clientLastName: inviteData.clientLastName || '',
       clientEmail: inviteData.clientEmail || '',
-      includeIntakeForm: inviteData.includeIntakeForm || false,
+      intakeFormId: inviteData.intakeFormId || undefined,
     },
     mode: 'onChange',
   });
@@ -54,7 +52,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
         <Controller
           name='clientLastName'
           control={control}
-          render={({ field }) => <Input id='clientLastName' placeholder='Your first name' {...field} />}
+          render={({ field }) => <Input id='clientLastName' placeholder='Your last name' {...field} />}
         />
         {errors.clientLastName && <p className='text-sm text-destructive'>{errors.clientLastName.message}</p>}
       </div>
@@ -70,16 +68,16 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
         {errors.clientEmail && <p className='text-sm text-destructive'>{errors.clientEmail.message}</p>}
       </div>
       <div className='space-y-4'>
-        <Label className='text-base font-semibold'>Intake Form</Label>
+        <Label className='text-base font-semibold'>Intake Form (Optional)</Label>
         <div className='flex items-center space-x-3'>
           <Controller
-            name='includeIntakeForm'
+            name='intakeFormId'
             control={control}
             render={({ field }) => (
               <Checkbox
                 id='includeIntakeForm'
-                checked={field.value}
-                onCheckedChange={field.onChange}
+                checked={!!field.value}
+                onCheckedChange={(checked) => field.onChange(checked ? 'placeholder' : undefined)}
                 className='h-5 w-5 rounded-sm border-gray-300'
               />
             )}

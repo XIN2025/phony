@@ -24,27 +24,21 @@ export class UsersService {
     profession?: string;
     practitionerId?: string;
   }) {
-    try {
-      // Explicitly avoid transactions by using a simple create operation
-      const user = await this.prisma.user.create({
-        data: {
-          email: userData.email,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          role: userData.role as UserRole,
-          profession: userData.profession || null,
-          practitionerId: userData.practitionerId || null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          isActive: true,
-          isEmailVerified: false, // Set to false initially, verify via OTP
-        },
-      });
-      return user;
-    } catch (error) {
-      console.error('Error creating user:', error);
-      throw error;
-    }
+    const user = await this.prisma.user.create({
+      data: {
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        role: userData.role as UserRole,
+        profession: userData.profession || null,
+        practitionerId: userData.practitionerId || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isActive: true,
+        isEmailVerified: false,
+      },
+    });
+    return user;
   }
 
   async updateUser(
@@ -88,7 +82,7 @@ export class UsersService {
     });
   }
 
-  async getAllPractioner() {
+  async getAllPractitioner() {
     return await this.prisma.user.findMany({
       where: {
         role: UserRole.PRACTITIONER,

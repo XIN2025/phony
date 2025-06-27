@@ -47,14 +47,11 @@ export default function ClientSignUpPage() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      // Clear all authentication data first
       await clearAllAuthData();
-      // Then sign out from NextAuth
       await signOut({
         redirect: false,
         callbackUrl: `/client/auth/signup?token=${encodeURIComponent(token || '')}`,
       });
-      // Force page reload to clear any cached session data
       window.location.href = `/client/auth/signup?token=${encodeURIComponent(token || '')}`;
     } catch {
       setIsLoggingOut(false);
@@ -79,7 +76,6 @@ export default function ClientSignUpPage() {
 
     const toastId = toast.loading('Creating your account...');
 
-    // Create FormData for multipart upload
     const formData = new FormData();
     formData.append('firstName', firstName.trim());
     formData.append('lastName', lastName.trim());
@@ -95,7 +91,8 @@ export default function ClientSignUpPage() {
         router.push(`/client/auth?email=${encodeURIComponent(email!.trim().toLowerCase())}`);
       },
       onError: (err: unknown) => {
-        toast.error(err instanceof Error ? err.message : 'An unexpected error occurred.', { id: toastId });
+        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred.';
+        toast.error(errorMessage, { id: toastId });
       },
     });
   };
@@ -108,7 +105,6 @@ export default function ClientSignUpPage() {
     );
   }
 
-  // Handle authenticated users - show different messages based on role
   if (status === 'authenticated' && session) {
     if (session.user.role === 'PRACTITIONER') {
       return (

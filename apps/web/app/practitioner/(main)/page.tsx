@@ -22,7 +22,13 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useGetInvitations, useDeleteInvitation, useResendInvitation, InvitationResponse } from '@/lib/hooks/use-api';
+import {
+  useGetInvitations,
+  useDeleteInvitation,
+  useResendInvitation,
+  useCleanupExpiredInvitations,
+  InvitationResponse,
+} from '@/lib/hooks/use-api';
 import { useEffect } from 'react';
 
 const LoadingSpinner = () => (
@@ -45,6 +51,7 @@ export default function PractitionerDashboard() {
   const { data: invitations = [], isLoading: isInvitationsLoading } = useGetInvitations();
   const { mutate: deleteInvitation, isPending: isDeleting } = useDeleteInvitation();
   const { mutate: resendInvitation, isPending: isResending } = useResendInvitation();
+  const { mutate: cleanupExpiredInvitations, isPending: isCleaningUp } = useCleanupExpiredInvitations();
 
   // Handle navigation for unauthenticated users
   useEffect(() => {
@@ -129,8 +136,31 @@ export default function PractitionerDashboard() {
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>Pending Invitations</CardTitle>
-              <CardDescription>You have {pendingInvitations.length} pending invitations.</CardDescription>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <CardTitle>Pending Invitations</CardTitle>
+                  <CardDescription>You have {pendingInvitations.length} pending invitations.</CardDescription>
+                </div>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    cleanupExpiredInvitations(undefined, {
+                      onSuccess: () => {
+                        toast.success('Expired invitations cleaned up successfully.');
+                      },
+                      onError: (error: Error) => {
+                        toast.error(`Failed to cleanup expired invitations: ${error.message}`);
+                      },
+                    })
+                  }
+                  disabled={isCleaningUp}
+                  className='flex items-center gap-2'
+                >
+                  {isCleaningUp ? <Loader2 className='h-4 w-4 animate-spin' /> : <Trash2 className='h-4 w-4' />}
+                  Cleanup Expired
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className='overflow-x-auto'>
@@ -165,14 +195,12 @@ export default function PractitionerDashboard() {
                                 <p className='text-xs sm:text-sm text-muted-foreground truncate'>
                                   {getClientDisplayName(client)}
                                 </p>
-                                <p className='text-xs text-muted-foreground sm:hidden'>
-                                  {new Date(client.createdAt).toLocaleDateString()}
-                                </p>
+                                <p className='text-xs text-muted-foreground sm:hidden'>{client.invited || 'N/A'}</p>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell className='text-sm text-muted-foreground hidden sm:table-cell'>
-                            {new Date(client.createdAt).toLocaleDateString()}
+                            {client.invited || 'N/A'}
                           </TableCell>
                           <TableCell className='text-right'>
                             <div className='flex items-center justify-end gap-1 sm:gap-2'>

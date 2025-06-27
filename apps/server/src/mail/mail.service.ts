@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
-import { config } from 'src/common/config';
+import { config } from '../common/config';
 import { Template, templates, TemplateContextMap } from './templates';
 import { clientInvitationTemplate } from './templates/client-invitation-template';
 

@@ -3,10 +3,10 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Button } from '@repo/ui/components/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@repo/ui/components/tabs';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Checkbox } from '@repo/ui/components/checkbox';
-import { MessageCircle } from 'lucide-react';
+import Link from 'next/link';
 
 const mockClient = {
   name: 'Sophie Bennett',
@@ -73,6 +73,15 @@ export default function ClientDashboardPage({ params }: { params: Promise<{ clie
             <p className='text-sm text-muted-foreground mt-1'>Client since {mockClient.since}</p>
           </div>
           <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mt-2 sm:mt-0'>
+            <Link href={`/practitioner/clients/${clientId}/messages`}>
+              <Button
+                variant='outline'
+                className='rounded-full px-4 sm:px-6 py-2 text-sm font-medium border border-border flex items-center gap-2 w-full sm:w-auto'
+              >
+                <MessageCircle className='h-4 w-4' />
+                Message Client
+              </Button>
+            </Link>
             <Button
               variant='outline'
               className='rounded-full px-4 sm:px-6 py-2 text-sm font-medium border border-border'

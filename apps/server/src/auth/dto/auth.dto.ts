@@ -103,6 +103,14 @@ export class UserDto implements User {
   @IsEnum(ClientStatus)
   @IsOptional()
   clientStatus?: ClientStatus;
+
+  @ApiProperty({
+    type: 'string',
+    nullable: true,
+  })
+  @IsString()
+  @IsOptional()
+  practitionerId?: string;
 }
 
 export class LoginResponseDto implements LoginResponse {
@@ -112,4 +120,11 @@ export class LoginResponseDto implements LoginResponse {
   @ApiProperty()
   @IsObject()
   user: UserDto;
+}
+
+export interface ProfileUpdateBody {
+  firstName?: string;
+  lastName?: string;
+  profession?: string;
+  [key: string]: unknown;
 }

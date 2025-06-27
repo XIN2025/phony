@@ -1,6 +1,6 @@
 ﻿'use client';
 import { useInviteContext } from '@/context/InviteContext';
-import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
+import { CreateIntakeFormDto, QuestionType } from '@repo/shared-types/schemas';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { Checkbox } from '@repo/ui/components/checkbox';
@@ -37,53 +37,71 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
       disabled: true,
     };
     switch (question.type) {
-      case 'SHORT_ANSWER':
+      case QuestionType.SHORT_TEXT:
         return <Input {...commonProps} placeholder='I have issues' />;
-      case 'LONG_ANSWER':
+      case QuestionType.LONG_TEXT:
         return (
           <Textarea
             {...commonProps}
             placeholder='A lot of issues that are affecting my everyday life. I am very unhappy with how things are and I am stuck in a loop trying to get myself out of this mess.'
           />
         );
-      case 'MULTIPLE_CHOICE':
-      case 'DROPDOWN':
+      case QuestionType.MULTIPLE_CHOICE:
+      case QuestionType.SELECT:
         return (
           <RadioGroup disabled>
             {question.options?.map((opt, i) => (
-              <div key={i} className='mb-2'>
+              <div key={opt.id || i} className='mb-2'>
                 <Label
-                  htmlFor={`q-preview-${i}`}
+                  htmlFor={`q-preview-${opt.id || i}`}
                   className='flex items-center space-x-2 p-3 rounded-md bg-gray-100 border border-gray-300'
                 >
-                  <RadioGroupItem value={opt.text} id={`q-preview-${i}`} />
+                  <RadioGroupItem value={opt.label} id={`q-preview-${opt.id || i}`} />
                   <span>
-                    {String.fromCharCode(65 + i)}. {opt.text}
+                    {String.fromCharCode(65 + i)}. {opt.label}
                   </span>
                 </Label>
               </div>
             ))}
           </RadioGroup>
         );
-      case 'CHECKBOXES':
+      case QuestionType.CHECKBOX:
         return (
           <div className='space-y-2'>
             {question.options?.map((opt, i) => (
               <Label
-                key={i}
-                htmlFor={`q-preview-check-${i}`}
+                key={opt.id || i}
+                htmlFor={`q-preview-check-${opt.id || i}`}
                 className='flex items-center space-x-2 p-3 rounded-md bg-gray-100 border border-gray-300'
               >
-                <Checkbox id={`q-preview-check-${i}`} disabled />
+                <Checkbox id={`q-preview-check-${opt.id || i}`} disabled />
                 <span>
-                  {String.fromCharCode(65 + i)}. {opt.text}
+                  {String.fromCharCode(65 + i)}. {opt.label}
                 </span>
               </Label>
             ))}
           </div>
         );
+      case QuestionType.NUMBER:
+        return <Input {...commonProps} type='number' placeholder='25' />;
+      case QuestionType.EMAIL:
+        return <Input {...commonProps} type='email' placeholder='user@example.com' />;
+      case QuestionType.PHONE:
+        return <Input {...commonProps} type='tel' placeholder='(555) 123-4567' />;
+      case QuestionType.DATE:
+        return <Input {...commonProps} type='date' />;
+      case QuestionType.TIME:
+        return <Input {...commonProps} type='time' />;
+      case QuestionType.URL:
+        return <Input {...commonProps} type='url' placeholder='https://example.com' />;
+      case QuestionType.FILE_UPLOAD:
+        return (
+          <div className='border-2 border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-100'>
+            <span className='text-gray-500'>File upload placeholder</span>
+          </div>
+        );
       default:
-        return null;
+        return <Input {...commonProps} placeholder='Enter your answer' />;
     }
   };
 
@@ -93,16 +111,15 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
         <Card className='rounded-2xl border-2 shadow-none'>
           <CardContent className='p-6 space-y-6'>
             <h2 className='text-xl font-semibold text-center'>{formData.title}</h2>
-            {formData.questions
-              .sort((a, b) => a.order - b.order)
-              .map((q, index) => (
-                <div key={index} className='space-y-3'>
-                  <Label className='font-semibold text-base'>
-                    {q.text} {q.isRequired && <span className='text-destructive'>*</span>}
-                  </Label>
-                  {renderAnswer(q)}
-                </div>
-              ))}
+            {formData.description && <p className='text-center text-muted-foreground'>{formData.description}</p>}
+            {formData.questions.map((q, index) => (
+              <div key={q.id || index} className='space-y-3'>
+                <Label className='font-semibold text-base'>
+                  {q.title} {q.required && <span className='text-destructive'>*</span>}
+                </Label>
+                {renderAnswer(q)}
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
