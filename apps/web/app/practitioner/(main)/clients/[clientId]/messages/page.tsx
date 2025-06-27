@@ -57,16 +57,15 @@ export default function ClientMessagesPage({ params }: { params: Promise<{ clien
     <div className='flex flex-col h-screen w-full overflow-hidden'>
       <div className='p-4 sm:p-6 border-b border-border/60 bg-muted/5 flex-shrink-0'>
         <div className='flex flex-col sm:flex-row sm:items-center gap-4'>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => router.push(`/practitioner/clients/${clientId}/dashboard`)}
-            className='flex items-center gap-2 w-fit'
+          <button
+            type='button'
+            aria-label='Back'
+            onClick={() => router.push('/practitioner/clients')}
+            className='text-gray-600 hover:text-gray-900 focus:outline-none'
+            style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <ArrowLeft className='h-4 w-4' />
-            <span className='hidden sm:inline'>Back to Dashboard</span>
-            <span className='sm:hidden'>Back</span>
-          </Button>
+            <ArrowLeft className='h-6 w-6' />
+          </button>
           <div className='flex-1'>
             <h1 className='text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white'>
               Messages with {clientDisplayName}
