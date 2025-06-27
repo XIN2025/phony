@@ -23,20 +23,21 @@ model User {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @default(now()) @map("updated_at")
 
-
+  // Relation for a client to have one practitioner
   practitionerId String? @db.ObjectId
   practitioner   User?   @relation("PractitionerToClients", fields: [practitionerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  // Relation for a practitioner to have many clients
   clients User[] @relation("PractitionerToClients")
 
+  // Relation for invitations sent by a practitioner
   sentInvitations Invitation[] @relation("PractitionerInvitations")
 
+  // Relation for intake forms created by a practitioner (templates)
   intakeForms IntakeForm[]
 
+  // Relation for intake form submissions by clients
   intakeFormSubmissions IntakeFormSubmission[]
-
-  clientGoals Goal[] @relation("GoalClient")
-  practitionerGoals Goal[] @relation("GoalPractitioner")
 
   @@map("users")
 }
@@ -96,6 +97,7 @@ enum QuestionType {
   TICK_BOX_GRID
 }
 
+// IntakeForm template - created by practitioner
 model IntakeForm {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   title          String
@@ -107,13 +109,16 @@ model IntakeForm {
   practitioner User       @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
   questions    Question[]
 
+  // Relation to invitations
   invitations Invitation[]
 
+  // Relation to submissions
   submissions IntakeFormSubmission[]
 
   @@map("intake_forms")
 }
 
+// Question template - part of IntakeForm
 model Question {
   id         String       @id @default(auto()) @map("_id") @db.ObjectId
   formId     String       @db.ObjectId
@@ -128,6 +133,7 @@ model Question {
   @@map("questions")
 }
 
+// IntakeFormSubmission - snapshot of when a client filled out a form
 model IntakeFormSubmission {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   clientId   String   @db.ObjectId
@@ -141,50 +147,14 @@ model IntakeFormSubmission {
   @@map("intake_form_submissions")
 }
 
+// Answer - individual response to a question
 model Answer {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   submissionId String   @db.ObjectId
   questionId   String   @db.ObjectId
-  value        String 
+  value        String   // Store as JSON string for complex answers
 
   submission IntakeFormSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@map("answers")
-}
-
-enum GoalType {
-  DAILY_TARGETED
-  CONSISTENT
-}
-
-model Goal {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  clientId       String   @db.ObjectId
-  practitionerId String   @db.ObjectId
-  type           GoalType
-  title          String
-  target         String
-  frequency      String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  client         User     @relation("GoalClient", fields: [clientId], references: [id], onDelete: Cascade)
-  practitioner   User     @relation("GoalPractitioner", fields: [practitionerId], references: [id], onDelete: Cascade)
-  tasks          Task[]
-
-  @@map("goals")
-}
-
- 
-model Task {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  goalId    String   @db.ObjectId
-  date      DateTime
-  feedback  String?
-  achieved  String?
-  completed Boolean  @default(false)
-
-  goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
-
-  @@map("tasks")
 }

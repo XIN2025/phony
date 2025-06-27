@@ -29,16 +29,3 @@ export type VerifyOtpRequest = {
 export type SendOtpRequest = {
   email: string;
 };
-
-export type PractitionerSignUpRequest = VerifyOtpRequest & {
-  firstName: string;
-  lastName: string;
-  profession: string;
-};
-
-export type ClientSignUpRequest = {
-  email: string;
-  firstName: string;
-  lastName: string;
-  invitationToken: string;
-};
