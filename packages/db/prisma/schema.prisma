@@ -8,6 +8,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ===============================================
+//           CORE USER & AUTH MODELS
+// ===============================================
 model User {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   email           String   @unique
@@ -19,46 +22,67 @@ model User {
   role            UserRole
   isEmailVerified Boolean  @default(false) @map("is_email_verified")
   isActive        Boolean  @default(true) @map("is_active")
-  clientStatus    ClientStatus? @default(ACTIVE) @map("client_status")
+  clientStatus    ClientStatus? @map("client_status")
   createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @default(now()) @map("updated_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-
+  // --- EXISTING RELATIONS ---
   practitionerId String? @db.ObjectId
   practitioner   User?   @relation("PractitionerToClients", fields: [practitionerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  clients User[] @relation("PractitionerToClients")
-
+  clients        User[]  @relation("PractitionerToClients")
   sentInvitations Invitation[] @relation("PractitionerInvitations")
-
-  intakeForms IntakeForm[]
-
+  intakeForms     IntakeForm[]
   intakeFormSubmissions IntakeFormSubmission[]
 
-  clientGoals Goal[] @relation("GoalClient")
-  practitionerGoals Goal[] @relation("GoalPractitioner")
+  // === NEW RELATIONS for Sessions, Plans, and Tasks ===
+  // As a Practitioner
+  practitionerSessions Session[]      @relation("PractitionerSessions")
+  practitionerPlans    Plan[]         @relation("PractitionerPlans")
+
+  // As a Client
+  clientSessions          Session[]              @relation("ClientSessions")
+  clientPlans             Plan[]                 @relation("ClientPlans")
+  clientCompletions       ActionItemCompletion[]
+
+  // === NEW RELATIONS for Messaging ===
+  // As a Practitioner
+  practitionerConversations Conversation[] @relation("PractitionerConversations")
+  // As a Client
+  clientConversations     Conversation[] @relation("ClientConversations")
+  // As a message author
+  sentMessages            Message[]      @relation("SentMessages")
+  // Add message reactions relation
+  messageReactions        MessageReaction[] @relation("MessageReactions")
 
   @@map("users")
 }
 
+// ===============================================
+//      UNCHANGED & EXISTING MODELS
+// ===============================================
+
 model Invitation {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  practitionerId String   @db.ObjectId
-  clientEmail    String
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  practitionerId  String           @db.ObjectId
+  clientEmail     String
   clientFirstName String
   clientLastName  String
-  token          String   @unique
-  expiresAt      DateTime
-  isAccepted     Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @default(now())
-  intakeFormId   String?  @db.ObjectId
-
-  practitioner User        @relation("PractitionerInvitations", fields: [practitionerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  intakeForm   IntakeForm? @relation(fields: [intakeFormId], references: [id], onDelete: SetNull)
-
+  token           String           @unique
+  expiresAt       DateTime
+  status          InvitationStatus @default(PENDING)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  intakeFormId    String?          @db.ObjectId
+  practitioner    User             @relation("PractitionerInvitations", fields: [practitionerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  intakeForm      IntakeForm?      @relation(fields: [intakeFormId], references: [id], onDelete: SetNull)
   @@unique([practitionerId, clientEmail])
   @@map("invitations")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
 }
 
 model Otp {
@@ -67,8 +91,7 @@ model Otp {
   otp       String
   expiresAt DateTime
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @map("updated_at")
-
+  updatedAt DateTime @updatedAt @map("updated_at")
   @@map("otps")
 }
 
@@ -103,14 +126,10 @@ model IntakeForm {
   practitionerId String   @db.ObjectId
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-
-  practitioner User       @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
-  questions    Question[]
-
-  invitations Invitation[]
-
-  submissions IntakeFormSubmission[]
-
+  practitioner   User       @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  questions      Question[]
+  invitations    Invitation[]
+  submissions    IntakeFormSubmission[]
   @@map("intake_forms")
 }
 
@@ -119,25 +138,21 @@ model Question {
   formId     String       @db.ObjectId
   text       String
   type       QuestionType
-  options    String[] // For multiple choice, checkboxes
+  options    String[]
   isRequired Boolean      @default(true)
   order      Int
-
-  form IntakeForm @relation(fields: [formId], references: [id], onDelete: Cascade)
-
+  form       IntakeForm @relation(fields: [formId], references: [id], onDelete: Cascade)
   @@map("questions")
 }
 
 model IntakeFormSubmission {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  clientId   String   @db.ObjectId
-  formId     String   @db.ObjectId
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  clientId    String   @db.ObjectId
+  formId      String   @db.ObjectId
   submittedAt DateTime @default(now())
-
-  client User         @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  form   IntakeForm   @relation(fields: [formId], references: [id], onDelete: Cascade)
-  answers Answer[]
-
+  client      User       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  form        IntakeForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  answers     Answer[]
   @@map("intake_form_submissions")
 }
 
@@ -145,46 +160,148 @@ model Answer {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   submissionId String   @db.ObjectId
   questionId   String   @db.ObjectId
-  value        String 
-
-  submission IntakeFormSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-
+  value        Json
+  submission   IntakeFormSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   @@map("answers")
 }
 
-enum GoalType {
-  DAILY_TARGETED
-  CONSISTENT
+// ===============================================
+//      === NEW MODELS FOR UPCOMING FEATURES ===
+// ===============================================
+
+model Session {
+  id                 String        @id @default(auto()) @map("_id") @db.ObjectId
+  practitionerId     String        @db.ObjectId
+  practitioner       User          @relation("PractitionerSessions", fields: [practitionerId], references: [id], onDelete: Cascade)
+  clientId           String        @db.ObjectId
+  client             User          @relation("ClientSessions", fields: [clientId], references: [id], onDelete: Cascade)
+  recordedAt         DateTime      @default(now())
+  status             SessionStatus @default(UPLOADING)
+  audioFileUrl       String?
+  transcript         String?
+  transcriptionJobId String?
+  plan               Plan?
+  @@map("sessions")
 }
 
-model Goal {
+enum SessionStatus {
+  UPLOADING
+  TRANSCRIBING
+  REVIEW_READY
+  COMPLETED
+}
+
+model Plan {
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId      String     @unique @db.ObjectId
+  session        Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  practitionerId String     @db.ObjectId
+  practitioner   User       @relation("PractitionerPlans", fields: [practitionerId], references: [id], onDelete: Cascade)
+  clientId       String     @db.ObjectId
+  client         User       @relation("ClientPlans", fields: [clientId], references: [id], onDelete: Cascade)
+  status         PlanStatus @default(DRAFT)
+  publishedAt    DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  actionItems    ActionItem[]
+  @@map("plans")
+}
+
+enum PlanStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model ActionItem {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  planId      String      @db.ObjectId
+  plan        Plan        @relation(fields: [planId], references: [id], onDelete: Cascade)
+  description String
+  category    String?
+  target      String?
+  frequency   String?
+  source      ActionItemSource @default(MANUAL)
+  resources   Resource[]
+  completions ActionItemCompletion[]
+  @@map("action_items")
+}
+
+enum ActionItemSource {
+  AI_SUGGESTED
+  MANUAL
+}
+
+model Resource {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  actionItemId String       @db.ObjectId
+  actionItem   ActionItem   @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  type         ResourceType
+  url          String
+  title        String?
+  @@map("resources")
+}
+
+enum ResourceType {
+  LINK
+  PDF
+}
+
+model ActionItemCompletion {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  actionItemId  String     @db.ObjectId
+  actionItem    ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  clientId      String     @db.ObjectId
+  client        User       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  completedAt   DateTime   @default(now())
+  rating        Int?
+  journalEntry  String?
+  achievedValue String?
+  @@map("action_item_completions")
+}
+
+// ===============================================
+//      === NEW MODELS FOR MESSAGING ===
+// ===============================================
+
+model Conversation {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  clientId       String   @db.ObjectId
   practitionerId String   @db.ObjectId
-  type           GoalType
-  title          String
-  target         String
-  frequency      String
+  practitioner   User     @relation("PractitionerConversations", fields: [practitionerId], references: [id], onDelete: Cascade)
+  clientId       String   @db.ObjectId
+  client         User     @relation("ClientConversations", fields: [clientId], references: [id], onDelete: Cascade)
+  messages       Message[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-
-  client         User     @relation("GoalClient", fields: [clientId], references: [id], onDelete: Cascade)
-  practitioner   User     @relation("GoalPractitioner", fields: [practitionerId], references: [id], onDelete: Cascade)
-  tasks          Task[]
-
-  @@map("goals")
+  @@unique([practitionerId, clientId])
+  @@map("conversations")
 }
 
- 
-model Task {
+model Message {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String       @db.ObjectId
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  authorId       String       @db.ObjectId
+  author         User         @relation("SentMessages", fields: [authorId], references: [id], onDelete: Cascade)
+  content        String
+  createdAt      DateTime     @default(now())
+  readAt         DateTime?
+  reactions      MessageReaction[]
+  
+  @@index([conversationId, createdAt])
+  @@index([authorId])
+  @@map("messages")
+}
+
+model MessageReaction {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  goalId    String   @db.ObjectId
-  date      DateTime
-  feedback  String?
-  achieved  String?
-  completed Boolean  @default(false)
-
-  goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
-
-  @@map("tasks")
+  messageId String   @db.ObjectId
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String   @db.ObjectId
+  user      User     @relation("MessageReactions", fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String
+  createdAt DateTime @default(now())
+  
+  @@unique([messageId, userId, emoji])
+  @@map("message_reactions")
 }
