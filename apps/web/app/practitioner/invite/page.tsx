@@ -29,7 +29,7 @@ export default function InviteClientPage() {
     clientFirstName: string;
     clientLastName: string;
     clientEmail: string;
-    includeIntakeForm: boolean;
+    intakeFormId?: string;
   }) => {
     setSubmitting(true);
     const normalizedData = {
@@ -37,41 +37,13 @@ export default function InviteClientPage() {
       clientEmail: data.clientEmail.trim().toLowerCase(),
       clientFirstName: data.clientFirstName.trim(),
       clientLastName: data.clientLastName.trim(),
-      intakeFormId: undefined,
     };
     setInviteData(normalizedData);
-    if (normalizedData.includeIntakeForm) {
-      setSubmitting(false);
-      goToNextStep();
-    } else {
-      inviteClient(normalizedData, {
-        onSuccess: () => {
-          // Invalidate invitations query after success
-          queryClient.invalidateQueries({ queryKey: ['invitations'] });
-          router.push('/practitioner/invite/success');
-        },
-        onError: (error: Error) => {
-          setSubmitting(false);
-          let errorMessage = 'Failed to send invitation.';
-          if (error.message) {
-            errorMessage = error.message;
-          }
-          if (errorMessage.includes('already exists')) {
-            errorMessage = `A client with the email "${inviteData.clientEmail}" already exists in the system. Please use a different email address or check if this client has already been invited.`;
-          } else if (errorMessage.includes('Failed to send invitation email')) {
-            errorMessage =
-              'The invitation email could not be sent. Please check the email address and try again, or contact support if the problem persists.';
-          }
-          toast.error(errorMessage, {
-            description: 'Please review the information and try again.',
-            duration: 5000,
-          });
-        },
-      });
-    }
+    setSubmitting(false);
+    goToNextStep();
   };
 
-  const handleFormSelect = async (formId: string | 'create-new') => {
+  const handleFormSelect = async (formId: string | 'create-new' | 'skip') => {
     if (formId === 'create-new') {
       setInviteData({
         intakeFormId: undefined,

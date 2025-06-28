@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserRole } from '@repo/db';
+import { UserRole, InvitationStatus } from '@repo/db';
 import { config } from 'src/common/config';
 import { generateOtp } from 'src/common/utils/auth.utils';
 import {
@@ -193,7 +193,8 @@ export class AuthService {
       });
     }
     if (!invitation) throwAuthError('Invalid invitation token', 'unauthorized');
-    if (invitation.isAccepted) throwAuthError('This invitation has already been used', 'unauthorized');
+    if (invitation.status === InvitationStatus.ACCEPTED)
+      throwAuthError('This invitation has already been used', 'unauthorized');
     if (invitation.expiresAt < new Date()) throwAuthError('This invitation has expired', 'unauthorized');
     if (invitation.clientEmail.toLowerCase() !== normalizedEmail)
       throwAuthError('Email does not match the invitation', 'unauthorized');
@@ -223,7 +224,10 @@ export class AuthService {
         avatarUrl: avatarUrl,
       },
     });
-    await this.prismaService.invitation.update({ where: { id: invitation.id }, data: { isAccepted: true } });
+    await this.prismaService.invitation.update({
+      where: { id: invitation.id },
+      data: { status: InvitationStatus.ACCEPTED },
+    });
     const normalizedUser = normalizeUserData(user);
     const token = await generateToken(
       this.jwtService,

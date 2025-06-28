@@ -5,10 +5,8 @@ import * as z from 'zod';
 import { Button } from '@repo/ui/components/button';
 import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';
-import { Checkbox } from '@repo/ui/components/checkbox';
 import { inviteClientSchema } from '@repo/shared-types/schemas';
 import { useInviteContext } from '@/context/InviteContext';
-import { useState } from 'react';
 
 type FormValues = z.infer<typeof inviteClientSchema>;
 interface Props {
@@ -22,14 +20,13 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
     handleSubmit,
     control,
     formState: { errors, isValid },
-    watch,
   } = useForm<FormValues>({
     resolver: zodResolver(inviteClientSchema),
     defaultValues: {
       clientFirstName: inviteData.clientFirstName || '',
       clientLastName: inviteData.clientLastName || '',
       clientEmail: inviteData.clientEmail || '',
-      includeIntakeForm: inviteData.includeIntakeForm || false,
+      intakeFormId: inviteData.intakeFormId || undefined,
     },
     mode: 'onChange',
   });
@@ -69,26 +66,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
         />
         {errors.clientEmail && <p className='text-sm text-destructive'>{errors.clientEmail.message}</p>}
       </div>
-      <div className='space-y-4'>
-        <Label className='text-base font-semibold'>Intake Form</Label>
-        <div className='flex items-center space-x-3'>
-          <Controller
-            name='includeIntakeForm'
-            control={control}
-            render={({ field }) => (
-              <Checkbox
-                id='includeIntakeForm'
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                className='h-5 w-5 rounded-sm border-gray-300'
-              />
-            )}
-          />
-          <Label htmlFor='includeIntakeForm' className='font-normal text-gray-700'>
-            Include intake form for onboarding
-          </Label>
-        </div>
-      </div>
+
       <div className='flex flex-col gap-4 pt-8 sm:flex-row sm:justify-between'>
         <Button type='button' variant='outline' onClick={onCancel} className='w-full rounded-lg px-6 sm:w-auto'>
           Cancel

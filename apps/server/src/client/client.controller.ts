@@ -20,7 +20,7 @@ export class ClientController {
   @ApiResponse({ status: 200, description: 'Intake form retrieved successfully.' })
   async getIntakeForm(@Request() req) {
     const clientId = req.user.id;
-    return this.clientService.getIntakeForm(clientId);
+    return this.clientService.getIntakeFormForClient(clientId);
   }
 
   @Post('intake-form/submit')

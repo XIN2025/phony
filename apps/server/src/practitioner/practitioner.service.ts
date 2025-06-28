@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { config } from '../common/config';
+import { inviteClientSchema } from '@repo/shared-types/schemas';
+import { z } from 'zod';
 import {
   normalizeEmail,
   getPractitionerName,
@@ -11,14 +13,9 @@ import {
   validateRequiredFields,
   getAvatarUrl,
 } from 'src/common/utils/user.utils';
-import { UserRole } from '@repo/db';
+import { UserRole, InvitationStatus } from '@repo/db';
 
-export interface InviteClientDto {
-  clientFirstName: string;
-  clientLastName: string;
-  clientEmail: string;
-  intakeFormId?: string;
-}
+export type InviteClientDto = z.infer<typeof inviteClientSchema>;
 
 export interface InvitationResponse {
   id: string;
@@ -58,7 +55,7 @@ export class PractitionerService {
     });
     let invitation;
     if (existingInvitation) {
-      if (existingInvitation.isAccepted)
+      if (existingInvitation.status === InvitationStatus.ACCEPTED)
         throwAuthError('This client has already been invited and accepted the invitation', 'badRequest');
       invitation = await this.prismaService.invitation.update({
         where: { id: existingInvitation.id },
@@ -68,6 +65,7 @@ export class PractitionerService {
           intakeFormId,
           token: `${normalizedEmail}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          status: InvitationStatus.PENDING,
         },
       });
     } else {
@@ -106,7 +104,7 @@ export class PractitionerService {
       clientEmail: invitation.clientEmail,
       clientFirstName: invitation.clientFirstName,
       clientLastName: invitation.clientLastName,
-      status: invitation.isAccepted ? 'JOINED' : 'PENDING',
+      status: invitation.status === InvitationStatus.ACCEPTED ? 'JOINED' : 'PENDING',
       invited: formatDate(invitation.createdAt),
       createdAt: invitation.createdAt,
       avatar: getAvatarUrl({
@@ -169,7 +167,7 @@ export class PractitionerService {
       clientEmail: newInvitation.clientEmail,
       clientFirstName: newInvitation.clientFirstName,
       clientLastName: newInvitation.clientLastName,
-      status: newInvitation.isAccepted ? 'JOINED' : 'PENDING',
+      status: newInvitation.status === InvitationStatus.ACCEPTED ? 'JOINED' : 'PENDING',
       invited: formatDate(newInvitation.createdAt),
       createdAt: newInvitation.createdAt,
       avatar: getAvatarUrl({
@@ -215,7 +213,7 @@ export class PractitionerService {
     if (isExpired) throwAuthError('Invitation not found or has expired.', 'notFound');
     return {
       clientEmail: invitation.clientEmail,
-      isAccepted: invitation.isAccepted,
+      isAccepted: invitation.status === InvitationStatus.ACCEPTED,
     };
   }
 
@@ -258,6 +256,34 @@ export class PractitionerService {
     return { message: 'Invitation deleted successfully' };
   }
 
+  async cleanupExpiredInvitations(practitionerId: string) {
+    const currentTime = new Date();
+
+    // Update expired invitations to EXPIRED status
+    await this.prismaService.invitation.updateMany({
+      where: {
+        practitionerId,
+        expiresAt: { lt: currentTime },
+        status: InvitationStatus.PENDING,
+      },
+      data: {
+        status: InvitationStatus.EXPIRED,
+      },
+    });
+
+    // Optionally delete very old expired invitations (older than 30 days)
+    const thirtyDaysAgo = new Date(currentTime.getTime() - 30 * 24 * 60 * 60 * 1000);
+    await this.prismaService.invitation.deleteMany({
+      where: {
+        practitionerId,
+        status: InvitationStatus.EXPIRED,
+        expiresAt: { lt: thirtyDaysAgo },
+      },
+    });
+
+    return { message: 'Expired invitations cleaned up successfully' };
+  }
+
   async getInvitations(practitionerId: string) {
     const invitations = await this.prismaService.invitation.findMany({
       where: {
@@ -269,37 +295,71 @@ export class PractitionerService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return invitations.map((invitation) => {
-      const avatar = getAvatarUrl({
-        firstName: invitation.clientFirstName,
-        lastName: invitation.clientLastName,
-      });
+    const currentTime = new Date();
 
-      return {
-        id: invitation.id,
-        clientEmail: invitation.clientEmail,
-        clientFirstName: invitation.clientFirstName,
-        clientLastName: invitation.clientLastName,
-        status: invitation.isAccepted ? 'JOINED' : 'PENDING',
-        invited: formatDate(invitation.createdAt),
-        expiresAt: formatDate(invitation.expiresAt),
-        intakeFormTitle: invitation.intakeForm ? getIntakeFormTitle(invitation.intakeForm) : undefined,
-        avatar: avatar,
-      };
-    });
+    return invitations
+      .map((invitation) => {
+        const avatar = getAvatarUrl({
+          firstName: invitation.clientFirstName,
+          lastName: invitation.clientLastName,
+        });
+
+        // Check if invitation is expired
+        const isExpired = invitation.expiresAt < currentTime;
+
+        // If expired and still PENDING, update status to EXPIRED in database
+        if (isExpired && invitation.status === InvitationStatus.PENDING) {
+          // Fire and forget - update the status in the background
+          this.prismaService.invitation
+            .update({
+              where: { id: invitation.id },
+              data: { status: InvitationStatus.EXPIRED },
+            })
+            .catch(() => {
+              // Ignore errors for this background update
+            });
+        }
+
+        let status: 'PENDING' | 'JOINED' | 'EXPIRED';
+        if (invitation.status === InvitationStatus.ACCEPTED) {
+          status = 'JOINED';
+        } else if (isExpired || invitation.status === InvitationStatus.EXPIRED) {
+          // Don't return expired invitations
+          return null;
+        } else {
+          status = 'PENDING';
+        }
+
+        return {
+          id: invitation.id,
+          clientEmail: invitation.clientEmail,
+          clientFirstName: invitation.clientFirstName,
+          clientLastName: invitation.clientLastName,
+          status,
+          invited: formatDate(invitation.createdAt),
+          expiresAt: formatDate(invitation.expiresAt),
+          intakeFormTitle: invitation.intakeForm ? getIntakeFormTitle(invitation.intakeForm) : undefined,
+          avatar: avatar,
+        };
+      })
+      .filter((invitation) => invitation !== null); // Remove expired invitations
   }
 
   async getIntakeFormSubmissions(practitionerId: string, formId: string) {
-    const form = await this.prismaService.intakeForm.findFirst({
+    const form = await this.prismaService.intakeForm.findUnique({
       where: {
         id: formId,
-        practitionerId: practitionerId,
+      },
+      include: {
+        questions: true,
       },
     });
 
-    if (!form) {
+    if (!form || form.practitionerId !== practitionerId) {
       throwAuthError('Intake form not found', 'notFound');
     }
+
+    const questionMap = new Map(form.questions.map((q) => [q.id, { text: q.text, type: q.type }]));
 
     const submissions = await this.prismaService.intakeFormSubmission.findMany({
       where: {
@@ -307,11 +367,7 @@ export class PractitionerService {
       },
       include: {
         client: true,
-        answers: {
-          include: {
-            submission: true,
-          },
-        },
+        answers: true,
       },
       orderBy: { submittedAt: 'desc' },
     });
@@ -326,9 +382,10 @@ export class PractitionerService {
       },
       submittedAt: submission.submittedAt,
       answers: submission.answers.map((answer) => ({
-        questionText: answer.questionId,
-        questionType: 'UNKNOWN',
-        answer: JSON.parse(answer.value),
+        questionId: answer.questionId,
+        questionText: questionMap.get(answer.questionId)?.text ?? 'Unknown Question',
+        questionType: questionMap.get(answer.questionId)?.type ?? 'UNKNOWN',
+        answer: typeof answer.value === 'string' ? JSON.parse(answer.value) : answer.value,
       })),
     }));
   }
