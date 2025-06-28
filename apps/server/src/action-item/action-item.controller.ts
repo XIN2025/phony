@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards } fro
 import { ActionItemService } from './action-item.service';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateActionItemDto, UpdateActionItemDto, CreateCompletionDto, UpdateCompletionDto } from './dto';
+import { CreateCompletionDto, UpdateCompletionDto } from './dto';
 
 @Controller('action-items')
 @ApiTags('action-items')
@@ -10,41 +10,6 @@ import { CreateActionItemDto, UpdateActionItemDto, CreateCompletionDto, UpdateCo
 @ApiBearerAuth()
 export class ActionItemController {
   constructor(private actionItemService: ActionItemService) {}
-
-  @Post()
-  @ApiOperation({ summary: 'Create a new action item' })
-  @ApiResponse({ status: 201, description: 'Action item created successfully.' })
-  createActionItem(@Body() createActionItemDto: CreateActionItemDto) {
-    return this.actionItemService.createActionItem(createActionItemDto);
-  }
-
-  @Get()
-  @ApiOperation({ summary: 'Get all action items' })
-  @ApiResponse({ status: 200, description: 'Action items retrieved successfully.' })
-  getAllActionItems() {
-    return this.actionItemService.getAllActionItems();
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Get action item by ID' })
-  @ApiResponse({ status: 200, description: 'Action item retrieved successfully.' })
-  getActionItemById(@Param('id') actionItemId: string) {
-    return this.actionItemService.getActionItemById(actionItemId);
-  }
-
-  @Put(':id')
-  @ApiOperation({ summary: 'Update an action item' })
-  @ApiResponse({ status: 200, description: 'Action item updated successfully.' })
-  updateActionItem(@Param('id') actionItemId: string, @Body() updateActionItemDto: UpdateActionItemDto) {
-    return this.actionItemService.updateActionItem(actionItemId, updateActionItemDto);
-  }
-
-  @Delete(':id')
-  @ApiOperation({ summary: 'Delete an action item' })
-  @ApiResponse({ status: 200, description: 'Action item deleted successfully.' })
-  deleteActionItem(@Param('id') actionItemId: string) {
-    return this.actionItemService.deleteActionItem(actionItemId);
-  }
 
   @Post('completions')
   @ApiOperation({ summary: 'Complete an action item' })
@@ -70,8 +35,8 @@ export class ActionItemController {
   @Put('completions/:id')
   @ApiOperation({ summary: 'Update a completion' })
   @ApiResponse({ status: 200, description: 'Completion updated successfully.' })
-  updateCompletion(@Param('id') completionId: string, @Body() updateCompletionDto: UpdateCompletionDto) {
-    return this.actionItemService.updateCompletion(completionId, updateCompletionDto);
+  updateCompletion(@Param('id') completionId: string, @Body() updateData: UpdateCompletionDto) {
+    return this.actionItemService.updateCompletion(completionId, updateData);
   }
 
   @Delete('completions/:id')
@@ -79,5 +44,12 @@ export class ActionItemController {
   @ApiResponse({ status: 200, description: 'Completion deleted successfully.' })
   deleteCompletion(@Param('id') completionId: string) {
     return this.actionItemService.deleteCompletion(completionId);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get action item by ID' })
+  @ApiResponse({ status: 200, description: 'Action item retrieved successfully.' })
+  getActionItemById(@Param('id') actionItemId: string) {
+    return this.actionItemService.getActionItemById(actionItemId);
   }
 }

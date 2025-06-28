@@ -2,11 +2,7 @@ import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ClientService } from './client.service';
-
-interface SubmitIntakeFormDto {
-  formId: string;
-  answers: Record<string, unknown>;
-}
+import { SubmitIntakeFormDto } from './dto/submit-intake-form.dto';
 
 @ApiTags('client')
 @Controller('client')
@@ -20,7 +16,7 @@ export class ClientController {
   @ApiResponse({ status: 200, description: 'Intake form retrieved successfully.' })
   async getIntakeForm(@Request() req) {
     const clientId = req.user.id;
-    return this.clientService.getIntakeForm(clientId);
+    return this.clientService.getIntakeFormForClient(clientId);
   }
 
   @Post('intake-form/submit')

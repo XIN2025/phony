@@ -1,74 +1,32 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotImplementedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateActionItemDto, UpdateActionItemDto, CreateCompletionDto, UpdateCompletionDto } from './dto';
+import { CreateCompletionDto, UpdateCompletionDto } from './dto';
 
 @Injectable()
 export class ActionItemService {
   constructor(private prisma: PrismaService) {}
 
-  async createActionItem(data: CreateActionItemDto) {
-    return await this.prisma.actionItem.create({
-      data: {
-        description: data.description,
-        category: data.category,
-        target: data.target,
-        frequency: data.frequency,
-        source: data.source || 'MANUAL',
-      },
-    });
+  completeActionItem(data: CreateCompletionDto) {
+    throw new NotImplementedException('This feature will be implemented in a future update.');
   }
 
-  async getAllActionItems() {
-    return await this.prisma.actionItem.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+  getActionItemCompletions(actionItemId: string, clientId?: string) {
+    throw new NotImplementedException('This feature will be implemented in a future update.');
   }
 
-  async getActionItemById(actionItemId: string) {
-    const actionItem = await this.prisma.actionItem.findUnique({
-      where: { id: actionItemId },
-    });
-
-    if (!actionItem) {
-      throw new NotFoundException(`ActionItem with ID ${actionItemId} not found`);
-    }
-
-    return actionItem;
+  getClientCompletions(clientId: string, planId?: string) {
+    throw new NotImplementedException('This feature will be implemented in a future update.');
   }
 
-  async updateActionItem(actionItemId: string, data: UpdateActionItemDto) {
-    await this.getActionItemById(actionItemId);
-    return await this.prisma.actionItem.update({
-      where: { id: actionItemId },
-      data,
-    });
+  updateCompletion(completionId: string, updateData: UpdateCompletionDto) {
+    throw new NotImplementedException('This feature will be implemented in a future update.');
   }
 
-  async deleteActionItem(actionItemId: string) {
-    await this.getActionItemById(actionItemId);
-
-    return await this.prisma.actionItem.delete({
-      where: { id: actionItemId },
-    });
+  deleteCompletion(completionId: string) {
+    throw new NotImplementedException('This feature will be implemented in a future update.');
   }
 
-  completeActionItem(_data: CreateCompletionDto) {
-    throw new NotFoundException('ActionItem completion functionality will be implemented in future update');
-  }
-
-  getActionItemCompletions(_actionItemId: string, _clientId?: string) {
-    return [];
-  }
-
-  getClientCompletions(_clientId: string, _planId?: string) {
-    return [];
-  }
-
-  updateCompletion(_completionId: string, _updateData: UpdateCompletionDto) {
-    throw new NotFoundException('ActionItem completion functionality will be implemented in future update');
-  }
-
-  deleteCompletion(_completionId: string) {
-    throw new NotFoundException('ActionItem completion functionality will be implemented in future update');
+  getActionItemById(actionItemId: string) {
+    throw new NotImplementedException('This feature will be implemented in a future update.');
   }
 }
