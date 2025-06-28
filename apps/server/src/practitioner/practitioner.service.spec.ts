@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PractitionerService, InviteClientDto } from './practitioner.service';
+import { PractitionerService } from './practitioner.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
-import { UserRole } from '@repo/db';
+import { InvitationStatus, UserRole } from '@repo/db';
+import { InviteClientDto } from './dto/invite-client.dto';
 
 describe('PractitionerService', () => {
   let service: PractitionerService;
@@ -80,7 +81,7 @@ describe('PractitionerService', () => {
       clientLastName: 'Doe',
       token: 'valid-token',
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      isAccepted: false,
+      status: InvitationStatus.PENDING,
       createdAt: new Date(),
     };
 
@@ -156,7 +157,7 @@ describe('PractitionerService', () => {
       const existingInvitation = {
         ...mockInvitation,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day from now
-        isAccepted: false,
+        status: InvitationStatus.PENDING,
         token: 'existing-token',
         clientFirstName: 'John',
         clientLastName: 'Doe',
@@ -185,7 +186,7 @@ describe('PractitionerService', () => {
       const expiredInvitation = {
         ...mockInvitation,
         expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-        isAccepted: false,
+        status: InvitationStatus.PENDING,
       };
       mockPrismaService.user.findUnique
         .mockResolvedValueOnce(mockPractitioner as never) // First call for practitioner
@@ -277,7 +278,7 @@ describe('PractitionerService', () => {
       token,
       clientEmail: 'client@example.com',
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day from now
-      isAccepted: false,
+      status: InvitationStatus.PENDING,
       practitionerId: 'practitioner-id',
       intakeFormId: 'form-id',
     };
@@ -289,7 +290,7 @@ describe('PractitionerService', () => {
 
       expect(result).toEqual({
         clientEmail: 'client@example.com',
-        isAccepted: false,
+        status: 'PENDING',
       });
     });
 
@@ -322,7 +323,7 @@ describe('PractitionerService', () => {
       {
         id: 'invitation-1',
         clientEmail: 'client1@example.com',
-        isAccepted: false,
+        status: 'PENDING',
         createdAt: new Date('2024-01-01'),
         expiresAt: new Date('2024-01-08'),
         clientFirstName: 'John',
@@ -332,7 +333,7 @@ describe('PractitionerService', () => {
       {
         id: 'invitation-2',
         clientEmail: 'client2@example.com',
-        isAccepted: true,
+        status: 'JOINED',
         createdAt: new Date('2024-01-02'),
         expiresAt: new Date('2024-01-08'),
         clientFirstName: 'Jane',
@@ -456,7 +457,7 @@ describe('PractitionerService', () => {
       id: invitationId,
       practitionerId,
       clientEmail: 'client@example.com',
-      isAccepted: false,
+      status: InvitationStatus.PENDING,
     };
 
     const mockPractitioner = {
