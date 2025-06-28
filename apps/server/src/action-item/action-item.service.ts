@@ -1,21 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-
-interface CreateActionItemDto {
-  description: string;
-  category?: string;
-  target?: string;
-  frequency?: string;
-  source?: 'AI_SUGGESTED' | 'MANUAL';
-}
-
-interface CreateCompletionDto {
-  actionItemId: string;
-  clientId: string;
-  rating?: number;
-  journalEntry?: string;
-  achievedValue?: string;
-}
+import { CreateActionItemDto, UpdateActionItemDto, CreateCompletionDto, UpdateCompletionDto } from './dto';
 
 @Injectable()
 export class ActionItemService {
@@ -51,7 +36,7 @@ export class ActionItemService {
     return actionItem;
   }
 
-  async updateActionItem(actionItemId: string, data: Partial<CreateActionItemDto>) {
+  async updateActionItem(actionItemId: string, data: UpdateActionItemDto) {
     await this.getActionItemById(actionItemId);
     return await this.prisma.actionItem.update({
       where: { id: actionItemId },
@@ -79,7 +64,7 @@ export class ActionItemService {
     return [];
   }
 
-  updateCompletion(_completionId: string, _updateData: Partial<CreateCompletionDto>) {
+  updateCompletion(_completionId: string, _updateData: UpdateCompletionDto) {
     throw new NotFoundException('ActionItem completion functionality will be implemented in future update');
   }
 
