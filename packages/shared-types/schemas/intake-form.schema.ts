@@ -1,18 +1,16 @@
 import { z } from 'zod';
 
 export enum QuestionType {
-  SHORT_TEXT = 'SHORT_TEXT',
-  LONG_TEXT = 'LONG_TEXT',
+  SHORT_ANSWER = 'SHORT_ANSWER',
+  LONG_ANSWER = 'LONG_ANSWER',
   MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
-  CHECKBOX = 'CHECKBOX',
-  SELECT = 'SELECT',
-  NUMBER = 'NUMBER',
-  EMAIL = 'EMAIL',
-  PHONE = 'PHONE',
-  DATE = 'DATE',
-  TIME = 'TIME',
-  URL = 'URL',
+  CHECKBOXES = 'CHECKBOXES',
+  SCALE = 'SCALE',
+  DROPDOWN = 'DROPDOWN',
   FILE_UPLOAD = 'FILE_UPLOAD',
+  RATING = 'RATING',
+  MULTIPLE_CHOICE_GRID = 'MULTIPLE_CHOICE_GRID',
+  TICK_BOX_GRID = 'TICK_BOX_GRID',
 }
 
 export const questionOptionSchema = z.object({

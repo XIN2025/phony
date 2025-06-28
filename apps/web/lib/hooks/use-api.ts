@@ -172,7 +172,9 @@ export function useGetIntakeForms() {
   return useQuery({
     queryKey: ['intakeForms'],
     queryFn: () => ApiClient.get<IntakeForm[]>('/api/intake-forms'),
-    staleTime: 30 * 1000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 }
 
@@ -192,6 +194,7 @@ export function useCreateIntakeForm() {
     mutationFn: (data: CreateIntakeFormDto) => ApiClient.post<IntakeForm>('/api/intake-forms', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['intakeForms'] });
+      queryClient.refetchQueries({ queryKey: ['intakeForms'] });
     },
   });
 }
@@ -204,7 +207,9 @@ export function useUpdateIntakeForm() {
       ApiClient.put<IntakeForm>(`/api/intake-forms/${id}`, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['intakeForms'] });
+      queryClient.refetchQueries({ queryKey: ['intakeForms'] });
       queryClient.invalidateQueries({ queryKey: ['intakeForm', id] });
+      queryClient.refetchQueries({ queryKey: ['intakeForm', id] });
     },
   });
 }
@@ -216,6 +221,7 @@ export function useDeleteIntakeForm() {
     mutationFn: (id: string) => ApiClient.delete<void>(`/api/intake-forms/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['intakeForms'] });
+      queryClient.refetchQueries({ queryKey: ['intakeForms'] });
     },
   });
 }

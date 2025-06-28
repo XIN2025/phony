@@ -31,9 +31,7 @@ interface AnswerData {
   value: string;
 }
 
-// Direct mapping since enums are now consistent
 function mapQuestionType(type: SharedQuestionType): PrismaQuestionType {
-  // Since we've aligned the enums, we can directly map the values
   return type as PrismaQuestionType;
 }
 

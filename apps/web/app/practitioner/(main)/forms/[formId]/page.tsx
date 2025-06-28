@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { IntakeFormBuilder } from '@/components/invite/IntakeFormBuilder';
-import { useGetIntakeForm, useUpdateIntakeForm } from '@/lib/hooks/use-api';
+import { useGetIntakeForm, useUpdateIntakeForm, useDeleteIntakeForm } from '@/lib/hooks/use-api';
 import { CreateIntakeFormDto, QuestionType } from '@repo/shared-types/schemas';
 import { toast } from 'sonner';
 import { InviteContextProvider, InviteData, useInviteContext } from '@/context/InviteContext';
@@ -38,6 +38,7 @@ export default function EditFormPage({ params }: { params: Promise<{ formId: str
 
   const { data: form, isLoading: isLoadingForm } = useGetIntakeForm(formId);
   const { mutate: updateForm, isPending: isUpdating } = useUpdateIntakeForm();
+  const { mutate: deleteForm } = useDeleteIntakeForm();
 
   useEffect(() => {
     params.then((resolvedParams) => {
@@ -82,11 +83,26 @@ export default function EditFormPage({ params }: { params: Promise<{ formId: str
           router.push('/practitioner/forms');
         },
         onError: (error) => {
-          console.error('Error updating form:', error);
           toast.error('Failed to update form. Please try again.');
         },
       },
     );
+  };
+
+  const handleDeleteForm = () => {
+    if (!formId) return;
+
+    if (confirm('Are you sure you want to delete this form? This action cannot be undone.')) {
+      deleteForm(formId, {
+        onSuccess: () => {
+          toast.success('Form deleted successfully!');
+          router.push('/practitioner/forms');
+        },
+        onError: (error) => {
+          toast.error('Failed to delete form. Please try again.');
+        },
+      });
+    }
   };
 
   if (!formId || isLoadingForm) {
@@ -133,7 +149,13 @@ export default function EditFormPage({ params }: { params: Promise<{ formId: str
       <div className='flex-1 w-full py-4 sm:py-6 lg:py-8 bg-background'>
         <div className='w-full px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto'>
           <FormWrapper formData={formData}>
-            <IntakeFormBuilder onSubmit={handleSubmit} onBack={handleBack} isLoading={isUpdating} />
+            <IntakeFormBuilder
+              onSubmit={handleSubmit}
+              onBack={handleBack}
+              onDelete={handleDeleteForm}
+              isLoading={isUpdating}
+              isEditMode={true}
+            />
           </FormWrapper>
         </div>
       </div>

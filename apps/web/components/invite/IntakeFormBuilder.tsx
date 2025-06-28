@@ -1,12 +1,12 @@
 ﻿'use client';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, Control, UseFormRegister } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { intakeFormSchema, CreateIntakeFormDto, QuestionType } from '@repo/shared-types/schemas';
 import { Button } from '@repo/ui/components/button';
 import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
-import { Trash2, Plus, GripVertical, Copy } from 'lucide-react';
+import { Trash2, Plus, GripVertical } from 'lucide-react';
 import { useInviteContext } from '@/context/InviteContext';
 import { useEffect, useState } from 'react';
 import { Checkbox } from '@repo/ui/components/checkbox';
@@ -16,13 +16,28 @@ interface QuestionOptionsProps {
   questionIndex: number;
   control: any;
   register: any;
+  form: any;
 }
 
-function QuestionOptions({ questionIndex, control, register }: QuestionOptionsProps) {
+function QuestionOptions({ questionIndex, control, register, form }: QuestionOptionsProps) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: `questions.${questionIndex}.options`,
   });
+
+  useEffect(() => {
+    fields.forEach((field, index) => {
+      const currentLabel = form.watch(`questions.${questionIndex}.options.${index}.label`);
+      const currentValue = form.watch(`questions.${questionIndex}.options.${index}.value`);
+
+      if (currentLabel && !currentValue) {
+        form.setValue(`questions.${questionIndex}.options.${index}.value`, currentLabel);
+      }
+      if (currentValue && !currentLabel) {
+        form.setValue(`questions.${questionIndex}.options.${index}.label`, currentValue);
+      }
+    });
+  }, [fields, form, questionIndex]);
 
   return (
     <div className='space-y-2 pt-4'>
@@ -39,8 +54,11 @@ function QuestionOptions({ questionIndex, control, register }: QuestionOptionsPr
                 onChange={(e) => {
                   const newValue = e.target.value;
                   inputField.onChange(newValue);
-                  // Also update the value field to match the label
-                  control.setValue(`questions.${questionIndex}.options.${optionIndex}.value`, newValue);
+                  form.setValue(`questions.${questionIndex}.options.${optionIndex}.value`, newValue);
+                }}
+                onBlur={(e) => {
+                  const newValue = e.target.value;
+                  form.setValue(`questions.${questionIndex}.options.${optionIndex}.value`, newValue);
                 }}
               />
             )}
@@ -69,32 +87,36 @@ function QuestionOptions({ questionIndex, control, register }: QuestionOptionsPr
 interface IntakeFormBuilderProps {
   onSubmit: (data: CreateIntakeFormDto) => void;
   onBack?: () => void;
+  onDelete?: () => void;
   isLoading?: boolean;
+  isEditMode?: boolean;
 }
 
 const questionTypeOptions = [
-  { value: QuestionType.SHORT_TEXT, label: 'Short Answer' },
-  { value: QuestionType.LONG_TEXT, label: 'Paragraph' },
+  { value: QuestionType.SHORT_ANSWER, label: 'Short Answer' },
+  { value: QuestionType.LONG_ANSWER, label: 'Paragraph' },
   { value: QuestionType.MULTIPLE_CHOICE, label: 'Multiple Choice' },
-  { value: QuestionType.CHECKBOX, label: 'Checkboxes' },
-  { value: QuestionType.SELECT, label: 'Drop-down' },
+  { value: QuestionType.CHECKBOXES, label: 'Checkboxes' },
+  { value: QuestionType.DROPDOWN, label: 'Drop-down' },
   { value: QuestionType.FILE_UPLOAD, label: 'File upload' },
-  { value: QuestionType.NUMBER, label: 'Number' },
-  { value: QuestionType.EMAIL, label: 'Email' },
-  { value: QuestionType.PHONE, label: 'Phone' },
-  { value: QuestionType.DATE, label: 'Date' },
-  { value: QuestionType.TIME, label: 'Time' },
-  { value: QuestionType.URL, label: 'URL' },
+  { value: QuestionType.SCALE, label: 'Number' },
+  { value: QuestionType.RATING, label: 'Rating' },
 ];
 
-export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBuilderProps) {
+export function IntakeFormBuilder({
+  onSubmit,
+  onBack,
+  onDelete,
+  isLoading,
+  isEditMode = false,
+}: IntakeFormBuilderProps) {
   const { inviteData, setInviteData } = useInviteContext();
 
   const [originalFormData, setOriginalFormData] = useState<CreateIntakeFormDto | null>(null);
 
   const form = useForm({
     resolver: zodResolver(intakeFormSchema),
-    mode: 'onChange', // Enable real-time validation
+    mode: 'onChange',
     defaultValues: inviteData.newIntakeForm || {
       title: '',
       description: '',
@@ -115,6 +137,13 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
       setOriginalFormData(JSON.parse(JSON.stringify(inviteData.newIntakeForm)));
     }
   }, [inviteData.intakeFormId, inviteData.newIntakeForm, originalFormData]);
+
+  // Reset form when context data changes (for edit mode)
+  useEffect(() => {
+    if (inviteData.newIntakeForm && inviteData.intakeFormId) {
+      form.reset(inviteData.newIntakeForm);
+    }
+  }, [inviteData.newIntakeForm, inviteData.intakeFormId, form]);
 
   useEffect(() => {
     return () => {
@@ -186,7 +215,7 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
   };
 
   return (
-    <form onSubmit={form.handleSubmit(handleFormSubmit)} className='space-y-6 max-w-none'>
+    <div className='space-y-6 max-w-none'>
       <div className='space-y-2'>
         <Label htmlFor='form-title' className='text-lg font-semibold'>
           Form Title
@@ -267,13 +296,13 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
               </div>
             </div>
             {form.watch(`questions.${index}.type`) === QuestionType.MULTIPLE_CHOICE && (
-              <QuestionOptions questionIndex={index} control={form.control} register={form.register} />
+              <QuestionOptions questionIndex={index} control={form.control} register={form.register} form={form} />
             )}
-            {form.watch(`questions.${index}.type`) === QuestionType.CHECKBOX && (
-              <QuestionOptions questionIndex={index} control={form.control} register={form.register} />
+            {form.watch(`questions.${index}.type`) === QuestionType.CHECKBOXES && (
+              <QuestionOptions questionIndex={index} control={form.control} register={form.register} form={form} />
             )}
-            {form.watch(`questions.${index}.type`) === QuestionType.SELECT && (
-              <QuestionOptions questionIndex={index} control={form.control} register={form.register} />
+            {form.watch(`questions.${index}.type`) === QuestionType.DROPDOWN && (
+              <QuestionOptions questionIndex={index} control={form.control} register={form.register} form={form} />
             )}
             <div className='flex items-center space-x-2 pt-4'>
               <Checkbox
@@ -286,9 +315,6 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
               </Label>
             </div>
             <div className='flex justify-end items-center gap-2 pt-4 mt-4'>
-              <Button type='button' variant='ghost' size='icon'>
-                <Copy className='h-5 w-5' />
-              </Button>
               <Button type='button' variant='ghost' size='icon' onClick={() => remove(index)}>
                 <Trash2 className='h-5 w-5' />
               </Button>
@@ -300,14 +326,22 @@ export function IntakeFormBuilder({ onSubmit, onBack, isLoading }: IntakeFormBui
         <Plus className='h-4 w-4 mr-2' />
         Add Question
       </Button>
-      <div className='flex flex-col-reverse gap-4 sm:flex-row sm:justify-between pt-4'>
-        <Button type='button' variant='secondary' onClick={onBack} className='w-full sm:w-auto'>
-          Cancel
-        </Button>
-        <Button type='submit' disabled={isLoading} className='w-full sm:w-auto'>
-          {isLoading ? 'Saving...' : 'Preview'}
+      <div className='flex justify-end pt-4'>
+        <Button
+          type='button'
+          disabled={isLoading}
+          className='w-full sm:w-auto'
+          onClick={async () => {
+            const isValid = await form.trigger();
+            if (isValid) {
+              const formData = form.getValues();
+              handleFormSubmit(formData);
+            }
+          }}
+        >
+          {isLoading ? (isEditMode ? 'Updating...' : 'Saving...') : isEditMode ? 'Update Form' : 'Preview'}
         </Button>
       </div>
-    </form>
+    </div>
   );
 }

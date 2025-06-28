@@ -3,17 +3,11 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { Button } from '@repo/ui/components/button';
 import { Input } from '@repo/ui/components/input';
-import { Search, Grid, List, Plus, FileText, MoreVertical, Loader2 } from 'lucide-react';
+import { Search, Grid, List, Plus, FileText, Loader2, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useGetIntakeForms, useDeleteIntakeForm } from '@/lib/hooks/use-api';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@repo/ui/components/dropdown-menu';
 
 export default function FormsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -29,20 +23,6 @@ export default function FormsPage() {
 
   const handleFormClick = (formId: string) => {
     router.push(`/practitioner/forms/${formId}`);
-  };
-
-  const handleDeleteForm = (formId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm('Are you sure you want to delete this form? This action cannot be undone.')) {
-      deleteForm(formId, {
-        onSuccess: () => {
-          toast.success('Form deleted successfully');
-        },
-        onError: () => {
-          toast.error('Failed to delete form');
-        },
-      });
-    }
   };
 
   const filteredForms = forms?.filter((form) => form.title.toLowerCase().includes(searchQuery.toLowerCase())) || [];
@@ -181,28 +161,25 @@ export default function FormsPage() {
                               </span>
                             </div>
                           </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                className='p-1 h-8 w-8'
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreVertical className='h-4 w-4' />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align='end'>
-                              <DropdownMenuItem onClick={() => handleFormClick(form.id)}>Edit Form</DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={(e) => handleDeleteForm(form.id, e)}
-                                className='text-destructive'
-                                disabled={isDeleting}
-                              >
-                                Delete Form
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            className='p-1 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteForm(form.id, {
+                                onSuccess: () => {
+                                  toast.success('Form deleted successfully');
+                                },
+                                onError: () => {
+                                  toast.error('Failed to delete form');
+                                },
+                              });
+                            }}
+                            disabled={isDeleting}
+                          >
+                            <Trash2 className='h-4 w-4' />
+                          </Button>
                         </div>
                       </div>
                     </CardContent>

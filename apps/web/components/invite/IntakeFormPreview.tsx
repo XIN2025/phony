@@ -12,7 +12,7 @@ import { Textarea } from '@repo/ui/components/textarea';
 interface Props {
   formData: CreateIntakeFormDto;
   onBack: () => void;
-  onSubmit: (saveAsTemplate: boolean) => void;
+  onSubmit: (saveAsTemplate?: boolean) => void;
   isLoading: boolean;
   isNewForm: boolean;
 }
@@ -37,9 +37,9 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
       disabled: true,
     };
     switch (question.type) {
-      case QuestionType.SHORT_TEXT:
+      case QuestionType.SHORT_ANSWER:
         return <Input {...commonProps} placeholder='I have issues' />;
-      case QuestionType.LONG_TEXT:
+      case QuestionType.LONG_ANSWER:
         return (
           <Textarea
             {...commonProps}
@@ -47,7 +47,7 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
           />
         );
       case QuestionType.MULTIPLE_CHOICE:
-      case QuestionType.SELECT:
+      case QuestionType.DROPDOWN:
         return (
           <RadioGroup disabled>
             {question.options?.map((opt, i) => (
@@ -65,7 +65,7 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
             ))}
           </RadioGroup>
         );
-      case QuestionType.CHECKBOX:
+      case QuestionType.CHECKBOXES:
         return (
           <div className='space-y-2'>
             {question.options?.map((opt, i) => (
@@ -82,18 +82,10 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
             ))}
           </div>
         );
-      case QuestionType.NUMBER:
+      case QuestionType.SCALE:
         return <Input {...commonProps} type='number' placeholder='25' />;
-      case QuestionType.EMAIL:
-        return <Input {...commonProps} type='email' placeholder='user@example.com' />;
-      case QuestionType.PHONE:
-        return <Input {...commonProps} type='tel' placeholder='(555) 123-4567' />;
-      case QuestionType.DATE:
-        return <Input {...commonProps} type='date' />;
-      case QuestionType.TIME:
-        return <Input {...commonProps} type='time' />;
-      case QuestionType.URL:
-        return <Input {...commonProps} type='url' placeholder='https://example.com' />;
+      case QuestionType.RATING:
+        return <Input {...commonProps} type='number' placeholder='5' />;
       case QuestionType.FILE_UPLOAD:
         return (
           <div className='border-2 border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-100'>
@@ -140,17 +132,11 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
           Back
         </Button>
         <Button
-          onClick={() => onSubmit(shouldShowSaveOption ? saveAsTemplate : false)}
+          onClick={() => onSubmit()}
           disabled={isLoading}
           className='rounded-full bg-black px-6 text-white hover:bg-gray-800'
         >
-          {isLoading
-            ? shouldShowSaveOption && saveAsTemplate
-              ? 'Saving Form & Sending...'
-              : 'Sending Invitation...'
-            : shouldShowSaveOption && saveAsTemplate
-              ? 'Send & Save Template'
-              : 'Send Invitation'}
+          {isLoading ? 'Creating Form...' : 'Create Form'}
         </Button>
       </div>
     </div>

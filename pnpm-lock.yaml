@@ -317,7 +317,7 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       emoji-picker-react:
-        specifier: ^4.12.0
+        specifier: ^4.12.2
         version: 4.12.2(react@19.1.0)
       framer-motion:
         specifier: ^12.18.1

@@ -1,8 +1,9 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { IntakeFormBuilder } from '@/components/invite/IntakeFormBuilder';
+import { IntakeFormPreview } from '@/components/invite/IntakeFormPreview';
 import { useCreateIntakeForm } from '@/lib/hooks/use-api';
 import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
 import { toast } from 'sonner';
@@ -14,20 +15,32 @@ function NewFormWrapper({ children }: { children: React.ReactNode }) {
 
 export default function NewFormPage() {
   const router = useRouter();
+  const [showPreview, setShowPreview] = useState(false);
+  const [formData, setFormData] = useState<CreateIntakeFormDto | null>(null);
   const { mutate: createForm, isPending: isCreating } = useCreateIntakeForm();
 
   const handleBack = () => {
     router.push('/practitioner/forms');
   };
 
-  const handleSubmit = (formData: CreateIntakeFormDto) => {
+  const handlePreview = (data: CreateIntakeFormDto) => {
+    setFormData(data);
+    setShowPreview(true);
+  };
+
+  const handleBackToEdit = () => {
+    setShowPreview(false);
+  };
+
+  const handleSaveForm = () => {
+    if (!formData) return;
+
     createForm(formData, {
       onSuccess: (response) => {
         toast.success('Form created successfully!');
-        router.push(`/practitioner/forms/${response.id}`);
+        router.push('/practitioner/forms');
       },
       onError: (error) => {
-        console.error('Error creating form:', error);
         toast.error('Failed to create form. Please try again.');
       },
     });
@@ -41,7 +54,7 @@ export default function NewFormPage() {
           <button
             type='button'
             aria-label='Back'
-            onClick={handleBack}
+            onClick={showPreview ? handleBackToEdit : handleBack}
             className='text-muted-foreground hover:text-foreground focus:outline-none'
             style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
@@ -50,7 +63,9 @@ export default function NewFormPage() {
         </div>
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
           <div>
-            <h1 className='text-xl sm:text-2xl md:text-3xl font-bold leading-tight'>New Form</h1>
+            <h1 className='text-xl sm:text-2xl md:text-3xl font-bold leading-tight'>
+              {showPreview ? 'Preview Form' : 'New Form'}
+            </h1>
           </div>
         </div>
       </div>
@@ -59,7 +74,17 @@ export default function NewFormPage() {
       <div className='flex-1 w-full py-4 sm:py-6 lg:py-8 bg-background'>
         <div className='w-full px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto'>
           <NewFormWrapper>
-            <IntakeFormBuilder onSubmit={handleSubmit} onBack={handleBack} isLoading={isCreating} />
+            {showPreview && formData ? (
+              <IntakeFormPreview
+                formData={formData}
+                onBack={handleBackToEdit}
+                onSubmit={handleSaveForm}
+                isLoading={isCreating}
+                isNewForm={true}
+              />
+            ) : (
+              <IntakeFormBuilder onSubmit={handlePreview} onBack={handleBack} isLoading={false} />
+            )}
           </NewFormWrapper>
         </div>
       </div>
