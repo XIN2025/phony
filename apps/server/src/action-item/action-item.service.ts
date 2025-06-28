@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotImplementedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCompletionDto, UpdateCompletionDto } from './dto';
 
@@ -6,147 +6,27 @@ import { CreateCompletionDto, UpdateCompletionDto } from './dto';
 export class ActionItemService {
   constructor(private prisma: PrismaService) {}
 
-  async completeActionItem(data: CreateCompletionDto) {
-    return await this.prisma.actionItemCompletion.create({
-      data: {
-        actionItemId: data.actionItemId,
-        clientId: data.clientId,
-        rating: data.rating,
-        journalEntry: data.journalEntry,
-        achievedValue: data.achievedValue,
-      },
-      include: {
-        actionItem: {
-          select: {
-            id: true,
-            description: true,
-            category: true,
-            target: true,
-            frequency: true,
-          },
-        },
-      },
-    });
+  completeActionItem(data: CreateCompletionDto) {
+    throw new NotImplementedException('This feature will be implemented in a future update.');
   }
 
-  async getActionItemCompletions(actionItemId: string, clientId?: string) {
-    return await this.prisma.actionItemCompletion.findMany({
-      where: {
-        actionItemId,
-        ...(clientId && { clientId }),
-      },
-      include: {
-        client: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        actionItem: {
-          select: {
-            id: true,
-            description: true,
-            category: true,
-            target: true,
-            frequency: true,
-          },
-        },
-      },
-      orderBy: { completedAt: 'desc' },
-    });
+  getActionItemCompletions(actionItemId: string, clientId?: string) {
+    throw new NotImplementedException('This feature will be implemented in a future update.');
   }
 
-  async getClientCompletions(clientId: string, planId?: string) {
-    return await this.prisma.actionItemCompletion.findMany({
-      where: {
-        clientId,
-        ...(planId && {
-          actionItem: {
-            planId: planId,
-          },
-        }),
-      },
-      include: {
-        actionItem: {
-          select: {
-            id: true,
-            description: true,
-            category: true,
-            target: true,
-            frequency: true,
-            planId: true,
-            plan: {
-              select: {
-                id: true,
-                session: {
-                  select: {
-                    recordedAt: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: { completedAt: 'desc' },
-    });
+  getClientCompletions(clientId: string, planId?: string) {
+    throw new NotImplementedException('This feature will be implemented in a future update.');
   }
 
-  async updateCompletion(completionId: string, updateData: UpdateCompletionDto) {
-    return await this.prisma.actionItemCompletion.update({
-      where: { id: completionId },
-      data: {
-        rating: updateData.rating,
-        journalEntry: updateData.journalEntry,
-        achievedValue: updateData.achievedValue,
-      },
-      include: {
-        actionItem: {
-          select: {
-            id: true,
-            description: true,
-            category: true,
-            target: true,
-            frequency: true,
-          },
-        },
-      },
-    });
+  updateCompletion(completionId: string, updateData: UpdateCompletionDto) {
+    throw new NotImplementedException('This feature will be implemented in a future update.');
   }
 
-  async deleteCompletion(completionId: string) {
-    return await this.prisma.actionItemCompletion.delete({
-      where: { id: completionId },
-    });
+  deleteCompletion(completionId: string) {
+    throw new NotImplementedException('This feature will be implemented in a future update.');
   }
 
-  async getActionItemById(actionItemId: string) {
-    return await this.prisma.actionItem.findUnique({
-      where: { id: actionItemId },
-      include: {
-        plan: {
-          select: {
-            id: true,
-            clientId: true,
-            practitionerId: true,
-            status: true,
-          },
-        },
-        resources: true,
-        completions: {
-          include: {
-            client: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-          orderBy: { completedAt: 'desc' },
-        },
-      },
-    });
+  getActionItemById(actionItemId: string) {
+    throw new NotImplementedException('This feature will be implemented in a future update.');
   }
 }
