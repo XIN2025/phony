@@ -22,7 +22,7 @@ export class ActionItemService {
   constructor(private prisma: PrismaService) {}
 
   async createActionItem(data: CreateActionItemDto) {
-    return this.prisma.actionItem.create({
+    return await this.prisma.actionItem.create({
       data: {
         description: data.description,
         category: data.category,
@@ -34,7 +34,7 @@ export class ActionItemService {
   }
 
   async getAllActionItems() {
-    return this.prisma.actionItem.findMany({
+    return await this.prisma.actionItem.findMany({
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -52,23 +52,21 @@ export class ActionItemService {
   }
 
   async updateActionItem(actionItemId: string, data: Partial<CreateActionItemDto>) {
-    await this.getActionItemById(actionItemId); // Validate exists
-
-    return this.prisma.actionItem.update({
+    await this.getActionItemById(actionItemId);
+    return await this.prisma.actionItem.update({
       where: { id: actionItemId },
       data,
     });
   }
 
   async deleteActionItem(actionItemId: string) {
-    await this.getActionItemById(actionItemId); // Validate exists
+    await this.getActionItemById(actionItemId);
 
-    return this.prisma.actionItem.delete({
+    return await this.prisma.actionItem.delete({
       where: { id: actionItemId },
     });
   }
 
-  // Placeholder methods for completion functionality (will be implemented in future chunks)
   completeActionItem(_data: CreateCompletionDto) {
     throw new NotFoundException('ActionItem completion functionality will be implemented in future update');
   }
