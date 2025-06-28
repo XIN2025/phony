@@ -15,9 +15,10 @@ interface Props {
   onSubmit: (saveAsTemplate?: boolean) => void;
   isLoading: boolean;
   isNewForm: boolean;
+  buttonText?: string;
 }
 
-export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNewForm }: Props) {
+export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNewForm, buttonText }: Props) {
   const { inviteData, setInviteData } = useInviteContext();
 
   const hasChanges = inviteData.hasChanges || false;
@@ -136,7 +137,7 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
           disabled={isLoading}
           className='rounded-full bg-black px-6 text-white hover:bg-gray-800'
         >
-          {isLoading ? 'Creating Form...' : 'Create Form'}
+          {buttonText || (isLoading ? 'Creating Form...' : 'Create Form')}
         </Button>
       </div>
     </div>

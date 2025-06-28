@@ -90,6 +90,7 @@ interface IntakeFormBuilderProps {
   onDelete?: () => void;
   isLoading?: boolean;
   isEditMode?: boolean;
+  buttonText?: string;
 }
 
 const questionTypeOptions = [
@@ -109,6 +110,7 @@ export function IntakeFormBuilder({
   onDelete,
   isLoading,
   isEditMode = false,
+  buttonText,
 }: IntakeFormBuilderProps) {
   const { inviteData, setInviteData } = useInviteContext();
 
@@ -339,7 +341,8 @@ export function IntakeFormBuilder({
             }
           }}
         >
-          {isLoading ? (isEditMode ? 'Updating...' : 'Saving...') : isEditMode ? 'Update Form' : 'Preview'}
+          {buttonText ||
+            (isLoading ? (isEditMode ? 'Updating...' : 'Saving...') : isEditMode ? 'Update Form' : 'Preview')}
         </Button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 ﻿'use client';
+import { useState } from 'react';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Skeleton } from '@repo/ui/components/skeleton';
@@ -17,18 +18,24 @@ interface Props {
 }
 
 export function IntakeFormSelector({ onNext }: Props) {
+  const [showAllForms, setShowAllForms] = useState(false);
   const { data: forms, isLoading: formsLoading, error: formsError } = useGetIntakeForms();
 
   const { mutate: deleteForm, isPending: isDeleting } = useDeleteIntakeForm();
+
+  // Show only 3 forms by default, or all forms if showAllForms is true
+  const displayedForms = showAllForms ? forms : forms?.slice(0, 3);
 
   return (
     <div className='space-y-6'>
       <Card className='rounded-xl'>
         <CardHeader className='flex flex-row items-center justify-between'>
           <CardTitle className='text-xl font-semibold'>Choose Existing Form</CardTitle>
-          <Button variant='link' className='text-sm font-semibold'>
-            See All
-          </Button>
+          {forms && forms.length > 3 && (
+            <Button variant='link' className='text-sm font-semibold' onClick={() => setShowAllForms(!showAllForms)}>
+              {showAllForms ? 'Show Less' : 'See All'}
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
@@ -36,7 +43,7 @@ export function IntakeFormSelector({ onNext }: Props) {
             {formsError && <p className='text-destructive col-span-3'>Error loading forms.</p>}
             {!formsLoading &&
               !formsError &&
-              forms?.map((form) => (
+              displayedForms?.map((form) => (
                 <Card
                   key={form.id}
                   onClick={() => onNext(form.id)}

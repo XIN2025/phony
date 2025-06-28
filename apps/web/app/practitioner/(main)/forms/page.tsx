@@ -132,7 +132,7 @@ export default function FormsPage() {
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : viewMode === 'grid' ? (
               <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6'>
                 {filteredForms.map((form) => (
                   <Card
@@ -181,6 +181,60 @@ export default function FormsPage() {
                             <Trash2 className='h-4 w-4' />
                           </Button>
                         </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className='space-y-3'>
+                {filteredForms.map((form) => (
+                  <Card
+                    key={form.id}
+                    className='bg-background border border-border rounded-xl shadow-none cursor-pointer hover:bg-muted/20 transition-colors'
+                    onClick={() => handleFormClick(form.id)}
+                  >
+                    <CardContent className='p-4 sm:p-6'>
+                      <div className='flex items-center justify-between'>
+                        <div className='flex items-center gap-4 flex-1'>
+                          <div className='w-12 h-12 bg-muted rounded-lg flex items-center justify-center flex-shrink-0'>
+                            <FileText className='h-6 w-6 text-muted-foreground' />
+                          </div>
+                          <div className='flex-1 min-w-0'>
+                            <h3 className='font-medium text-base line-clamp-1'>{form.title}</h3>
+                            <p className='text-sm text-muted-foreground'>
+                              {format(new Date(form.updatedAt), 'MMM d, yyyy')}
+                            </p>
+                            <div className='flex items-center gap-2 mt-1'>
+                              <span className='text-xs text-muted-foreground'>
+                                {form.questions?.length || 0} questions
+                              </span>
+                              <span className='text-xs text-muted-foreground'>•</span>
+                              <span className='text-xs text-muted-foreground'>
+                                {form.submissionCount || 0} submissions
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          className='p-1 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteForm(form.id, {
+                              onSuccess: () => {
+                                toast.success('Form deleted successfully');
+                              },
+                              onError: () => {
+                                toast.error('Failed to delete form');
+                              },
+                            });
+                          }}
+                          disabled={isDeleting}
+                        >
+                          <Trash2 className='h-4 w-4' />
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
