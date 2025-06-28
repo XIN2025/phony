@@ -1,74 +1,152 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateActionItemDto, UpdateActionItemDto, CreateCompletionDto, UpdateCompletionDto } from './dto';
+import { CreateCompletionDto, UpdateCompletionDto } from './dto';
 
 @Injectable()
 export class ActionItemService {
   constructor(private prisma: PrismaService) {}
 
-  async createActionItem(data: CreateActionItemDto) {
-    return await this.prisma.actionItem.create({
+  async completeActionItem(data: CreateCompletionDto) {
+    return await this.prisma.actionItemCompletion.create({
       data: {
-        description: data.description,
-        category: data.category,
-        target: data.target,
-        frequency: data.frequency,
-        source: data.source || 'MANUAL',
+        actionItemId: data.actionItemId,
+        clientId: data.clientId,
+        rating: data.rating,
+        journalEntry: data.journalEntry,
+        achievedValue: data.achievedValue,
+      },
+      include: {
+        actionItem: {
+          select: {
+            id: true,
+            description: true,
+            category: true,
+            target: true,
+            frequency: true,
+          },
+        },
       },
     });
   }
 
-  async getAllActionItems() {
-    return await this.prisma.actionItem.findMany({
-      orderBy: { createdAt: 'desc' },
+  async getActionItemCompletions(actionItemId: string, clientId?: string) {
+    return await this.prisma.actionItemCompletion.findMany({
+      where: {
+        actionItemId,
+        ...(clientId && { clientId }),
+      },
+      include: {
+        client: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        actionItem: {
+          select: {
+            id: true,
+            description: true,
+            category: true,
+            target: true,
+            frequency: true,
+          },
+        },
+      },
+      orderBy: { completedAt: 'desc' },
+    });
+  }
+
+  async getClientCompletions(clientId: string, planId?: string) {
+    return await this.prisma.actionItemCompletion.findMany({
+      where: {
+        clientId,
+        ...(planId && {
+          actionItem: {
+            planId: planId,
+          },
+        }),
+      },
+      include: {
+        actionItem: {
+          select: {
+            id: true,
+            description: true,
+            category: true,
+            target: true,
+            frequency: true,
+            planId: true,
+            plan: {
+              select: {
+                id: true,
+                session: {
+                  select: {
+                    recordedAt: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { completedAt: 'desc' },
+    });
+  }
+
+  async updateCompletion(completionId: string, updateData: UpdateCompletionDto) {
+    return await this.prisma.actionItemCompletion.update({
+      where: { id: completionId },
+      data: {
+        rating: updateData.rating,
+        journalEntry: updateData.journalEntry,
+        achievedValue: updateData.achievedValue,
+      },
+      include: {
+        actionItem: {
+          select: {
+            id: true,
+            description: true,
+            category: true,
+            target: true,
+            frequency: true,
+          },
+        },
+      },
+    });
+  }
+
+  async deleteCompletion(completionId: string) {
+    return await this.prisma.actionItemCompletion.delete({
+      where: { id: completionId },
     });
   }
 
   async getActionItemById(actionItemId: string) {
-    const actionItem = await this.prisma.actionItem.findUnique({
+    return await this.prisma.actionItem.findUnique({
       where: { id: actionItemId },
+      include: {
+        plan: {
+          select: {
+            id: true,
+            clientId: true,
+            practitionerId: true,
+            status: true,
+          },
+        },
+        resources: true,
+        completions: {
+          include: {
+            client: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+          orderBy: { completedAt: 'desc' },
+        },
+      },
     });
-
-    if (!actionItem) {
-      throw new NotFoundException(`ActionItem with ID ${actionItemId} not found`);
-    }
-
-    return actionItem;
-  }
-
-  async updateActionItem(actionItemId: string, data: UpdateActionItemDto) {
-    await this.getActionItemById(actionItemId);
-    return await this.prisma.actionItem.update({
-      where: { id: actionItemId },
-      data,
-    });
-  }
-
-  async deleteActionItem(actionItemId: string) {
-    await this.getActionItemById(actionItemId);
-
-    return await this.prisma.actionItem.delete({
-      where: { id: actionItemId },
-    });
-  }
-
-  completeActionItem(_data: CreateCompletionDto) {
-    throw new NotFoundException('ActionItem completion functionality will be implemented in future update');
-  }
-
-  getActionItemCompletions(_actionItemId: string, _clientId?: string) {
-    return [];
-  }
-
-  getClientCompletions(_clientId: string, _planId?: string) {
-    return [];
-  }
-
-  updateCompletion(_completionId: string, _updateData: UpdateCompletionDto) {
-    throw new NotFoundException('ActionItem completion functionality will be implemented in future update');
-  }
-
-  deleteCompletion(_completionId: string) {
-    throw new NotFoundException('ActionItem completion functionality will be implemented in future update');
   }
 }
