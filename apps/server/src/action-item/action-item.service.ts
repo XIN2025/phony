@@ -1,45 +1,74 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-
-interface CreateCompletionDto {
-  actionItemId: string;
-  clientId: string;
-  rating?: number;
-  journalEntry?: string;
-  achievedValue?: string;
-}
+import { CreateActionItemDto, UpdateActionItemDto, CreateCompletionDto, UpdateCompletionDto } from './dto';
 
 @Injectable()
 export class ActionItemService {
   constructor(private prisma: PrismaService) {}
 
+  async createActionItem(data: CreateActionItemDto) {
+    return await this.prisma.actionItem.create({
+      data: {
+        description: data.description,
+        category: data.category,
+        target: data.target,
+        frequency: data.frequency,
+        source: data.source || 'MANUAL',
+      },
+    });
+  }
+
+  async getAllActionItems() {
+    return await this.prisma.actionItem.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getActionItemById(actionItemId: string) {
+    const actionItem = await this.prisma.actionItem.findUnique({
+      where: { id: actionItemId },
+    });
+
+    if (!actionItem) {
+      throw new NotFoundException(`ActionItem with ID ${actionItemId} not found`);
+    }
+
+    return actionItem;
+  }
+
+  async updateActionItem(actionItemId: string, data: UpdateActionItemDto) {
+    await this.getActionItemById(actionItemId);
+    return await this.prisma.actionItem.update({
+      where: { id: actionItemId },
+      data,
+    });
+  }
+
+  async deleteActionItem(actionItemId: string) {
+    await this.getActionItemById(actionItemId);
+
+    return await this.prisma.actionItem.delete({
+      where: { id: actionItemId },
+    });
+  }
+
   completeActionItem(_data: CreateCompletionDto) {
-    // TODO: Implement when ActionItem models are added to schema
-    throw new NotFoundException('ActionItem functionality not yet implemented - database schema pending');
+    throw new NotFoundException('ActionItem completion functionality will be implemented in future update');
   }
 
   getActionItemCompletions(_actionItemId: string, _clientId?: string) {
-    // TODO: Implement when ActionItem models are added to schema
     return [];
   }
 
   getClientCompletions(_clientId: string, _planId?: string) {
-    // TODO: Implement when ActionItem models are added to schema
     return [];
   }
 
-  updateCompletion(_completionId: string, _updateData: Partial<CreateCompletionDto>) {
-    // TODO: Implement when ActionItem models are added to schema
-    throw new NotFoundException('ActionItem functionality not yet implemented - database schema pending');
+  updateCompletion(_completionId: string, _updateData: UpdateCompletionDto) {
+    throw new NotFoundException('ActionItem completion functionality will be implemented in future update');
   }
 
   deleteCompletion(_completionId: string) {
-    // TODO: Implement when ActionItem models are added to schema
-    throw new NotFoundException('ActionItem functionality not yet implemented - database schema pending');
-  }
-
-  getActionItemById(_actionItemId: string) {
-    // TODO: Implement when ActionItem models are added to schema
-    throw new NotFoundException('ActionItem functionality not yet implemented - database schema pending');
+    throw new NotFoundException('ActionItem completion functionality will be implemented in future update');
   }
 }
