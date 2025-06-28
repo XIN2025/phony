@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { config } from '../common/config';
-import { inviteClientSchema } from '@repo/shared-types/schemas';
-import { z } from 'zod';
 import {
   normalizeEmail,
   getPractitionerName,
@@ -14,19 +12,8 @@ import {
   getAvatarUrl,
 } from 'src/common/utils/user.utils';
 import { UserRole, InvitationStatus } from '@repo/db';
-
-export type InviteClientDto = z.infer<typeof inviteClientSchema>;
-
-export interface InvitationResponse {
-  id: string;
-  clientEmail: string;
-  clientFirstName: string;
-  clientLastName: string;
-  status: 'PENDING' | 'JOINED';
-  invited?: string;
-  avatar?: string;
-  createdAt: Date;
-}
+import { InviteClientDto } from './dto/invite-client.dto';
+import { InvitationResponseDto } from './dto/invitation.response.dto';
 
 @Injectable()
 export class PractitionerService {
@@ -35,7 +22,7 @@ export class PractitionerService {
     private readonly mailService: MailService
   ) {}
 
-  async inviteClient(practitionerId: string, inviteData: InviteClientDto): Promise<InvitationResponse> {
+  async inviteClient(practitionerId: string, inviteData: InviteClientDto): Promise<InvitationResponseDto> {
     validateRequiredFields(inviteData as unknown as Record<string, unknown>, [
       'clientFirstName',
       'clientLastName',
@@ -114,7 +101,7 @@ export class PractitionerService {
     };
   }
 
-  async resendInvitation(practitionerId: string, invitationId: string): Promise<InvitationResponse> {
+  async resendInvitation(practitionerId: string, invitationId: string): Promise<InvitationResponseDto> {
     const originalInvitation = await this.prismaService.invitation.findFirst({
       where: { id: invitationId, practitionerId },
     });
