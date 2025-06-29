@@ -45,13 +45,13 @@ describe('IntakeFormService', () => {
           {
             id: 'q1',
             title: 'What is your name?',
-            type: QuestionType.SHORT_TEXT,
+            type: QuestionType.SHORT_ANSWER,
             required: true,
           },
           {
             id: 'q2',
             title: 'Tell us about yourself',
-            type: QuestionType.LONG_TEXT,
+            type: QuestionType.LONG_ANSWER,
             required: false,
           },
         ],

@@ -24,11 +24,11 @@ export class PractitionerService {
   ) {}
 
   async inviteClient(practitionerId: string, inviteData: InviteClientDto): Promise<InvitationResponse> {
-    validateRequiredFields(inviteData as unknown as Record<string, unknown>, ['clientFirstName', 'clientEmail']);
+    validateRequiredFields({ practitionerId, ...inviteData }, ['practitionerId', 'clientEmail', 'clientFirstName']);
     const { clientFirstName, clientLastName, clientEmail, intakeFormId } = inviteData;
     const normalizedEmail = normalizeEmail(clientEmail);
     const normalizedFirstName = clientFirstName.trim();
-    const normalizedLastName = clientLastName?.trim();
+    const normalizedLastName = clientLastName?.trim() ?? '';
 
     const practitioner = await this.prismaService.user.findUnique({ where: { id: practitionerId } });
     if (!practitioner) throwAuthError('Practitioner not found', 'notFound');

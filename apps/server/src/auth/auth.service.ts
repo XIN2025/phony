@@ -150,7 +150,7 @@ export class AuthService {
     const { email, firstName, lastName, profession } = data;
     const normalizedEmail = normalizeEmail(email);
     const normalizedFirstName = firstName.trim();
-    const normalizedLastName = lastName?.trim();
+    const normalizedLastName = lastName?.trim() ?? '';
     const normalizedProfession = profession.trim();
 
     const existingUser = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
@@ -220,7 +220,7 @@ export class AuthService {
     const { email, firstName, lastName, invitationToken } = data;
     const normalizedEmail = normalizeEmail(email);
     const normalizedFirstName = firstName.trim();
-    const normalizedLastName = lastName?.trim();
+    const normalizedLastName = lastName?.trim() ?? '';
     let invitation = await this.prismaService.invitation.findUnique({
       where: { token: invitationToken },
       include: { practitioner: true },
