@@ -18,7 +18,7 @@ import { getInitials, getAvatarUrl } from '@/lib/utils';
 
 const profileSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
-  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  lastName: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -72,8 +72,7 @@ export function ProfileSetupForm({ onSuccess }: ProfileSetupFormProps) {
     try {
       const formData = new FormData();
       formData.append('firstName', data.firstName);
-      formData.append('lastName', data.lastName);
-
+      formData.append('lastName', data.lastName || '');
       if (selectedFile) {
         formData.append('avatar', selectedFile);
       }

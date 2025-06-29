@@ -62,7 +62,7 @@ export default function IntakePage() {
       return;
     }
 
-    if (session.user.clientStatus === 'PENDING' || session.user.clientStatus === 'ACTIVE') {
+    if (session.user.clientStatus === 'ACTIVE') {
       router.push('/client');
       return;
     }

@@ -42,6 +42,9 @@ describe('Auth hooks', () => {
         avatarUrl: null,
         role: 'PRACTITIONER',
         profession: 'Doctor',
+        isEmailVerified: true,
+        practitionerId: null,
+        idProofUrl: null,
       },
     };
 
@@ -134,6 +137,9 @@ describe('Auth hooks', () => {
         avatarUrl: null,
         role: 'PRACTITIONER',
         profession: 'Psychologist',
+        isEmailVerified: true,
+        practitionerId: null,
+        idProofUrl: null,
       },
     };
 
@@ -187,6 +193,10 @@ describe('Auth hooks', () => {
         avatarUrl: null,
         role: 'CLIENT',
         clientStatus: 'ACTIVE',
+        profession: null,
+        isEmailVerified: true,
+        practitionerId: null,
+        idProofUrl: null,
       },
     };
 
@@ -247,6 +257,10 @@ describe('Auth hooks', () => {
           avatarUrl: '/uploads/client-id-1234567890.jpg',
           role: 'CLIENT',
           clientStatus: 'ACTIVE',
+          profession: null,
+          isEmailVerified: true,
+          practitionerId: null,
+          idProofUrl: null,
         },
       };
 

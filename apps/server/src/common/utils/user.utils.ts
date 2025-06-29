@@ -17,7 +17,7 @@ export function normalizeUserData(user: PrismaUser): {
   id: string;
   email: string;
   firstName: string;
-  lastName: string;
+  lastName?: string | null;
   role: UserRole;
   profession?: string | null;
   avatarUrl?: string | null;
@@ -37,7 +37,7 @@ export function createUserResponse(user: {
   id: string;
   email: string;
   firstName: string;
-  lastName: string;
+  lastName?: string | null;
   role: UserRole;
   profession?: string | null;
   avatarUrl?: string | null;
@@ -68,7 +68,7 @@ export function createJwtPayload(
     id: string;
     email: string;
     firstName: string;
-    lastName: string;
+    lastName?: string | null;
     role: UserRole;
     practitionerId?: string | null;
     clientStatus?: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
@@ -93,7 +93,7 @@ export function generateToken(
     id: string;
     email: string;
     firstName: string;
-    lastName: string;
+    lastName?: string | null;
     role: UserRole;
     practitionerId?: string | null;
     clientStatus?: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
@@ -128,8 +128,12 @@ export function updateClientStatus(
   }
 }
 
-export function getPractitionerName(user: { firstName: string; lastName: string; profession?: string | null }): string {
-  const fullName = `${user.firstName} ${user.lastName}`.trim();
+export function getPractitionerName(user: {
+  firstName: string;
+  lastName?: string | null;
+  profession?: string | null;
+}): string {
+  const fullName = `${user.firstName} ${user.lastName ?? ''}`.trim();
   return user.profession ? `${fullName} (${user.profession})` : fullName;
 }
 
@@ -137,7 +141,7 @@ export function getIntakeFormTitle(form: {
   title: string;
   practitioner?: {
     firstName: string;
-    lastName: string;
+    lastName?: string | null;
     profession?: string | null;
   } | null;
 }): string {
@@ -148,11 +152,11 @@ export function getIntakeFormTitle(form: {
   return form.title;
 }
 
-export function getAvatarUrl(user: { avatarUrl?: string | null; firstName: string; lastName: string }): string {
+export function getAvatarUrl(user: { avatarUrl?: string | null; firstName: string; lastName?: string | null }): string {
   if (user.avatarUrl) {
     return user.avatarUrl;
   }
-  const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+  const initials = `${user.firstName.charAt(0)}${user.lastName?.charAt(0) ?? ''}`.toUpperCase();
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=random&size=128`;
 }
 

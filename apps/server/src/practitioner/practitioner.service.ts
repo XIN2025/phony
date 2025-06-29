@@ -24,15 +24,11 @@ export class PractitionerService {
   ) {}
 
   async inviteClient(practitionerId: string, inviteData: InviteClientDto): Promise<InvitationResponse> {
-    validateRequiredFields(inviteData as unknown as Record<string, unknown>, [
-      'clientFirstName',
-      'clientLastName',
-      'clientEmail',
-    ]);
+    validateRequiredFields(inviteData as unknown as Record<string, unknown>, ['clientFirstName', 'clientEmail']);
     const { clientFirstName, clientLastName, clientEmail, intakeFormId } = inviteData;
     const normalizedEmail = normalizeEmail(clientEmail);
     const normalizedFirstName = clientFirstName.trim();
-    const normalizedLastName = clientLastName.trim();
+    const normalizedLastName = clientLastName?.trim();
 
     const practitioner = await this.prismaService.user.findUnique({ where: { id: practitionerId } });
     if (!practitioner) throwAuthError('Practitioner not found', 'notFound');
@@ -160,22 +156,22 @@ export class PractitionerService {
       createdAt: newInvitation.createdAt,
       avatar: getAvatarUrl({
         firstName: newInvitation.clientFirstName,
-        lastName: newInvitation.clientLastName,
+        lastName: newInvitation.clientLastName || '',
       }),
     };
   }
 
   private async sendInvitationEmail(
     invitation: { token: string },
-    practitioner: { firstName: string; lastName: string; profession?: string | null },
+    practitioner: { firstName: string; lastName?: string | null; profession?: string | null },
     email: string,
     firstName: string,
-    lastName: string,
+    lastName?: string | null,
     intakeFormTitle?: string
   ): Promise<void> {
     const invitationLink = `${config.frontendUrl}/client/auth/signup?token=${encodeURIComponent(invitation.token)}`;
     const practitionerName = getPractitionerName(practitioner);
-    const clientName = `${firstName} ${lastName}`;
+    const clientName = `${firstName} ${lastName || ''}`.trim();
 
     const emailSent = await this.mailService.sendClientInvitation({
       to: email,

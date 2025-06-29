@@ -42,8 +42,11 @@ export default function PractitionerSignUpPage() {
     lastName: string;
     profession: string;
     profileImage?: File;
+    idProof?: File;
   } | null>(null);
   const [profileImagePreview, setProfileImagePreview] = React.useState<string>('');
+  const [idProofFile, setIdProofFile] = React.useState<File | null>(null);
+  const [idProofFileName, setIdProofFileName] = React.useState<string>('');
   const router = useRouter();
   const { status } = useSession();
   const [profileImage, setProfileImage] = React.useState<File | null>(null);
@@ -112,10 +115,13 @@ export default function PractitionerSignUpPage() {
       formData.append('otp', values.otp!.trim());
       formData.append('role', 'PRACTITIONER');
       formData.append('firstName', profileData?.firstName || values.firstName!.trim());
-      formData.append('lastName', profileData?.lastName || values.lastName!.trim());
+      formData.append('lastName', profileData?.lastName || values.lastName?.trim() || '');
       formData.append('profession', profileData?.profession || values.profession!);
       if (profileData?.profileImage || profileImage) {
         formData.append('profileImage', profileData?.profileImage || profileImage!);
+      }
+      if (profileData?.idProof || idProofFile) {
+        formData.append('idProof', profileData?.idProof || idProofFile!);
       }
       handleSignup(formData, {
         onSuccess: async (response) => {
@@ -186,19 +192,12 @@ export default function PractitionerSignUpPage() {
           toast.error('First name is required.');
           return;
         }
-        if (!values.lastName?.trim()) {
-          toast.error('Last name is required.');
-          return;
-        }
-        if (!values.profession?.trim()) {
-          toast.error('Profession is required.');
-          return;
-        }
         setProfileData({
           firstName: values.firstName.trim(),
-          lastName: values.lastName.trim(),
-          profession: values.profession.trim(),
+          lastName: values.lastName?.trim() ?? '',
+          profession: values.profession?.trim() ?? '',
           profileImage: values.profileImage,
+          idProof: values.idProof,
         });
         setStep(4);
         break;
@@ -220,6 +219,15 @@ export default function PractitionerSignUpPage() {
       setProfileImage(file);
       setProfileImagePreview(URL.createObjectURL(file));
       form.setValue('profileImage', file);
+    }
+  };
+
+  const handleIdProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIdProofFile(file);
+      setIdProofFileName(file.name);
+      form.setValue('idProof', file);
     }
   };
 
@@ -413,11 +421,12 @@ export default function PractitionerSignUpPage() {
                   type='file'
                   accept='.pdf,image/*'
                   className='hidden'
-                  onChange={handleProfileImageChange}
+                  onChange={handleIdProofChange}
                 />
                 <label htmlFor='id-proof-upload' className='btn btn-outline cursor-pointer'>
                   Choose File
                 </label>
+                {idProofFileName && <span className='text-xs text-green-600 mt-2'>Selected: {idProofFileName}</span>}
               </div>
             </div>
             <FormField

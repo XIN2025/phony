@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { User } from '@repo/db';
 import { generateOtp } from '../common/utils/auth.utils';
 import {
   decodeInvitationToken,
@@ -15,6 +16,7 @@ import {
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginResponseDto, ProfileUpdateBody } from './dto/auth.dto';
+import { User as UserDto } from '@repo/shared-types/types';
 
 // Removed duplicate interface - using the one from auth.controller.ts
 
@@ -22,6 +24,7 @@ interface ProfileUpdateData {
   firstName?: string;
   lastName?: string;
   avatarUrl?: string;
+  profession?: string;
 }
 
 @Injectable()
@@ -31,6 +34,22 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly mailService: MailService
   ) {}
+
+  private toUserDto(user: User): UserDto {
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName ?? null,
+      role: user.role,
+      avatarUrl: user.avatarUrl ?? null,
+      profession: user.profession ?? null,
+      clientStatus: user.clientStatus ?? undefined,
+      practitionerId: user.practitionerId ?? null,
+      isEmailVerified: user.isEmailVerified,
+      idProofUrl: user.idProofUrl ?? null,
+    };
+  }
 
   async sendOtp(email: string): Promise<{ success: boolean }> {
     validateRequiredFields({ email }, ['email']);
@@ -105,24 +124,14 @@ export class AuthService {
       id: user.id,
       email: user.email,
       firstName: user.firstName,
-      lastName: user.lastName,
+      lastName: user.lastName ?? null,
       role: user.role,
       practitionerId: user.practitionerId,
-      clientStatus: user.clientStatus || undefined,
+      clientStatus: user.clientStatus ?? undefined,
     });
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        avatarUrl: user.avatarUrl,
-        profession: user.profession,
-        clientStatus: user.clientStatus || undefined,
-        practitionerId: user.practitionerId || undefined,
-      },
+      user: this.toUserDto(user),
       token,
     };
   }
@@ -131,16 +140,17 @@ export class AuthService {
     data: {
       email: string;
       firstName: string;
-      lastName: string;
+      lastName?: string;
       profession: string;
     },
-    file?: Express.Multer.File
+    file?: Express.Multer.File,
+    idProofFile?: Express.Multer.File
   ): Promise<LoginResponseDto> {
-    validateRequiredFields(data, ['email', 'firstName', 'lastName', 'profession']);
+    validateRequiredFields(data, ['email', 'firstName', 'profession']);
     const { email, firstName, lastName, profession } = data;
     const normalizedEmail = normalizeEmail(email);
     const normalizedFirstName = firstName.trim();
-    const normalizedLastName = lastName.trim();
+    const normalizedLastName = lastName?.trim();
     const normalizedProfession = profession.trim();
 
     const existingUser = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
@@ -157,6 +167,17 @@ export class AuthService {
       avatarUrl = `/uploads/${savedFilename}`;
     }
 
+    let idProofUrl: string | undefined = undefined;
+    if (idProofFile && idProofFile.buffer) {
+      const validation = validateFileUpload(idProofFile);
+      if (!validation.isValid) {
+        throwAuthError(validation.error || 'Invalid ID proof file', 'badRequest');
+      }
+      const filename = generateUniqueFilename(idProofFile.originalname);
+      const savedFilename = await saveFileToUploads(idProofFile, filename);
+      idProofUrl = `/uploads/${savedFilename}`;
+    }
+
     const user = await this.prismaService.user.create({
       data: {
         email: normalizedEmail,
@@ -164,6 +185,7 @@ export class AuthService {
         lastName: normalizedLastName,
         role: 'PRACTITIONER',
         avatarUrl,
+        idProofUrl,
         profession: normalizedProfession,
       },
       include: { clients: true },
@@ -173,24 +195,14 @@ export class AuthService {
       id: user.id,
       email: user.email,
       firstName: user.firstName,
-      lastName: user.lastName,
+      lastName: user.lastName ?? null,
       role: user.role,
       practitionerId: user.practitionerId,
-      clientStatus: user.clientStatus || undefined,
+      clientStatus: user.clientStatus ?? undefined,
     });
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        avatarUrl: user.avatarUrl,
-        profession: user.profession,
-        clientStatus: user.clientStatus || undefined,
-        practitionerId: user.practitionerId || undefined,
-      },
+      user: this.toUserDto(user),
       token,
     };
   }
@@ -199,16 +211,16 @@ export class AuthService {
     data: {
       email: string;
       firstName: string;
-      lastName: string;
+      lastName?: string;
       invitationToken: string;
     },
     file?: Express.Multer.File
   ): Promise<LoginResponseDto> {
-    validateRequiredFields(data, ['email', 'firstName', 'lastName', 'invitationToken']);
+    validateRequiredFields(data, ['email', 'firstName', 'invitationToken']);
     const { email, firstName, lastName, invitationToken } = data;
     const normalizedEmail = normalizeEmail(email);
     const normalizedFirstName = firstName.trim();
-    const normalizedLastName = lastName.trim();
+    const normalizedLastName = lastName?.trim();
     let invitation = await this.prismaService.invitation.findUnique({
       where: { token: invitationToken },
       include: { practitioner: true },
@@ -262,24 +274,14 @@ export class AuthService {
       id: user.id,
       email: user.email,
       firstName: user.firstName,
-      lastName: user.lastName,
+      lastName: user.lastName ?? null,
       role: user.role,
-      practitionerId: user.practitionerId || undefined,
-      clientStatus: user.clientStatus || undefined,
+      practitionerId: user.practitionerId ?? null,
+      clientStatus: user.clientStatus ?? undefined,
     });
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        avatarUrl: user.avatarUrl,
-        profession: user.profession,
-        clientStatus: user.clientStatus || undefined,
-        practitionerId: user.practitionerId || undefined,
-      },
+      user: this.toUserDto(user),
       token,
     };
   }
@@ -315,17 +317,7 @@ export class AuthService {
 
     if (!user) throwAuthError('User not found', 'notFound');
 
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      avatarUrl: user.avatarUrl,
-      profession: user.profession,
-      clientStatus: user.clientStatus || undefined,
-      practitionerId: user.practitionerId || undefined,
-    };
+    return this.toUserDto(user);
   }
 
   async updateProfile(
@@ -333,10 +325,10 @@ export class AuthService {
     body: ProfileUpdateBody,
     file?: Express.Multer.File
   ): Promise<LoginResponseDto['user']> {
-    const updateData: ProfileUpdateData = {
-      firstName: body.firstName,
-      lastName: body.lastName,
-    };
+    const dataToUpdate: ProfileUpdateData = {};
+    if (body.firstName) dataToUpdate.firstName = body.firstName;
+    if (body.lastName || body.lastName === '') dataToUpdate.lastName = body.lastName;
+    if (body.profession) dataToUpdate.profession = body.profession;
 
     if (file && file.buffer) {
       const validation = validateFileUpload(file);
@@ -345,26 +337,16 @@ export class AuthService {
       }
       const filename = generateUniqueFilename(file.originalname);
       const savedFilename = await saveFileToUploads(file, filename);
-      updateData.avatarUrl = `/uploads/${savedFilename}`;
+      dataToUpdate.avatarUrl = `/uploads/${savedFilename}`;
     }
 
     const user = await this.prismaService.user.update({
       where: { id: userId },
-      data: updateData,
+      data: dataToUpdate,
       include: { clients: true },
     });
 
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      avatarUrl: user.avatarUrl,
-      profession: user.profession,
-      clientStatus: user.clientStatus || undefined,
-      practitionerId: user.practitionerId || undefined,
-    };
+    return this.toUserDto(user);
   }
 
   async getCurrentUser(userId: string): Promise<LoginResponseDto['user']> {
@@ -376,16 +358,6 @@ export class AuthService {
       throwAuthError('User not found', 'notFound');
     }
 
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      avatarUrl: user.avatarUrl,
-      profession: user.profession,
-      clientStatus: user.clientStatus || undefined,
-      practitionerId: user.practitionerId || undefined,
-    };
+    return this.toUserDto(user);
   }
 }

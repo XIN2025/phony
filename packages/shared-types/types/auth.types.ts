@@ -4,13 +4,14 @@ export type User = {
   id: string;
   email: string;
   firstName: string;
-  lastName: string;
+  lastName: string | null;
   avatarUrl: string | null;
   role: UserRole;
-  profession?: string | null;
+  profession: string | null;
   clientStatus?: ClientStatus;
-  isEmailVerified?: boolean;
-  practitionerId?: string | null;
+  isEmailVerified: boolean;
+  practitionerId: string | null;
+  idProofUrl: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -32,13 +33,13 @@ export type SendOtpRequest = {
 
 export type PractitionerSignUpRequest = VerifyOtpRequest & {
   firstName: string;
-  lastName: string;
+  lastName?: string;
   profession: string;
 };
 
 export type ClientSignUpRequest = {
   email: string;
   firstName: string;
-  lastName: string;
+  lastName?: string;
   invitationToken: string;
 };

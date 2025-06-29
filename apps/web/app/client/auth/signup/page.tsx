@@ -69,8 +69,8 @@ export default function ClientSignUpPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName.trim() || !lastName.trim()) {
-      toast.error('Please enter your full name.');
+    if (!firstName.trim()) {
+      toast.error('Please enter your first name.');
       return;
     }
 
@@ -224,7 +224,6 @@ export default function ClientSignUpPage() {
               <Input
                 id='last-name'
                 placeholder='Your last name'
-                required
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
               />

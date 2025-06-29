@@ -4,6 +4,7 @@ import { ApiClient } from '@/lib/api-client';
 import { envConfig } from '@/config';
 import { LoginResponse } from '@repo/shared-types/types';
 import { createAuthError, validateAuthFields } from '@/lib/auth-utils';
+import { UserRole, ClientStatus } from '@repo/db';
 
 const credentialsAuthProvider = CredentialsProvider({
   name: 'Credentials',
@@ -35,6 +36,8 @@ const credentialsAuthProvider = CredentialsProvider({
           profession: res.profession ?? null,
           clientStatus: res.clientStatus,
           practitionerId: res.practitionerId ?? null,
+          isEmailVerified: res.isEmailVerified ?? false,
+          idProofUrl: res.idProofUrl ?? null,
         };
         return user;
       }
@@ -60,6 +63,8 @@ const credentialsAuthProvider = CredentialsProvider({
         profession: res.user.profession ?? null,
         clientStatus: res.user.clientStatus,
         practitionerId: res.user.practitionerId ?? null,
+        isEmailVerified: res.user.isEmailVerified ?? false,
+        idProofUrl: res.user.idProofUrl ?? null,
       };
       return user;
     } catch (error) {
@@ -106,10 +111,10 @@ export const authOptions: AuthOptions = {
         session.user.firstName = token.firstName as string;
         session.user.lastName = token.lastName as string;
         session.user.avatarUrl = token.avatarUrl as string;
-        session.user.role = token.role as string;
+        session.user.role = token.role as UserRole;
         session.user.profession = token.profession as string;
         session.user.token = token.token as string;
-        session.user.clientStatus = token.clientStatus as string;
+        session.user.clientStatus = token.clientStatus as ClientStatus;
         session.user.practitionerId = token.practitionerId as string;
       }
       return session;

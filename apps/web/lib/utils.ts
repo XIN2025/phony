@@ -1,14 +1,9 @@
 ﻿import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { User } from '@repo/shared-types/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-interface User {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
 }
 
 export function getUserDisplayName(user: User | null | undefined): string {
@@ -33,7 +28,10 @@ export function getUserDisplayName(user: User | null | undefined): string {
   return 'Unknown User';
 }
 
-export function getAvatarUrl(avatarUrl?: string | null, user?: { firstName?: string; lastName?: string }): string {
+export function getAvatarUrl(
+  avatarUrl?: string | null,
+  user?: User | { firstName?: string; lastName?: string | null },
+): string {
   // If no avatar URL provided, generate a placeholder avatar
   if (!avatarUrl || avatarUrl === '') {
     let name = 'U';
@@ -58,10 +56,10 @@ export function getAvatarUrl(avatarUrl?: string | null, user?: { firstName?: str
 }
 
 export function getInitials(
-  input: string | { firstName?: string; lastName?: string; user?: { firstName?: string; lastName?: string } },
+  input: string | { firstName?: string; lastName?: string | null; user?: User } | User | {},
 ): string {
   // Helper function to extract initials from first and last name
-  const extractInitials = (firstName?: string, lastName?: string): string => {
+  const extractInitials = (firstName?: string, lastName?: string | null): string => {
     if (firstName && lastName) {
       return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
     }
@@ -75,11 +73,14 @@ export function getInitials(
   };
 
   if (typeof input === 'string') {
-    const parts = input?.trim()?.split(' ') || [];
+    const trimmed = input?.trim();
+    if (!trimmed) return 'U';
+
+    const parts = trimmed.split(' ');
     if (parts.length >= 2 && parts[0] && parts[1]) {
       return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
     }
-    return input.charAt(0).toUpperCase();
+    return trimmed.charAt(0).toUpperCase();
   }
 
   if (typeof input === 'object' && input !== null) {
@@ -89,7 +90,7 @@ export function getInitials(
     }
 
     if ('firstName' in input) {
-      const userInput = input as { firstName?: string; lastName?: string };
+      const userInput = input as { firstName?: string; lastName?: string | null };
       return extractInitials(userInput.firstName, userInput.lastName);
     }
   }

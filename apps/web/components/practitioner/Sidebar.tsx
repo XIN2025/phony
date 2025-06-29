@@ -89,8 +89,18 @@ export const SidebarContent = ({
           ))}
         </nav>
       </div>
-      <div className='mt-auto border-t p-4 space-y-3'>
-        <UserProfile />
+      <div className='mt-auto p-4 space-y-3'>
+        <Link
+          href='/practitioner/settings'
+          onClick={() => setSidebarOpen(false)}
+          className={`block rounded-lg p-2 transition-all ${
+            pathname === '/practitioner/settings'
+              ? 'border border-border bg-background font-semibold text-foreground shadow-sm'
+              : 'hover:bg-muted'
+          }`}
+        >
+          <UserProfile />
+        </Link>
         <Button
           variant='ghost'
           size='sm'

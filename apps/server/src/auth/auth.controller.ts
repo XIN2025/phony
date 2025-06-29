@@ -1,10 +1,20 @@
-import { Body, Controller, Post, Request, UseGuards, UploadedFile, UseInterceptors, Get } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Request,
+  UseGuards,
+  UploadedFile,
+  UseInterceptors,
+  Get,
+  UploadedFiles,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
 import { LoginResponseDto, OtpAuthDto, VerifyOtpDto, PractitionerSignUpDto, ProfileUpdateBody } from './dto/auth.dto';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 
 // Moved ProfileUpdateBody to shared DTOs
@@ -30,13 +40,23 @@ export class AuthController {
 
   @Post('practitioner/signup')
   @Public()
-  @UseInterceptors(FileInterceptor('profileImage', { storage: memoryStorage() }))
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'profileImage', maxCount: 1 },
+        { name: 'idProof', maxCount: 1 },
+      ],
+      { storage: memoryStorage() }
+    )
+  )
   @ApiResponse({ type: LoginResponseDto })
   async practitionerSignUp(
     @Body() body: PractitionerSignUpDto,
-    @UploadedFile() file?: Express.Multer.File
+    @UploadedFiles() files?: { profileImage?: Express.Multer.File[]; idProof?: Express.Multer.File[] }
   ): Promise<LoginResponseDto> {
-    return this.authService.handlePractitionerSignUp(body, file);
+    const profileImage = files?.profileImage?.[0];
+    const idProof = files?.idProof?.[0];
+    return this.authService.handlePractitionerSignUp(body, profileImage, idProof);
   }
 
   @Post('client/signup')
@@ -44,7 +64,7 @@ export class AuthController {
   @UseInterceptors(FileInterceptor('profileImage', { storage: memoryStorage() }))
   @ApiResponse({ type: LoginResponseDto })
   async clientSignUp(
-    @Body() body: { email: string; firstName: string; lastName: string; invitationToken: string },
+    @Body() body: { email: string; firstName: string; lastName?: string; invitationToken: string },
     @UploadedFile() file?: Express.Multer.File
   ): Promise<LoginResponseDto> {
     return this.authService.handleClientSignUp(body, file);

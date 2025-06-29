@@ -590,7 +590,7 @@
           "id": { "type": "string" },
           "email": { "type": "string" },
           "firstName": { "type": "string" },
-          "lastName": { "type": "string" },
+          "lastName": { "type": "string", "nullable": true },
           "avatarUrl": { "type": "string", "nullable": true },
           "role": { "type": "string", "enum": ["PRACTITIONER", "CLIENT"] },
           "profession": { "type": "string", "nullable": true },
@@ -599,7 +599,9 @@
             "enum": ["ACTIVE", "NEEDS_INTAKE", "INTAKE_COMPLETED"],
             "nullable": true
           },
-          "practitionerId": { "type": "string", "nullable": true }
+          "practitionerId": { "type": "string", "nullable": true },
+          "isEmailVerified": { "type": "boolean" },
+          "idProofUrl": { "type": "string", "nullable": true }
         },
         "required": [
           "id",
@@ -610,7 +612,9 @@
           "role",
           "profession",
           "clientStatus",
-          "practitionerId"
+          "practitionerId",
+          "isEmailVerified",
+          "idProofUrl"
         ]
       },
       "LoginResponseDto": {
@@ -629,7 +633,7 @@
           "lastName": { "type": "string" },
           "profession": { "type": "string" }
         },
-        "required": ["email", "otp", "role", "firstName", "lastName", "profession"]
+        "required": ["email", "otp", "role", "firstName", "profession"]
       }
     }
   }

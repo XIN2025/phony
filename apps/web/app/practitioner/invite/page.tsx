@@ -27,7 +27,7 @@ export default function InviteClientPage() {
 
   const handleDetailsSubmit = (data: {
     clientFirstName: string;
-    clientLastName: string;
+    clientLastName?: string;
     clientEmail: string;
     intakeFormId?: string;
   }) => {
@@ -36,7 +36,7 @@ export default function InviteClientPage() {
       ...data,
       clientEmail: data.clientEmail.trim().toLowerCase(),
       clientFirstName: data.clientFirstName.trim(),
-      clientLastName: data.clientLastName.trim(),
+      clientLastName: data.clientLastName?.trim() || '',
     };
     setInviteData(normalizedData);
     if (normalizedData.intakeFormId) {

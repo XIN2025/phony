@@ -18,7 +18,7 @@ export interface ChatMessage {
   author: {
     id: string;
     firstName: string;
-    lastName: string;
+    lastName: string | null;
     role: string;
     avatarUrl?: string;
   };

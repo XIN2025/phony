@@ -1,17 +1,6 @@
 ﻿'use client';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { getInitials, getAvatarUrl } from '@/lib/utils';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@repo/ui/components/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
@@ -235,50 +224,40 @@ export default function PractitionerDashboard() {
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button variant='ghost' size='sm' className='h-8 w-8 sm:h-9 sm:w-9 p-0'>
-                                          <Trash2 className='h-4 w-4' />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Delete invitation</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent className='max-w-[95vw] mx-4'>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete Invitation</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete this invitation? This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() =>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant='ghost'
+                                      size='sm'
+                                      className='h-8 w-8 sm:h-9 sm:w-9 p-0'
+                                      onClick={() => {
+                                        console.log('Delete invitation clicked for:', client.id);
                                         deleteInvitation(client.id, {
                                           onSuccess: () => {
+                                            console.log('Invitation deleted successfully');
                                             toast.success('Invitation deleted successfully.');
                                           },
                                           onError: (error: Error) => {
+                                            console.error('Failed to delete invitation:', error);
                                             toast.error(`Failed to delete invitation: ${error.message}`);
                                           },
-                                        })
-                                      }
+                                        });
+                                      }}
                                       disabled={isDeleting}
-                                      className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
                                     >
-                                      {isDeleting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-                                      Delete
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                                      {isDeleting ? (
+                                        <Loader2 className='h-4 w-4 animate-spin' />
+                                      ) : (
+                                        <Trash2 className='h-4 w-4' />
+                                      )}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Delete invitation</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </div>
                           </TableCell>
                         </TableRow>
