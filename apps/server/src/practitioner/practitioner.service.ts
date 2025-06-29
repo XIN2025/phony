@@ -14,12 +14,14 @@ import {
 import { UserRole, InvitationStatus } from '@repo/db';
 import { InviteClientDto } from './dto/invite-client.dto';
 import { InvitationResponseDto } from './dto/invitation.response.dto';
+import { UsersService } from 'src/users/users.services';
 
 @Injectable()
 export class PractitionerService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    private readonly usersService: UsersService
   ) {}
 
   async inviteClient(practitionerId: string, inviteData: InviteClientDto): Promise<InvitationResponseDto> {
@@ -33,9 +35,9 @@ export class PractitionerService {
     const normalizedFirstName = clientFirstName.trim();
     const normalizedLastName = clientLastName.trim();
 
-    const practitioner = await this.prismaService.user.findUnique({ where: { id: practitionerId } });
+    const practitioner = await this.usersService.getUserById(practitionerId);
     if (!practitioner) throwAuthError('Practitioner not found', 'notFound');
-    const existingUser = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
+    const existingUser = await this.usersService.getUserByEmail(normalizedEmail);
     if (existingUser) throwAuthError('A user with this email already exists', 'badRequest');
     const existingInvitation = await this.prismaService.invitation.findFirst({
       where: { practitionerId, clientEmail: normalizedEmail },
@@ -109,7 +111,7 @@ export class PractitionerService {
     if (!originalInvitation)
       throwAuthError('Invitation not found or you do not have permission to access it.', 'notFound');
     const { clientEmail, clientFirstName, clientLastName, intakeFormId } = originalInvitation;
-    const practitioner = await this.prismaService.user.findUnique({ where: { id: practitionerId } });
+    const practitioner = await this.usersService.getUserById(practitionerId);
     if (!practitioner) throwAuthError('Practitioner not found', 'notFound');
 
     await this.prismaService.invitation.delete({ where: { id: invitationId } });
