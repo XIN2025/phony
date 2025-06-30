@@ -57,17 +57,6 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
         </SheetContent>
       </Sheet>
       <div className='flex flex-1 flex-col'>
-        <header className='border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:hidden'>
-          <div className='container flex h-14 items-center px-4'>
-            <Button variant='ghost' size='icon' onClick={() => setSidebarOpen(true)}>
-              <Menu className='h-6 w-6' />
-              <span className='sr-only'>Toggle sidebar</span>
-            </Button>
-            <div className='ml-4'>
-              <h1 className='text-lg font-semibold'>Continuum</h1>
-            </div>
-          </div>
-        </header>
         <main className='flex-1'>{children}</main>
       </div>
     </div>

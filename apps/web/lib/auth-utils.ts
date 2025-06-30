@@ -91,17 +91,19 @@ export function validateAuthFields(credentials: Record<string, unknown>): void {
 }
 
 function cleanErrorMessage(message: string): string {
-  return message
-    .replace(
-      /^An account with this email already exists$/i,
-      'An account with this email already exists. Please try logging in instead.',
-    )
-    .replace(
-      /^Account not found\. Please sign up first or check your email\.$/i,
-      'No account found with this email. Please check your email or sign up for a new account.',
-    )
-    .replace(/^Invalid OTP$/i, 'Invalid verification code. Please try again.')
-    .replace(/^OTP has expired$/i, 'Verification code has expired. Please request a new code.');
+  if (/^An account with this email already exists/i.test(message)) {
+    return 'An account with this email already exists. Please try logging in instead.';
+  }
+  if (/^Account not found/i.test(message)) {
+    return 'No account found with this email. Please check your email or sign up for a new account.';
+  }
+  if (/^Invalid OTP/i.test(message)) {
+    return 'Invalid verification code. Please try again.';
+  }
+  if (/^OTP has expired/i.test(message)) {
+    return 'Verification code has expired. Please request a new code.';
+  }
+  return message;
 }
 
 interface ErrorObject {
