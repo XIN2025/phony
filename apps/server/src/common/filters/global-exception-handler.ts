@@ -25,7 +25,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       message = exception.message;
     }
 
-    if (status === HttpStatus.UNAUTHORIZED) {
+    if (status === HttpStatus.UNAUTHORIZED && message === 'Unauthorized') {
       message = 'Authentication failed. Please log in again.';
     } else if (status === HttpStatus.FORBIDDEN) {
       message = 'Access denied. You do not have permission.';

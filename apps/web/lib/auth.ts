@@ -68,7 +68,8 @@ const credentialsAuthProvider = CredentialsProvider({
       };
       return user;
     } catch (error) {
-      throw createAuthError(error);
+      const authError = createAuthError(error);
+      throw new Error(authError.message);
     }
   },
 });
