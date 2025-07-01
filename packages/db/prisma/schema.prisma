@@ -42,7 +42,7 @@ model User {
   // As a Client
   clientSessions          Session[]              @relation("ClientSessions")
   clientPlans             Plan[]                 @relation("ClientPlans")
-  clientCompletions       ActionItemCompletion[]
+  clientCompletions       ActionItemCompletion[] @relation("ClientCompletions")
 
   // === NEW RELATIONS for Messaging ===
   // As a Practitioner
@@ -175,10 +175,14 @@ model Session {
   practitioner       User          @relation("PractitionerSessions", fields: [practitionerId], references: [id], onDelete: Cascade)
   clientId           String        @db.ObjectId
   client             User          @relation("ClientSessions", fields: [clientId], references: [id], onDelete: Cascade)
+  title              String?
+  notes              String?
   recordedAt         DateTime      @default(now())
   status             SessionStatus @default(UPLOADING)
-  audioFileUrl       String?
+  audioFileUrl       String? 
   transcript         String?
+  filteredTranscript String?
+  aiSummary          String?
   transcriptionJobId String?
   plan               Plan?
   @@map("sessions")
@@ -187,23 +191,25 @@ model Session {
 enum SessionStatus {
   UPLOADING
   TRANSCRIBING
+  AI_PROCESSING
   REVIEW_READY
   COMPLETED
 }
 
 model Plan {
-  id             String     @id @default(auto()) @map("_id") @db.ObjectId
-  sessionId      String     @unique @db.ObjectId
-  session        Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  practitionerId String     @db.ObjectId
-  practitioner   User       @relation("PractitionerPlans", fields: [practitionerId], references: [id], onDelete: Cascade)
-  clientId       String     @db.ObjectId
-  client         User       @relation("ClientPlans", fields: [clientId], references: [id], onDelete: Cascade)
-  status         PlanStatus @default(DRAFT)
-  publishedAt    DateTime?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  actionItems    ActionItem[]
+  id                   String     @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId            String     @unique @db.ObjectId
+  session              Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  practitionerId       String     @db.ObjectId
+  practitioner         User       @relation("PractitionerPlans", fields: [practitionerId], references: [id], onDelete: Cascade)
+  clientId             String     @db.ObjectId
+  client               User       @relation("ClientPlans", fields: [clientId], references: [id], onDelete: Cascade)
+  status               PlanStatus @default(DRAFT)
+  publishedAt          DateTime?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  actionItems          ActionItem[]
+  suggestedActionItems SuggestedActionItem[]
   @@map("plans")
 }
 
@@ -211,6 +217,25 @@ enum PlanStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+model SuggestedActionItem {
+  id          String                    @id @default(auto()) @map("_id") @db.ObjectId
+  planId      String                    @db.ObjectId
+  plan        Plan                      @relation(fields: [planId], references: [id], onDelete: Cascade)
+  description String
+  category    String?
+  target      String?
+  frequency   String?
+  status      SuggestedActionItemStatus @default(PENDING)
+  createdAt   DateTime                  @default(now())
+  @@map("suggested_action_items")
+}
+
+enum SuggestedActionItemStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model ActionItem {
@@ -252,7 +277,7 @@ model ActionItemCompletion {
   actionItemId  String     @db.ObjectId
   actionItem    ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
   clientId      String     @db.ObjectId
-  client        User       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client        User       @relation("ClientCompletions", fields: [clientId], references: [id], onDelete: Cascade)
   completedAt   DateTime   @default(now())
   rating        Int?
   journalEntry  String?

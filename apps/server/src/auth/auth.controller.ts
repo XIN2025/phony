@@ -14,7 +14,7 @@ import { Public } from './decorators/public.decorator';
 import { LoginResponseDto, OtpAuthDto, VerifyOtpDto, PractitionerSignUpDto, ProfileUpdateBody } from './dto/auth.dto';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { FileInterceptor, FilesInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 
 // Moved ProfileUpdateBody to shared DTOs

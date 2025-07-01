@@ -70,4 +70,70 @@ export class PlanController {
   async updatePlan(@Param('id') planId: string, @Body() updateData: Partial<CreatePlanDto>) {
     return await this.planService.updatePlan(planId, updateData);
   }
+
+  // Suggested Action Items endpoints
+  @Get(':id/with-suggestions')
+  @ApiOperation({ summary: 'Get plan with AI suggestions' })
+  @ApiResponse({ status: 200, description: 'Plan with suggestions retrieved successfully.' })
+  async getPlanWithSuggestions(@Param('id') planId: string) {
+    return await this.planService.getPlanWithSuggestions(planId);
+  }
+
+  @Get(':id/suggestions')
+  @ApiOperation({ summary: 'Get suggested action items for a plan' })
+  @ApiResponse({ status: 200, description: 'Suggested action items retrieved successfully.' })
+  async getSuggestedActionItems(@Param('id') planId: string) {
+    return await this.planService.getSuggestedActionItems(planId);
+  }
+
+  @Post('suggestions/:suggestionId/approve')
+  @ApiOperation({ summary: 'Approve a suggested action item' })
+  @ApiResponse({ status: 200, description: 'Suggested action item approved successfully.' })
+  async approveSuggestedActionItem(@Param('suggestionId') suggestionId: string) {
+    return await this.planService.approveSuggestedActionItem(suggestionId);
+  }
+
+  @Post('suggestions/:suggestionId/reject')
+  @ApiOperation({ summary: 'Reject a suggested action item' })
+  @ApiResponse({ status: 200, description: 'Suggested action item rejected successfully.' })
+  async rejectSuggestedActionItem(@Param('suggestionId') suggestionId: string) {
+    return await this.planService.rejectSuggestedActionItem(suggestionId);
+  }
+
+  @Patch('suggestions/:suggestionId')
+  @ApiOperation({ summary: 'Edit a suggested action item' })
+  @ApiResponse({ status: 200, description: 'Suggested action item updated successfully.' })
+  async updateSuggestedActionItem(
+    @Param('suggestionId') suggestionId: string,
+    @Body()
+    updateData: {
+      description?: string;
+      category?: string;
+      target?: string;
+      frequency?: string;
+    }
+  ) {
+    return await this.planService.updateSuggestedActionItem(suggestionId, updateData);
+  }
+
+  @Post(':id/action-items')
+  @ApiOperation({ summary: 'Add a custom action item to a plan' })
+  @ApiResponse({ status: 201, description: 'Custom action item added successfully.' })
+  async addCustomActionItem(
+    @Param('id') planId: string,
+    @Body()
+    actionItemData: {
+      description: string;
+      category?: string;
+      target?: string;
+      frequency?: string;
+      resources?: {
+        type: 'LINK' | 'PDF';
+        url: string;
+        title?: string;
+      }[];
+    }
+  ) {
+    return await this.planService.addCustomActionItem(planId, actionItemData);
+  }
 }

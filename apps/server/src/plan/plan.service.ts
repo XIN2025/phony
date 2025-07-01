@@ -198,4 +198,146 @@ export class PlanService {
       },
     });
   }
+
+  // Methods for handling suggested action items
+  async getSuggestedActionItems(planId: string) {
+    return await this.prisma.suggestedActionItem.findMany({
+      where: { planId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async approveSuggestedActionItem(suggestedItemId: string) {
+    // Get the suggested item
+    const suggestedItem = await this.prisma.suggestedActionItem.findUnique({
+      where: { id: suggestedItemId },
+    });
+
+    if (!suggestedItem) {
+      throw new Error('Suggested action item not found');
+    }
+
+    // Create actual action item
+    const actionItem = await this.prisma.actionItem.create({
+      data: {
+        planId: suggestedItem.planId,
+        description: suggestedItem.description,
+        category: suggestedItem.category,
+        target: suggestedItem.target,
+        frequency: suggestedItem.frequency,
+        source: ActionItemSource.AI_SUGGESTED,
+      },
+      include: {
+        resources: true,
+      },
+    });
+
+    // Update suggested item status to approved
+    await this.prisma.suggestedActionItem.update({
+      where: { id: suggestedItemId },
+      data: { status: 'APPROVED' },
+    });
+
+    return actionItem;
+  }
+
+  async rejectSuggestedActionItem(suggestedItemId: string) {
+    return await this.prisma.suggestedActionItem.update({
+      where: { id: suggestedItemId },
+      data: { status: 'REJECTED' },
+    });
+  }
+
+  async updateSuggestedActionItem(
+    suggestedItemId: string,
+    updateData: {
+      description?: string;
+      category?: string;
+      target?: string;
+      frequency?: string;
+    }
+  ) {
+    return await this.prisma.suggestedActionItem.update({
+      where: { id: suggestedItemId },
+      data: updateData,
+    });
+  }
+
+  async getPlanWithSuggestions(planId: string) {
+    return await this.prisma.plan.findUnique({
+      where: { id: planId },
+      include: {
+        session: {
+          select: {
+            id: true,
+            recordedAt: true,
+            status: true,
+            transcript: true,
+            filteredTranscript: true,
+            aiSummary: true,
+          },
+        },
+        practitioner: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profession: true,
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        actionItems: {
+          include: {
+            resources: true,
+            completions: true,
+          },
+        },
+        suggestedActionItems: {
+          where: {
+            status: 'PENDING', // Only show pending suggestions
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+  }
+
+  async addCustomActionItem(
+    planId: string,
+    actionItemData: {
+      description: string;
+      category?: string;
+      target?: string;
+      frequency?: string;
+      resources?: {
+        type: 'LINK' | 'PDF';
+        url: string;
+        title?: string;
+      }[];
+    }
+  ) {
+    return await this.prisma.actionItem.create({
+      data: {
+        planId,
+        description: actionItemData.description,
+        category: actionItemData.category,
+        target: actionItemData.target,
+        frequency: actionItemData.frequency,
+        source: ActionItemSource.MANUAL,
+        resources: {
+          create: actionItemData.resources || [],
+        },
+      },
+      include: {
+        resources: true,
+      },
+    });
+  }
 }
