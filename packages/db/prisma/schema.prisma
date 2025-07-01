@@ -42,7 +42,7 @@ model User {
   // As a Client
   clientSessions          Session[]              @relation("ClientSessions")
   clientPlans             Plan[]                 @relation("ClientPlans")
-  clientCompletions       ActionItemCompletion[]
+  clientCompletions       ActionItemCompletion[] @relation("ClientCompletions")
 
   // === NEW RELATIONS for Messaging ===
   // As a Practitioner
@@ -175,9 +175,11 @@ model Session {
   practitioner       User          @relation("PractitionerSessions", fields: [practitionerId], references: [id], onDelete: Cascade)
   clientId           String        @db.ObjectId
   client             User          @relation("ClientSessions", fields: [clientId], references: [id], onDelete: Cascade)
+  title              String?
+  notes              String?
   recordedAt         DateTime      @default(now())
   status             SessionStatus @default(UPLOADING)
-  audioFileUrl       String?
+  audioFileUrl       String? 
   transcript         String?
   transcriptionJobId String?
   plan               Plan?
@@ -252,7 +254,7 @@ model ActionItemCompletion {
   actionItemId  String     @db.ObjectId
   actionItem    ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
   clientId      String     @db.ObjectId
-  client        User       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client        User       @relation("ClientCompletions", fields: [clientId], references: [id], onDelete: Cascade)
   completedAt   DateTime   @default(now())
   rating        Int?
   journalEntry  String?

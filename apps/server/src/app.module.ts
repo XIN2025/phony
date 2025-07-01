@@ -16,6 +16,10 @@ import { SessionModule } from './session/session.module';
 import { PlanModule } from './plan/plan.module';
 import { ActionItemModule } from './action-item/action-item.module';
 import { ChatModule } from './chat/chat.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { TranscriptionModule } from './transcription/transcription.module';
 
 @Module({
   imports: [
@@ -39,7 +43,10 @@ import { ChatModule } from './chat/chat.module';
         redact: ['req.headers', 'res.headers'],
       },
     }),
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
     AuthModule,
     PrismaModule,
     MailModule,
@@ -51,6 +58,12 @@ import { ChatModule } from './chat/chat.module';
     PlanModule,
     ActionItemModule,
     ChatModule,
+    ScheduleModule.forRoot(),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', '..', 'web', 'out'),
+      exclude: ['/api/(.*)'],
+    }),
+    TranscriptionModule,
   ],
   controllers: [AppController],
   providers: [

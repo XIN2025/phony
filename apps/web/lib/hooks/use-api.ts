@@ -11,6 +11,7 @@ import {
   GetConversationsResponse,
   GetConversationResponse,
   GetMessagesResponse,
+  Conversation,
 } from '@repo/shared-types/types';
 import { InviteClientDto, InvitationResponse, CreateIntakeFormDto } from '@repo/shared-types/schemas';
 
