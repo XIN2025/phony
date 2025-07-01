@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Param, Put, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { SessionService } from './session.service';
-import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { SessionStatus } from '@repo/db';
 import { CurrentUser } from '../auth/decorators/user.decorator';
 import { RequestUser } from '../auth/dto/request-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('sessions')
 @ApiTags('sessions')
@@ -17,10 +18,37 @@ export class SessionController {
   @ApiOperation({ summary: 'Create a new session' })
   @ApiResponse({ status: 201, description: 'Session created successfully.' })
   async createSession(
-    @Body() createSessionDto: { clientId: string; title: string; description?: string; audioFileUrl?: string },
+    @Body() createSessionDto: { clientId: string; title: string; notes?: string },
     @CurrentUser() user: RequestUser
   ) {
-    return await this.sessionService.createSession(user.id, createSessionDto.clientId, createSessionDto.audioFileUrl);
+    return await this.sessionService.createSession(
+      user.id,
+      createSessionDto.clientId,
+      createSessionDto.title,
+      createSessionDto.notes
+    );
+  }
+
+  @Post(':id/upload')
+  @UseInterceptors(FileInterceptor('audio'))
+  @ApiOperation({ summary: 'Upload audio for a session' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        audio: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Audio uploaded successfully.' })
+  async uploadAudio(@Param('id') sessionId: string, @UploadedFile() file: Express.Multer.File) {
+    // We'll construct the URL to be stored in the database
+    const audioFileUrl = `/uploads/${file.filename}`;
+    return await this.sessionService.addAudioToSession(sessionId, audioFileUrl);
   }
 
   @Put(':id/status')

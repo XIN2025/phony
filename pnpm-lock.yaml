@@ -130,6 +130,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.621.0
         version: 3.839.0
+      '@deepgram/sdk':
+        specifier: ^4.7.0
+        version: 4.7.0
       '@nestjs-modules/mailer':
         specifier: ^2.0.2
         version: 2.0.2(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(nodemailer@7.0.3)
@@ -154,6 +157,12 @@ importers:
       '@nestjs/platform-socket.io':
         specifier: ^11.1.3
         version: 11.1.3(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/websockets@11.1.3)(rxjs@7.8.2)
+      '@nestjs/schedule':
+        specifier: ^6.0.0
+        version: 6.0.0(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)
+      '@nestjs/serve-static':
+        specifier: ^5.0.3
+        version: 5.0.3(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(express@5.1.0)
       '@nestjs/swagger':
         specifier: ^11.1.4
         version: 11.2.0(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)
@@ -1099,6 +1108,14 @@ packages:
   '@date-fns/tz@1.2.0':
     resolution: {integrity: sha512-LBrd7MiJZ9McsOgxqWX7AaxrDjcFVjWH/tIKJd7pnR7McaslGYOP1QmmiBXdJH/H/yLCT+rcQ7FaPBUxRGUtrg==}
 
+  '@deepgram/captions@1.2.0':
+    resolution: {integrity: sha512-8B1C/oTxTxyHlSFubAhNRgCbQ2SQ5wwvtlByn8sDYZvdDtdn/VE2yEPZ4BvUnrKWmsbTQY6/ooLV+9Ka2qmDSQ==}
+    engines: {node: '>=18.0.0'}
+
+  '@deepgram/sdk@4.7.0':
+    resolution: {integrity: sha512-3SC7tvwzReH2bctehjob8BD3YBINw85DGN22Mk+IDFB2xPCrFlpDyDBBDbA831HIstoIqvg4yLrkz5sI9mGm+g==}
+    engines: {node: '>=18.0.0'}
+
   '@emnapi/core@1.4.3':
     resolution: {integrity: sha512-4m62DuCE07lw01soJwPiBGC0nAww0Q+RY70VZ+n49yDIO13yyinhbWCeNnaob0lakDtWQzSdtNWzJeOJt2ma+g==}
 
@@ -1990,10 +2007,32 @@ packages:
       '@nestjs/websockets': ^11.0.0
       rxjs: ^7.1.0
 
+  '@nestjs/schedule@6.0.0':
+    resolution: {integrity: sha512-aQySMw6tw2nhitELXd3EiRacQRgzUKD9mFcUZVOJ7jPLqIBvXOyvRWLsK9SdurGA+jjziAlMef7iB5ZEFFoQpw==}
+    peerDependencies:
+      '@nestjs/common': ^10.0.0 || ^11.0.0
+      '@nestjs/core': ^10.0.0 || ^11.0.0
+
   '@nestjs/schematics@11.0.5':
     resolution: {integrity: sha512-T50SCNyqCZ/fDssaOD7meBKLZ87ebRLaJqZTJPvJKjlib1VYhMOCwXYsr7bjMPmuPgiQHOwvppz77xN/m6GM7A==}
     peerDependencies:
       typescript: '>=4.8.2'
+
+  '@nestjs/serve-static@5.0.3':
+    resolution: {integrity: sha512-0jFjTlSVSLrI+mot8lfm+h2laXtKzCvgsVStv9T1ZBZTDwS26gM5czIhIESmWAod0PfrbCDFiu9C1MglObL8VA==}
+    peerDependencies:
+      '@fastify/static': ^8.0.4
+      '@nestjs/common': ^11.0.2
+      '@nestjs/core': ^11.0.2
+      express: ^5.0.1
+      fastify: ^5.2.1
+    peerDependenciesMeta:
+      '@fastify/static':
+        optional: true
+      express:
+        optional: true
+      fastify:
+        optional: true
 
   '@nestjs/swagger@11.2.0':
     resolution: {integrity: sha512-5wolt8GmpNcrQv34tIPUtPoV1EeFbCetm40Ij3+M0FNNnf2RJ3FyWfuQvI8SBlcJyfaounYVTKzKHreFXsUyOg==}
@@ -3423,6 +3462,9 @@ packages:
   '@types/jsonwebtoken@9.0.7':
     resolution: {integrity: sha512-ugo316mmTYBl2g81zDFnZ7cfxlut3o+/EQdaP7J8QN2kY6lJ22hmQYCK5EHcJHbrW+dkCGSCPgbG8JtYj6qSrg==}
 
+  '@types/luxon@3.6.2':
+    resolution: {integrity: sha512-R/BdP7OxEMc44l2Ex5lSXHoIXTB2JLNa3y2QISIbr58U/YcsffyQrYW//hZSdrfxrjRZj3GcUoxMPGdO8gSYuw==}
+
   '@types/methods@1.1.4':
     resolution: {integrity: sha512-ymXWVrDiCxTBE3+RIrrP533E70eA+9qu7zdWoHuOmGujkYtzf4HQF96b8nwHLqhuf4ykX61IGRIB38CC6/sImQ==}
 
@@ -3440,6 +3482,9 @@ packages:
 
   '@types/multer@1.4.13':
     resolution: {integrity: sha512-bhhdtPw7JqCiEfC9Jimx5LqX9BDIPJEh2q/fQ4bqbBPtyEZYr3cvF22NwG0DmPZNYA0CAf2CnqDB4KIGGpJcaw==}
+
+  '@types/node@18.19.113':
+    resolution: {integrity: sha512-TmSTE9vyebJ9vSEiU+P+0Sp4F5tMgjiEOZaQUW6wA3ODvi6uBgkHQ+EsIu0pbiKvf9QHEvyRCiaz03rV0b+IaA==}
 
   '@types/node@20.19.1':
     resolution: {integrity: sha512-jJD50LtlD2dodAEO653i3YF04NWak6jN3ky+Ri3Em3mGR39/glWiboM/IePaRbgwSfqM1TpGXfAg8ohn/4dTgA==}
@@ -4480,6 +4525,13 @@ packages:
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
 
+  cron@4.3.0:
+    resolution: {integrity: sha512-ciiYNLfSlF9MrDqnbMdRWFiA6oizSF7kA1osPP9lRzNu0Uu+AWog1UKy7SkckiDY2irrNjeO6qLyKnXC8oxmrw==}
+    engines: {node: '>=18.x'}
+
+  cross-fetch@3.2.0:
+    resolution: {integrity: sha512-Q+xVJLoGOeIMXZmbUK4HYk+69cQH6LudR0Vu/pRm2YlU/hDV9CiS0gKUMaWY5f2NeUH9C1nV3bsTlCo0FsTV1Q==}
+
   cross-spawn@6.0.6:
     resolution: {integrity: sha512-VqCUuhcd1iB+dsv8gxPttb5iZh/D0iubSP21g36KXdEuf6I5JiioesUVjpCdHV9MZRUfVFlvwtIUyPfxo5trtw==}
     engines: {node: '>=4.8'}
@@ -4591,6 +4643,9 @@ packages:
 
   dateformat@4.6.3:
     resolution: {integrity: sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA==}
+
+  dayjs@1.11.13:
+    resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==}
 
   debug@3.2.7:
     resolution: {integrity: sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==}
@@ -6615,6 +6670,10 @@ packages:
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
+  luxon@3.6.1:
+    resolution: {integrity: sha512-tJLxrKJhO2ukZ5z0gyjY1zPh3Rh88Ej9P7jNrZiHMUXHae1yvI2imgOZtL1TO8TW6biMMKfTtAOoEJANgtWBMQ==}
+    engines: {node: '>=12'}
+
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
     hasBin: true
@@ -8558,6 +8617,9 @@ packages:
   underscore@1.13.7:
     resolution: {integrity: sha512-GMXzWtsc57XAtguZgaQViUOzs0KTkk8ojr3/xAxXLITqf/3EMwxC0inyETfDFjH/Krbhuep0HNbbjI9i/q3F3g==}
 
+  undici-types@5.26.5:
+    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
+
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
@@ -9796,6 +9858,23 @@ snapshots:
 
   '@date-fns/tz@1.2.0': {}
 
+  '@deepgram/captions@1.2.0':
+    dependencies:
+      dayjs: 1.11.13
+
+  '@deepgram/sdk@4.7.0':
+    dependencies:
+      '@deepgram/captions': 1.2.0
+      '@types/node': 18.19.113
+      cross-fetch: 3.2.0
+      deepmerge: 4.3.1
+      events: 3.3.0
+      ws: 8.18.2
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - utf-8-validate
+
   '@emnapi/core@1.4.3':
     dependencies:
       '@emnapi/wasi-threads': 1.0.2
@@ -10790,6 +10869,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@nestjs/schedule@6.0.0(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)':
+    dependencies:
+      '@nestjs/common': 11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 11.1.3(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.3)(@nestjs/websockets@11.1.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      cron: 4.3.0
+
   '@nestjs/schematics@11.0.5(chokidar@4.0.3)(typescript@5.8.2)':
     dependencies:
       '@angular-devkit/core': 19.2.6(chokidar@4.0.3)
@@ -10811,6 +10896,14 @@ snapshots:
       typescript: 5.8.3
     transitivePeerDependencies:
       - chokidar
+
+  '@nestjs/serve-static@5.0.3(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(express@5.1.0)':
+    dependencies:
+      '@nestjs/common': 11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 11.1.3(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.3)(@nestjs/websockets@11.1.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      path-to-regexp: 8.2.0
+    optionalDependencies:
+      express: 5.1.0
 
   '@nestjs/swagger@11.2.0(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)':
     dependencies:
@@ -12400,6 +12493,8 @@ snapshots:
     dependencies:
       '@types/node': 22.15.33
 
+  '@types/luxon@3.6.2': {}
+
   '@types/methods@1.1.4': {}
 
   '@types/mime@1.3.5': {}
@@ -12417,6 +12512,10 @@ snapshots:
   '@types/multer@1.4.13':
     dependencies:
       '@types/express': 5.0.3
+
+  '@types/node@18.19.113':
+    dependencies:
+      undici-types: 5.26.5
 
   '@types/node@20.19.1':
     dependencies:
@@ -13610,6 +13709,17 @@ snapshots:
 
   create-require@1.1.1: {}
 
+  cron@4.3.0:
+    dependencies:
+      '@types/luxon': 3.6.2
+      luxon: 3.6.1
+
+  cross-fetch@3.2.0:
+    dependencies:
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - encoding
+
   cross-spawn@6.0.6:
     dependencies:
       nice-try: 1.0.5
@@ -13722,6 +13832,8 @@ snapshots:
   date-fns@4.1.0: {}
 
   dateformat@4.6.3: {}
+
+  dayjs@1.11.13: {}
 
   debug@3.2.7:
     dependencies:
@@ -16451,6 +16563,8 @@ snapshots:
     dependencies:
       react: 19.1.0
 
+  luxon@3.6.1: {}
+
   lz-string@1.5.0: {}
 
   magic-string@0.30.17:
@@ -17029,7 +17143,6 @@ snapshots:
   node-fetch@2.7.0:
     dependencies:
       whatwg-url: 5.0.0
-    optional: true
 
   node-fetch@3.3.2:
     dependencies:
@@ -18584,8 +18697,7 @@ snapshots:
       universalify: 0.2.0
       url-parse: 1.5.10
 
-  tr46@0.0.3:
-    optional: true
+  tr46@0.0.3: {}
 
   tr46@3.0.0:
     dependencies:
@@ -18830,6 +18942,8 @@ snapshots:
 
   underscore@1.13.7: {}
 
+  undici-types@5.26.5: {}
+
   undici-types@6.21.0: {}
 
   unicorn-magic@0.1.0: {}
@@ -18996,8 +19110,7 @@ snapshots:
 
   web-streams-polyfill@3.3.3: {}
 
-  webidl-conversions@3.0.1:
-    optional: true
+  webidl-conversions@3.0.1: {}
 
   webidl-conversions@7.0.0: {}
 
@@ -19050,7 +19163,6 @@ snapshots:
     dependencies:
       tr46: 0.0.3
       webidl-conversions: 3.0.1
-    optional: true
 
   which-boxed-primitive@1.1.1:
     dependencies:
