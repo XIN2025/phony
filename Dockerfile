@@ -39,7 +39,7 @@ RUN cd packages/shared-types && pnpm run build
 RUN cd apps/server && nest build
 
 # Build web application  
-RUN cd apps/web && next build
+RUN cd apps/web && pnpm build
 
 # Production stage for backend server
 FROM node:20-alpine AS server-production
