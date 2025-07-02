@@ -1,41 +1,42 @@
-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: server-production
-    container_name: continuum-server
-    restart: unless-stopped
-    ports:
-      - '3003:3001'
-    env_file:
-      - ./apps/server/.env
-      - ./packages/db/.env
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      - mongodb
-    volumes:
-      - uploads_data:/app/uploads
-    networks:
-      - continuum-network
-
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: web-production
-    container_name: continuum-web
-    restart: unless-stopped
-    ports:
-      - '3002:3000'
-    env_file:
-      - ./apps/web/.env
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      - server
-    networks:
-      - continuum-network
+services:
+    server:
+        build:
+          context: .
+          dockerfile: Dockerfile
+          target: server-production
+        container_name: continuum-server
+        restart: unless-stopped
+        ports:
+          - '3003:3001'
+        env_file:
+          - ./apps/server/.env
+          - ./packages/db/.env
+        environment:
+          - NODE_ENV=production
+        depends_on:
+          - mongodb
+        volumes:
+          - uploads_data:/app/uploads
+        networks:
+          - continuum-network
+    
+      web:
+        build:
+          context: .
+          dockerfile: Dockerfile
+          target: web-production
+        container_name: continuum-web
+        restart: unless-stopped
+        ports:
+          - '3002:3000'
+        env_file:
+          - ./apps/web/.env
+        environment:
+          - NODE_ENV=production
+        depends_on:
+          - server
+        networks:
+          - continuum-network
 
 volumes:
   mongodb_data:
