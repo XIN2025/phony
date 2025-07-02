@@ -20,7 +20,7 @@ services:
         networks:
           - continuum-network
     
-      web:
+    web:
         build:
           context: .
           dockerfile: Dockerfile
