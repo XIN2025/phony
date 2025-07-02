@@ -13,8 +13,6 @@ services:
           - ./packages/db/.env
         environment:
           - NODE_ENV=production
-        depends_on:
-          - mongodb
         volumes:
           - uploads_data:/app/uploads
         networks:
@@ -39,7 +37,6 @@ services:
           - continuum-network
 
 volumes:
-  mongodb_data:
   uploads_data:
 
 networks:
