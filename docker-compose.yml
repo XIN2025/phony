@@ -7,7 +7,7 @@ services:
         container_name: continuum-server
         restart: unless-stopped
         ports:
-          - '3003:3001'
+          - '3002:3001'
         env_file:
           - ./apps/server/.env
           - ./packages/db/.env
@@ -26,7 +26,7 @@ services:
         container_name: continuum-web
         restart: unless-stopped
         ports:
-          - '3002:3000'
+          - '3003:3000'
         env_file:
           - ./apps/web/.env
         environment:
