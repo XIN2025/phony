@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { config } from '../common/config';
-import { InviteClientDto, InvitationResponse } from '@repo/shared-types/schemas';
+import { InviteClientDto, InvitationResponse } from '@repo/shared-types';
 import {
   normalizeEmail,
   getPractitionerName,

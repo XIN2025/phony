@@ -3,7 +3,7 @@ import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Check, CheckCheck, Clock } from 'lucide-react';
 import { cn, getInitials, getAvatarUrl } from '@/lib/utils';
-import { Message } from '@repo/shared-types/types';
+import { Message } from '@repo/shared-types';
 import { MessageReactions } from './MessageReactions';
 import { MessageActions } from './MessageActions';
 import { useSession } from 'next-auth/react';

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ClientStatus, UserRole } from '@repo/db';
+import { LoginResponse, SendOtpRequest, User, VerifyOtpRequest } from '@repo/shared-types';
 import { IsEmail, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
-import { LoginResponse, SendOtpRequest, User, VerifyOtpRequest } from '@repo/shared-types/types';
-import { UserRole, ClientStatus } from '@repo/db';
 
 export class OtpAuthDto implements SendOtpRequest {
   @ApiProperty()

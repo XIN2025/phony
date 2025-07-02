@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { IntakeFormBuilder } from '@/components/invite/IntakeFormBuilder';
 import { IntakeFormPreview } from '@/components/invite/IntakeFormPreview';
 import { useCreateIntakeForm } from '@/lib/hooks/use-api';
-import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
+import { CreateIntakeFormDto } from '@repo/shared-types';
 import { toast } from 'sonner';
 import { InviteContextProvider } from '@/context/InviteContext';
 

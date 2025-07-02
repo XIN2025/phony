@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@repo/db';
+import { User as UserDto } from '@repo/shared-types';
 import { generateOtp } from '../common/utils/auth.utils';
 import {
   decodeInvitationToken,
   determineClientStatus,
   generateToken,
-  normalizeEmail,
-  throwAuthError,
-  saveFileToUploads,
   generateUniqueFilename,
+  normalizeEmail,
+  saveFileToUploads,
+  throwAuthError,
   validateFileUpload,
   validateRequiredFields,
 } from '../common/utils/user.utils';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginResponseDto, ProfileUpdateBody } from './dto/auth.dto';
-import { User as UserDto } from '@repo/shared-types/types';
 
 // Removed duplicate interface - using the one from auth.controller.ts
 

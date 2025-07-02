@@ -74,9 +74,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       this.logger.log('Extracting user ID from token');
 
-      // For JWT tokens, we need to properly decode them
       if (token.includes('.')) {
-        // This is a JWT token - decode the payload
         const parts = token.split('.');
         if (parts.length !== 3) {
           this.logger.warn('Invalid JWT format');
@@ -86,21 +84,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
         this.logger.log('JWT payload keys:', Object.keys(payload));
 
-        // Try different possible user ID fields (more comprehensive)
         const userId =
           payload.sub ||
           payload.userId ||
           payload.id ||
           payload.user?.id ||
           payload.user_id ||
-          payload.email || // Sometimes email is used as identifier
+          payload.email ||
           payload.data?.id ||
           payload.data?.userId;
 
         this.logger.log('Extracted user ID:', userId);
         return userId || null;
       } else {
-        // This might be a simple token - return as is
         this.logger.log('Using simple token as user ID');
         return token;
       }

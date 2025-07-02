@@ -14,7 +14,7 @@ import {
 import { IntakeFormService } from './intake-form.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
+import { CreateIntakeFormDto } from '@repo/shared-types';
 
 @ApiTags('intake-forms')
 @Controller('intake-forms')

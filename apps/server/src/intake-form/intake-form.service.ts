@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { QuestionType as SharedQuestionType } from '@repo/shared-types/schemas';
+import { QuestionType as SharedQuestionType } from '@repo/shared-types';
 import { QuestionType as PrismaQuestionType } from '@repo/db';
 
 interface CreateIntakeFormData {

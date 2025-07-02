@@ -16,7 +16,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Switch } from '@repo/ui/components/switch';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { User } from '@repo/shared-types/types';
+import { User } from '@repo/shared-types';
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();

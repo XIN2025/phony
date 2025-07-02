@@ -1,6 +1,6 @@
 ﻿import { type ClassValue, clsx } from 'clsx';
+import { User } from '@repo/shared-types';
 import { twMerge } from 'tailwind-merge';
-import { User } from '@repo/shared-types/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

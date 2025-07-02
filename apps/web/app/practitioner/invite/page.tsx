@@ -9,7 +9,7 @@ import { IntakeFormSelector } from '@/components/invite/IntakeFormSelector';
 import { IntakeFormBuilder } from '@/components/invite/IntakeFormBuilder';
 import { IntakeFormPreview } from '@/components/invite/IntakeFormPreview';
 import { useInviteContext } from '@/context/InviteContext';
-import { CreateIntakeFormDto, QuestionType } from '@repo/shared-types/schemas';
+import { CreateIntakeFormDto, QuestionType } from '@repo/shared-types';
 import { useInviteClient, useCreateIntakeForm, useUpdateIntakeForm, useGetIntakeForm } from '@/lib/hooks/use-api';
 import { useQueryClient } from '@tanstack/react-query';
 

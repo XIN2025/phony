@@ -1,6 +1,6 @@
 ﻿'use client';
 import { useInviteContext } from '@/context/InviteContext';
-import { CreateIntakeFormDto, QuestionType } from '@repo/shared-types/schemas';
+import { CreateIntakeFormDto, QuestionType } from '@repo/shared-types';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { Checkbox } from '@repo/ui/components/checkbox';

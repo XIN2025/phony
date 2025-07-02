@@ -1,7 +1,7 @@
 ﻿'use client';
 import { useForm, useFieldArray, Controller, Control, UseFormRegister } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { intakeFormSchema, CreateIntakeFormDto, QuestionType } from '@repo/shared-types/schemas';
+import { intakeFormSchema, CreateIntakeFormDto, QuestionType } from '@repo/shared-types';
 import { Button } from '@repo/ui/components/button';
 import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';

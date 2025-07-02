@@ -3,28 +3,12 @@
   "version": "0.0.0",
   "type": "module",
   "private": true,
-  "main": "./dist/types/index.js",
-  "types": "./dist/types/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/types/index.js",
-      "require": "./dist/types/index.js",
-      "types": "./dist/types/index.d.ts"
-    },
-    "./schemas": {
-      "import": "./dist/schemas/index.js",
-      "require": "./dist/schemas/index.js",
-      "types": "./dist/schemas/index.d.ts"
-    },
-    "./types": {
-      "import": "./dist/types/index.js",
-      "require": "./dist/types/index.js",
-      "types": "./dist/types/index.d.ts"
-    },
-    "./enums": {
-      "import": "./dist/enums/index.js",
-      "require": "./dist/enums/index.js",
-      "types": "./dist/enums/index.d.ts"
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {

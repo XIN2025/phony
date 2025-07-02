@@ -11,8 +11,8 @@ import {
   GetConversationsResponse,
   GetConversationResponse,
   GetMessagesResponse,
-} from '@repo/shared-types/types';
-import { InviteClientDto, InvitationResponse, CreateIntakeFormDto } from '@repo/shared-types/schemas';
+} from '@repo/shared-types';
+import { InviteClientDto, InvitationResponse, CreateIntakeFormDto } from '@repo/shared-types';
 
 export type { InvitationResponse };
 export function useSendOtp() {

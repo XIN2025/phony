@@ -12,7 +12,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { emailSchema, otpSchema } from '@repo/shared-types/schemas';
+import { emailSchema, otpSchema } from '@repo/shared-types';
 import { useSendOtp } from '@/lib/hooks/use-api';
 import { handleLoginError } from '@/lib/auth-utils';
 

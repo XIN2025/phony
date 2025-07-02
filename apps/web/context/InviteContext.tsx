@@ -1,5 +1,5 @@
 ﻿'use client';
-import { CreateIntakeFormDto } from '@repo/shared-types/schemas';
+import { CreateIntakeFormDto } from '@repo/shared-types';
 import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
 export type InviteData = {
   clientFirstName: string;

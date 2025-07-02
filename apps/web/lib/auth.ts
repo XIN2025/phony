@@ -2,7 +2,7 @@
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { ApiClient } from '@/lib/api-client';
 import { envConfig } from '@/config';
-import { LoginResponse } from '@repo/shared-types/types';
+import { LoginResponse } from '@repo/shared-types';
 import { createAuthError, validateAuthFields } from '@/lib/auth-utils';
 import { UserRole, ClientStatus } from '@repo/db';
 

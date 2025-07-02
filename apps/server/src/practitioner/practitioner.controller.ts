@@ -1,6 +1,6 @@
 import { Controller, Post, Get, Delete, Body, UseGuards, Request, Param } from '@nestjs/common';
 import { PractitionerService } from './practitioner.service';
-import { InviteClientDto } from '@repo/shared-types/schemas';
+import { InviteClientDto } from '@repo/shared-types';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '../auth/decorators/public.decorator';

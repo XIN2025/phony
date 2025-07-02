@@ -21,7 +21,7 @@ import {
 } from '@/lib/hooks/use-api';
 import { useSocket } from '@/lib/hooks/use-socket';
 import { useUserPresence } from '@/lib/hooks/use-user-presence';
-import { Conversation, Message } from '@repo/shared-types/types';
+import { Conversation, Message } from '@repo/shared-types';
 
 interface ChatContainerProps {
   participantId?: string;
