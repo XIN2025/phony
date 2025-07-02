@@ -62,7 +62,7 @@ COPY --from=base /app/packages/shared-types/dist ./packages/shared-types/dist
 COPY --from=base /app/packages/shared-types/package.json ./packages/shared-types/
 
 # Install only production dependencies
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install
 
 # Create uploads directory
 RUN mkdir -p ./uploads
