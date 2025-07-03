@@ -1,10 +1,10 @@
 ﻿import { AuthOptions, User } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { ApiClient } from '@/lib/api-client';
-import { envConfig } from '@/config';
 import { LoginResponse } from '@repo/shared-types';
 import { createAuthError, validateAuthFields } from '@/lib/auth-utils';
 import { UserRole, ClientStatus } from '@repo/db';
+import { envConfigServer } from '@/config/server';
 
 const credentialsAuthProvider = CredentialsProvider({
   name: 'Credentials',
@@ -76,7 +76,7 @@ const credentialsAuthProvider = CredentialsProvider({
 
 export const authOptions: AuthOptions = {
   providers: [credentialsAuthProvider],
-  secret: envConfig.nextAuthSecret,
+  secret: envConfigServer.nextAuthSecret,
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (trigger === 'update' && session?.user) {

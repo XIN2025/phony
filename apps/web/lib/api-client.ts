@@ -25,8 +25,16 @@ export class ApiClient {
       const isOtpRequest = config.url?.includes('/auth/otp');
       const timeout = isOtpRequest ? 30000 : 10000;
 
+      // Use the internal URL only if we are inside a Docker container (for SSR)
+      const useInternalUrl = isServer && process.env.DOCKER_ENV === 'true';
+      const baseURL = useInternalUrl ? envConfig.internalApiUrl : envConfig.apiUrl;
+
+      console.log(
+        `[ApiClient] Requesting. isServer: ${isServer}, useInternalUrl: ${useInternalUrl}, baseURL: ${baseURL}, url: ${config.url}`,
+      );
+
       const client = axios.create({
-        baseURL: envConfig.apiUrl,
+        baseURL: baseURL,
         timeout: timeout,
         headers: {
           ...(config.data && !isFormData ? { 'Content-Type': 'application/json' } : {}),
@@ -36,9 +44,12 @@ export class ApiClient {
         },
       });
 
+      console.log('[ApiClient] Axios client created with headers:', client.defaults.headers);
+
       const response: AxiosResponse<T> = await client.request(config);
       return response.data;
     } catch (err) {
+      console.error('[ApiClient] Error during request:', err);
       throw createAuthError(err);
     }
   }

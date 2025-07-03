@@ -20,6 +20,7 @@ import { handleLoginError } from '@/lib/auth-utils';
 export default function PractitionerAuthPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [showOTP, setShowOTP] = React.useState(false);
+  const [email, setEmail] = React.useState('');
   const [resendTimer, setResendTimer] = React.useState(0);
   const timerCleanupRef = React.useRef<(() => void) | null>(null);
   const router = useRouter();
@@ -75,6 +76,7 @@ export default function PractitionerAuthPage() {
 
   async function onSubmit(values: z.infer<typeof emailSchema>) {
     if (!showOTP) {
+      setEmail(values.email);
       handleSendOTP(
         { email: values.email },
         {
@@ -95,7 +97,7 @@ export default function PractitionerAuthPage() {
     setIsLoading(true);
     try {
       const res = await signIn('credentials', {
-        email: values.email,
+        email: email,
         otp: values.otp,
         role: 'PRACTITIONER',
         redirect: false,
@@ -213,9 +215,7 @@ export default function PractitionerAuthPage() {
       <div className='flex flex-col space-y-2 text-center'>
         <h1 className='text-2xl font-bold tracking-tight'>{showOTP ? 'Check your email' : 'Practitioner Login'}</h1>
         <p className='text-muted-foreground'>
-          {showOTP
-            ? `We've sent a code to ${form.getValues('email')}`
-            : 'Welcome back! Please sign in to your account.'}
+          {showOTP ? `We've sent a code to ${email}` : 'Welcome back! Please sign in to your account.'}
         </p>
       </div>
       <Form {...form}>

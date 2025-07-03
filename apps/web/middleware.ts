@@ -1,8 +1,12 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { envConfigServer } from '@/config/server';
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getToken({
+    req: request,
+    secret: envConfigServer.nextAuthSecret || 'fallback-secret-for-build',
+  });
   const { pathname } = request.nextUrl;
 
   if (token?.error && (token.error === 'UserNotFound' || token.error === 'InvalidToken')) {

@@ -3,6 +3,7 @@ lockfileVersion: '9.0'
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
+  injectWorkspacePackages: true
 
 importers:
 
@@ -10,7 +11,7 @@ importers:
     dependencies:
       '@repo/db':
         specifier: workspace:*
-        version: link:packages/db
+        version: file:packages/db(prisma@6.10.1(typescript@5.8.2))(typescript@5.8.2)
       '@repo/shared-types':
         specifier: workspace:*
         version: link:packages/shared-types
@@ -2800,6 +2801,9 @@ packages:
 
   '@radix-ui/rect@1.1.1':
     resolution: {integrity: sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw==}
+
+  '@repo/db@file:packages/db':
+    resolution: {directory: packages/db, type: directory}
 
   '@scarf/scarf@1.4.0':
     resolution: {integrity: sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==}
@@ -10907,6 +10911,11 @@ snapshots:
       prisma: 6.10.1(typescript@5.8.2)
       typescript: 5.8.2
 
+  '@prisma/client@6.6.0(prisma@6.10.1(typescript@5.8.2))(typescript@5.8.2)':
+    optionalDependencies:
+      prisma: 6.10.1(typescript@5.8.2)
+      typescript: 5.8.2
+
   '@prisma/client@6.6.0(prisma@6.6.0(typescript@5.8.3))(typescript@5.8.3)':
     optionalDependencies:
       prisma: 6.6.0(typescript@5.8.3)
@@ -11617,6 +11626,13 @@ snapshots:
       '@types/react-dom': 19.1.1(@types/react@19.1.0)
 
   '@radix-ui/rect@1.1.1': {}
+
+  '@repo/db@file:packages/db(prisma@6.10.1(typescript@5.8.2))(typescript@5.8.2)':
+    dependencies:
+      '@prisma/client': 6.6.0(prisma@6.10.1(typescript@5.8.2))(typescript@5.8.2)
+    transitivePeerDependencies:
+      - prisma
+      - typescript
 
   '@scarf/scarf@1.4.0': {}
 

@@ -2,15 +2,23 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@repo/ui/components/button';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 
 interface SessionErrorHandlerProps {
   children: React.ReactNode;
 }
 
 export function SessionErrorHandler({ children }: SessionErrorHandlerProps) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
+
+  if (status === 'loading') {
+    return (
+      <div className='flex h-screen items-center justify-center'>
+        <Loader2 className='h-12 w-12 animate-spin text-muted-foreground' />
+      </div>
+    );
+  }
 
   if (session?.error && (session.error === 'UserNotFound' || session.error === 'InvalidToken')) {
     return (
@@ -32,6 +40,11 @@ export function SessionErrorHandler({ children }: SessionErrorHandlerProps) {
         </div>
       </div>
     );
+  }
+
+  if (status === 'unauthenticated') {
+    // Or handle this case as needed, for now just rendering children
+    return <>{children}</>;
   }
 
   return <>{children}</>;

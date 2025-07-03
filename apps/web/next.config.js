@@ -1,4 +1,6 @@
+/** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   transpilePackages: ['@repo/ui', '@repo/db'],
   reactStrictMode: false,
   images: { remotePatterns: [{ protocol: 'https', hostname: '*' }] },
@@ -18,4 +20,5 @@ const nextConfig = {
     return config;
   },
 };
+
 export default nextConfig;

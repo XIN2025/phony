@@ -66,21 +66,34 @@ export class AuthService {
     const otp = generateOtp();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await this.prismaService.otp.upsert({
-      where: { email: normalizedEmail },
-      update: { otp, expiresAt },
-      create: { email: normalizedEmail, otp, expiresAt },
-    });
+    try {
+      await this.prismaService.otp.upsert({
+        where: { email: normalizedEmail },
+        update: { otp, expiresAt },
+        create: { email: normalizedEmail, otp, expiresAt },
+      });
+      console.log(`[AuthService] Successfully saved OTP for ${normalizedEmail} to database.`);
+    } catch (error) {
+      console.error('[AuthService] Error saving OTP to database:', error);
+      throwAuthError('Failed to process OTP request.', 'badRequest');
+    }
 
-    await this.mailService.sendTemplateMail({
-      to: normalizedEmail,
-      subject: 'Your OTP Code',
-      templateName: 'OTP',
-      context: {
-        otp: otp,
-        validity: 10, // 10 minutes validity
-      },
-    });
+    try {
+      await this.mailService.sendTemplateMail({
+        to: normalizedEmail,
+        subject: 'Your OTP Code',
+        templateName: 'OTP',
+        context: {
+          otp: otp,
+          validity: 10, // 10 minutes validity
+        },
+      });
+      console.log(`[AuthService] Successfully sent OTP email to ${normalizedEmail}.`);
+    } catch (error) {
+      console.error('[AuthService] Error sending OTP email:', error);
+      throwAuthError('Failed to send OTP email.', 'badRequest');
+    }
+
     return { success: true };
   }
 
@@ -115,7 +128,7 @@ export class AuthService {
       throwAuthError('Account not found. Please sign up first or check your email.', 'unauthorized');
     }
 
-    await this.validateOtp(email, otp);
+    await this.validateOtp(email, otp, false);
 
     if (user.role !== role) {
       throwAuthError(`Invalid role. Expected ${role}, got ${user.role}`, 'unauthorized');
@@ -130,6 +143,8 @@ export class AuthService {
       practitionerId: user.practitionerId,
       clientStatus: user.clientStatus ?? undefined,
     });
+
+    await this.prismaService.otp.delete({ where: { email: normalizedEmail } });
 
     return {
       user: this.toUserDto(user),
