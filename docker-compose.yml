@@ -6,14 +6,11 @@ services:
       dockerfile: apps/server/Dockerfile
     restart: unless-stopped
     ports:
-      - '3002:3001'
+      - '${SERVER_HOST_PORT}:3001'
     env_file:
       - ./apps/server/.env
     environment:
-      - DATABASE_URL=mongodb://db:27017/continuum?replicaSet=rs0
-      - FRONTEND_URL=http://localhost:3003
-      - PORT=3001
-      - GOOGLE_CALLBACK_URL=http://localhost:3003/api/auth/callback/google
+      - DATABASE_URL=mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@db:27017/continuum?replicaSet=rs0&authSource=admin
     volumes:
       - uploads_data:/app/uploads
     networks:
@@ -32,14 +29,10 @@ services:
         - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
     restart: unless-stopped
     ports:
-      - '3003:3000'
+      - '${WEB_HOST_PORT}:3000'
     environment:
       - DOCKER_ENV=true
-      - NEXTAUTH_URL=http://localhost:3003
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXT_PUBLIC_APP_URL=http://localhost:3003
-      - NEXT_PUBLIC_API_URL=http://localhost:3002
-      - INTERNAL_API_URL=http://server:3001
     env_file:
       - ./apps/web/.env
     networks:
