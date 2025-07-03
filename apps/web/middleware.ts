@@ -1,4 +1,5 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+﻿// @ts-ignore
+import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { envConfigServer } from '@/config/server';
 
@@ -6,8 +7,18 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({
     req: request,
     secret: envConfigServer.nextAuthSecret || 'fallback-secret-for-build',
+    secureCookie: false,
+    cookieName: 'next-auth.session-token',
   });
   const { pathname } = request.nextUrl;
+
+  console.log('[Middleware]', {
+    pathname,
+    hasToken: !!token,
+    tokenRole: token?.role,
+    tokenError: token?.error,
+    cookies: request.cookies.getAll().map((c: any) => ({ name: c.name, hasValue: !!c.value })),
+  });
 
   if (token?.error && (token.error === 'UserNotFound' || token.error === 'InvalidToken')) {
     return NextResponse.redirect(new URL('/client/auth', request.url));
@@ -30,19 +41,16 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/practitioner/auth', request.url));
     }
 
-    // Handle client-specific redirects
     if (
       pathname.startsWith('/client') &&
       !pathname.includes('/auth') &&
       !pathname.includes('/profile-setup') &&
       !pathname.includes('/intake')
     ) {
-      // Check if profile setup is needed
       if (!token.firstName || !token.lastName) {
         return NextResponse.redirect(new URL('/client/profile-setup', request.url));
       }
 
-      // Check if intake is needed
       if (token.clientStatus === 'NEEDS_INTAKE') {
         return NextResponse.redirect(new URL('/client/intake', request.url));
       }

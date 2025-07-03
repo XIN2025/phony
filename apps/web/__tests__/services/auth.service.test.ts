@@ -3,7 +3,7 @@ import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useSendOtp, useVerifyOtp, usePractitionerSignup, useClientSignup } from '../../lib/hooks/use-api';
-import { LoginResponse, SendOtpRequest, VerifyOtpRequest } from '@repo/shared-types/types';
+import { LoginResponse, SendOtpRequest, VerifyOtpRequest } from '@repo/shared-types';
 
 // Mock ApiClient
 jest.mock('../../lib/api-client', () => ({

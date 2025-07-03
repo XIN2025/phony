@@ -1,6 +1,8 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 RUN npm install -g pnpm
+ARG DOCKER_BUILD=false
+ENV DOCKER_BUILD=${DOCKER_BUILD}
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/server/package.json ./apps/server/
 COPY apps/web/package.json ./apps/web/
@@ -29,3 +31,6 @@ COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 EXPOSE 3000
 
 CMD ["node", "apps/web/server.js"]
+
+
+

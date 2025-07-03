@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { IntakeFormService } from './intake-form.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { QuestionType } from '@repo/shared-types/schemas';
+import { QuestionType } from '@repo/shared-types';
 
 describe('IntakeFormService', () => {
   let service: IntakeFormService;

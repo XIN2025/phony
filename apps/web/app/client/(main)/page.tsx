@@ -1,6 +1,6 @@
 ﻿'use client';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Checkbox } from '@repo/ui/components/checkbox';
@@ -10,6 +10,8 @@ import { Label } from '@repo/ui/components/label';
 import { Star, Calendar, Target, Clock, Menu } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSidebar } from '@/context/SidebarContext';
+import Link from 'next/link';
+import { Badge } from '@repo/ui/components/badge';
 
 interface ActionItem {
   id: string;
@@ -27,7 +29,7 @@ interface CompletionData {
 }
 
 const ClientPage = () => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const queryClient = useQueryClient();
   const { setSidebarOpen } = useSidebar();
   const [selectedTask, setSelectedTask] = useState<ActionItem | null>(null);
@@ -36,8 +38,9 @@ const ClientPage = () => {
     journalEntry: '',
     achievedValue: '',
   });
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: todayTasks, isLoading } = useQuery({
+  const { data: todayTasks, isLoading: todayTasksLoading } = useQuery({
     queryKey: ['today-tasks'],
     queryFn: async (): Promise<ActionItem[]> => {
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -87,24 +90,56 @@ const ClientPage = () => {
     completeTaskMutation.mutate();
   };
 
-  if (isLoading) {
+  useEffect(() => {
+    console.log('[ClientPage] Component mounted', {
+      status,
+      hasSession: !!session,
+      userRole: session?.user?.role,
+      userId: session?.user?.id,
+    });
+
+    if (status !== 'loading') {
+      setIsLoading(false);
+    }
+  }, [status, session]);
+
+  useEffect(() => {
+    console.log('[ClientPage] Session update:', {
+      status,
+      hasSession: !!session,
+      userRole: session?.user?.role,
+      userName: session?.user ? `${session.user.firstName} ${session.user.lastName}` : null,
+    });
+  }, [session, status]);
+
+  if (status === 'loading' || isLoading) {
+    console.log('[ClientPage] Showing loading state');
     return (
-      <div className='flex h-screen items-center justify-center'>
+      <div className='flex items-center justify-center min-h-screen'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
-          <p className='text-sm text-muted-foreground'>Loading your daily plan...</p>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto'></div>
+          <p className='mt-4 text-gray-600'>Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
+  if (status === 'unauthenticated') {
+    console.log('[ClientPage] User not authenticated');
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='text-center'>
+          <p className='text-gray-600'>Please log in to access your dashboard.</p>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('[ClientPage] Rendering dashboard for user:', session?.user);
+
   const user = session?.user;
   const completedTasks = todayTasks?.filter((task) => task.isCompleted).length || 0;
   const totalTasks = todayTasks?.length || 0;
-
-  if (!user) {
-    return null;
-  }
 
   return (
     <div className='flex h-full w-full flex-col'>
@@ -116,7 +151,7 @@ const ClientPage = () => {
           </Button>
           <div>
             <h1 className='text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white'>
-              Welcome back, {user.firstName}!
+              Welcome back, {user?.firstName}!
             </h1>
             <p className='text-gray-600 dark:text-gray-400 mt-2'>Here&apos;s your plan for today</p>
           </div>

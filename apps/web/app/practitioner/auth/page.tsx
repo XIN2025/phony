@@ -27,11 +27,20 @@ export default function PractitionerAuthPage() {
   const { data: session, status } = useSession();
 
   React.useEffect(() => {
+    console.log('[PractitionerAuth] Session status changed:', {
+      status,
+      hasSession: !!session,
+      userRole: session?.user?.role,
+      isLoading,
+      showOTP,
+    });
+
     if (status === 'authenticated' && session) {
+      console.log('[PractitionerAuth] User authenticated, redirecting...', session.user);
       const targetDashboard = session.user.role === 'PRACTITIONER' ? '/practitioner' : '/client';
       router.replace(targetDashboard);
     }
-  }, [session, status, router]);
+  }, [status, session?.user?.role, router]); // Fixed dependencies
 
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useSendOtp();
 
@@ -95,6 +104,8 @@ export default function PractitionerAuthPage() {
     }
 
     setIsLoading(true);
+    console.log('[PractitionerAuth] Starting login process...', { email, role: 'PRACTITIONER' });
+
     try {
       const res = await signIn('credentials', {
         email: email,
@@ -102,13 +113,23 @@ export default function PractitionerAuthPage() {
         role: 'PRACTITIONER',
         redirect: false,
       });
+
+      console.log('[PractitionerAuth] SignIn response:', res);
+
       if (res?.error) {
+        console.error('[PractitionerAuth] SignIn error:', res.error);
         const errorMessage = handleLoginError(res.error, 'PRACTITIONER');
         toast.error(errorMessage);
-      } else {
+      } else if (res?.ok) {
+        console.log('[PractitionerAuth] SignIn successful, waiting for session update...');
         toast.success('Logged in successfully');
+        // Remove manual redirect - let useEffect handle it
+      } else {
+        console.warn('[PractitionerAuth] Unexpected signIn response:', res);
+        toast.error('Login failed - unexpected response');
       }
-    } catch (_error: unknown) {
+    } catch (error: unknown) {
+      console.error('[PractitionerAuth] SignIn exception:', error);
       toast.error('An error occurred during sign in');
     } finally {
       setIsLoading(false);
@@ -206,8 +227,12 @@ export default function PractitionerAuthPage() {
     );
   }
 
-  if (session) {
-    return null;
+  if (status === 'authenticated') {
+    return (
+      <div className='flex items-center justify-center'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    );
   }
 
   return (

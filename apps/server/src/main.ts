@@ -14,7 +14,10 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.setGlobalPrefix('api');
-  app.enableCors({ origin: '*' });
+  app.enableCors({
+    origin: ['http://localhost:3003', 'http://localhost:3000', config.frontendUrl],
+    credentials: true,
+  });
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ limit: '50mb', extended: true }));
   app.useLogger(app.get(Logger));

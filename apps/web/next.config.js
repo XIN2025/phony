@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: process.env.DOCKER_BUILD === 'true' ? 'standalone' : undefined,
   transpilePackages: ['@repo/ui', '@repo/db'],
   reactStrictMode: false,
   images: { remotePatterns: [{ protocol: 'https', hostname: '*' }] },
@@ -14,10 +14,15 @@ const nextConfig = {
       };
     }
 
-    config.output.hashFunction = 'md4';
+    // Use modern hash function for better compatibility
+    config.output.hashFunction = 'xxhash64';
     config.output.hashDigest = 'hex';
 
     return config;
+  },
+  experimental: {
+    // Enable modern features for better performance
+    optimizePackageImports: ['@repo/ui'],
   },
 };
 

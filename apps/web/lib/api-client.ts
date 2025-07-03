@@ -1,15 +1,15 @@
 ﻿import { envConfig } from '@/config';
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { getSession } from 'next-auth/react';
 import { createAuthError } from '@/lib/auth-utils';
 
 export class ApiClient {
-  static async request<T>(config: AxiosRequestConfig): Promise<T> {
+  static async request<T>(config: AxiosRequestConfig, session?: any): Promise<T> {
     try {
       const isServer = typeof window === 'undefined';
-      const session = isServer ? await getServerSession(authOptions) : await getSession();
+
+      // Use provided session or get it from client-side only
+      const currentSession = session || (!isServer ? await getSession() : null);
       const isFormData = config.data instanceof FormData;
 
       const publicEndpoints = [
@@ -31,6 +31,7 @@ export class ApiClient {
 
       console.log(
         `[ApiClient] Requesting. isServer: ${isServer}, useInternalUrl: ${useInternalUrl}, baseURL: ${baseURL}, url: ${config.url}`,
+        { hasSession: !!currentSession, isPublicEndpoint, hasToken: !!currentSession?.user?.token },
       );
 
       const client = axios.create({
@@ -38,8 +39,10 @@ export class ApiClient {
         timeout: timeout,
         headers: {
           ...(config.data && !isFormData ? { 'Content-Type': 'application/json' } : {}),
-          ...(session?.user?.token && !isPublicEndpoint ? { Authorization: `Bearer ${session.user.token}` } : {}),
-          ...(session?.user?.id ? { 'x-user-id': session.user.id } : {}),
+          ...(currentSession?.user?.token && !isPublicEndpoint
+            ? { Authorization: `Bearer ${currentSession.user.token}` }
+            : {}),
+          ...(currentSession?.user?.id ? { 'x-user-id': currentSession.user.id } : {}),
           ...config.headers,
         },
       });
@@ -47,30 +50,40 @@ export class ApiClient {
       console.log('[ApiClient] Axios client created with headers:', client.defaults.headers);
 
       const response: AxiosResponse<T> = await client.request(config);
+      console.log(`[ApiClient] Request successful:`, {
+        url: config.url,
+        status: response.status,
+        hasData: !!response.data,
+      });
       return response.data;
-    } catch (err) {
-      console.error('[ApiClient] Error during request:', err);
+    } catch (err: any) {
+      console.error('[ApiClient] Error during request:', {
+        url: config.url,
+        error: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+      });
       throw createAuthError(err);
     }
   }
 
-  static async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return this.request<T>({ method: 'GET', url, ...config });
+  static async get<T>(url: string, config?: AxiosRequestConfig, session?: any): Promise<T> {
+    return this.request<T>({ method: 'GET', url, ...config }, session);
   }
 
-  static async post<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<T> {
-    return this.request<T>({ method: 'POST', url, data, ...config });
+  static async post<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig, session?: any): Promise<T> {
+    return this.request<T>({ method: 'POST', url, data, ...config }, session);
   }
 
-  static async put<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<T> {
-    return this.request<T>({ method: 'PUT', url, data, ...config });
+  static async put<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig, session?: any): Promise<T> {
+    return this.request<T>({ method: 'PUT', url, data, ...config }, session);
   }
 
-  static async patch<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<T> {
-    return this.request<T>({ method: 'PATCH', url, data, ...config });
+  static async patch<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig, session?: any): Promise<T> {
+    return this.request<T>({ method: 'PATCH', url, data, ...config }, session);
   }
 
-  static async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return this.request<T>({ method: 'DELETE', url, ...config });
+  static async delete<T>(url: string, config?: AxiosRequestConfig, session?: any): Promise<T> {
+    return this.request<T>({ method: 'DELETE', url, ...config }, session);
   }
 }

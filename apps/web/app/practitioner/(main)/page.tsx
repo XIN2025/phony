@@ -18,7 +18,7 @@ import {
   useCleanupExpiredInvitations,
   InvitationResponse,
 } from '@/lib/hooks/use-api';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const LoadingSpinner = () => (
   <div className='flex h-screen items-center justify-center'>
@@ -41,6 +41,30 @@ export default function PractitionerDashboard() {
   const { mutate: deleteInvitation, isPending: isDeleting } = useDeleteInvitation();
   const { mutate: resendInvitation, isPending: isResending } = useResendInvitation();
   const { mutate: cleanupExpiredInvitations, isPending: isCleaningUp } = useCleanupExpiredInvitations();
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    console.log('[PractitionerDashboard] Component mounted', {
+      status,
+      hasSession: !!session,
+      userRole: session?.user?.role,
+      userId: session?.user?.id,
+    });
+
+    if (status !== 'loading') {
+      setIsLoading(false);
+    }
+  }, [status, session]);
+
+  useEffect(() => {
+    console.log('[PractitionerDashboard] Session update:', {
+      status,
+      hasSession: !!session,
+      userRole: session?.user?.role,
+      userName: session?.user ? `${session.user.firstName} ${session.user.lastName}` : null,
+    });
+  }, [session, status]);
 
   // Handle navigation for unauthenticated users
   useEffect(() => {
@@ -80,6 +104,8 @@ export default function PractitionerDashboard() {
   const pendingInvitations = invitations.filter((inv) => inv.status === 'PENDING');
   const joinedClients = invitations.filter((inv) => inv.status === 'JOINED');
   const totalClients = invitations.length;
+
+  console.log('[PractitionerDashboard] Rendering dashboard for user:', session?.user);
 
   return (
     <>
