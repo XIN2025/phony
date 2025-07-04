@@ -1,4 +1,4 @@
-import { UserRole, ClientStatus } from '@repo/db';
+import { UserRole, ClientStatus } from '../../db/src/generated/client';
 
 export type User = {
   id: string;
