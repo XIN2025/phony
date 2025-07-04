@@ -5,10 +5,9 @@
   "main": "./generated/prisma/index.js",
   "types": "./generated/prisma/index.d.ts",
   "exports": {
-    ".": "./generated/prisma/index.js",
-    "./question-type": {
-      "import": "./question-type.ts",
-      "require": "./question-type.ts"
+    ".": {
+      "import": "./generated/prisma/index.js",
+      "types": "./generated/prisma/index.d.ts"
     }
   },
   "scripts": {
@@ -21,6 +20,6 @@
     "@prisma/client": "6.6.0"
   },
   "devDependencies": {
-    "prisma": "^5.18.0"
+    "prisma": "6.6.0"
   }
 }

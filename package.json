@@ -16,6 +16,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json,css,scss,js,jsx,html,mdx,yml,yaml}\"",
     "check-types": "turbo run check-types"
   },
+  "prisma": {
+    "schema": "packages/db/prisma/schema.prisma"
+  },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
@@ -33,6 +36,16 @@
     "typescript": "5.8.2"
   },
   "packageManager": "pnpm@10.0.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "prisma",
+      "@prisma/client"
+    ],
+    "overrides": {
+      "prisma": "6.6.0",
+      "@prisma/client": "6.6.0"
+    }
+  },
   "engines": {
     "node": ">=18"
   },
