@@ -15,7 +15,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: ['http://localhost:3003', 'http://localhost:3000', config.frontendUrl],
+    origin: ['http://localhost:3001', 'http://localhost:3000', config.frontendUrl],
     credentials: true,
   });
   app.use(json({ limit: '50mb' }));

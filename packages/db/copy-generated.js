@@ -8,10 +8,8 @@ async function copyGenerated() {
 
     console.log(`Copying from ${sourceDir} to ${targetDir}`);
 
-    // Ensure target directory exists
     await fs.ensureDir(targetDir);
 
-    // Copy all files and directories
     await fs.copy(sourceDir, targetDir);
 
     console.log('✅ Generated files copied successfully');
