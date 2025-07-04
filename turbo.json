@@ -6,7 +6,7 @@
       "dependsOn": ["^start"]
     },
     "build": {
-      "dependsOn": ["^build", "@repo/db#db:generate"],
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "generated/**"]
     },
@@ -28,7 +28,9 @@
       "persistent": true
     },
     "db:generate": {
-      "cache": false
+      "cache": true,
+      "inputs": ["packages/db/prisma/schema.prisma"],
+      "outputs": ["packages/db/generated/**"]
     },
     "db:migrate": {
       "cache": false,
