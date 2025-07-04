@@ -36,13 +36,13 @@ export class TranscriptionService {
       });
 
       if (error) {
-        this.logger.error('Deepgram API returned an error:', error.message);
+        this.logger.error('Deepgram API returned an error:', JSON.stringify(error, null, 2));
         return null;
       }
 
       return result.results.channels[0].alternatives[0].paragraphs?.transcript ?? '';
     } catch (err) {
-      this.logger.error(`An unexpected error occurred during transcription for ${filePath}:`, err.stack);
+      this.logger.error(`An unexpected error occurred during transcription for ${filePath}:`, err);
       return null;
     }
   }
