@@ -1,4 +1,4 @@
-import * as Client from './generated/prisma';
+import * as Client from './generated/client';
 
 export const UserRole = Client.UserRole;
 export const ClientStatus = Client.ClientStatus;
@@ -12,7 +12,7 @@ export const ResourceType = Client.ResourceType;
 export const PrismaClient = Client.PrismaClient;
 export const Prisma = Client.Prisma;
 
-export * from './generated/prisma';
+export * from './generated/client';
 
 const prisma = new PrismaClient();
 export default prisma;

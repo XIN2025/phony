@@ -2,19 +2,19 @@
   "name": "@repo/db",
   "version": "0.0.0",
   "private": true,
-  "main": "./index.js",
-  "types": "./index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./index.js",
-      "types": "./index.d.ts"
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
     "db:generate": "prisma generate",
     "db:push": "prisma db push --accept-data-loss",
     "format": "prisma format",
-    "build": "pnpm db:generate && tsc",
+    "build": "pnpm db:generate && tsc && node -e \"const fs=require('fs');const path=require('path');function copyDir(src,dest){if(!fs.existsSync(dest))fs.mkdirSync(dest,{recursive:true});const items=fs.readdirSync(src);for(const item of items){const srcPath=path.join(src,item);const destPath=path.join(dest,item);if(fs.statSync(srcPath).isDirectory()){copyDir(srcPath,destPath);}else{fs.copyFileSync(srcPath,destPath);}}}copyDir('src/generated','dist/generated');\"",
     "clean": "rm -rf dist"
   },
   "dependencies": {

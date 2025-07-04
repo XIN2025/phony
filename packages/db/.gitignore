@@ -1,0 +1,6 @@
+# Build artifacts that shouldn't be committed
+dist/
+*.tsbuildinfo
+
+# Generated source code
+src/generated/ 
