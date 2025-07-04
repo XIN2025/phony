@@ -1,8 +1,8 @@
 export const envConfig = {
-  appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003',
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002',
+  appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   internalApiUrl: process.env.INTERNAL_API_URL || 'http://server:3001',
-  nextAuthUrl: process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003',
+  nextAuthUrl: process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
 
   providers: {
     google: {

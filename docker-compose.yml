@@ -1,43 +1,40 @@
 services:
-  server:
-    container_name: continuum-server
-    build:
-      context: .
-      dockerfile: apps/server/Dockerfile
-    restart: unless-stopped
-    ports:
-      - 3003:3001
-    env_file:
-      - ./apps/server/.env
-    volumes:
-      - uploads_data:/app/uploads
-    networks:
-      - continuum-network
-
   web:
-    container_name: continuum-web
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
-      args:
-        - DOCKER_BUILD=true
-        - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-    restart: unless-stopped
+      dockerfile: Dockerfile
+    container_name: continuum-web
     ports:
-      - 3002:3000
-    environment:
-      - DOCKER_ENV=true
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - '3000:3000'
     env_file:
-      - ./apps/web/.env
+      - apps/web/.env
+      - .env
+    environment:
+      - NODE_ENV=development
+      - DOCKER_ENV=true
+    restart: on-failure:5
     networks:
-      - continuum-network
-    depends_on:
-      - server
+      - app_network
+    command: ['pnpm', '--filter', 'web', 'run', 'start']
 
-volumes:
-  uploads_data:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: continuum-server
+    ports:
+      - '3001:3001'
+    env_file:
+      - apps/server/.env
+      - packages/db/.env
+      - .env
+    environment:
+      - NODE_ENV=development
+    restart: on-failure:5
+    networks:
+      - app_network
+    command: ['pnpm', '--filter', 'server', 'run', 'start']
 
 networks:
-  continuum-network:
+  app_network:
     driver: bridge
