@@ -20,7 +20,7 @@ export class UsersService {
     email: string;
     firstName: string;
     lastName: string;
-    role: string;
+    role: (typeof UserRole)[keyof typeof UserRole];
     profession?: string;
     practitionerId?: string;
   }) {
@@ -29,7 +29,7 @@ export class UsersService {
         email: userData.email,
         firstName: userData.firstName,
         lastName: userData.lastName,
-        role: userData.role as UserRole,
+        role: userData.role,
         profession: userData.profession || null,
         practitionerId: userData.practitionerId || null,
         createdAt: new Date(),
@@ -47,7 +47,7 @@ export class UsersService {
       email: string;
       firstName: string;
       lastName: string;
-      role: string;
+      role: (typeof UserRole)[keyof typeof UserRole];
       profession: string;
       practitionerId: string;
       isActive: boolean;
@@ -60,7 +60,7 @@ export class UsersService {
         email: userData.email,
         firstName: userData.firstName,
         lastName: userData.lastName,
-        role: userData.role as UserRole,
+        role: userData.role,
         profession: userData.profession,
         practitionerId: userData.practitionerId,
         isActive: userData.isActive,

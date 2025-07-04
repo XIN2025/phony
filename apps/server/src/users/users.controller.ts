@@ -3,6 +3,7 @@ import { UsersService } from './users.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '../auth/decorators/public.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UserRole } from '@repo/db';
 
 @ApiTags('users')
 @Controller('users')
@@ -53,7 +54,7 @@ export class UsersController {
       email: string;
       firstName: string;
       lastName: string;
-      role: string;
+      role: (typeof UserRole)[keyof typeof UserRole];
       profession?: string;
       practitionerId?: string;
     }

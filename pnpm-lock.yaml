@@ -15,7 +15,7 @@ importers:
     dependencies:
       '@repo/db':
         specifier: workspace:*
-        version: file:packages/db(prisma@6.6.0(typescript@5.8.2))(typescript@5.8.2)
+        version: link:packages/db
       '@repo/shared-types':
         specifier: workspace:*
         version: link:packages/shared-types
@@ -179,6 +179,9 @@ importers:
       '@prisma/client':
         specifier: 6.6.0
         version: 6.6.0(prisma@6.6.0(typescript@5.8.2))(typescript@5.8.2)
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
@@ -432,11 +435,17 @@ importers:
     dependencies:
       '@prisma/client':
         specifier: 6.6.0
-        version: 6.6.0(prisma@6.6.0(typescript@5.8.3))(typescript@5.8.3)
+        version: 6.6.0(prisma@6.6.0(typescript@5.8.2))(typescript@5.8.2)
     devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       prisma:
         specifier: 6.6.0
-        version: 6.6.0(typescript@5.8.3)
+        version: 6.6.0(typescript@5.8.2)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.2
 
   packages/eslint-config:
     devDependencies:
@@ -478,7 +487,7 @@ importers:
     dependencies:
       '@repo/db':
         specifier: workspace:*
-        version: file:packages/db(prisma@6.6.0(typescript@5.8.2))(typescript@5.8.2)
+        version: link:../db
       zod:
         specifier: ^3.23.8
         version: 3.25.67
@@ -2823,9 +2832,6 @@ packages:
 
   '@radix-ui/rect@1.1.1':
     resolution: {integrity: sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw==}
-
-  '@repo/db@file:packages/db':
-    resolution: {directory: packages/db, type: directory}
 
   '@scarf/scarf@1.4.0':
     resolution: {integrity: sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==}
@@ -10980,11 +10986,6 @@ snapshots:
       prisma: 6.6.0(typescript@5.8.2)
       typescript: 5.8.2
 
-  '@prisma/client@6.6.0(prisma@6.6.0(typescript@5.8.3))(typescript@5.8.3)':
-    optionalDependencies:
-      prisma: 6.6.0(typescript@5.8.3)
-      typescript: 5.8.3
-
   '@prisma/config@6.6.0':
     dependencies:
       esbuild: 0.25.5
@@ -11665,13 +11666,6 @@ snapshots:
       '@types/react-dom': 19.1.1(@types/react@19.1.0)
 
   '@radix-ui/rect@1.1.1': {}
-
-  '@repo/db@file:packages/db(prisma@6.6.0(typescript@5.8.2))(typescript@5.8.2)':
-    dependencies:
-      '@prisma/client': 6.6.0(prisma@6.6.0(typescript@5.8.2))(typescript@5.8.2)
-    transitivePeerDependencies:
-      - prisma
-      - typescript
 
   '@scarf/scarf@1.4.0': {}
 
@@ -17572,16 +17566,6 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
       typescript: 5.8.2
-    transitivePeerDependencies:
-      - supports-color
-
-  prisma@6.6.0(typescript@5.8.3):
-    dependencies:
-      '@prisma/config': 6.6.0
-      '@prisma/engines': 6.6.0
-    optionalDependencies:
-      fsevents: 2.3.3
-      typescript: 5.8.3
     transitivePeerDependencies:
       - supports-color
 

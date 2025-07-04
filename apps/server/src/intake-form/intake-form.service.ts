@@ -31,8 +31,8 @@ interface AnswerData {
   value: string;
 }
 
-function mapQuestionType(type: SharedQuestionType): PrismaQuestionType {
-  return type as PrismaQuestionType;
+function mapQuestionType(type: SharedQuestionType): (typeof PrismaQuestionType)[keyof typeof PrismaQuestionType] {
+  return type as (typeof PrismaQuestionType)[keyof typeof PrismaQuestionType];
 }
 
 @Injectable()

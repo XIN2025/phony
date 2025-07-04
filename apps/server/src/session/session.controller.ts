@@ -56,7 +56,7 @@ export class SessionController {
   @ApiResponse({ status: 200, description: 'Session status updated successfully.' })
   async updateSessionStatus(
     @Param('id') sessionId: string,
-    @Body() body: { status: SessionStatus; transcript?: string }
+    @Body() body: { status: (typeof SessionStatus)[keyof typeof SessionStatus]; transcript?: string }
   ) {
     return await this.sessionService.updateSessionStatus(sessionId, body.status, body.transcript);
   }

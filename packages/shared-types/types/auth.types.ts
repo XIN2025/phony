@@ -6,9 +6,9 @@ export type User = {
   firstName: string;
   lastName: string | null;
   avatarUrl: string | null;
-  role: UserRole;
+  role: (typeof UserRole)[keyof typeof UserRole];
   profession: string | null;
-  clientStatus?: ClientStatus;
+  clientStatus?: (typeof ClientStatus)[keyof typeof ClientStatus];
   isEmailVerified: boolean;
   practitionerId: string | null;
   idProofUrl: string | null;
@@ -24,7 +24,7 @@ export type LoginResponse = {
 export type VerifyOtpRequest = {
   email: string;
   otp: string;
-  role: UserRole;
+  role: (typeof UserRole)[keyof typeof UserRole];
 };
 
 export type SendOtpRequest = {

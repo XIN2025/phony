@@ -8,11 +8,11 @@ import { UserRole, ClientStatus } from '@repo/db';
 interface JwtPayload {
   sub: string;
   email: string;
-  role: UserRole;
+  role: (typeof UserRole)[keyof typeof UserRole];
   firstName: string;
   lastName: string;
   avatarUrl?: string | null;
-  clientStatus?: ClientStatus;
+  clientStatus?: (typeof ClientStatus)[keyof typeof ClientStatus];
   practitionerId?: string | null;
 }
 

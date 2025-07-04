@@ -11,7 +11,7 @@ interface CreatePlanDto {
     category?: string;
     target?: string;
     frequency?: string;
-    source?: ActionItemSource;
+    source?: (typeof ActionItemSource)[keyof typeof ActionItemSource];
     resources?: {
       type: 'LINK' | 'PDF';
       url: string;

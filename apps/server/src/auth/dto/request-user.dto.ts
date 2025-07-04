@@ -6,7 +6,7 @@ export interface RequestUser {
   firstName: string;
   lastName: string;
   avatarUrl?: string | null;
-  role: UserRole;
-  clientStatus?: ClientStatus;
+  role: (typeof UserRole)[keyof typeof UserRole];
+  clientStatus?: (typeof ClientStatus)[keyof typeof ClientStatus];
   practitionerId?: string | null;
 }

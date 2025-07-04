@@ -166,10 +166,10 @@ export const authOptions: AuthOptions = {
             firstName: token.firstName as string,
             lastName: token.lastName as string,
             avatarUrl: token.avatarUrl as string,
-            role: token.role as UserRole,
+            role: token.role as (typeof UserRole)[keyof typeof UserRole],
             profession: token.profession as string,
             token: token.token as string,
-            clientStatus: token.clientStatus as ClientStatus,
+            clientStatus: token.clientStatus as (typeof ClientStatus)[keyof typeof ClientStatus],
             practitionerId: token.practitionerId as string,
           },
         };
@@ -181,10 +181,10 @@ export const authOptions: AuthOptions = {
         session.user.firstName = token.firstName as string;
         session.user.lastName = token.lastName as string;
         session.user.avatarUrl = token.avatarUrl as string;
-        session.user.role = token.role as UserRole;
+        session.user.role = token.role as (typeof UserRole)[keyof typeof UserRole];
         session.user.profession = token.profession as string;
         session.user.token = token.token as string;
-        session.user.clientStatus = token.clientStatus as ClientStatus;
+        session.user.clientStatus = token.clientStatus as (typeof ClientStatus)[keyof typeof ClientStatus];
         session.user.practitionerId = token.practitionerId as string;
         console.log('[NextAuth] Session created:', {
           id: session.user.id,

@@ -22,7 +22,7 @@ export class VerifyOtpDto implements VerifyOtpRequest {
     enum: UserRole,
   })
   @IsEnum(UserRole)
-  role: UserRole;
+  role: (typeof UserRole)[keyof typeof UserRole];
 }
 
 export class PractitionerSignUpDto implements VerifyOtpRequest {
@@ -40,7 +40,7 @@ export class PractitionerSignUpDto implements VerifyOtpRequest {
     default: 'PRACTITIONER',
   })
   @IsEnum(UserRole)
-  role: UserRole;
+  role: (typeof UserRole)[keyof typeof UserRole];
 
   @ApiProperty()
   @IsString()
@@ -90,7 +90,7 @@ export class UserDto implements User {
     enum: UserRole,
   })
   @IsEnum(UserRole)
-  role: UserRole;
+  role: (typeof UserRole)[keyof typeof UserRole];
 
   @ApiProperty({
     type: 'string',
@@ -107,7 +107,7 @@ export class UserDto implements User {
   })
   @IsEnum(ClientStatus)
   @IsOptional()
-  clientStatus?: ClientStatus;
+  clientStatus?: (typeof ClientStatus)[keyof typeof ClientStatus];
 
   @ApiProperty({
     type: 'string',

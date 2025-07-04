@@ -24,7 +24,11 @@ export class SessionService {
     });
   }
 
-  async updateSessionStatus(sessionId: string, status: SessionStatus, transcript?: string) {
+  async updateSessionStatus(
+    sessionId: string,
+    status: (typeof SessionStatus)[keyof typeof SessionStatus],
+    transcript?: string
+  ) {
     return await this.prisma.session.update({
       where: { id: sessionId },
       data: {

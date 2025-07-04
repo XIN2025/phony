@@ -18,7 +18,7 @@ export function normalizeUserData(user: PrismaUser): {
   email: string;
   firstName: string;
   lastName?: string | null;
-  role: UserRole;
+  role: (typeof UserRole)[keyof typeof UserRole];
   profession?: string | null;
   avatarUrl?: string | null;
   isEmailVerified: boolean;
@@ -38,7 +38,7 @@ export function createUserResponse(user: {
   email: string;
   firstName: string;
   lastName?: string | null;
-  role: UserRole;
+  role: (typeof UserRole)[keyof typeof UserRole];
   profession?: string | null;
   avatarUrl?: string | null;
   isEmailVerified: boolean;
@@ -69,7 +69,7 @@ export function createJwtPayload(
     email: string;
     firstName: string;
     lastName?: string | null;
-    role: UserRole;
+    role: (typeof UserRole)[keyof typeof UserRole];
     practitionerId?: string | null;
     clientStatus?: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
   },
@@ -94,7 +94,7 @@ export function generateToken(
     email: string;
     firstName: string;
     lastName?: string | null;
-    role: UserRole;
+    role: (typeof UserRole)[keyof typeof UserRole];
     practitionerId?: string | null;
     clientStatus?: 'ACTIVE' | 'NEEDS_INTAKE' | 'INTAKE_COMPLETED';
   },
