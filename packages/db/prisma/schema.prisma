@@ -3,15 +3,13 @@ generator client {
   output        = "../src/generated/client"
   binaryTargets = ["native", "rhel-openssl-1.0.x"]
 }
-
+ 
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
-// ===============================================
-//           CORE USER & AUTH MODELS
-// ===============================================
+ 
 model User {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   email           String   @unique
@@ -27,7 +25,6 @@ model User {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  // --- EXISTING RELATIONS ---
   practitionerId String? @db.ObjectId
   practitioner   User?   @relation("PractitionerToClients", fields: [practitionerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   clients        User[]  @relation("PractitionerToClients")
@@ -35,32 +32,23 @@ model User {
   intakeForms     IntakeForm[]
   intakeFormSubmissions IntakeFormSubmission[]
 
-  // === NEW RELATIONS for Sessions, Plans, and Tasks ===
-  // As a Practitioner
+ 
   practitionerSessions Session[]      @relation("PractitionerSessions")
   practitionerPlans    Plan[]         @relation("PractitionerPlans")
 
-  // As a Client
   clientSessions          Session[]              @relation("ClientSessions")
   clientPlans             Plan[]                 @relation("ClientPlans")
   clientCompletions       ActionItemCompletion[] @relation("ClientCompletions")
 
-  // === NEW RELATIONS for Messaging ===
-  // As a Practitioner
   practitionerConversations Conversation[] @relation("PractitionerConversations")
-  // As a Client
   clientConversations     Conversation[] @relation("ClientConversations")
-  // As a message author
   sentMessages            Message[]      @relation("SentMessages")
-  // Add message reactions relation
   messageReactions        MessageReaction[] @relation("MessageReactions")
 
   @@map("users")
 }
 
-// ===============================================
-//      UNCHANGED & EXISTING MODELS
-// ===============================================
+ 
 
 model Invitation {
   id              String           @id @default(auto()) @map("_id") @db.ObjectId
@@ -166,9 +154,7 @@ model Answer {
   @@map("answers")
 }
 
-// ===============================================
-//      === NEW MODELS FOR UPCOMING FEATURES ===
-// ===============================================
+ 
 
 model Session {
   id                 String        @id @default(auto()) @map("_id") @db.ObjectId
@@ -182,6 +168,8 @@ model Session {
   status             SessionStatus @default(UPLOADING)
   audioFileUrl       String? 
   transcript         String?
+  filteredTranscript String?
+  aiSummary          String?
   transcriptionJobId String?
   plan               Plan?
   @@map("sessions")
@@ -190,23 +178,25 @@ model Session {
 enum SessionStatus {
   UPLOADING
   TRANSCRIBING
+  AI_PROCESSING
   REVIEW_READY
   COMPLETED
 }
 
 model Plan {
-  id             String     @id @default(auto()) @map("_id") @db.ObjectId
-  sessionId      String     @unique @db.ObjectId
-  session        Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  practitionerId String     @db.ObjectId
-  practitioner   User       @relation("PractitionerPlans", fields: [practitionerId], references: [id], onDelete: Cascade)
-  clientId       String     @db.ObjectId
-  client         User       @relation("ClientPlans", fields: [clientId], references: [id], onDelete: Cascade)
-  status         PlanStatus @default(DRAFT)
-  publishedAt    DateTime?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  actionItems    ActionItem[]
+  id                   String     @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId            String     @unique @db.ObjectId
+  session              Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  practitionerId       String     @db.ObjectId
+  practitioner         User       @relation("PractitionerPlans", fields: [practitionerId], references: [id], onDelete: Cascade)
+  clientId             String     @db.ObjectId
+  client               User       @relation("ClientPlans", fields: [clientId], references: [id], onDelete: Cascade)
+  status               PlanStatus @default(DRAFT)
+  publishedAt          DateTime?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  actionItems          ActionItem[]
+  suggestedActionItems SuggestedActionItem[]
   @@map("plans")
 }
 
@@ -214,6 +204,25 @@ enum PlanStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+model SuggestedActionItem {
+  id          String                    @id @default(auto()) @map("_id") @db.ObjectId
+  planId      String                    @db.ObjectId
+  plan        Plan                      @relation(fields: [planId], references: [id], onDelete: Cascade)
+  description String
+  category    String?
+  target      String?
+  frequency   String?
+  status      SuggestedActionItemStatus @default(PENDING)
+  createdAt   DateTime                  @default(now())
+  @@map("suggested_action_items")
+}
+
+enum SuggestedActionItemStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model ActionItem {
@@ -262,10 +271,7 @@ model ActionItemCompletion {
   achievedValue String?
   @@map("action_item_completions")
 }
-
-// ===============================================
-//      === NEW MODELS FOR MESSAGING ===
-// ===============================================
+ 
 
 model Conversation {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId

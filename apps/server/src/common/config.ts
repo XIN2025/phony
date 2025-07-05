@@ -24,6 +24,8 @@ const optionalEnvVars = {
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
   GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/api/auth/callback/google',
   DATABASE_URL: process.env.DATABASE_URL || 'mongodb://localhost:27017/continuum',
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+  DEEPGRAM_API_KEY: process.env.DEEPGRAM_API_KEY || '',
 };
 
 export const config = {
@@ -55,5 +57,9 @@ export const config = {
   otp: {
     expiryMs: OTP_EXPIRY_MS,
     expiryMinutes: OTP_EXPIRY_MINUTES,
+  },
+  ai: {
+    geminiApiKey: optionalEnvVars.GEMINI_API_KEY,
+    deepgramApiKey: optionalEnvVars.DEEPGRAM_API_KEY,
   },
 };

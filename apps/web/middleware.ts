@@ -12,14 +12,6 @@ export async function middleware(request: NextRequest) {
   });
   const { pathname } = request.nextUrl;
 
-  console.log('[Middleware]', {
-    pathname,
-    hasToken: !!token,
-    tokenRole: token?.role,
-    tokenError: token?.error,
-    cookies: request.cookies.getAll().map((c: any) => ({ name: c.name, hasValue: !!c.value })),
-  });
-
   if (token?.error && (token.error === 'UserNotFound' || token.error === 'InvalidToken')) {
     return NextResponse.redirect(new URL('/client/auth', request.url));
   }

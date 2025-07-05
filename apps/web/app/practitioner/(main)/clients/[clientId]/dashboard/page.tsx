@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Button } from '@repo/ui/components/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@repo/ui/components/tabs';
-import { ArrowLeft, MessageCircle, Plus, Play, Square } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Plus, Play, Square, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import Link from 'next/link';
@@ -24,6 +24,26 @@ type PopulatedActionItem = ActionItem & { resources: Resource[]; completions: Ac
 type PopulatedPlan = Plan & { actionItems: PopulatedActionItem[] };
 type PopulatedSession = Session & { plan: PopulatedPlan | null };
 
+// Add type for session detail
+type SessionDetail = {
+  id: string;
+  status: string;
+  title?: string;
+  transcript?: string;
+  filteredTranscript?: string;
+  aiSummary?: string;
+  plan?: {
+    suggestedActionItems?: Array<{
+      id: string;
+      description: string;
+      category?: string;
+      target?: string;
+      frequency?: string;
+      status: string;
+    }>;
+  };
+};
+
 const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
   const [selectedTask, setSelectedTask] = useState<PopulatedActionItem | null>(null);
@@ -37,6 +57,11 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const [sessionTitle, setSessionTitle] = useState('');
   const [sessionNotes, setSessionNotes] = useState('');
   const [consentGiven, setConsentGiven] = useState(false);
+
+  // Add session detail modal state
+  const [selectedSession, setSelectedSession] = useState<SessionDetail | null>(null);
+  const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
+  const [isLoadingSessionDetail, setIsLoadingSessionDetail] = useState(false);
 
   const [client, setClient] = useState<User | null>(null);
   const [sessions, setSessions] = useState<PopulatedSession[]>([]);
@@ -142,6 +167,20 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     setShowJournalDetail(true);
   };
 
+  const handleSessionClick = async (sessionId: string) => {
+    setIsLoadingSessionDetail(true);
+    setIsSessionModalOpen(true);
+    try {
+      const sessionDetail = await ApiClient.get<SessionDetail>(`/api/sessions/${sessionId}`);
+      setSelectedSession(sessionDetail);
+    } catch (error) {
+      console.error('Failed to fetch session details:', error);
+      toast.error('Failed to load session details');
+    } finally {
+      setIsLoadingSessionDetail(false);
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -237,14 +276,20 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                 </TableRow>
               ) : sessions.length > 0 ? (
                 sessions.map((session) => (
-                  <TableRow key={session.id}>
+                  <TableRow
+                    key={session.id}
+                    className='cursor-pointer hover:bg-gray-50'
+                    onClick={() => handleSessionClick(session.id)}
+                  >
                     <TableCell>{new Date(session.recordedAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          session.status === 'COMPLETED'
+                          session.status === 'REVIEW_READY'
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            : session.status === 'COMPLETED'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-yellow-100 text-yellow-800'
                         }`}
                       >
                         {session.status}
@@ -252,8 +297,16 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                     </TableCell>
                     <TableCell>{session.plan?.actionItems?.length || 0}</TableCell>
                     <TableCell>
-                      <Button variant='ghost' size='sm' className='p-1 h-8 w-8' disabled>
-                        ...
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='p-1 h-8 w-8'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSessionClick(session.id);
+                        }}
+                      >
+                        View
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -473,6 +526,127 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               })),
             }}
           />
+        )}
+
+        {/* Session Detail Modal */}
+        {isSessionModalOpen && (
+          <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
+            <div className='bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto'>
+              <div className='flex items-center justify-between p-6 border-b'>
+                <h2 className='text-xl font-semibold'>{selectedSession?.title || 'Session Details'}</h2>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  onClick={() => {
+                    setIsSessionModalOpen(false);
+                    setSelectedSession(null);
+                  }}
+                >
+                  <X className='h-5 w-5' />
+                </Button>
+              </div>
+
+              <div className='p-6 space-y-6'>
+                {isLoadingSessionDetail ? (
+                  <div className='flex items-center justify-center py-8'>
+                    <Skeleton className='h-8 w-full' />
+                  </div>
+                ) : selectedSession ? (
+                  <>
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                      <div>
+                        <h3 className='font-semibold mb-2'>Status</h3>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            selectedSession.status === 'REVIEW_READY'
+                              ? 'bg-green-100 text-green-800'
+                              : selectedSession.status === 'COMPLETED'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                          }`}
+                        >
+                          {selectedSession.status}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className='font-semibold mb-2'>Title</h3>
+                        <p className='text-sm text-gray-600'>{selectedSession.title || 'Untitled Session'}</p>
+                      </div>
+                    </div>
+
+                    {selectedSession.transcript && (
+                      <div>
+                        <h3 className='font-semibold mb-2'>Transcript</h3>
+                        <div className='bg-gray-50 p-4 rounded-lg max-h-40 overflow-y-auto'>
+                          <pre className='text-sm whitespace-pre-wrap'>{selectedSession.transcript}</pre>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedSession.filteredTranscript && (
+                      <div>
+                        <h3 className='font-semibold mb-2'>Filtered Transcript</h3>
+                        <div className='bg-gray-50 p-4 rounded-lg max-h-40 overflow-y-auto'>
+                          <pre className='text-sm whitespace-pre-wrap'>{selectedSession.filteredTranscript}</pre>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedSession.aiSummary && (
+                      <div>
+                        <h3 className='font-semibold mb-2'>AI Summary</h3>
+                        <div className='bg-blue-50 p-4 rounded-lg'>
+                          <p className='text-sm'>{selectedSession.aiSummary}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedSession.plan?.suggestedActionItems &&
+                      selectedSession.plan.suggestedActionItems.length > 0 && (
+                        <div>
+                          <h3 className='font-semibold mb-2'>Suggested Action Items</h3>
+                          <div className='space-y-3'>
+                            {selectedSession.plan.suggestedActionItems.map((item) => (
+                              <div key={item.id} className='border p-3 rounded-lg'>
+                                <p className='font-medium text-sm'>{item.description}</p>
+                                <div className='flex flex-wrap gap-2 mt-2'>
+                                  {item.category && (
+                                    <span className='text-xs bg-gray-100 px-2 py-1 rounded'>
+                                      Category: {item.category}
+                                    </span>
+                                  )}
+                                  {item.target && (
+                                    <span className='text-xs bg-gray-100 px-2 py-1 rounded'>Target: {item.target}</span>
+                                  )}
+                                  {item.frequency && (
+                                    <span className='text-xs bg-gray-100 px-2 py-1 rounded'>
+                                      Frequency: {item.frequency}
+                                    </span>
+                                  )}
+                                  <span
+                                    className={`text-xs px-2 py-1 rounded ${
+                                      item.status === 'PENDING'
+                                        ? 'bg-yellow-100 text-yellow-800'
+                                        : item.status === 'APPROVED'
+                                          ? 'bg-green-100 text-green-800'
+                                          : 'bg-red-100 text-red-800'
+                                    }`}
+                                  >
+                                    {item.status}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                  </>
+                ) : (
+                  <div className='text-center text-gray-500 py-8'>No session details available</div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </>
     );

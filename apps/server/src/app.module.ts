@@ -46,6 +46,12 @@ import { TranscriptionModule } from './transcription/transcription.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      load: [
+        async () => {
+          const { config } = await import('./common/config');
+          return config;
+        },
+      ],
     }),
     AuthModule,
     PrismaModule,

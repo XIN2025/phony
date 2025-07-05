@@ -359,6 +359,16 @@
         "tags": ["sessions"]
       }
     },
+    "/api/sessions/practitioner/me": {
+      "get": {
+        "operationId": "SessionController_getMySessions",
+        "parameters": [],
+        "responses": { "200": { "description": "Sessions retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get sessions for current practitioner",
+        "tags": ["sessions"]
+      }
+    },
     "/api/sessions/client/{id}": {
       "get": {
         "operationId": "SessionController_getSessionsByClient",
@@ -434,6 +444,66 @@
         "responses": { "200": { "description": "Plan updated successfully." } },
         "security": [{ "bearer": [] }],
         "summary": "Update a plan",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/{id}/with-suggestions": {
+      "get": {
+        "operationId": "PlanController_getPlanWithSuggestions",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Plan with suggestions retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get plan with AI suggestions",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/{id}/suggestions": {
+      "get": {
+        "operationId": "PlanController_getSuggestedActionItems",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Suggested action items retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get suggested action items for a plan",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/suggestions/{suggestionId}/approve": {
+      "post": {
+        "operationId": "PlanController_approveSuggestedActionItem",
+        "parameters": [{ "name": "suggestionId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Suggested action item approved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Approve a suggested action item",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/suggestions/{suggestionId}/reject": {
+      "post": {
+        "operationId": "PlanController_rejectSuggestedActionItem",
+        "parameters": [{ "name": "suggestionId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Suggested action item rejected successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Reject a suggested action item",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/suggestions/{suggestionId}": {
+      "patch": {
+        "operationId": "PlanController_updateSuggestedActionItem",
+        "parameters": [{ "name": "suggestionId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Suggested action item updated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Edit a suggested action item",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/{id}/action-items": {
+      "post": {
+        "operationId": "PlanController_addCustomActionItem",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "201": { "description": "Custom action item added successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Add a custom action item to a plan",
         "tags": ["plans"]
       }
     },

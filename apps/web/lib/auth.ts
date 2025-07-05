@@ -15,19 +15,10 @@ const credentialsAuthProvider = CredentialsProvider({
     token: { label: 'Token', type: 'text' },
   },
   async authorize(credentials) {
-    console.log('[NextAuth] Authorize called with:', {
-      hasCredentials: !!credentials,
-      hasToken: !!credentials?.token,
-      hasOtp: !!credentials?.otp,
-      email: credentials?.email,
-      role: credentials?.role,
-    });
-
     try {
       validateAuthFields(credentials || {});
 
       if (credentials?.token) {
-        console.log('[NextAuth] Validating existing token...');
         const res = await ApiClient.get<LoginResponse['user']>(
           '/api/auth/me',
           {
@@ -38,7 +29,6 @@ const credentialsAuthProvider = CredentialsProvider({
           null,
         );
 
-        console.log('[NextAuth] Token validation successful:', res);
         const user: User = {
           id: res.id,
           email: res.email,
@@ -57,11 +47,9 @@ const credentialsAuthProvider = CredentialsProvider({
       }
 
       if (!credentials?.otp) {
-        console.error('[NextAuth] No OTP provided');
         throw new Error('OTP required');
       }
 
-      console.log('[NextAuth] Verifying OTP...');
       const res = await ApiClient.post<LoginResponse>(
         '/api/auth/otp/verify',
         {
@@ -73,7 +61,6 @@ const credentialsAuthProvider = CredentialsProvider({
         null,
       );
 
-      console.log('[NextAuth] OTP verification successful:', res);
       const user: User = {
         id: res.user.id,
         email: res.user.email,
@@ -88,10 +75,8 @@ const credentialsAuthProvider = CredentialsProvider({
         isEmailVerified: res.user.isEmailVerified ?? false,
         idProofUrl: res.user.idProofUrl ?? null,
       };
-      console.log('[NextAuth] Created user object:', user);
       return user;
     } catch (error) {
-      console.error('[NextAuth] Authorization failed:', error);
       const authError = createAuthError(error);
       throw new Error(authError.message);
     }
@@ -103,20 +88,10 @@ export const authOptions: AuthOptions = {
   secret: envConfigServer.nextAuthSecret,
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      console.log('[NextAuth] JWT callback:', {
-        hasTrigger: !!trigger,
-        trigger,
-        hasUser: !!user,
-        hasToken: !!token,
-        tokenRole: token?.role,
-      });
-
       if (trigger === 'update' && session?.user) {
-        console.log('[NextAuth] JWT update trigger:', session.user);
         return { ...token, ...session.user };
       }
       if (user) {
-        console.log('[NextAuth] Setting JWT from user:', user);
         token.id = user.id;
         token.email = user.email;
         token.firstName = user.firstName;
@@ -128,27 +103,12 @@ export const authOptions: AuthOptions = {
         token.clientStatus = user.clientStatus;
         token.practitionerId = user.practitionerId;
         delete token.error;
-        console.log('[NextAuth] JWT token created:', {
-          id: token.id,
-          email: token.email,
-          role: token.role,
-        });
         return token;
       }
       return token;
     },
     async session({ session, token }) {
-      console.log('[NextAuth] Session callback:', {
-        hasSession: !!session,
-        hasToken: !!token,
-        tokenError: token?.error,
-        tokenRole: token?.role,
-        sessionUser: !!session?.user,
-        tokenData: token ? Object.keys(token) : [],
-      });
-
       if (token.error && (token.error === 'UserNotFound' || token.error === 'InvalidToken')) {
-        console.error('[NextAuth] Session error:', token.error);
         return {
           expires: new Date(0).toISOString(),
           user: undefined,
@@ -157,7 +117,6 @@ export const authOptions: AuthOptions = {
       }
 
       if (!session?.user) {
-        console.error('[NextAuth] No session.user found, creating empty session');
         return {
           expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
           user: {
@@ -186,11 +145,6 @@ export const authOptions: AuthOptions = {
         session.user.token = token.token as string;
         session.user.clientStatus = token.clientStatus as (typeof ClientStatus)[keyof typeof ClientStatus];
         session.user.practitionerId = token.practitionerId as string;
-        console.log('[NextAuth] Session created:', {
-          id: session.user.id,
-          email: session.user.email,
-          role: session.user.role,
-        });
       }
       return session;
     },
@@ -199,43 +153,13 @@ export const authOptions: AuthOptions = {
     strategy: 'jwt',
     maxAge: 10 * 24 * 60 * 60,
   },
-  cookies: {
-    sessionToken: {
-      name: 'next-auth.session-token',
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: false,
-        maxAge: 10 * 24 * 60 * 60,
-      },
-    },
-    callbackUrl: {
-      name: 'next-auth.callback-url',
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: false,
-      },
-    },
-    csrfToken: {
-      name: 'next-auth.csrf-token',
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: false,
-      },
-    },
+  pages: {
+    signIn: '/client/auth',
+    error: '/client/auth',
   },
   events: {
     async signOut() {
-      return;
+      // Clean up any client-side state if needed
     },
   },
-  pages: {
-    error: '/auth/error',
-  },
-  debug: process.env.NODE_ENV === 'development',
 };

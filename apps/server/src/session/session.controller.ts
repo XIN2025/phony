@@ -46,9 +46,18 @@ export class SessionController {
   })
   @ApiResponse({ status: 201, description: 'Audio uploaded successfully.' })
   async uploadAudio(@Param('id') sessionId: string, @UploadedFile() file: Express.Multer.File) {
-    // We'll construct the URL to be stored in the database
-    const audioFileUrl = `/uploads/${file.filename}`;
-    return await this.sessionService.addAudioToSession(sessionId, audioFileUrl);
+    if (!file || !file.buffer) {
+      throw new Error('No audio file provided or file buffer is empty');
+    }
+
+    console.log(`Upload received for session ${sessionId}:`, {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      bufferLength: file.buffer?.byteLength,
+    });
+
+    return await this.sessionService.addAudioToSession(sessionId, file.buffer);
   }
 
   @Put(':id/status')
@@ -66,6 +75,13 @@ export class SessionController {
   @ApiResponse({ status: 200, description: 'Sessions retrieved successfully.' })
   async getSessionsByPractitioner(@Param('id') practitionerId: string) {
     return await this.sessionService.getSessionsByPractitioner(practitionerId);
+  }
+
+  @Get('practitioner/me')
+  @ApiOperation({ summary: 'Get sessions for current practitioner' })
+  @ApiResponse({ status: 200, description: 'Sessions retrieved successfully.' })
+  async getMySessions(@CurrentUser() user: RequestUser) {
+    return await this.sessionService.getSessionsByPractitioner(user.id);
   }
 
   @Get('client/:id')
