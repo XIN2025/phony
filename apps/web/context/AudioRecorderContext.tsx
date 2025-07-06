@@ -94,12 +94,14 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
 
       recorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: mimeType });
+        console.log('[AudioRecorderContext] recorder.onstop fired, blob:', blob);
         setAudioBlob(blob);
         setStatus('stopped');
         cleanupStreams();
         if (timerIntervalRef.current) {
           clearInterval(timerIntervalRef.current);
         }
+        console.log('[AudioRecorderContext] setAudioBlob called, status set to stopped');
       };
 
       recorder.onerror = (event) => {
@@ -143,8 +145,16 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
+    if (mediaRecorderRef.current) {
+      console.log('[AudioRecorderContext] stopRecording called, state:', mediaRecorderRef.current.state);
+      if (mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+        console.log('[AudioRecorderContext] mediaRecorder.stop() called');
+      } else {
+        console.log('[AudioRecorderContext] mediaRecorderRef.current.state is not "recording"');
+      }
+    } else {
+      console.log('[AudioRecorderContext] stopRecording called but mediaRecorderRef.current is null');
     }
   };
 

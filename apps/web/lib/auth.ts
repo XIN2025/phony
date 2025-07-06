@@ -86,6 +86,11 @@ const credentialsAuthProvider = CredentialsProvider({
 export const authOptions: AuthOptions = {
   providers: [credentialsAuthProvider],
   secret: envConfigServer.nextAuthSecret,
+  session: {
+    strategy: 'jwt',
+    maxAge: 10 * 24 * 60 * 60, // 10 days
+    updateAge: 24 * 60 * 60, // Update session every 24 hours instead of default 1 hour
+  },
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (trigger === 'update' && session?.user) {
@@ -148,10 +153,6 @@ export const authOptions: AuthOptions = {
       }
       return session;
     },
-  },
-  session: {
-    strategy: 'jwt',
-    maxAge: 10 * 24 * 60 * 60,
   },
   pages: {
     signIn: '/client/auth',

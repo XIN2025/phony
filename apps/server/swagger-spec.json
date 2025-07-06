@@ -345,6 +345,24 @@
         "tags": ["sessions"]
       }
     },
+    "/api/sessions/{id}": {
+      "put": {
+        "operationId": "SessionController_updateSession",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Session updated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Update session data",
+        "tags": ["sessions"]
+      },
+      "get": {
+        "operationId": "SessionController_getSessionById",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Session retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get session by ID",
+        "tags": ["sessions"]
+      }
+    },
     "/api/sessions/{id}/status": {
       "put": {
         "operationId": "SessionController_updateSessionStatus",
@@ -382,16 +400,6 @@
         "responses": { "200": { "description": "Sessions retrieved successfully." } },
         "security": [{ "bearer": [] }],
         "summary": "Get sessions by client",
-        "tags": ["sessions"]
-      }
-    },
-    "/api/sessions/{id}": {
-      "get": {
-        "operationId": "SessionController_getSessionById",
-        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
-        "responses": { "200": { "description": "Session retrieved successfully." } },
-        "security": [{ "bearer": [] }],
-        "summary": "Get session by ID",
         "tags": ["sessions"]
       }
     },
@@ -510,6 +518,16 @@
         "responses": { "201": { "description": "Custom action item added successfully." } },
         "security": [{ "bearer": [] }],
         "summary": "Add a custom action item to a plan",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/generate": {
+      "post": {
+        "operationId": "PlanController_generatePlanFromSession",
+        "parameters": [],
+        "responses": { "200": { "description": "Plan generated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Generate action plan from session",
         "tags": ["plans"]
       }
     },
