@@ -8,7 +8,6 @@ export class ApiClient {
     try {
       const isServer = typeof window === 'undefined';
 
-      // Use provided session or get it from client-side only
       const currentSession = session || (!isServer ? await getSession() : null);
       const isFormData = config.data instanceof FormData;
 
@@ -23,20 +22,17 @@ export class ApiClient {
       const isPublicEndpoint = publicEndpoints.some((endpoint) => config.url?.includes(endpoint));
 
       const isOtpRequest = config.url?.includes('/auth/otp');
-      const timeout = isOtpRequest ? 30000 : 10000;
+      let timeout = isOtpRequest ? 30000 : 50000;
+      if (config.timeout && config.timeout > timeout) {
+        timeout = config.timeout;
+      }
 
-      // Use the internal URL only if we are inside a Docker container (for SSR)
       const useInternalUrl = isServer && process.env.DOCKER_ENV === 'true';
       const baseURL = useInternalUrl ? envConfig.internalApiUrl : envConfig.apiUrl;
 
-      console.log(
-        `[ApiClient] Requesting. isServer: ${isServer}, useInternalUrl: ${useInternalUrl}, baseURL: ${baseURL}, url: ${config.url}`,
-        { hasSession: !!currentSession, isPublicEndpoint, hasToken: !!currentSession?.user?.token },
-      );
-
       const client = axios.create({
         baseURL: baseURL,
-        timeout: timeout,
+        timeout,
         headers: {
           ...(config.data && !isFormData ? { 'Content-Type': 'application/json' } : {}),
           ...(currentSession?.user?.token && !isPublicEndpoint
@@ -47,22 +43,9 @@ export class ApiClient {
         },
       });
 
-      console.log('[ApiClient] Axios client created with headers:', client.defaults.headers);
-
       const response: AxiosResponse<T> = await client.request(config);
-      console.log(`[ApiClient] Request successful:`, {
-        url: config.url,
-        status: response.status,
-        hasData: !!response.data,
-      });
       return response.data;
     } catch (err: any) {
-      console.error('[ApiClient] Error during request:', {
-        url: config.url,
-        error: err.message,
-        status: err.response?.status,
-        data: err.response?.data,
-      });
       throw createAuthError(err);
     }
   }

@@ -56,7 +56,6 @@ export class SessionService {
         throw new Error('Audio buffer cannot be empty');
       }
 
-      // Check if session exists first
       const existingSession = await this.prisma.session.findUnique({
         where: { id: sessionId },
       });
@@ -65,10 +64,8 @@ export class SessionService {
         throw new Error(`Session with ID ${sessionId} not found`);
       }
 
-      // Always save the audio file to disk
       const audioFileUrl = this.saveAudioFile(audioBuffer, sessionId);
 
-      // Update session with audio file URL, duration, and set status to TRANSCRIBING
       const session = await this.prisma.session.update({
         where: { id: sessionId },
         data: {
@@ -78,7 +75,6 @@ export class SessionService {
         },
       });
 
-      // Start transcription in background
       setTimeout(() => {
         this.transcribeAndUpdateStatus(sessionId, audioFileUrl).catch((err) => {
           this.logger.error(`Caught unhandled error in background transcription for session ${sessionId}:`, err.stack);
@@ -122,7 +118,6 @@ export class SessionService {
       if (transcript && transcript.trim().length > 0) {
         this.logger.log(`Transcription successful for session: ${sessionId}. Starting AI processing.`);
 
-        // Update status to AI_PROCESSING
         await this.prisma.session.update({
           where: { id: sessionId },
           data: {
@@ -131,7 +126,6 @@ export class SessionService {
           },
         });
 
-        // Start AI processing in background
         setTimeout(() => {
           this.processWithAI(sessionId, transcript).catch((err) => {
             this.logger.error(`Caught unhandled error in AI processing for session ${sessionId}:`, err.stack);
@@ -175,7 +169,7 @@ export class SessionService {
       await this.prisma.session.update({
         where: { id: sessionId },
         data: {
-          filteredTranscript: aiResults.filteredTranscript,
+          filteredTranscript: aiResults.filteredTranscript || transcript,
           aiSummary: aiResults.summary?.summary || 'AI summary generation failed',
           status: SessionStatus.REVIEW_READY,
         },
@@ -187,16 +181,21 @@ export class SessionService {
 
       this.logger.log(`AI processing completed successfully for session: ${sessionId}. Audio file saved to disk.`);
     } catch (error) {
-      this.logger.error(`AI processing failed for session: ${sessionId}`, error);
+      this.logger.error(`Unexpected error in AI processing for session: ${sessionId}`, error);
+      this.logger.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
 
       await this.prisma.session.update({
         where: { id: sessionId },
         data: {
+          filteredTranscript: transcript,
           aiSummary: 'AI processing failed - please try again',
           status: SessionStatus.REVIEW_READY,
         },
       });
-
       this.logger.log(`AI processing failed for session ${sessionId}, but audio file was saved to disk.`);
     }
   }
@@ -346,6 +345,16 @@ export class SessionService {
             },
           },
         },
+      },
+    });
+  }
+
+  async updateSession(sessionId: string, data: { aiSummary?: string; notes?: string }) {
+    return await this.prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        ...(data.aiSummary !== undefined ? { aiSummary: data.aiSummary } : {}),
+        ...(data.notes !== undefined ? { notes: data.notes } : {}),
       },
     });
   }

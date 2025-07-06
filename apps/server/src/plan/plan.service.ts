@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanStatus, ActionItemSource } from '@repo/db';
+import { AiService } from '../ai/ai.service';
 
 interface CreatePlanDto {
   sessionId: string;
@@ -27,7 +28,10 @@ interface CreatePlanDto {
 
 @Injectable()
 export class PlanService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private aiService: AiService
+  ) {}
 
   async createPlan(data: CreatePlanDto) {
     return await this.prisma.plan.create({
@@ -108,7 +112,7 @@ export class PlanService {
     return await this.prisma.plan.findMany({
       where: {
         clientId,
-        status: PlanStatus.PUBLISHED, // Only show published plans to clients
+        status: PlanStatus.PUBLISHED,
       },
       include: {
         session: {
@@ -130,7 +134,7 @@ export class PlanService {
             resources: true,
             completions: {
               where: {
-                clientId: clientId, // Only show client's own completions
+                clientId: clientId,
               },
             },
           },
@@ -185,7 +189,7 @@ export class PlanService {
         ...updateData,
         actionItems: updateData.actionItems
           ? {
-              deleteMany: {}, // Remove existing action items
+              deleteMany: {},
               create: updateData.actionItems.map((item) => ({
                 description: item.description,
                 category: item.category,
@@ -214,7 +218,6 @@ export class PlanService {
     });
   }
 
-  // Methods for handling suggested action items
   async getSuggestedActionItems(planId: string) {
     return await this.prisma.suggestedActionItem.findMany({
       where: { planId },
@@ -223,7 +226,6 @@ export class PlanService {
   }
 
   async approveSuggestedActionItem(suggestedItemId: string) {
-    // Get the suggested item
     const suggestedItem = await this.prisma.suggestedActionItem.findUnique({
       where: { id: suggestedItemId },
     });
@@ -232,7 +234,6 @@ export class PlanService {
       throw new Error('Suggested action item not found');
     }
 
-    // Create actual action item
     const actionItem = await this.prisma.actionItem.create({
       data: {
         planId: suggestedItem.planId,
@@ -252,7 +253,6 @@ export class PlanService {
       },
     });
 
-    // Update suggested item status to approved
     await this.prisma.suggestedActionItem.update({
       where: { id: suggestedItemId },
       data: { status: 'APPROVED' },
@@ -321,7 +321,7 @@ export class PlanService {
         },
         suggestedActionItems: {
           where: {
-            status: 'PENDING', // Only show pending suggestions
+            status: 'PENDING',
           },
           orderBy: { createdAt: 'desc' },
         },
@@ -369,5 +369,64 @@ export class PlanService {
         resources: true,
       },
     });
+  }
+
+  async generatePlanFromSession(sessionId: string) {
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+      include: { plan: true },
+    });
+    if (!session) throw new Error('Session not found');
+    if (!session.transcript || !session.transcript.trim()) {
+      throw new Error('Session transcript is empty. Cannot generate action plan.');
+    }
+    let planId = session.plan?.id;
+    if (!planId) {
+      const newPlan = await this.prisma.plan.create({
+        data: {
+          sessionId: session.id,
+          practitionerId: session.practitionerId,
+          clientId: session.clientId,
+        },
+      });
+      planId = newPlan.id;
+    }
+    try {
+      const combinedText = [session.transcript, session.aiSummary, session.notes].filter(Boolean).join('\n\n');
+      const aiResults = await this.aiService.processSession(combinedText);
+      await this.prisma.suggestedActionItem.deleteMany({ where: { planId } });
+      if (aiResults.actionItemSuggestions?.suggestions?.length > 0) {
+        const suggestedItems = aiResults.actionItemSuggestions.suggestions.map((suggestion) => {
+          const s = suggestion as {
+            description: string;
+            category?: string;
+            target?: string;
+            frequency?: string;
+            weeklyRepetitions?: number;
+            isMandatory?: boolean;
+            whyImportant?: string;
+            recommendedActions?: string;
+            toolsToHelp?: string;
+          };
+          return {
+            planId: planId,
+            description: s.description,
+            category: s.category,
+            target: s.target,
+            frequency: s.frequency,
+            weeklyRepetitions: s.weeklyRepetitions || 1,
+            isMandatory: s.isMandatory || false,
+            whyImportant: s.whyImportant,
+            recommendedActions: s.recommendedActions,
+            toolsToHelp: s.toolsToHelp,
+          };
+        });
+        await this.prisma.suggestedActionItem.createMany({ data: suggestedItems });
+      }
+    } catch {
+      // Continue, plan is still created
+    }
+    const plan = await this.getPlanWithSuggestions(planId);
+    return JSON.parse(JSON.stringify(plan));
   }
 }

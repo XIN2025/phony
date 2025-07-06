@@ -32,7 +32,6 @@ export function useSocket(event: string, handler: EventHandler): Socket | null {
 
       socketRef.current.on('connect', () => {
         setIsConnected(true);
-        // Force a small delay then emit a custom event to ensure presence is updated
         setTimeout(() => {
           if (socketRef.current?.connected) {
             socketRef.current.emit('userConnected', { userId: session.user.id });

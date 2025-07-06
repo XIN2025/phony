@@ -19,6 +19,7 @@ import { Badge } from '@repo/ui/components/badge';
 import { Plus, Trash2, Edit, Check, X, AlertCircle, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { ApiClient } from '@/lib/api-client';
+import { TaskEditorDialog } from './TaskEditorDialog';
 
 interface ActionItem {
   id: string;
@@ -37,6 +38,7 @@ interface ActionItem {
     url: string;
     title?: string;
   }>;
+  daysOfWeek?: string[];
 }
 
 interface SuggestedActionItem {
@@ -51,6 +53,7 @@ interface SuggestedActionItem {
   recommendedActions?: string;
   toolsToHelp?: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  daysOfWeek?: string[];
 }
 
 interface PlanData {
@@ -65,6 +68,8 @@ interface PlanEditorProps {
   onPlanUpdated?: () => void;
 }
 
+const DAYS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+
 export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clientId, onPlanUpdated }) => {
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [suggestedItems, setSuggestedItems] = useState<SuggestedActionItem[]>([]);
@@ -73,6 +78,12 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<ActionItem | null>(null);
   const [editingSuggestion, setEditingSuggestion] = useState<SuggestedActionItem | null>(null);
+  const [complementaryTasks, setComplementaryTasks] = useState<SuggestedActionItem[]>([]);
+  const [showTaskDialog, setShowTaskDialog] = useState(false);
+  const [taskDialogInitialValues, setTaskDialogInitialValues] = useState<any>(null);
+  const [isEditingTask, setIsEditingTask] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [viewingSuggestion, setViewingSuggestion] = useState<SuggestedActionItem | null>(null);
 
   const [formData, setFormData] = useState({
     description: '',
@@ -170,6 +181,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
       setIsPublishing(true);
       await ApiClient.patch(`/api/plans/${planId}/publish`);
       toast.success('Plan published to client!');
+      await loadPlanData();
       onPlanUpdated?.();
     } catch (error) {
       console.error('Failed to publish plan:', error);
@@ -223,12 +235,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
           </div>
 
           <div className='flex items-center gap-2'>
-            <Select
-              value={item.weeklyRepetitions?.toString() || '1'}
-              onValueChange={(value) => {
-                console.log('Update weekly repetitions:', value);
-              }}
-            >
+            <Select value={item.weeklyRepetitions?.toString() || '1'} onValueChange={(value) => {}}>
               <SelectTrigger className='w-20 h-8'>
                 <SelectValue />
               </SelectTrigger>
@@ -241,12 +248,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
               </SelectContent>
             </Select>
 
-            <Checkbox
-              checked={!!item.isMandatory}
-              onCheckedChange={(checked) => {
-                console.log('Update mandatory:', checked);
-              }}
-            />
+            <Checkbox checked={!!item.isMandatory} onCheckedChange={(checked) => {}} />
 
             <Button
               variant='ghost'
@@ -354,6 +356,55 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
     </div>
   );
 
+  // Helper to toggle days
+  function toggleDay(item: any, day: string, isSessionTask: boolean) {
+    const key = 'daysOfWeek';
+    const days = item[key] || [];
+    const newDays = days.includes(day) ? days.filter((d: string) => d !== day) : [...days, day];
+    if (isSessionTask) {
+      setActionItems((prev) => prev.map((t) => (t.id === item.id ? { ...t, [key]: newDays } : t)));
+    } else {
+      setSuggestedItems((prev) => prev.map((t) => (t.id === item.id ? { ...t, [key]: newDays } : t)));
+    }
+  }
+
+  // Open dialog for new task
+  const handleAddTaskClick = () => {
+    setTaskDialogInitialValues(null);
+    setIsEditingTask(false);
+    setEditingTaskId(null);
+    setShowTaskDialog(true);
+  };
+
+  // Open dialog for editing
+  const handleEditTaskClick = (item: ActionItem) => {
+    setTaskDialogInitialValues(item);
+    setIsEditingTask(true);
+    setEditingTaskId(item.id);
+    setShowTaskDialog(true);
+  };
+
+  // Save handler for dialog
+  const handleTaskDialogSave = async (values: any) => {
+    try {
+      if (isEditingTask && editingTaskId) {
+        await ApiClient.patch(`/api/plans/${planId}/action-items/${editingTaskId}`, values);
+        toast.success('Task updated');
+      } else {
+        await ApiClient.post(`/api/plans/${planId}/action-items`, values);
+        toast.success('Task added');
+      }
+      setShowTaskDialog(false);
+      setTaskDialogInitialValues(null);
+      setIsEditingTask(false);
+      setEditingTaskId(null);
+      loadPlanData();
+      onPlanUpdated?.();
+    } catch (error) {
+      toast.error('Failed to save task');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className='flex items-center justify-center py-8'>
@@ -366,197 +417,174 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
   }
 
   return (
-    <div className='space-y-6'>
-      {/* Plan Editor Description */}
-      <Card className='bg-blue-50 border-blue-200'>
-        <CardContent className='p-4'>
-          <div className='flex items-start gap-3'>
-            <Info className='h-5 w-5 text-blue-600 mt-0.5' />
-            <div className='text-sm text-blue-800'>
-              <h3 className='font-semibold mb-2'>How to Organize a Client Action Plan:</h3>
-              <ul className='space-y-1 text-xs'>
-                <li>
-                  • <strong>Task Sources:</strong> Actions you stated during your session + AI suggestions based on
-                  transcript
-                </li>
-                <li>
-                  • <strong>Set Weekly Goals:</strong> For each task, set how many times per week you want your client
-                  to complete it
-                </li>
-                <li>
-                  • <strong>Client's Daily Plan:</strong> Continuum automatically creates a simple daily to-do list,
-                  spreading tasks over the week
-                </li>
-                <li>
-                  • <strong>Mandatory Tasks:</strong> Mark critical tasks as mandatory - they'll appear at the top of
-                  your client's daily list
-                </li>
-              </ul>
-            </div>
+    <div className='space-y-8 w-full px-2 sm:px-6 md:px-10   '>
+      {/* Tasks mentioned during session */}
+      <div
+        className='rounded-3xl border-2 border-gray-700 shadow-sm bg-white p-4 sm:p-6 w-full mx-0'
+        style={{ borderColor: '#B0B3B8' }}
+      >
+        <div className='flex items-center justify-between mb-2 sm:mb-4 border-b pb-2'>
+          <div className='font-bold text-lg sm:text-xl text-gray-900 text-left underline underline-offset-4'>
+            Tasks mentioned during session
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Your Actions Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center justify-between'>
-            <span>Your Actions</span>
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-              <DialogTrigger asChild>
-                <Button size='sm' className='h-8'>
-                  <Plus className='h-4 w-4 mr-2' />
-                  Add Action
-                </Button>
-              </DialogTrigger>
-              <DialogContent className='max-w-2xl'>
-                <DialogHeader>
-                  <DialogTitle>Add Custom Action Item</DialogTitle>
-                  <DialogDescription>Create a new action item for your client's plan.</DialogDescription>
-                </DialogHeader>
-                <div className='space-y-4'>
-                  <div>
-                    <label className='text-sm font-medium'>Description *</label>
-                    <Input
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder='e.g., Practice breathing exercises for 5 minutes'
-                    />
-                  </div>
-                  <div className='grid grid-cols-2 gap-4'>
-                    <div>
-                      <label className='text-sm font-medium'>Category</label>
-                      <Input
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        placeholder='e.g., Mindfulness'
-                      />
-                    </div>
-                    <div>
-                      <label className='text-sm font-medium'>Target</label>
-                      <Input
-                        value={formData.target}
-                        onChange={(e) => setFormData({ ...formData, target: e.target.value })}
-                        placeholder='e.g., Reduce anxiety'
-                      />
-                    </div>
-                  </div>
-                  <div className='grid grid-cols-2 gap-4'>
-                    <div>
-                      <label className='text-sm font-medium'>Frequency</label>
-                      <Input
-                        value={formData.frequency}
-                        onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-                        placeholder='e.g., Daily'
-                      />
-                    </div>
-                    <div>
-                      <label className='text-sm font-medium'>Weekly Repetitions</label>
-                      <Select
-                        value={formData.weeklyRepetitions.toString()}
-                        onValueChange={(value) => setFormData({ ...formData, weeklyRepetitions: parseInt(value) })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[1, 2, 3, 4, 5, 6, 7].map((num) => (
-                            <SelectItem key={num} value={num.toString()}>
-                              {num} time{num > 1 ? 's' : ''} per week
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className='flex items-center space-x-2'>
-                    <Checkbox
-                      id='mandatory'
-                      checked={!!formData.isMandatory}
-                      onCheckedChange={(checked) => setFormData({ ...formData, isMandatory: checked === true })}
-                    />
-                    <label htmlFor='mandatory' className='text-sm font-medium'>
-                      Mark as mandatory (appears at top of client's daily list)
-                    </label>
-                  </div>
-                  <div>
-                    <label className='text-sm font-medium'>Why is this important?</label>
-                    <Textarea
-                      value={formData.whyImportant}
-                      onChange={(e) => setFormData({ ...formData, whyImportant: e.target.value })}
-                      placeholder='Explain why this task benefits the client...'
-                      rows={2}
-                    />
-                  </div>
-                  <div>
-                    <label className='text-sm font-medium'>Recommended actions</label>
-                    <Textarea
-                      value={formData.recommendedActions}
-                      onChange={(e) => setFormData({ ...formData, recommendedActions: e.target.value })}
-                      placeholder='Specific steps to complete this task...'
-                      rows={2}
-                    />
-                  </div>
-                  <div>
-                    <label className='text-sm font-medium'>Tools to help</label>
-                    <Textarea
-                      value={formData.toolsToHelp}
-                      onChange={(e) => setFormData({ ...formData, toolsToHelp: e.target.value })}
-                      placeholder='Apps, resources, or tools that could help...'
-                      rows={2}
-                    />
-                  </div>
+          <Button size='sm' variant='ghost' className='text-primary font-semibold' onClick={handleAddTaskClick}>
+            + Add Task
+          </Button>
+        </div>
+        <div className='space-y-0 divide-y divide-gray-200'>
+          {actionItems.map((item) => (
+            <div key={item.id} className='flex flex-col py-4 w-full'>
+              {/* Top line: Task name + actions */}
+              <div className='flex flex-row items-center w-full'>
+                <div className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-[140px] flex-1'>
+                  {item.description}
                 </div>
-                <div className='flex justify-end gap-2'>
-                  <Button variant='outline' onClick={() => setShowAddDialog(false)}>
-                    Cancel
+                <div className='flex-1' />
+                <div className='flex items-center gap-1 min-w-[70px] justify-end'>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='hover:bg-gray-100'
+                    onClick={() => handleEditTaskClick(item)}
+                  >
+                    <Edit className='h-4 w-4' />
                   </Button>
-                  <Button onClick={handleAddCustomAction} disabled={!formData.description}>
-                    Add Action Item
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='hover:bg-gray-100 text-destructive'
+                    onClick={() => handleDeleteActionItem(item.id)}
+                  >
+                    <Trash2 className='h-4 w-4' />
                   </Button>
                 </div>
-              </DialogContent>
-            </Dialog>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className='space-y-3'>
-            {actionItems.length === 0 ? (
-              <div className='text-center py-8 text-muted-foreground'>
-                <p>No action items yet. Add your first action or approve AI suggestions below.</p>
               </div>
-            ) : (
-              actionItems.map((item) => renderActionItemRow(item))
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Suggested Complementary Actions Section */}
-      {suggestedItems.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <AlertCircle className='h-5 w-5 text-orange-500' />
-              Suggested Complementary Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='space-y-3'>{suggestedItems.map((item) => renderSuggestedItemRow(item))}</div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Publish Button */}
-      <div className='flex justify-end'>
-        <Button
-          onClick={handlePublishPlan}
-          disabled={isPublishing || actionItems.length === 0}
-          className='bg-green-600 hover:bg-green-700'
-        >
-          {isPublishing ? 'Publishing...' : 'Publish to Client'}
-        </Button>
+              {/* Bottom line: Duration, Days, Mandatory Task */}
+              <div className='flex flex-row items-center w-full mt-1 text-xs'>
+                <div className='text-gray-700 min-w-[110px]'>
+                  Duration: <span className='font-medium'>15 Minutes</span>
+                </div>
+                {/* Centered Days */}
+                <div className='flex-1 flex justify-center'>
+                  <div className='flex items-center gap-1 min-w-[220px]'>
+                    Weekly Repetition (Days):
+                    {DAYS.map((d) => (
+                      <span
+                        key={d}
+                        className={`w-7 h-7 flex items-center justify-center rounded-full border text-xs font-semibold ml-1 cursor-pointer transition-colors ${item.daysOfWeek?.includes(d) ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}
+                        onClick={() => toggleDay(item, d, true)}
+                      >
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {/* Mandatory Task */}
+                <div className='flex items-center gap-1 min-w-[120px] justify-end pr-2'>
+                  <Checkbox
+                    checked={!!item.isMandatory}
+                    onCheckedChange={(checked) =>
+                      setActionItems((prev) =>
+                        prev.map((t) => (t.id === item.id ? { ...t, isMandatory: checked === true } : t)),
+                      )
+                    }
+                    className='scale-90'
+                  />
+                  <span className='text-gray-700 text-xs'>Mandatory Task?</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+      {/* Complementary Tasks */}
+      <div
+        className='rounded-3xl border-2 border-gray-900 shadow-sm bg-white p-4 sm:p-6 w-full mx-0 mt-8'
+        style={{ borderColor: '#B0B3B8' }}
+      >
+        <div className='flex items-center justify-between mb-2 sm:mb-4 border-b pb-2'>
+          <div className='font-bold text-lg sm:text-xl flex items-center gap-2 text-gray-900 text-left underline underline-offset-4'>
+            <span>✧</span> Complementary Tasks
+          </div>
+          <Button size='sm' variant='ghost' className='text-primary font-semibold'>
+            + Generate More
+          </Button>
+        </div>
+        <div className='space-y-0 divide-y divide-gray-200'>
+          {suggestedItems.map((item) => (
+            <div key={item.id} className='flex flex-col py-4 w-full'>
+              <div className='flex flex-row items-center w-full'>
+                <div
+                  className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-[140px] flex-1 cursor-pointer hover:underline'
+                  onClick={() => setViewingSuggestion(item)}
+                >
+                  {item.description}
+                </div>
+                <div className='flex-1' />
+                <div className='min-w-[140px] pl-2 flex items-center justify-end'>
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    className='font-medium border-2 border-gray-800 rounded-lg'
+                    onClick={() => handleApproveSuggestion(item.id)}
+                  >
+                    Add to Action Plan
+                  </Button>
+                </div>
+              </div>
+              {/* Bottom line: Duration, Days, Mandatory Task */}
+              <div className='flex flex-row items-center w-full mt-1 text-xs'>
+                <div className='text-gray-700 min-w-[110px]'>
+                  Duration: <span className='font-medium'>15 Minutes</span>
+                </div>
+                {/* Centered Days */}
+                <div className='flex-1 flex justify-center'>
+                  <div className='flex items-center gap-1 min-w-[220px]'>
+                    Weekly Repetition (Days):
+                    {DAYS.map((d) => (
+                      <span
+                        key={d}
+                        className={`w-7 h-7 flex items-center justify-center rounded-full border text-xs font-semibold ml-1 cursor-pointer transition-colors ${item.daysOfWeek?.includes(d) ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}
+                        onClick={() => toggleDay(item, d, false)}
+                      >
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {/* Mandatory Task */}
+                <div className='flex items-center gap-1 min-w-[120px] justify-end pr-2'>
+                  <Checkbox
+                    checked={!!item.isMandatory}
+                    onCheckedChange={(checked) =>
+                      setSuggestedItems((prev) =>
+                        prev.map((t) => (t.id === item.id ? { ...t, isMandatory: checked === true } : t)),
+                      )
+                    }
+                    className='scale-90'
+                  />
+                  <span className='text-gray-700 text-xs'>Mandatory Task?</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Task Editor Dialog for editing/adding */}
+      <TaskEditorDialog
+        open={showTaskDialog}
+        onClose={() => setShowTaskDialog(false)}
+        onSave={handleTaskDialogSave}
+        initialValues={taskDialogInitialValues}
+      />
+      {/* Task Editor Dialog for viewing complementary task (read-only) */}
+      <TaskEditorDialog
+        open={!!viewingSuggestion}
+        onClose={() => setViewingSuggestion(null)}
+        onSave={() => {}}
+        initialValues={viewingSuggestion}
+        readOnly={true}
+      />
     </div>
   );
 };

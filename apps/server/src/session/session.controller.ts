@@ -54,29 +54,22 @@ export class SessionController {
     @UploadedFile() file: Express.Multer.File,
     @Body() body: { durationSeconds?: string }
   ) {
-    try {
-      if (!file || !file.buffer) {
-        throw new Error('No audio file provided or file buffer is empty');
-      }
-
-      console.log(`Upload received for session ${sessionId}:`, {
-        originalname: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size,
-        bufferLength: file.buffer?.byteLength,
-        durationSeconds: body.durationSeconds,
-      });
-
-      const durationSeconds = body.durationSeconds ? parseInt(body.durationSeconds, 10) : undefined;
-
-      // Only pass durationSeconds if it's a valid number
-      const validDurationSeconds = durationSeconds && !isNaN(durationSeconds) ? durationSeconds : undefined;
-
-      return await this.sessionService.addAudioToSession(sessionId, file.buffer, validDurationSeconds);
-    } catch (error) {
-      console.error(`Error uploading audio for session ${sessionId}:`, error);
-      throw error;
+    if (!file || !file.buffer) {
+      throw new Error('No audio file provided or file buffer is empty');
     }
+
+    const durationSeconds = body.durationSeconds ? parseInt(body.durationSeconds, 10) : undefined;
+
+    const validDurationSeconds = durationSeconds && !isNaN(durationSeconds) ? durationSeconds : undefined;
+
+    return await this.sessionService.addAudioToSession(sessionId, file.buffer, validDurationSeconds);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update session data' })
+  @ApiResponse({ status: 200, description: 'Session updated successfully.' })
+  async updateSession(@Param('id') sessionId: string, @Body() body: { aiSummary?: string; notes?: string }) {
+    return await this.sessionService.updateSession(sessionId, body);
   }
 
   @Put(':id/status')

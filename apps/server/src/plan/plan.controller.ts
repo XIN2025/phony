@@ -146,4 +146,11 @@ export class PlanController {
   ) {
     return await this.planService.addCustomActionItem(planId, actionItemData);
   }
+
+  @Post('generate')
+  @ApiOperation({ summary: 'Generate action plan from session' })
+  @ApiResponse({ status: 200, description: 'Plan generated successfully.' })
+  async generatePlanFromSession(@Body() body: { sessionId: string }) {
+    return await this.planService.generatePlanFromSession(body.sessionId);
+  }
 }

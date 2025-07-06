@@ -6,13 +6,11 @@ import { filterTranscriptPrompt } from './prompts/filter-transcript';
 import { meetingSummaryPrompt } from './prompts/meeting-summary';
 import { actionItemPrompt } from './prompts/action-item.suggestion';
 
-// Schema for structured summarization output
 const summarySchema = z.object({
   title: z.string().describe('A concise, relevant title for the session, max 5 words'),
   summary: z.string().describe('A detailed, structured markdown summary of the session'),
 });
 
-// Schema for action item suggestions
 const actionItemSuggestionsSchema = z.object({
   suggestions: z
     .array(
@@ -50,95 +48,109 @@ export class AiService {
   }
 
   async filterTranscript(rawTranscript: string): Promise<string> {
-    try {
-      this.logger.log('Starting transcript filtering process...');
-
-      const prompt = this.getFilteredTranscriptPrompt();
-      const fullPrompt = `${prompt}\n\nPlease filter the following transcript:\n\n---\n\n${rawTranscript}`;
-
-      const result = await this.model.generateContent(fullPrompt);
-      const filteredText = result.response.text();
-
-      this.logger.log('Transcript filtering completed successfully');
-      return filteredText;
-    } catch (error) {
-      this.logger.error('Error filtering transcript:', error);
-      throw new Error('Failed to filter transcript');
+    if (!rawTranscript || rawTranscript.trim().length === 0) {
+      return '';
     }
+
+    if (rawTranscript.length > 100000) {
+      rawTranscript = rawTranscript.substring(0, 100000);
+    }
+
+    const prompt = this.getFilteredTranscriptPrompt();
+    const fullPrompt = `${prompt}\n\nPlease filter the following transcript:\n\n---\n\n${rawTranscript}`;
+
+    const result = await this.model.generateContent(fullPrompt);
+
+    if (!result || !result.response) {
+      throw new Error('No response from Gemini API');
+    }
+
+    const filteredText = result.response.text();
+
+    if (!filteredText) {
+      return rawTranscript;
+    }
+
+    return filteredText;
   }
 
   async generateStructuredSummary(filteredTranscript: string): Promise<SessionSummary> {
-    try {
-      this.logger.log('Starting structured summarization process...');
-
-      const prompt = this.getMeetingSummaryPrompt();
-      const fullPrompt = `${prompt}\n\nGenerate a summary for the following transcript:\n\n---\n\n${filteredTranscript}`;
-
-      const result = await this.model.generateContent(fullPrompt);
-      const summaryText = result.response.text();
-
-      this.logger.log('Raw AI summary response:', summaryText);
-
-      let parsedSummary: SessionSummary;
-      try {
-        const jsonMatch = summaryText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          throw new Error('No JSON found in response');
-        }
-        const jsonString = jsonMatch[0];
-        this.logger.log('Extracted JSON string:', jsonString);
-
-        const jsonData = JSON.parse(jsonString);
-        this.logger.log('Parsed JSON data:', jsonData);
-
-        parsedSummary = summarySchema.parse(jsonData);
-        this.logger.log('Validated summary:', parsedSummary);
-      } catch (error) {
-        this.logger.warn('Failed to parse structured summary, using fallback format. Error:', error);
-        parsedSummary = {
-          title: 'Session Summary',
-          summary: summaryText,
-        };
-      }
-
-      this.logger.log('Structured summarization completed successfully');
-      return parsedSummary;
-    } catch (error) {
-      this.logger.error('Error generating structured summary:', error);
-      throw new Error('Failed to generate structured summary');
+    if (!filteredTranscript || filteredTranscript.trim().length === 0) {
+      return {
+        title: 'Session Summary',
+        summary: 'No transcript content available to summarize.',
+      };
     }
+
+    const prompt = this.getMeetingSummaryPrompt();
+    const fullPrompt = `${prompt}\n\nGenerate a summary for the following transcript:\n\n---\n\n${filteredTranscript}`;
+
+    const result = await this.model.generateContent(fullPrompt);
+
+    if (!result || !result.response) {
+      throw new Error('No response from Gemini API');
+    }
+
+    const summaryText = result.response.text();
+
+    if (!summaryText) {
+      return {
+        title: 'Session Summary',
+        summary: 'AI summary generation failed - no response received.',
+      };
+    }
+
+    let parsedSummary: SessionSummary;
+    try {
+      const jsonMatch = summaryText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON found in response');
+      }
+      const jsonString = jsonMatch[0];
+      const jsonData = JSON.parse(jsonString);
+      parsedSummary = summarySchema.parse(jsonData);
+    } catch {
+      parsedSummary = {
+        title: 'Session Summary',
+        summary: summaryText,
+      };
+    }
+
+    return parsedSummary;
   }
 
   async suggestActionItems(filteredTranscript: string): Promise<ActionItemSuggestions> {
-    try {
-      this.logger.log('Starting action item suggestion process...');
-
-      const prompt = this.getActionItemSuggestionPrompt();
-      const fullPrompt = `${prompt}\n\nAnalyze the following session transcript and suggest action items:\n\n---\n\n${filteredTranscript}`;
-
-      const result = await this.model.generateContent(fullPrompt);
-      const suggestionText = result.response.text();
-
-      let parsedSuggestions: ActionItemSuggestions;
-      try {
-        const jsonMatch = suggestionText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          throw new Error('No JSON found in response');
-        }
-        parsedSuggestions = actionItemSuggestionsSchema.parse(JSON.parse(jsonMatch[0]));
-      } catch (parseError) {
-        this.logger.warn('Failed to parse action item suggestions, using empty array');
-        parsedSuggestions = { suggestions: [] };
-      }
-
-      this.logger.log(
-        `Action item suggestion completed successfully. Found ${parsedSuggestions.suggestions.length} suggestions`
-      );
-      return parsedSuggestions;
-    } catch (error) {
-      this.logger.error('Error suggesting action items:', error);
-      throw new Error('Failed to suggest action items');
+    if (!filteredTranscript || filteredTranscript.trim().length === 0) {
+      return { suggestions: [] };
     }
+
+    const prompt = this.getActionItemSuggestionPrompt();
+    const fullPrompt = `${prompt}\n\nAnalyze the following session transcript and suggest action items:\n\n---\n\n${filteredTranscript}`;
+
+    const result = await this.model.generateContent(fullPrompt);
+
+    if (!result || !result.response) {
+      throw new Error('No response from Gemini API');
+    }
+
+    const suggestionText = result.response.text();
+
+    if (!suggestionText) {
+      return { suggestions: [] };
+    }
+
+    let parsedSuggestions: ActionItemSuggestions;
+    try {
+      const jsonMatch = suggestionText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON found in response');
+      }
+      parsedSuggestions = actionItemSuggestionsSchema.parse(JSON.parse(jsonMatch[0]));
+    } catch {
+      parsedSuggestions = { suggestions: [] };
+    }
+
+    return parsedSuggestions;
   }
 
   async processSession(rawTranscript: string): Promise<{
@@ -146,26 +158,29 @@ export class AiService {
     summary: SessionSummary;
     actionItemSuggestions: ActionItemSuggestions;
   }> {
-    try {
-      this.logger.log('Starting complete AI processing pipeline...');
-
-      const filteredTranscript = await this.filterTranscript(rawTranscript);
-
-      const [summary, actionItemSuggestions] = await Promise.all([
-        this.generateStructuredSummary(filteredTranscript),
-        this.suggestActionItems(filteredTranscript),
-      ]);
-
-      this.logger.log('Complete AI processing pipeline completed successfully');
+    if (!rawTranscript || rawTranscript.trim().length === 0) {
       return {
-        filteredTranscript,
-        summary,
-        actionItemSuggestions,
+        filteredTranscript: '',
+        summary: {
+          title: 'Session Summary',
+          summary: 'No transcript content available to process.',
+        },
+        actionItemSuggestions: { suggestions: [] },
       };
-    } catch (error) {
-      this.logger.error('Error in complete AI processing pipeline:', error);
-      throw error;
     }
+
+    const filteredTranscript = await this.filterTranscript(rawTranscript);
+
+    const [summary, actionItemSuggestions] = await Promise.all([
+      this.generateStructuredSummary(filteredTranscript),
+      this.suggestActionItems(filteredTranscript),
+    ]);
+
+    return {
+      filteredTranscript,
+      summary,
+      actionItemSuggestions,
+    };
   }
 
   private getFilteredTranscriptPrompt(): string {
