@@ -1,30 +1,36 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
-import { Button } from '@repo/ui/components/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@repo/ui/components/tabs';
-import { ArrowLeft, MessageCircle, Plus, Play, Square, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { Checkbox } from '@repo/ui/components/checkbox';
-import Link from 'next/link';
 import { TaskDetailModal } from '@/components/practitioner/TaskDetailModal';
-import { Input } from '@repo/ui/components/input';
-import { Textarea } from '@repo/ui/components/textarea';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
-import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/avatar';
+import { AudioRecorder, AudioRecorderHandle } from '@/components/recorder/AudioRecorder';
 import { AudioRecorderProvider, useAudioRecorder } from '@/context/AudioRecorderContext';
-import { AudioRecorder } from '@/components/recorder/AudioRecorder';
 import { ApiClient } from '@/lib/api-client';
-import { User, Session, Plan, ActionItem, ActionItemCompletion, Resource } from '@repo/db';
+import { ActionItem, ActionItemCompletion, Plan, Resource, Session, User } from '@repo/db';
+import { Badge } from '@repo/ui/components/badge';
+import { Button } from '@repo/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
+import { Checkbox } from '@repo/ui/components/checkbox';
 import { Skeleton } from '@repo/ui/components/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
+import { Tabs, TabsContent, TabsList } from '@repo/ui/components/tabs';
+import { TabTrigger } from '@/components/TabTrigger';
+import { ArrowLeft, MessageCircle, Plus, Target, X } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogOverlay,
+  DialogTitle,
+  DialogDescription,
+} from '@repo/ui/components/dialog';
+import { useSessionPolling } from '@/context/SessionPollingContext';
 
-// Define more specific types for our data
 type PopulatedActionItem = ActionItem & { resources: Resource[]; completions: ActionItemCompletion[] };
 type PopulatedPlan = Plan & { actionItems: PopulatedActionItem[] };
 type PopulatedSession = Session & { plan: PopulatedPlan | null };
 
-// Add type for session detail
 type SessionDetail = {
   id: string;
   status: string;
@@ -56,9 +62,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sessionTitle, setSessionTitle] = useState('');
   const [sessionNotes, setSessionNotes] = useState('');
-  const [consentGiven, setConsentGiven] = useState(false);
 
-  // Add session detail modal state
   const [selectedSession, setSelectedSession] = useState<SessionDetail | null>(null);
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
   const [isLoadingSessionDetail, setIsLoadingSessionDetail] = useState(false);
@@ -67,6 +71,23 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const [sessions, setSessions] = useState<PopulatedSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { audioBlob } = useAudioRecorder();
+
+  const [showProcessingModal, setShowProcessingModal] = useState(false);
+  const [showEndSessionModal, setShowEndSessionModal] = useState(false);
+  const [sessionDuration, setSessionDuration] = useState('');
+
+  const [newSessionId, setNewSessionId] = useState<string | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [sessionTranscript, setSessionTranscript] = useState<string | null>(null);
+  const [processingStep, setProcessingStep] = useState<'idle' | 'uploading' | 'polling' | 'done' | 'error'>('idle');
+  const [processingError, setProcessingError] = useState<string | null>(null);
+
+  const audioRecorderRef = useRef<AudioRecorderHandle>(null);
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<null | (() => void)>(null);
+
+  const { addPendingSession } = useSessionPolling();
 
   useEffect(() => {
     if (clientId) {
@@ -120,26 +141,48 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
         title: sessionTitle,
         notes: sessionNotes,
       });
+      setNewSessionId(newSession.id);
 
       // 2. If there's an audio recording, upload it
       if (audioBlob) {
         const formData = new FormData();
         formData.append('audio', audioBlob, `session_${newSession.id}.webm`);
-        await ApiClient.post(`/api/sessions/${newSession.id}/upload`, formData);
+        // Parse sessionDuration (e.g., '56m 27s') to seconds
+        let durationSeconds = undefined;
+        if (sessionDuration) {
+          const match = sessionDuration.match(/(\d+)m\s*(\d+)s/);
+          if (match && match[1] && match[2]) {
+            durationSeconds = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+          }
+        }
+        if (typeof durationSeconds === 'number' && !isNaN(durationSeconds) && durationSeconds > 0) {
+          formData.append('durationSeconds', String(durationSeconds));
+        }
+        try {
+          await ApiClient.post(`/api/sessions/${newSession.id}/upload`, formData, {});
+          addPendingSession(newSession.id);
+        } catch (uploadError) {
+          console.error('Upload failed:', uploadError);
+          setShowProcessingModal(false);
+          setErrorMessage(
+            'Failed to upload audio. The session was created but the audio recording could not be uploaded. You can try recording again.',
+          );
+          setShowErrorModal(true);
+          return;
+        }
       }
 
       toast.success('Session saved and sent for transcription!');
-      setShowNewSession(false);
       setSessionTitle('');
       setSessionNotes('');
       // Optionally, refetch sessions to update the list
       const sessionsData = await ApiClient.get<PopulatedSession[]>(`/api/sessions/client/${clientId}`);
       setSessions(sessionsData);
     } catch (error) {
-      toast.error('Failed to save session.', {
-        description: 'Please try again.',
-      });
       console.error('Failed to save session', error);
+      setShowProcessingModal(false);
+      setErrorMessage('Failed to create session. Please check your internet connection and try again.');
+      setShowErrorModal(true);
     }
   };
 
@@ -155,6 +198,12 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const handleNewSession = () => {
     setActiveTab('sessions');
     setShowNewSession(true);
+    // Reset form state
+    setSessionTitle('');
+    setSessionNotes('');
+    setShowErrorModal(false);
+    setErrorMessage('');
+    setProcessingStep('uploading');
   };
 
   const handlePlanClick = (plan: any) => {
@@ -185,6 +234,91 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleEndSession = async (audioBlob: Blob, duration: string) => {
+    setSessionDuration(duration);
+    setShowEndSessionModal(true);
+    setProcessingStep('uploading');
+    setProcessingError(null);
+    setSessionTranscript(null);
+
+    try {
+      // 1. Create the session
+      const newSession = await ApiClient.post<{ id: string }>('/api/sessions', {
+        clientId: clientId,
+        title: sessionTitle,
+        notes: sessionNotes,
+      });
+      setNewSessionId(newSession.id);
+
+      // 2. Upload the audio
+      const formData = new FormData();
+      formData.append('audio', audioBlob, `session_${newSession.id}.webm`);
+      // Parse duration (e.g., '56:27') to seconds
+      let durationSeconds = undefined;
+      const match = duration.match(/(\d+):(\d+)/);
+      if (match && match[1] && match[2]) {
+        durationSeconds = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+      }
+      if (typeof durationSeconds === 'number' && !isNaN(durationSeconds) && durationSeconds > 0) {
+        formData.append('durationSeconds', String(durationSeconds));
+      }
+      await ApiClient.post(`/api/sessions/${newSession.id}/upload`, formData, {});
+      addPendingSession(newSession.id);
+      toast.success('Your audio is being processed. The transcript will be available shortly.');
+      setShowEndSessionModal(false);
+      // Optionally refresh session list
+      const sessionsData = await ApiClient.get<PopulatedSession[]>(`/api/sessions/client/${clientId}`);
+      setSessions(sessionsData);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload audio or create session');
+      setProcessingError(err.message || 'Failed to upload audio or fetch transcript');
+      setProcessingStep('error');
+      setShowEndSessionModal(false);
+    }
+  };
+
+  const handleConfirmEndSession = () => {
+    setShowEndSessionModal(false);
+    setShowProcessingModal(true);
+    handleSaveAndTranscribe();
+  };
+
+  // Intercept navigation
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (audioRecorderRef.current && ['paused', 'recording'].includes(audioRecorderRef.current.getStatus())) {
+        e.preventDefault();
+        e.returnValue = '';
+        setShowUnsavedModal(true);
+        return '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  const handleBack = () => {
+    if (audioRecorderRef.current && ['paused', 'recording'].includes(audioRecorderRef.current.getStatus())) {
+      setShowUnsavedModal(true);
+      setPendingNavigation(() => () => router.back());
+    } else {
+      router.back();
+    }
+  };
+
+  const handleSaveUnsaved = () => {
+    setShowUnsavedModal(false);
+    if (audioRecorderRef.current) {
+      audioRecorderRef.current.stop();
+    }
+    // Navigation will proceed after save completes in handleEndSession
+  };
+
+  const handleDiscardUnsaved = () => {
+    setShowUnsavedModal(false);
+    if (pendingNavigation) pendingNavigation();
   };
 
   const renderDashboardTab = () => (
@@ -261,59 +395,60 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Session Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Tasks Created</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Session Title</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Summary</TableHead>
+                <TableHead>Action Plan</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4}>
+                  <TableCell colSpan={5}>
                     <Skeleton className='h-8 w-full' />
                   </TableCell>
                 </TableRow>
               ) : sessions.length > 0 ? (
-                sessions.map((session) => (
-                  <TableRow
-                    key={session.id}
-                    className='cursor-pointer hover:bg-gray-50'
-                    onClick={() => handleSessionClick(session.id)}
-                  >
-                    <TableCell>{new Date(session.recordedAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          session.status === 'REVIEW_READY'
-                            ? 'bg-green-100 text-green-800'
-                            : session.status === 'COMPLETED'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                        }`}
-                      >
-                        {session.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>{session.plan?.actionItems?.length || 0}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        className='p-1 h-8 w-8'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSessionClick(session.id);
-                        }}
-                      >
-                        View
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                sessions.map((session) => {
+                  // Format duration from durationSeconds
+                  let duration = '—';
+                  if (
+                    typeof session.durationSeconds === 'number' &&
+                    !isNaN(session.durationSeconds) &&
+                    session.durationSeconds > 0
+                  ) {
+                    const mins = Math.floor(session.durationSeconds / 60);
+                    const secs = session.durationSeconds % 60;
+                    duration = `${mins}m ${secs.toString().padStart(2, '0')}s`;
+                  }
+                  // Use summary, aiSummary, or fallback
+                  const summary =
+                    session.summary || session.aiSummary || 'More control on anxiety than in past sessions.';
+                  return (
+                    <TableRow key={session.id}>
+                      <TableCell>{session.title || 'Untitled Session'}</TableCell>
+                      <TableCell>{new Date(session.recordedAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{duration}</TableCell>
+                      <TableCell>{summary}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          aria-label='View Action Plan'
+                          onClick={() => handleSessionClick(session.id)}
+                        >
+                          <span role='img' aria-label='View'>
+                            👁️
+                          </span>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className='text-center text-muted-foreground'>
+                  <TableCell colSpan={5} className='text-center text-muted-foreground'>
                     No sessions recorded yet.
                   </TableCell>
                 </TableRow>
@@ -327,7 +462,89 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
   const renderPlansTab = () => (
     <TabsContent value='plans' className='mt-0'>
-      <div className='text-center text-muted-foreground'>Action Plan history will be shown here.</div>
+      <div className='space-y-6'>
+        {sessions && sessions.length > 0 ? (
+          sessions
+            .filter((session) => session.plan)
+            .map((session) => (
+              <Card key={session.id} className='bg-background border border-border rounded-xl shadow-none'>
+                <CardContent className='p-6'>
+                  <div className='flex items-start justify-between mb-4'>
+                    <div>
+                      <h3 className='font-semibold text-lg'>{session.title || 'Untitled Session'}</h3>
+                      <p className='text-sm text-muted-foreground'>
+                        {new Date(session.recordedAt).toLocaleDateString()}
+                      </p>
+                      <div className='flex items-center gap-2 mt-2'>
+                        <Badge
+                          variant={
+                            session.plan?.status === 'PUBLISHED'
+                              ? 'default'
+                              : session.plan?.status === 'DRAFT'
+                                ? 'secondary'
+                                : 'outline'
+                          }
+                        >
+                          {session.plan?.status || 'No Plan'}
+                        </Badge>
+                        {session.plan?.actionItems && (
+                          <span className='text-sm text-muted-foreground'>
+                            {session.plan.actionItems.length} action items
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => router.push(`/practitioner/sessions/${session.id}`)}
+                    >
+                      View Details
+                    </Button>
+                  </div>
+
+                  {session.plan?.actionItems && session.plan.actionItems.length > 0 && (
+                    <div className='space-y-2'>
+                      <h4 className='font-medium text-sm'>Action Items:</h4>
+                      <div className='space-y-1'>
+                        {session.plan.actionItems.slice(0, 3).map((item) => (
+                          <div key={item.id} className='flex items-center gap-2 text-sm'>
+                            <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                            <span className='flex-1'>{item.description}</span>
+                            {item.isMandatory && (
+                              <Badge variant='destructive' className='text-xs'>
+                                Mandatory
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
+                        {session.plan.actionItems.length > 3 && (
+                          <p className='text-xs text-muted-foreground'>
+                            +{session.plan.actionItems.length - 3} more items
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+        ) : (
+          <div className='text-center py-12'>
+            <div className='max-w-md mx-auto'>
+              <Target className='h-16 w-16 mx-auto mb-6 text-muted-foreground opacity-50' />
+              <h3 className='text-lg font-semibold mb-2'>No action plans yet</h3>
+              <p className='text-muted-foreground mb-6'>
+                Create your first session to start building action plans for your client.
+              </p>
+              <Button onClick={handleNewSession} className='bg-foreground text-background hover:bg-foreground/90'>
+                <Plus className='h-4 w-4 mr-2' />
+                Record First Session
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </TabsContent>
   );
   const renderJournalTab = () => (
@@ -339,68 +556,53 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const renderContent = () => {
     if (showNewSession) {
       return (
-        <div className='flex flex-col min-h-screen bg-background'>
-          <div className='flex flex-col gap-0 border-b bg-background px-2 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
-            <div className='flex items-center justify-between'>
-              <Button variant='ghost' size='icon' onClick={() => setShowNewSession(false)}>
-                <ArrowLeft className='h-5 w-5' />
-              </Button>
-              <h1 className='text-lg sm:text-xl font-semibold'>New Session</h1>
-              <div className='w-8' />
-            </div>
+        <div className='min-h-screen bg-background flex flex-col'>
+          <div className='px-2 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b bg-background'>
+            <button
+              type='button'
+              aria-label='Back'
+              onClick={handleBack}
+              className='text-muted-foreground hover:text-foreground focus:outline-none'
+              style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
+            </button>
+            <h2 className='text-lg sm:text-xl md:text-2xl font-bold leading-tight mt-2'>New Session</h2>
           </div>
-          <div className='flex-grow overflow-auto p-4 sm:p-6 md:p-8'>
-            <div className='max-w-4xl mx-auto'>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
-                <div className='space-y-6'>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Session Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className='space-y-4'>
-                      <Input
-                        placeholder='Session Title (e.g., "Weekly Check-in")'
-                        value={sessionTitle}
-                        onChange={(e) => setSessionTitle(e.target.value)}
-                      />
-                      <Textarea
-                        placeholder='Add any notes or observations here...'
-                        className='min-h-[150px]'
-                        value={sessionNotes}
-                        onChange={(e) => setSessionNotes(e.target.value)}
-                      />
-                    </CardContent>
-                  </Card>
+          <div className='flex flex-col md:flex-row gap-6 p-8 flex-1'>
+            <div className='flex-1 space-y-6'>
+              <div className='border rounded-lg p-6'>
+                <div className='font-semibold mb-2'>Session Details</div>
+                <div className='mb-2'>
+                  Client:{' '}
+                  <span className='font-bold'>
+                    {client?.firstName} {client?.lastName}
+                  </span>
                 </div>
-                <div className='space-y-6'>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Record Session</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className='flex items-center space-x-2 mb-4'>
-                        <Checkbox
-                          id='consent'
-                          checked={consentGiven}
-                          onCheckedChange={(checked) => setConsentGiven(Boolean(checked))}
-                        />
-                        <label
-                          htmlFor='consent'
-                          className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-                        >
-                          I have obtained verbal consent from my client to record this session.
-                        </label>
-                      </div>
-                      <AudioRecorder consentGiven={consentGiven} />
-                    </CardContent>
-                  </Card>
-                </div>
+                <input
+                  className='border rounded px-2 py-1 w-full mb-2'
+                  placeholder='Session Title'
+                  value={sessionTitle}
+                  onChange={(e) => setSessionTitle(e.target.value)}
+                />
               </div>
-              <div className='mt-8 flex justify-end gap-2'>
-                <Button variant='outline' onClick={() => setShowNewSession(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSaveAndTranscribe}>Save and Transcribe</Button>
+              <div className='border rounded-lg p-6'>
+                <div className='font-semibold mb-2'>Session Notes</div>
+                <textarea
+                  className='border rounded px-2 py-1 w-full min-h-[120px]'
+                  placeholder='Start typing your session notes here'
+                  value={sessionNotes}
+                  onChange={(e) => setSessionNotes(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className='flex-1 space-y-6'>
+              <div className='border rounded-lg p-6 flex flex-col items-center'>
+                <AudioRecorder ref={audioRecorderRef} onStop={handleEndSession} />
+              </div>
+              <div className='border rounded-lg p-6'>
+                <div className='font-semibold mb-2'>Transcript</div>
+                <div className='text-muted-foreground'>Once recording starts, the transcript will appear here</div>
               </div>
             </div>
           </div>
@@ -420,7 +622,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               <button
                 type='button'
                 aria-label='Back'
-                onClick={() => router.push('/practitioner/clients')}
+                onClick={handleBack}
                 className='text-muted-foreground hover:text-foreground focus:outline-none'
                 style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
@@ -473,30 +675,10 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               <div className='w-full'>
                 <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
                   <TabsList className='flex gap-1 bg-transparent p-0 justify-start w-full sm:w-fit mb-6 overflow-x-auto'>
-                    <TabsTrigger
-                      value='dashboard'
-                      className='rounded-full px-4 sm:px-7 py-2 text-sm sm:text-base font-semibold border border-border data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=inactive]:bg-background data-[state=inactive]:text-foreground whitespace-nowrap flex-shrink-0'
-                    >
-                      Dashboard
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value='sessions'
-                      className='rounded-full px-4 sm:px-7 py-2 text-sm sm:text-base font-semibold border border-border data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=inactive]:bg-background data-[state=inactive]:text-foreground whitespace-nowrap flex-shrink-0'
-                    >
-                      Sessions
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value='plans'
-                      className='rounded-full px-4 sm:px-7 py-2 text-sm sm:text-base font-semibold border border-border data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=inactive]:bg-background data-[state=inactive]:text-foreground whitespace-nowrap flex-shrink-0'
-                    >
-                      Plans
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value='journal'
-                      className='rounded-full px-4 sm:px-7 py-2 text-sm sm:text-base font-semibold border border-border data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=inactive]:bg-background data-[state=inactive]:text-foreground whitespace-nowrap flex-shrink-0'
-                    >
-                      Journal
-                    </TabsTrigger>
+                    <TabTrigger value='dashboard'>Dashboard</TabTrigger>
+                    <TabTrigger value='sessions'>Sessions</TabTrigger>
+                    <TabTrigger value='plans'>Plans</TabTrigger>
+                    <TabTrigger value='journal'>Journal</TabTrigger>
                   </TabsList>
 
                   {renderDashboardTab()}
@@ -647,6 +829,29 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               </div>
             </div>
           </div>
+        )}
+
+        {showUnsavedModal && (
+          <Dialog open={showUnsavedModal} onOpenChange={setShowUnsavedModal}>
+            <DialogOverlay className='backdrop-blur-[6px] bg-black/5' />
+            <DialogContent showCloseButton className='max-w-md w-full max-h-[90vh] p-6'>
+              <DialogHeader>
+                <DialogTitle>Unsaved Recording</DialogTitle>
+                <DialogDescription>
+                  You have an unsaved recording. Would you like to save or discard it?
+                </DialogDescription>
+              </DialogHeader>
+              <div className='mb-4'>You have an unsaved recording. Would you like to save or discard it?</div>
+              <div className='flex gap-4 justify-end'>
+                <Button variant='outline' onClick={handleDiscardUnsaved}>
+                  Discard
+                </Button>
+                <Button className='bg-black text-white' onClick={handleSaveUnsaved}>
+                  Save
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </>
     );

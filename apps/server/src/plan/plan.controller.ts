@@ -13,6 +13,11 @@ interface CreatePlanDto {
     category?: string;
     target?: string;
     frequency?: string;
+    weeklyRepetitions?: number;
+    isMandatory?: boolean;
+    whyImportant?: string;
+    recommendedActions?: string;
+    toolsToHelp?: string;
     source?: (typeof ActionItemSource)[keyof typeof ActionItemSource];
     resources?: {
       type: 'LINK' | 'PDF';
@@ -127,6 +132,11 @@ export class PlanController {
       category?: string;
       target?: string;
       frequency?: string;
+      weeklyRepetitions?: number;
+      isMandatory?: boolean;
+      whyImportant?: string;
+      recommendedActions?: string;
+      toolsToHelp?: string;
       resources?: {
         type: 'LINK' | 'PDF';
         url: string;

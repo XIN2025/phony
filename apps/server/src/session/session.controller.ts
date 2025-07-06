@@ -18,14 +18,15 @@ export class SessionController {
   @ApiOperation({ summary: 'Create a new session' })
   @ApiResponse({ status: 201, description: 'Session created successfully.' })
   async createSession(
-    @Body() createSessionDto: { clientId: string; title: string; notes?: string },
+    @Body() createSessionDto: { clientId: string; title: string; notes?: string; summary?: string },
     @CurrentUser() user: RequestUser
   ) {
     return await this.sessionService.createSession(
       user.id,
       createSessionDto.clientId,
       createSessionDto.title,
-      createSessionDto.notes
+      createSessionDto.notes,
+      createSessionDto.summary
     );
   }
 
@@ -41,23 +42,41 @@ export class SessionController {
           type: 'string',
           format: 'binary',
         },
+        durationSeconds: {
+          type: 'number',
+        },
       },
     },
   })
   @ApiResponse({ status: 201, description: 'Audio uploaded successfully.' })
-  async uploadAudio(@Param('id') sessionId: string, @UploadedFile() file: Express.Multer.File) {
-    if (!file || !file.buffer) {
-      throw new Error('No audio file provided or file buffer is empty');
+  async uploadAudio(
+    @Param('id') sessionId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: { durationSeconds?: string }
+  ) {
+    try {
+      if (!file || !file.buffer) {
+        throw new Error('No audio file provided or file buffer is empty');
+      }
+
+      console.log(`Upload received for session ${sessionId}:`, {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        bufferLength: file.buffer?.byteLength,
+        durationSeconds: body.durationSeconds,
+      });
+
+      const durationSeconds = body.durationSeconds ? parseInt(body.durationSeconds, 10) : undefined;
+
+      // Only pass durationSeconds if it's a valid number
+      const validDurationSeconds = durationSeconds && !isNaN(durationSeconds) ? durationSeconds : undefined;
+
+      return await this.sessionService.addAudioToSession(sessionId, file.buffer, validDurationSeconds);
+    } catch (error) {
+      console.error(`Error uploading audio for session ${sessionId}:`, error);
+      throw error;
     }
-
-    console.log(`Upload received for session ${sessionId}:`, {
-      originalname: file.originalname,
-      mimetype: file.mimetype,
-      size: file.size,
-      bufferLength: file.buffer?.byteLength,
-    });
-
-    return await this.sessionService.addAudioToSession(sessionId, file.buffer);
   }
 
   @Put(':id/status')

@@ -21,6 +21,11 @@ const actionItemSuggestionsSchema = z.object({
         category: z.string().optional().describe('Optional category for the task'),
         target: z.string().optional().describe('Optional target or goal for the task'),
         frequency: z.string().optional().describe('Optional frequency or schedule for the task'),
+        weeklyRepetitions: z.number().optional().describe('Number of times per week this should be done'),
+        isMandatory: z.boolean().optional().describe('Whether this is a mandatory task'),
+        whyImportant: z.string().optional().describe('Why this task is important for the client'),
+        recommendedActions: z.string().optional().describe('Specific steps to complete this task'),
+        toolsToHelp: z.string().optional().describe('Tools, apps, or resources to help with this task'),
       })
     )
     .describe('Array of suggested action items from the session'),

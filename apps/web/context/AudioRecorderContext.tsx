@@ -4,12 +4,14 @@ import React, { createContext, useContext, useState, useRef, ReactNode } from 'r
 import { toast } from 'sonner';
 import { ApiClient } from '@/lib/api-client';
 
-type RecordingStatus = 'idle' | 'permission' | 'recording' | 'stopped' | 'error';
+type RecordingStatus = 'idle' | 'permission' | 'recording' | 'paused' | 'stopped' | 'error';
 
 interface AudioRecorderContextType {
   status: RecordingStatus;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
+  pauseRecording: () => void;
+  resumeRecording: () => void;
   audioBlob: Blob | null;
   error: string | null;
   recordingTime: number;
@@ -24,7 +26,7 @@ const getSupportedMimeType = () => {
       return type;
     }
   }
-  return ''; // Let the browser decide if no preference is supported
+  return '';
 };
 
 export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => {
@@ -51,16 +53,13 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
     setAudioBlob(null);
 
     try {
-      // 2. Get display media (for tab audio)
       const systemStream = await navigator.mediaDevices.getDisplayMedia({
         video: true,
         audio: true,
       });
 
-      // 3. Get user media (for microphone)
       const userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      // Check if system audio track was captured
       if (systemStream.getAudioTracks().length === 0) {
         toast.error('Tab audio not shared', {
           description: 'Please ensure you check "Share tab audio" in the browser prompt.',
@@ -72,7 +71,6 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
         return;
       }
 
-      // 4. Merge streams using Web Audio API to create a single audio track
       const audioContext = new AudioContext();
       const systemSource = audioContext.createMediaStreamSource(systemStream);
       const userSource = audioContext.createMediaStreamSource(userStream);
@@ -83,7 +81,6 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
 
       combinedStreamRef.current = destination.stream;
 
-      // 5. Start recording
       audioChunksRef.current = [];
       const mimeType = getSupportedMimeType();
       const recorder = new MediaRecorder(combinedStreamRef.current, { mimeType });
@@ -115,7 +112,6 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
         }
       };
 
-      // Add detailed stream logging before starting
       console.log('Inspecting combined stream before recording...');
       console.log(`Stream is active: ${combinedStreamRef.current.active}`);
       const audioTracks = combinedStreamRef.current.getAudioTracks();
@@ -130,7 +126,6 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
       recorder.start();
       setStatus('recording');
 
-      // Start timer
       setRecordingTime(0);
       timerIntervalRef.current = setInterval(() => {
         setRecordingTime((prev) => prev + 1);
@@ -151,13 +146,34 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
-    // Cleanup will happen in the onstop handler
+  };
+
+  const pauseRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.pause();
+      setStatus('paused');
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    }
+  };
+
+  const resumeRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
+      mediaRecorderRef.current.resume();
+      setStatus('recording');
+      timerIntervalRef.current = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+    }
   };
 
   const value = {
     status,
     startRecording,
     stopRecording,
+    pauseRecording,
+    resumeRecording,
     audioBlob,
     error,
     recordingTime,

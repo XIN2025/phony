@@ -11,6 +11,11 @@ interface CreatePlanDto {
     category?: string;
     target?: string;
     frequency?: string;
+    weeklyRepetitions?: number;
+    isMandatory?: boolean;
+    whyImportant?: string;
+    recommendedActions?: string;
+    toolsToHelp?: string;
     source?: (typeof ActionItemSource)[keyof typeof ActionItemSource];
     resources?: {
       type: 'LINK' | 'PDF';
@@ -37,6 +42,11 @@ export class PlanService {
             category: item.category,
             target: item.target,
             frequency: item.frequency,
+            weeklyRepetitions: item.weeklyRepetitions || 1,
+            isMandatory: item.isMandatory || false,
+            whyImportant: item.whyImportant,
+            recommendedActions: item.recommendedActions,
+            toolsToHelp: item.toolsToHelp,
             source: item.source || ActionItemSource.MANUAL,
             resources: {
               create: item.resources || [],
@@ -181,6 +191,11 @@ export class PlanService {
                 category: item.category,
                 target: item.target,
                 frequency: item.frequency,
+                weeklyRepetitions: item.weeklyRepetitions || 1,
+                isMandatory: item.isMandatory || false,
+                whyImportant: item.whyImportant,
+                recommendedActions: item.recommendedActions,
+                toolsToHelp: item.toolsToHelp,
                 source: item.source || ActionItemSource.MANUAL,
                 resources: {
                   create: item.resources || [],
@@ -225,6 +240,11 @@ export class PlanService {
         category: suggestedItem.category,
         target: suggestedItem.target,
         frequency: suggestedItem.frequency,
+        weeklyRepetitions: suggestedItem.weeklyRepetitions || 1,
+        isMandatory: suggestedItem.isMandatory || false,
+        whyImportant: suggestedItem.whyImportant,
+        recommendedActions: suggestedItem.recommendedActions,
+        toolsToHelp: suggestedItem.toolsToHelp,
         source: ActionItemSource.AI_SUGGESTED,
       },
       include: {
@@ -316,6 +336,11 @@ export class PlanService {
       category?: string;
       target?: string;
       frequency?: string;
+      weeklyRepetitions?: number;
+      isMandatory?: boolean;
+      whyImportant?: string;
+      recommendedActions?: string;
+      toolsToHelp?: string;
       resources?: {
         type: 'LINK' | 'PDF';
         url: string;
@@ -330,6 +355,11 @@ export class PlanService {
         category: actionItemData.category,
         target: actionItemData.target,
         frequency: actionItemData.frequency,
+        weeklyRepetitions: actionItemData.weeklyRepetitions || 1,
+        isMandatory: actionItemData.isMandatory || false,
+        whyImportant: actionItemData.whyImportant,
+        recommendedActions: actionItemData.recommendedActions,
+        toolsToHelp: actionItemData.toolsToHelp,
         source: ActionItemSource.MANUAL,
         resources: {
           create: actionItemData.resources || [],

@@ -443,6 +443,9 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.1
       cpy-cli:
         specifier: ^5.0.0
         version: 5.0.0

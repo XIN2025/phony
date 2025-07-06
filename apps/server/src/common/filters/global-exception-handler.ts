@@ -32,7 +32,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     } else if (status === HttpStatus.NOT_FOUND) {
       message = 'Resource not found. Please check the URL.';
     } else if (Number(status) >= 500) {
-      message = 'Server error. Please try again later.';
+      // In development, show more detailed error information
+      if (process.env.NODE_ENV === 'development') {
+        message = exception instanceof Error ? exception.message : 'Server error. Please try again later.';
+      } else {
+        message = 'Server error. Please try again later.';
+      }
     }
 
     this.logger.error(

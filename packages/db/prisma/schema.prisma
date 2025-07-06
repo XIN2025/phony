@@ -172,12 +172,15 @@ model Session {
   aiSummary          String?
   transcriptionJobId String?
   plan               Plan?
+  durationSeconds    Int?
+  summary            String?
   @@map("sessions")
 }
 
 enum SessionStatus {
   UPLOADING
   TRANSCRIBING
+  TRANSCRIPTION_FAILED
   AI_PROCESSING
   REVIEW_READY
   COMPLETED
@@ -207,15 +210,20 @@ enum PlanStatus {
 }
 
 model SuggestedActionItem {
-  id          String                    @id @default(auto()) @map("_id") @db.ObjectId
-  planId      String                    @db.ObjectId
-  plan        Plan                      @relation(fields: [planId], references: [id], onDelete: Cascade)
-  description String
-  category    String?
-  target      String?
-  frequency   String?
-  status      SuggestedActionItemStatus @default(PENDING)
-  createdAt   DateTime                  @default(now())
+  id                String                    @id @default(auto()) @map("_id") @db.ObjectId
+  planId            String                    @db.ObjectId
+  plan              Plan                      @relation(fields: [planId], references: [id], onDelete: Cascade)
+  description       String
+  category          String?
+  target            String?
+  frequency         String?
+  weeklyRepetitions Int?                      @default(1)
+  isMandatory       Boolean                   @default(false)
+  whyImportant      String?
+  recommendedActions String?
+  toolsToHelp       String?
+  status            SuggestedActionItemStatus @default(PENDING)
+  createdAt         DateTime                  @default(now())
   @@map("suggested_action_items")
 }
 
@@ -226,16 +234,21 @@ enum SuggestedActionItemStatus {
 }
 
 model ActionItem {
-  id          String      @id @default(auto()) @map("_id") @db.ObjectId
-  planId      String      @db.ObjectId
-  plan        Plan        @relation(fields: [planId], references: [id], onDelete: Cascade)
-  description String
-  category    String?
-  target      String?
-  frequency   String?
-  source      ActionItemSource @default(MANUAL)
-  resources   Resource[]
-  completions ActionItemCompletion[]
+  id                String      @id @default(auto()) @map("_id") @db.ObjectId
+  planId            String      @db.ObjectId
+  plan              Plan        @relation(fields: [planId], references: [id], onDelete: Cascade)
+  description       String
+  category          String?
+  target            String?
+  frequency         String?
+  weeklyRepetitions Int?        @default(1)
+  isMandatory       Boolean     @default(false)
+  whyImportant      String?
+  recommendedActions String?
+  toolsToHelp       String?
+  source            ActionItemSource @default(MANUAL)
+  resources         Resource[]
+  completions       ActionItemCompletion[]
   @@map("action_items")
 }
 

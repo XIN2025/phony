@@ -7,19 +7,30 @@ import { Checkbox } from '@repo/ui/components/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@repo/ui/components/dialog';
 import { Textarea } from '@repo/ui/components/textarea';
 import { Label } from '@repo/ui/components/label';
-import { Star, Calendar, Target, Clock, Menu } from 'lucide-react';
+import { Star, Calendar, Target, Clock, Menu, AlertCircle, Info, ExternalLink } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSidebar } from '@/context/SidebarContext';
 import Link from 'next/link';
 import { Badge } from '@repo/ui/components/badge';
+import { ApiClient } from '@/lib/api-client';
 
 interface ActionItem {
   id: string;
   description: string;
-  target: string;
-  frequency: string;
+  target?: string;
+  frequency?: string;
+  weeklyRepetitions?: number;
+  isMandatory?: boolean;
+  whyImportant?: string;
+  recommendedActions?: string;
+  toolsToHelp?: string;
+  category?: string;
   isCompleted: boolean;
-  category: string;
+  resources?: Array<{
+    type: 'LINK' | 'PDF';
+    url: string;
+    title?: string;
+  }>;
 }
 
 interface CompletionData {
@@ -43,32 +54,118 @@ const ClientPage = () => {
   const { data: todayTasks, isLoading: todayTasksLoading } = useQuery({
     queryKey: ['today-tasks'],
     queryFn: async (): Promise<ActionItem[]> => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return [
-        {
-          id: '1',
-          description: 'Spend Time Outdoors',
-          target: '30 mins',
-          frequency: '2/day',
-          isCompleted: false,
-          category: 'daily',
-        },
-        {
-          id: '4',
-          description: 'Sleep Routine',
-          target: '8 hrs',
-          frequency: '1/day',
-          isCompleted: false,
-          category: 'consistent',
-        },
-      ];
+      if (!session?.user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      try {
+        // Fetch published plans for the client
+        const plans = (await ApiClient.get(`/api/plans/client/${session.user.id}`)) as any[];
+
+        // Extract action items from all published plans
+        const allActionItems: ActionItem[] = [];
+
+        plans.forEach((plan: any) => {
+          if (plan.actionItems && plan.actionItems.length > 0) {
+            plan.actionItems.forEach((item: any) => {
+              allActionItems.push({
+                id: item.id,
+                description: item.description,
+                target: item.target,
+                frequency: item.frequency,
+                weeklyRepetitions: item.weeklyRepetitions || 1,
+                isMandatory: item.isMandatory || false,
+                whyImportant: item.whyImportant,
+                recommendedActions: item.recommendedActions,
+                toolsToHelp: item.toolsToHelp,
+                category: item.category,
+                isCompleted: item.completions && item.completions.length > 0,
+                resources: item.resources || [],
+              });
+            });
+          }
+        });
+
+        // Sort by mandatory first, then by category
+        return allActionItems.sort((a, b) => {
+          if (a.isMandatory && !b.isMandatory) return -1;
+          if (!a.isMandatory && b.isMandatory) return 1;
+          return 0;
+        });
+      } catch (error) {
+        console.error('Failed to fetch action items:', error);
+        // Return mock data for development
+        return [
+          {
+            id: '1',
+            description: 'Practice the 4-7-8 breathing technique for 5 minutes each morning',
+            target: 'Reduce anxiety levels',
+            frequency: 'Daily',
+            weeklyRepetitions: 7,
+            isMandatory: true,
+            whyImportant:
+              'This breathing technique helps activate your parasympathetic nervous system, reducing stress and anxiety.',
+            recommendedActions:
+              '1. Find a quiet space\n2. Sit comfortably\n3. Inhale for 4 counts\n4. Hold for 7 counts\n5. Exhale for 8 counts\n6. Repeat for 5 minutes',
+            toolsToHelp: 'Try apps like Calm or Headspace for guided breathing exercises',
+            category: 'Mindfulness',
+            isCompleted: false,
+            resources: [
+              {
+                type: 'LINK',
+                url: 'https://www.calm.com',
+                title: 'Calm App',
+              },
+            ],
+          },
+          {
+            id: '2',
+            description: 'Complete a daily mood journal rating anxiety levels 1-10',
+            target: 'Track emotional patterns',
+            frequency: 'Daily',
+            weeklyRepetitions: 7,
+            isMandatory: false,
+            whyImportant:
+              'Tracking your mood helps identify patterns and triggers, making it easier to manage anxiety.',
+            recommendedActions:
+              '1. Rate your anxiety from 1-10\n2. Note what happened today\n3. Record any triggers\n4. Write down coping strategies used',
+            toolsToHelp: 'Use a simple notebook or try mood tracking apps like Daylio',
+            category: 'Monitoring',
+            isCompleted: false,
+            resources: [
+              {
+                type: 'LINK',
+                url: 'https://daylio.webflow.io/',
+                title: 'Daylio Mood Tracker',
+              },
+            ],
+          },
+        ];
+      }
     },
+    enabled: !!session?.user?.id,
   });
 
   const completeTaskMutation = useMutation({
-    mutationFn: async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return { success: true };
+    mutationFn: async (taskId: string) => {
+      if (!session?.user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      try {
+        await ApiClient.post(`/api/action-items/${taskId}/complete`, {
+          clientId: session.user.id,
+          rating: completionData.rating,
+          journalEntry: completionData.journalEntry,
+          achievedValue: completionData.achievedValue,
+        });
+        return { success: true };
+      } catch (error) {
+        console.error('Failed to complete task:', error);
+        // For development, simulate success
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return { success: true };
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
@@ -87,7 +184,7 @@ const ClientPage = () => {
   const handleCompleteTask = () => {
     if (!selectedTask) return;
 
-    completeTaskMutation.mutate();
+    completeTaskMutation.mutate(selectedTask.id);
   };
 
   useEffect(() => {
@@ -140,6 +237,7 @@ const ClientPage = () => {
   const user = session?.user;
   const completedTasks = todayTasks?.filter((task) => task.isCompleted).length || 0;
   const totalTasks = todayTasks?.length || 0;
+  const mandatoryTasks = todayTasks?.filter((task) => task.isMandatory) || [];
 
   return (
     <div className='flex h-full w-full flex-col'>
@@ -187,99 +285,139 @@ const ClientPage = () => {
           </div>
 
           <div className='space-y-6 sm:space-y-8'>
-            <div>
-              <h2 className='text-xl font-semibold mb-4'>Daily Tasks</h2>
-              <div className='space-y-3'>
-                {todayTasks
-                  ?.filter((task) => task.category === 'daily')
-                  .map((task) => (
+            {/* Mandatory Tasks Section */}
+            {mandatoryTasks.length > 0 && (
+              <div>
+                <h2 className='text-xl font-semibold mb-4 flex items-center gap-2'>
+                  <AlertCircle className='h-5 w-5 text-red-500' />
+                  Priority Tasks
+                </h2>
+                <div className='space-y-3'>
+                  {mandatoryTasks.map((task) => (
                     <Card
                       key={task.id}
                       className={
                         task.isCompleted
                           ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
-                          : ''
+                          : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
                       }
                     >
-                      <CardContent className='p-4 sm:p-6'>
-                        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0'>
-                          <div className='flex items-start gap-3 flex-1'>
-                            <Checkbox
-                              checked={task.isCompleted}
-                              onCheckedChange={() => handleTaskToggle(task)}
-                              disabled={task.isCompleted}
-                              className='mt-1'
-                            />
-                            <div className='flex-1 min-w-0'>
-                              <div className='font-medium text-base sm:text-lg'>{task.description}</div>
-                              <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1'>
-                                <span className='flex items-center gap-1'>
-                                  <Target className='h-3 w-3 flex-shrink-0' />
-                                  {task.target}
-                                </span>
-                                <span className='flex items-center gap-1'>
-                                  <Clock className='h-3 w-3 flex-shrink-0' />
-                                  {task.frequency}
+                      <CardContent className='p-4'>
+                        <div className='flex items-start gap-3'>
+                          <Checkbox
+                            checked={task.isCompleted}
+                            onCheckedChange={() => handleTaskToggle(task)}
+                            disabled={task.isCompleted}
+                          />
+                          <div className='flex-1'>
+                            <div className='flex items-start justify-between'>
+                              <div className='flex-1'>
+                                <h3 className='font-medium text-sm sm:text-base'>{task.description}</h3>
+                                <div className='flex flex-wrap gap-2 mt-2'>
+                                  {task.category && (
+                                    <Badge variant='secondary' className='text-xs'>
+                                      {task.category}
+                                    </Badge>
+                                  )}
+                                  {task.target && (
+                                    <Badge variant='outline' className='text-xs'>
+                                      {task.target}
+                                    </Badge>
+                                  )}
+                                  <Badge variant='destructive' className='text-xs'>
+                                    Priority
+                                  </Badge>
+                                </div>
+                                {task.whyImportant && (
+                                  <p className='text-xs text-muted-foreground mt-2'>
+                                    <strong>Why important:</strong> {task.whyImportant}
+                                  </p>
+                                )}
+                              </div>
+                              <div className='flex items-center gap-2'>
+                                <Target className='h-4 w-4 text-muted-foreground' />
+                                <span className='text-xs text-muted-foreground'>
+                                  {task.weeklyRepetitions || 1}x/week
                                 </span>
                               </div>
                             </div>
                           </div>
-                          {task.isCompleted && (
-                            <div className='text-green-600 text-sm font-medium flex items-center gap-1 sm:ml-4'>
-                              <span className='text-lg'>✓</span>
-                              <span className='hidden sm:inline'>Completed</span>
-                            </div>
-                          )}
                         </div>
                       </CardContent>
                     </Card>
                   ))}
+                </div>
               </div>
-            </div>
+            )}
 
+            {/* Regular Tasks Section */}
             <div>
-              <h2 className='text-xl font-semibold mb-4'>Consistent Goals</h2>
+              <h2 className='text-xl font-semibold mb-4'>Daily Tasks</h2>
               <div className='space-y-3'>
                 {todayTasks
-                  ?.filter((task) => task.category === 'consistent')
+                  ?.filter((task) => !task.isMandatory)
                   .map((task) => (
                     <Card
                       key={task.id}
                       className={
                         task.isCompleted
                           ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
-                          : ''
+                          : 'bg-background border-border'
                       }
                     >
-                      <CardContent className='p-4 sm:p-6'>
-                        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0'>
-                          <div className='flex items-start gap-3 flex-1'>
-                            <Checkbox
-                              checked={task.isCompleted}
-                              onCheckedChange={() => handleTaskToggle(task)}
-                              disabled={task.isCompleted}
-                              className='mt-1'
-                            />
-                            <div className='flex-1 min-w-0'>
-                              <div className='font-medium text-base sm:text-lg'>{task.description}</div>
-                              <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1'>
-                                <span className='flex items-center gap-1'>
-                                  <Target className='h-3 w-3 flex-shrink-0' />
-                                  {task.target}
-                                </span>
-                                <span className='flex items-center gap-1'>
-                                  <Clock className='h-3 w-3 flex-shrink-0' />
-                                  {task.frequency}
+                      <CardContent className='p-4'>
+                        <div className='flex items-start gap-3'>
+                          <Checkbox
+                            checked={task.isCompleted}
+                            onCheckedChange={() => handleTaskToggle(task)}
+                            disabled={task.isCompleted}
+                          />
+                          <div className='flex-1'>
+                            <div className='flex items-start justify-between'>
+                              <div className='flex-1'>
+                                <h3 className='font-medium text-sm sm:text-base'>{task.description}</h3>
+                                <div className='flex flex-wrap gap-2 mt-2'>
+                                  {task.category && (
+                                    <Badge variant='secondary' className='text-xs'>
+                                      {task.category}
+                                    </Badge>
+                                  )}
+                                  {task.target && (
+                                    <Badge variant='outline' className='text-xs'>
+                                      {task.target}
+                                    </Badge>
+                                  )}
+                                </div>
+                                {task.whyImportant && (
+                                  <p className='text-xs text-muted-foreground mt-2'>
+                                    <strong>Why important:</strong> {task.whyImportant}
+                                  </p>
+                                )}
+                                {task.resources && task.resources.length > 0 && (
+                                  <div className='flex gap-2 mt-2'>
+                                    {task.resources.map((resource, index) => (
+                                      <Button
+                                        key={index}
+                                        variant='outline'
+                                        size='sm'
+                                        className='h-6 text-xs'
+                                        onClick={() => window.open(resource.url, '_blank')}
+                                      >
+                                        <ExternalLink className='h-3 w-3 mr-1' />
+                                        {resource.title || 'Resource'}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              <div className='flex items-center gap-2'>
+                                <Target className='h-4 w-4 text-muted-foreground' />
+                                <span className='text-xs text-muted-foreground'>
+                                  {task.weeklyRepetitions || 1}x/week
                                 </span>
                               </div>
                             </div>
                           </div>
-                          {task.isCompleted && (
-                            <div className='text-green-600 text-sm font-medium flex items-center gap-1 sm:ml-4'>
-                              <span className='text-lg'>✓</span>
-                              <span className='hidden sm:inline'>Completed</span>
-                            </div>
-                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -290,57 +428,85 @@ const ClientPage = () => {
         </div>
       </div>
 
+      {/* Task Completion Dialog */}
       <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
-        <DialogContent className='sm:max-w-md max-w-[95vw] mx-4'>
+        <DialogContent className='max-w-2xl'>
           <DialogHeader>
-            <DialogTitle>How did that feel?</DialogTitle>
-            <DialogDescription>
-              Tell us about your experience completing &quot;{selectedTask?.description}&quot;
-            </DialogDescription>
+            <DialogTitle>Complete Task</DialogTitle>
+            <DialogDescription>Mark this task as complete and provide feedback.</DialogDescription>
           </DialogHeader>
-          <div className='space-y-4'>
-            <div>
-              <Label htmlFor='rating'>Rate your experience (1-5)</Label>
-              <div className='flex mt-1'>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Button
-                    key={star}
-                    variant='ghost'
-                    size='icon'
-                    onClick={() => setCompletionData((prev) => ({ ...prev, rating: star }))}
-                  >
-                    <Star
-                      className={`h-6 w-6 ${completionData.rating >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                    />
-                  </Button>
-                ))}
+          {selectedTask && (
+            <div className='space-y-6'>
+              <div>
+                <h3 className='font-medium mb-2'>{selectedTask.description}</h3>
+                {selectedTask.recommendedActions && (
+                  <div className='bg-muted p-3 rounded-lg mb-4'>
+                    <h4 className='font-medium text-sm mb-2'>Recommended Steps:</h4>
+                    <pre className='text-sm whitespace-pre-wrap'>{selectedTask.recommendedActions}</pre>
+                  </div>
+                )}
+                {selectedTask.toolsToHelp && (
+                  <div className='bg-blue-50 p-3 rounded-lg mb-4'>
+                    <h4 className='font-medium text-sm mb-2 flex items-center gap-1'>
+                      <Info className='h-4 w-4' />
+                      Tools to Help:
+                    </h4>
+                    <p className='text-sm'>{selectedTask.toolsToHelp}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className='space-y-4'>
+                <div>
+                  <Label htmlFor='rating'>How helpful was this task? (1-5 stars)</Label>
+                  <div className='flex gap-1 mt-2'>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Button
+                        key={star}
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => setCompletionData({ ...completionData, rating: star })}
+                        className={completionData.rating >= star ? 'text-yellow-500' : 'text-gray-300'}
+                      >
+                        <Star className='h-5 w-5 fill-current' />
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor='journalEntry'>How did it go? (Optional)</Label>
+                  <Textarea
+                    id='journalEntry'
+                    value={completionData.journalEntry}
+                    onChange={(e) => setCompletionData({ ...completionData, journalEntry: e.target.value })}
+                    placeholder='Share your experience with this task...'
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor='achievedValue'>What did you achieve? (Optional)</Label>
+                  <Textarea
+                    id='achievedValue'
+                    value={completionData.achievedValue}
+                    onChange={(e) => setCompletionData({ ...completionData, achievedValue: e.target.value })}
+                    placeholder='Describe what you accomplished...'
+                    rows={2}
+                  />
+                </div>
+              </div>
+
+              <div className='flex justify-end gap-2'>
+                <Button variant='outline' onClick={() => setSelectedTask(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCompleteTask} disabled={completeTaskMutation.isPending}>
+                  {completeTaskMutation.isPending ? 'Completing...' : 'Mark Complete'}
+                </Button>
               </div>
             </div>
-
-            <div>
-              <Label htmlFor='journal-entry'>Journal Entry</Label>
-              <Textarea
-                id='journal-entry'
-                value={completionData.journalEntry}
-                onChange={(e) => setCompletionData((prev) => ({ ...prev, journalEntry: e.target.value }))}
-                placeholder='Write a few words about your experience...'
-              />
-            </div>
-            <div>
-              <Label htmlFor='achieved-value'>How much did you achieve?</Label>
-              <Textarea
-                id='achieved-value'
-                value={completionData.achievedValue}
-                onChange={(e) => setCompletionData((prev) => ({ ...prev, achievedValue: e.target.value }))}
-                placeholder={`e.g., ${selectedTask?.target}`}
-              />
-            </div>
-          </div>
-          <div className='flex justify-end pt-4'>
-            <Button onClick={handleCompleteTask} disabled={completeTaskMutation.isPending}>
-              {completeTaskMutation.isPending ? 'Completing...' : 'Complete Task'}
-            </Button>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -19,11 +19,23 @@ interface CreateCompletionDto {
 export class ActionItemController {
   constructor(private actionItemService: ActionItemService) {}
 
-  @Post('completions')
-  @ApiOperation({ summary: 'Complete an action item' })
-  @ApiResponse({ status: 201, description: 'Action item completed successfully.' })
-  async completeActionItem(@Body() createCompletionDto: CreateCompletionDto) {
-    return await this.actionItemService.completeActionItem(createCompletionDto);
+  @Post(':id/complete')
+  @ApiOperation({ summary: 'Mark an action item as completed' })
+  @ApiResponse({ status: 201, description: 'Action item marked as completed successfully.' })
+  async completeActionItem(
+    @Param('id') actionItemId: string,
+    @Body()
+    completionData: {
+      clientId: string;
+      rating?: number;
+      journalEntry?: string;
+      achievedValue?: string;
+    }
+  ) {
+    return await this.actionItemService.completeActionItem({
+      actionItemId,
+      ...completionData,
+    });
   }
 
   @Get(':id/completions')
