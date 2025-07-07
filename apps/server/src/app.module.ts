@@ -66,6 +66,11 @@ import { TranscriptionModule } from './transcription/transcription.module';
     ChatModule,
     ScheduleModule.forRoot(),
     ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'apps', 'server', 'uploads'),
+      serveRoot: '/uploads',
+      exclude: ['/api/(.*)'],
+    }),
+    ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', '..', 'web', 'out'),
       exclude: ['/api/(.*)'],
     }),
