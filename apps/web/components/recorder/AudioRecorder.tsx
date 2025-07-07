@@ -13,8 +13,8 @@ import {
   DialogClose,
   DialogDescription,
 } from '@repo/ui/components/dialog';
-import { ApiClient } from '@/lib/api-client';
 import { useRouter } from 'next/navigation';
+import { useCreateSession, useUploadSessionAudio, useGetSessionForPolling } from '@/lib/hooks/use-api';
 
 export interface AudioRecorderHandle {
   getStatus: () => string;
@@ -45,6 +45,11 @@ export const AudioRecorder = forwardRef<
   const [processingSessionId, setProcessingSessionId] = React.useState<string | null>(null);
   const [stopModalError, setStopModalError] = React.useState<string | null>(null);
 
+  // React Query hooks
+  const createSessionMutation = useCreateSession();
+  const uploadAudioMutation = useUploadSessionAudio();
+  const { data: processingSession } = useGetSessionForPolling(processingSessionId || '');
+
   const handleStart = async () => {
     // Always attempt to start recording, do not block for permissions
     setShowConsentModal(false);
@@ -70,6 +75,7 @@ export const AudioRecorder = forwardRef<
   };
 
   const handleStopConfirm = async () => {
+    console.log('[AudioRecorder] handleStopConfirm called, status:', status);
     if (!sessionTitle || sessionTitle.trim() === '') {
       setStopModalError('Please enter a session title before ending the session.');
       return;
@@ -77,7 +83,10 @@ export const AudioRecorder = forwardRef<
     setStopModalError(null);
     setShowStopConfirmationModal(false);
     if (status === 'recording' || status === 'paused') {
+      console.log('[AudioRecorder] Calling stopRecording, status:', status);
       stopRecording();
+    } else {
+      console.log('[AudioRecorder] Not calling stopRecording, status:', status);
     }
   };
 
@@ -127,15 +136,18 @@ export const AudioRecorder = forwardRef<
         }
         try {
           console.log('[AudioRecorder] Creating session', { clientId, sessionTitle, sessionNotes });
-          const res = await ApiClient.post<{ id: string }>('/api/sessions', {
+
+          // Create session using React Query mutation
+          const newSession = await createSessionMutation.mutateAsync({
             clientId,
             title: sessionTitle,
             notes: sessionNotes || '',
           });
-          const sessionId = res.id;
+          const sessionId = newSession.id;
           setProcessingSessionId(sessionId);
           console.log('[AudioRecorder] Session created', { sessionId });
-          // 2. Upload audio
+
+          // Upload audio using React Query mutation
           const formData = new FormData();
           formData.append('audio', audioBlob, `session_${sessionId}.webm`);
           // Parse duration (e.g., '56:27') to seconds
@@ -148,25 +160,10 @@ export const AudioRecorder = forwardRef<
             formData.append('durationSeconds', String(durationSeconds));
           }
           console.log('[AudioRecorder] Uploading audio', { sessionId, durationSeconds });
-          await ApiClient.post(`/api/sessions/${sessionId}/upload`, formData, {});
+          await uploadAudioMutation.mutateAsync({ sessionId, formData });
           console.log('[AudioRecorder] Audio uploaded successfully');
-          // Start polling for REVIEW_READY
-          if (pollingRef.current) clearInterval(pollingRef.current);
-          pollingRef.current = setInterval(async () => {
-            try {
-              console.log('[AudioRecorder] Polling session status', { sessionId });
-              const session = (await ApiClient.get(`/api/sessions/${sessionId}`)) as any;
-              console.log('[AudioRecorder] Polled session object', session);
-              if (session && session.status === 'REVIEW_READY') {
-                console.log('[AudioRecorder] Session is REVIEW_READY, redirecting', { sessionId });
-                if (pollingRef.current) clearInterval(pollingRef.current);
-                setShowProcessingModal(false);
-                router.push(`/practitioner/sessions/${sessionId}`);
-              }
-            } catch (err) {
-              console.error('[AudioRecorder] Polling error', err);
-            }
-          }, 2000);
+
+          // React Query will automatically handle polling through the useGetSession hook
         } catch (err: any) {
           setProcessingError(err.message || 'Failed to upload audio or create session');
           console.error('[AudioRecorder] Upload error', err);
@@ -178,6 +175,26 @@ export const AudioRecorder = forwardRef<
       hasCalledOnStop.current = false;
     }
   }, [status, audioBlob, recordingTime, clientId, sessionTitle, sessionNotes]);
+
+  // Handle session status changes from React Query
+  React.useEffect(() => {
+    console.log('[AudioRecorder] Session status effect', {
+      processingSessionId,
+      processingSession: processingSession
+        ? {
+            id: processingSession.id,
+            status: processingSession.status,
+          }
+        : null,
+    });
+
+    if (processingSession && processingSession.status === 'REVIEW_READY') {
+      console.log('[AudioRecorder] Session is REVIEW_READY, redirecting', { processingSessionId });
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      setShowProcessingModal(false);
+      router.push(`/practitioner/sessions/${processingSessionId}`);
+    }
+  }, [processingSession, processingSessionId, router]);
 
   // Cleanup polling on unmount
   React.useEffect(() => {

@@ -13,7 +13,7 @@ import { Label } from '@repo/ui/components/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Loader2, Upload, Camera } from 'lucide-react';
 import { toast } from 'sonner';
-import { ApiClient } from '@/lib/api-client';
+import { useCompleteProfile } from '@/lib/hooks/use-api';
 import { getInitials, getAvatarUrl } from '@/lib/utils';
 
 const profileSchema = z.object({
@@ -30,9 +30,11 @@ interface ProfileSetupFormProps {
 export function ProfileSetupForm({ onSuccess }: ProfileSetupFormProps) {
   const { data: session, update } = useSession();
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // React Query hook
+  const completeProfileMutation = useCompleteProfile();
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -67,39 +69,36 @@ export function ProfileSetupForm({ onSuccess }: ProfileSetupFormProps) {
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      const formData = new FormData();
-      formData.append('firstName', data.firstName);
-      formData.append('lastName', data.lastName || '');
-      if (selectedFile) {
-        formData.append('avatar', selectedFile);
-      }
-
-      const updatedUser = await ApiClient.post('/api/auth/profile/complete', formData);
-
-      await update({
-        ...session,
-        user: {
-          ...session.user,
-          ...(updatedUser && typeof updatedUser === 'object' ? updatedUser : {}),
-        },
-      });
-
-      toast.success('Profile updated successfully');
-
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        const redirectTo = session.user.role === 'CLIENT' ? '/client' : '/practitioner';
-        router.push(redirectTo);
-      }
-    } catch (error: any) {
-      toast.error(error.message ?? 'Failed to complete profile setup');
-    } finally {
-      setIsSubmitting(false);
+    const formData = new FormData();
+    formData.append('firstName', data.firstName);
+    formData.append('lastName', data.lastName || '');
+    if (selectedFile) {
+      formData.append('avatar', selectedFile);
     }
+
+    completeProfileMutation.mutate(formData, {
+      onSuccess: async (updatedUser) => {
+        await update({
+          ...session,
+          user: {
+            ...session.user,
+            ...(updatedUser && typeof updatedUser === 'object' ? updatedUser : {}),
+          },
+        });
+
+        toast.success('Profile updated successfully');
+
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          const redirectTo = session.user.role === 'CLIENT' ? '/client' : '/practitioner';
+          router.push(redirectTo);
+        }
+      },
+      onError: (error: any) => {
+        toast.error(error.message ?? 'Failed to complete profile setup');
+      },
+    });
   }
 
   const currentInitials = React.useMemo(() => {
@@ -174,8 +173,8 @@ export function ProfileSetupForm({ onSuccess }: ProfileSetupFormProps) {
             </div>
           </div>
 
-          <Button type='submit' className='w-full' disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+          <Button type='submit' className='w-full' disabled={completeProfileMutation.isPending}>
+            {completeProfileMutation.isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             Complete Profile
           </Button>
         </form>

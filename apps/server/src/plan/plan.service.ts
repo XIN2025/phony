@@ -23,6 +23,7 @@ interface CreatePlanDto {
       url: string;
       title?: string;
     }[];
+    daysOfWeek?: string[];
   }[];
 }
 
@@ -34,7 +35,7 @@ export class PlanService {
   ) {}
 
   async createPlan(data: CreatePlanDto) {
-    return await this.prisma.plan.create({
+    const plan = await this.prisma.plan.create({
       data: {
         sessionId: data.sessionId,
         practitionerId: data.practitionerId,
@@ -52,6 +53,7 @@ export class PlanService {
             recommendedActions: item.recommendedActions,
             toolsToHelp: item.toolsToHelp,
             source: item.source || ActionItemSource.MANUAL,
+            daysOfWeek: item.daysOfWeek || [],
             resources: {
               create: item.resources || [],
             },
@@ -66,6 +68,18 @@ export class PlanService {
         },
       },
     });
+
+    // Update the session to include the plan reference
+    await this.prisma.session.update({
+      where: { id: data.sessionId },
+      data: {
+        plan: {
+          connect: { id: plan.id },
+        },
+      },
+    });
+
+    return plan;
   }
 
   async publishPlan(planId: string) {
@@ -201,6 +215,7 @@ export class PlanService {
                 recommendedActions: item.recommendedActions,
                 toolsToHelp: item.toolsToHelp,
                 source: item.source || ActionItemSource.MANUAL,
+                daysOfWeek: item.daysOfWeek || [],
                 resources: {
                   create: item.resources || [],
                 },
@@ -346,6 +361,7 @@ export class PlanService {
         url: string;
         title?: string;
       }[];
+      daysOfWeek?: string[];
     }
   ) {
     return await this.prisma.actionItem.create({
@@ -360,6 +376,7 @@ export class PlanService {
         whyImportant: actionItemData.whyImportant,
         recommendedActions: actionItemData.recommendedActions,
         toolsToHelp: actionItemData.toolsToHelp,
+        daysOfWeek: actionItemData.daysOfWeek || [],
         source: ActionItemSource.MANUAL,
         resources: {
           create: actionItemData.resources || [],
@@ -390,43 +407,142 @@ export class PlanService {
         },
       });
       planId = newPlan.id;
+
+      await this.prisma.session.update({
+        where: { id: sessionId },
+        data: {
+          plan: {
+            connect: { id: planId },
+          },
+        },
+      });
     }
     try {
       const combinedText = [session.transcript, session.aiSummary, session.notes].filter(Boolean).join('\n\n');
+
       const aiResults = await this.aiService.processSession(combinedText);
+
+      await this.prisma.actionItem.deleteMany({ where: { planId } });
       await this.prisma.suggestedActionItem.deleteMany({ where: { planId } });
-      if (aiResults.actionItemSuggestions?.suggestions?.length > 0) {
-        const suggestedItems = aiResults.actionItemSuggestions.suggestions.map((suggestion) => {
-          const s = suggestion as {
-            description: string;
-            category?: string;
-            target?: string;
-            frequency?: string;
-            weeklyRepetitions?: number;
-            isMandatory?: boolean;
-            whyImportant?: string;
-            recommendedActions?: string;
-            toolsToHelp?: string;
-          };
-          return {
-            planId: planId,
-            description: s.description,
-            category: s.category,
-            target: s.target,
-            frequency: s.frequency,
-            weeklyRepetitions: s.weeklyRepetitions || 1,
-            isMandatory: s.isMandatory || false,
-            whyImportant: s.whyImportant,
-            recommendedActions: s.recommendedActions,
-            toolsToHelp: s.toolsToHelp,
-          };
-        });
-        await this.prisma.suggestedActionItem.createMany({ data: suggestedItems });
+
+      if (aiResults.actionItemSuggestions?.sessionTasks?.length > 0) {
+        const sessionTaskItems = aiResults.actionItemSuggestions.sessionTasks.map((s) => ({
+          planId: planId,
+          description: s.description,
+          category: s.category,
+          target: s.target,
+          frequency: s.frequency,
+          weeklyRepetitions: s.weeklyRepetitions || 1,
+          isMandatory: s.isMandatory || false,
+          whyImportant: s.whyImportant,
+          recommendedActions: s.recommendedActions,
+          toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
+          source: ActionItemSource.AI_SUGGESTED,
+        }));
+        await this.prisma.actionItem.createMany({ data: sessionTaskItems });
       }
-    } catch {
-      // Continue, plan is still created
+
+      if (aiResults.actionItemSuggestions?.complementaryTasks?.length > 0) {
+        const complementaryItems = aiResults.actionItemSuggestions.complementaryTasks.map((s) => ({
+          planId: planId,
+          description: s.description,
+          category: s.category,
+          target: s.target,
+          frequency: s.frequency,
+          weeklyRepetitions: s.weeklyRepetitions || 1,
+          isMandatory: s.isMandatory || false,
+          whyImportant: s.whyImportant,
+          recommendedActions: s.recommendedActions,
+          toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
+        }));
+        await this.prisma.suggestedActionItem.createMany({ data: complementaryItems });
+      }
+    } catch (err) {
+      throw new Error(`Failed to generate action items: ${err.message}`);
     }
     const plan = await this.getPlanWithSuggestions(planId);
     return JSON.parse(JSON.stringify(plan));
   }
+
+  async updateActionItem(
+    planId: string,
+    actionItemId: string,
+    updateData: {
+      description?: string;
+      category?: string;
+      target?: string;
+      frequency?: string;
+      weeklyRepetitions?: number;
+      isMandatory?: boolean;
+      whyImportant?: string;
+      recommendedActions?: string;
+      toolsToHelp?: string;
+      resources?: {
+        type: 'LINK' | 'PDF' | 'IMAGE' | 'DOCX';
+        url: string;
+        title?: string;
+      }[];
+      daysOfWeek?: string[];
+    }
+  ) {
+    const actionItem = await this.prisma.actionItem.findFirst({
+      where: { id: actionItemId, planId },
+    });
+    if (!actionItem) {
+      throw new Error('Resource not found. Please check the URL.');
+    }
+    const safeResources = updateData.resources
+      ? updateData.resources.map((r) => ({
+          ...r,
+          type: r.type as 'LINK' | 'PDF',
+        }))
+      : undefined;
+    const updated = await this.prisma.actionItem.update({
+      where: { id: actionItemId },
+      data: {
+        description: updateData.description,
+        category: updateData.category,
+        target: updateData.target,
+        frequency: updateData.frequency,
+        weeklyRepetitions: updateData.weeklyRepetitions,
+        isMandatory: updateData.isMandatory,
+        whyImportant: updateData.whyImportant,
+        recommendedActions: updateData.recommendedActions,
+        toolsToHelp: updateData.toolsToHelp,
+        daysOfWeek: updateData.daysOfWeek || [],
+        resources: safeResources
+          ? {
+              deleteMany: {},
+              create: safeResources,
+            }
+          : undefined,
+      },
+      include: { resources: true },
+    });
+    return updated;
+  }
+
+  async deleteActionItem(planId: string, actionItemId: string) {
+    const actionItem = await this.prisma.actionItem.findFirst({
+      where: { id: actionItemId, planId },
+    });
+    if (!actionItem) {
+      throw new Error('Resource not found. Please check the URL.');
+    }
+    await this.prisma.actionItem.delete({ where: { id: actionItemId } });
+    return { success: true };
+  }
+}
+
+function normalizeToolsToHelp(toolsToHelp: unknown): string | undefined {
+  if (!toolsToHelp) return undefined;
+  if (typeof toolsToHelp === 'string') return toolsToHelp;
+  if (Array.isArray(toolsToHelp)) {
+    return toolsToHelp
+      .map((tool) =>
+        tool.link ? `${tool.name} (${tool.whatItEnables}) - ${tool.link}` : `${tool.name} (${tool.whatItEnables})`
+      )
+      .join('\n');
+  }
+  return undefined;
 }

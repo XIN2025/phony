@@ -18,7 +18,7 @@ export class SessionController {
   @ApiOperation({ summary: 'Create a new session' })
   @ApiResponse({ status: 201, description: 'Session created successfully.' })
   async createSession(
-    @Body() createSessionDto: { clientId: string; title: string; notes?: string; summary?: string },
+    @Body() createSessionDto: { clientId: string; title: string; notes?: string; summaryTitle?: string },
     @CurrentUser() user: RequestUser
   ) {
     return await this.sessionService.createSession(
@@ -26,7 +26,7 @@ export class SessionController {
       createSessionDto.clientId,
       createSessionDto.title,
       createSessionDto.notes,
-      createSessionDto.summary
+      createSessionDto.summaryTitle
     );
   }
 
@@ -66,10 +66,13 @@ export class SessionController {
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update session data' })
+  @ApiOperation({ summary: 'Update session details' })
   @ApiResponse({ status: 200, description: 'Session updated successfully.' })
-  async updateSession(@Param('id') sessionId: string, @Body() body: { aiSummary?: string; notes?: string }) {
-    return await this.sessionService.updateSession(sessionId, body);
+  async updateSession(
+    @Param('id') sessionId: string,
+    @Body() updateData: { aiSummary?: string; notes?: string; summaryTitle?: string }
+  ) {
+    return await this.sessionService.updateSession(sessionId, updateData);
   }
 
   @Put(':id/status')

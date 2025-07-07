@@ -1,8 +1,6 @@
 'use client';
 
-import { ApiClient } from '@/lib/api-client';
 import { Button } from '@repo/ui/components/button';
-import { useQuery, useMutation } from '@tanstack/react-query';
 import { ArrowLeft, Play, Pause, SkipBack, SkipForward, Edit2, X, Check } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -10,6 +8,9 @@ import { PlanEditor } from '@/components/practitioner/PlanEditor';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui/components/dialog';
 import { Checkbox } from '@repo/ui/components/checkbox';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useGetSession, useUpdateSession, usePublishPlan, useGeneratePlan } from '@/lib/hooks/use-api';
 
 type SuggestedActionItem = {
   id: string;
@@ -72,43 +73,15 @@ export default function SessionDetailPage() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [complianceChecked, setComplianceChecked] = useState(false);
 
-  const {
-    data: session,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<SessionDetail, Error>({
-    queryKey: ['session', sessionId],
-    queryFn: async (): Promise<SessionDetail> => {
-      const result = await ApiClient.get<SessionDetail>(`/api/sessions/${sessionId}`);
-      return result;
-    },
-    enabled: !!sessionId,
-    refetchInterval: (query) => {
-      const sessionData = query.state.data;
-      if (!sessionData) return false;
+  // Use React Query hooks from use-api.ts
+  const { data: session, isLoading, error, refetch } = useGetSession(sessionId);
 
-      const processingStates = ['UPLOADING', 'TRANSCRIBING', 'AI_PROCESSING'];
-      const shouldPoll = processingStates.includes(sessionData.status);
+  const updateSessionMutation = useUpdateSession();
+  const publishPlanMutation = usePublishPlan();
+  const generatePlanMutation = useGeneratePlan();
 
-      return shouldPoll ? 5000 : false;
-    },
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
-
-  const publishPlanMutation = useMutation({
-    mutationFn: async (planId: string) => {
-      return await ApiClient.patch(`/api/plans/${planId}/publish`);
-    },
-    onSuccess: () => {
-      toast.success('Plan published to client!');
-      refetch();
-    },
-    onError: (error) => {
-      toast.error('Failed to publish plan');
-    },
-  });
+  // --- NO AUTOMATIC REDIRECT - Let users view session summary and notes ---
+  // Users can manually click "View Action Plan" button if they want to see the plan
 
   // Audio player logic
   useEffect(() => {
@@ -173,9 +146,12 @@ export default function SessionDetailPage() {
     setIsSaving(true);
     setSaveError(null);
     try {
-      await ApiClient.put(`/api/sessions/${session.id}`, {
-        aiSummary: summaryDraft,
-        notes: notesDraft,
+      await updateSessionMutation.mutateAsync({
+        sessionId: session.id,
+        data: {
+          aiSummary: summaryDraft,
+          notes: notesDraft,
+        },
       });
       setEditingSummary(false);
       setEditingNotes(false);
@@ -194,9 +170,12 @@ export default function SessionDetailPage() {
     // Save edits first if any
     if ((editingSummary && summaryDraft !== session.aiSummary) || (editingNotes && notesDraft !== session.notes)) {
       try {
-        await ApiClient.put(`/api/sessions/${session.id}`, {
-          aiSummary: summaryDraft,
-          notes: notesDraft,
+        await updateSessionMutation.mutateAsync({
+          sessionId: session.id,
+          data: {
+            aiSummary: summaryDraft,
+            notes: notesDraft,
+          },
         });
         setEditingSummary(false);
         setEditingNotes(false);
@@ -208,14 +187,16 @@ export default function SessionDetailPage() {
       }
     }
     try {
-      const plan = await ApiClient.post(`/api/plans/generate`, { sessionId: session.id });
+      const plan = await generatePlanMutation.mutateAsync({ sessionId: session.id });
       if (!plan || typeof plan !== 'object' || !('id' in plan)) {
         setSaveError('Failed to generate action plan. Please try again.');
         setIsGenerating(false);
         return;
       }
-      setGeneratedPlan(plan);
-      setShowActionPlan(true);
+      // Refetch session data so UI updates before redirect
+      await refetch();
+      // Redirect to the dashboard with plan editor open after generation
+      router.push(`/practitioner/clients/${session.client?.id || ''}/dashboard?editPlan=${plan.id}`);
     } catch (err: any) {
       setSaveError(err.message || 'Failed to generate action plan');
     } finally {
@@ -232,9 +213,18 @@ export default function SessionDetailPage() {
       toast.error('No plan to publish');
       return;
     }
-    publishPlanMutation.mutate(generatedPlan.id);
-    setShowPublishModal(false);
-    setComplianceChecked(false);
+    publishPlanMutation.mutate(generatedPlan.id, {
+      onSuccess: () => {
+        toast.success('Plan published to client!');
+        setShowPublishModal(false);
+        setComplianceChecked(false);
+        // Redirect to the plan detail page after successful publish
+        router.push(`/practitioner/clients/${session?.client?.id}/plans/${generatedPlan.id}`);
+      },
+      onError: () => {
+        toast.error('Failed to publish plan');
+      },
+    });
   };
 
   if (isLoading) {
@@ -282,30 +272,43 @@ export default function SessionDetailPage() {
 
   if (isGenerating) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-screen'>
-        <div className='flex items-center justify-center w-24 h-24 rounded-full bg-muted mb-6'>
-          <svg className='animate-spin-slow' width='48' height='48' viewBox='0 0 48 48' fill='none'>
-            <circle cx='24' cy='24' r='22' stroke='#E5E7EB' strokeWidth='4' />
-            <text x='24' y='30' textAnchor='middle' fontSize='32' fill='#6366F1'>
-              ✧
-            </text>
-          </svg>
-        </div>
-        <p className='text-lg font-medium'>Generating Action Plan</p>
-        <style jsx>{`
-          .animate-spin-slow {
-            animation: spin 1.5s linear infinite;
-          }
-          @keyframes spin {
-            0% {
-              transform: rotate(0deg);
-            }
-            100% {
-              transform: rotate(360deg);
-            }
-          }
-        `}</style>
-      </div>
+      <AnimatePresence>
+        <motion.div
+          key='plan-loading-overlay'
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+          className='fixed inset-0 z-50 flex items-center justify-center bg-white'
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 180, damping: 18 }}
+            className='flex flex-col items-center justify-center'
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+              className='mb-8'
+            >
+              <svg width='72' height='72' viewBox='0 0 72 72' fill='none'>
+                <circle cx='36' cy='36' r='30' stroke='#6366F1' strokeWidth='8' strokeDasharray='36 16' />
+              </svg>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className='flex flex-col items-center'
+            >
+              <h2 className='text-2xl font-bold text-gray-900 mb-2'>Generating Action Plan...</h2>
+              <p className='text-base text-gray-600'>This may take a moment. Please wait.</p>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
     );
   }
   if (showActionPlan && generatedPlan) {
@@ -393,12 +396,21 @@ export default function SessionDetailPage() {
             </p>
           </div>
         </div>
-        <Button
-          className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
-          onClick={handleGenerateActionPlan}
-        >
-          Generate Action Plan
-        </Button>
+        {session.plan ? (
+          <Button
+            className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
+            onClick={() => router.push(`/practitioner/clients/${session.client?.id}/plans/${session.plan.id}`)}
+          >
+            View Action Plan
+          </Button>
+        ) : (
+          <Button
+            className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
+            onClick={handleGenerateActionPlan}
+          >
+            Generate Action Plan
+          </Button>
+        )}
       </div>
 
       <div className='flex flex-col items-center justify-center w-full px-4 mt-6 mb-2'>
@@ -455,7 +467,7 @@ export default function SessionDetailPage() {
         {/* Session Summary (editable) */}
         <div className='bg-white border border-gray-300 rounded-lg shadow-sm p-5 mb-0'>
           <div className='flex items-center justify-between mb-2'>
-            <div className='font-bold text-base'>Session Summary</div>
+            <div className='font-extrabold text-2xl mb-2'>Session Summary</div>
             {!editingSummary && (
               <button onClick={() => setEditingSummary(true)} aria-label='Edit summary'>
                 <Edit2 className='h-4 w-4 text-muted-foreground' />
@@ -488,9 +500,7 @@ export default function SessionDetailPage() {
               {saveError && <div className='text-destructive text-xs'>{saveError}</div>}
             </div>
           ) : (
-            <div className='text-sm whitespace-pre-line leading-relaxed'>
-              {session.aiSummary || <span className='text-muted-foreground'>No summary available.</span>}
-            </div>
+            <MarkdownRenderer content={session.aiSummary || ''} className='text-sm' />
           )}
         </div>
         {/* Notes + Transcript grid */}
@@ -534,7 +544,7 @@ export default function SessionDetailPage() {
               <div className='text-sm leading-relaxed flex-1'>
                 {session.notes ? (
                   <ul className='list-disc pl-5 space-y-2'>
-                    {session.notes.split(/\n\s*\n|\n- /).map((note, i) => (
+                    {(session.notes as string).split(/\n\s*\n|\n- /).map((note: string, i: number) => (
                       <li key={i}>{note.trim()}</li>
                     ))}
                   </ul>
@@ -549,11 +559,7 @@ export default function SessionDetailPage() {
             <div className='font-bold text-base mb-2'>Transcript</div>
             <div className='text-sm leading-relaxed flex-1 overflow-y-auto'>
               {session.filteredTranscript ? (
-                <ul className='list-disc pl-5 space-y-2'>
-                  {session.filteredTranscript.split(/\n(?=\()/).map((line, i) => (
-                    <li key={i}>{line.trim()}</li>
-                  ))}
-                </ul>
+                <MarkdownRenderer content={session.filteredTranscript} className='text-sm' />
               ) : (
                 <span className='text-muted-foreground'>No transcript available.</span>
               )}

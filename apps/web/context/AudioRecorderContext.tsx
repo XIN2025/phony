@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useRef, ReactNode } from 'react';
 import { toast } from 'sonner';
-import { ApiClient } from '@/lib/api-client';
 
 type RecordingStatus = 'idle' | 'permission' | 'recording' | 'paused' | 'stopped' | 'error';
 
@@ -94,18 +93,15 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
 
       recorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: mimeType });
-        console.log('[AudioRecorderContext] recorder.onstop fired, blob:', blob);
         setAudioBlob(blob);
         setStatus('stopped');
         cleanupStreams();
         if (timerIntervalRef.current) {
           clearInterval(timerIntervalRef.current);
         }
-        console.log('[AudioRecorderContext] setAudioBlob called, status set to stopped');
       };
 
       recorder.onerror = (event) => {
-        console.error('MediaRecorder error:', event);
         setError(`Recording error: ${event.type}`);
         setStatus('error');
         cleanupStreams();
@@ -114,16 +110,10 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
         }
       };
 
-      console.log('Inspecting combined stream before recording...');
-      console.log(`Stream is active: ${combinedStreamRef.current.active}`);
       const audioTracks = combinedStreamRef.current.getAudioTracks();
-      console.log(`Found ${audioTracks.length} audio tracks in combined stream.`);
       if (audioTracks.length === 0) {
         throw new Error('The combined stream has no audio tracks. Recording cannot start.');
       }
-      audioTracks.forEach((track, index) => {
-        console.log(`Audio Track ${index + 1} readyState: ${track.readyState}`);
-      });
 
       recorder.start();
       setStatus('recording');
@@ -133,7 +123,6 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
         setRecordingTime((prev) => prev + 1);
       }, 1000);
     } catch (err) {
-      console.error('Error starting recording:', err);
       const message = err instanceof Error ? err.message : 'An unknown error occurred.';
       setError(`Failed to start recording: ${message}`);
       toast.error('Permission Denied', {
@@ -146,15 +135,9 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
 
   const stopRecording = () => {
     if (mediaRecorderRef.current) {
-      console.log('[AudioRecorderContext] stopRecording called, state:', mediaRecorderRef.current.state);
-      if (mediaRecorderRef.current.state === 'recording') {
+      if (mediaRecorderRef.current.state === 'recording' || mediaRecorderRef.current.state === 'paused') {
         mediaRecorderRef.current.stop();
-        console.log('[AudioRecorderContext] mediaRecorder.stop() called');
-      } else {
-        console.log('[AudioRecorderContext] mediaRecorderRef.current.state is not "recording"');
       }
-    } else {
-      console.log('[AudioRecorderContext] stopRecording called but mediaRecorderRef.current is null');
     }
   };
 

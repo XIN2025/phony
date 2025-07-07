@@ -21,9 +21,10 @@ interface TaskDetailModalProps {
       url?: string;
     }>;
   };
+  readOnly?: boolean;
 }
 
-export function TaskDetailModal({ open, onOpenChange, task }: TaskDetailModalProps) {
+export function TaskDetailModal({ open, onOpenChange, task, readOnly = false }: TaskDetailModalProps) {
   const handleEdit = () => {
     console.log('Edit task:', task.title);
   };
@@ -36,14 +37,16 @@ export function TaskDetailModal({ open, onOpenChange, task }: TaskDetailModalPro
       >
         <DialogHeader className='relative pb-4'>
           <DialogTitle className='text-lg sm:text-xl font-semibold pr-10'>Tasks</DialogTitle>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={handleEdit}
-            className='absolute top-0 right-0 p-2 hover:bg-muted rounded-md'
-          >
-            <Edit2 className='h-4 w-4' />
-          </Button>
+          {!readOnly && (
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={handleEdit}
+              className='absolute top-0 right-0 p-2 hover:bg-muted rounded-md'
+            >
+              <Edit2 className='h-4 w-4' />
+            </Button>
+          )}
         </DialogHeader>
 
         <div className='space-y-4 sm:space-y-6'>

@@ -12,7 +12,7 @@ const summarySchema = z.object({
 });
 
 const actionItemSuggestionsSchema = z.object({
-  suggestions: z
+  sessionTasks: z
     .array(
       z.object({
         description: z.string().describe('A clear, actionable task description'),
@@ -23,10 +23,51 @@ const actionItemSuggestionsSchema = z.object({
         isMandatory: z.boolean().optional().describe('Whether this is a mandatory task'),
         whyImportant: z.string().optional().describe('Why this task is important for the client'),
         recommendedActions: z.string().optional().describe('Specific steps to complete this task'),
-        toolsToHelp: z.string().optional().describe('Tools, apps, or resources to help with this task'),
+        toolsToHelp: z
+          .union([
+            z.string().optional(),
+            z
+              .array(
+                z.object({
+                  name: z.string(),
+                  whatItEnables: z.string(),
+                  link: z.string().optional(),
+                })
+              )
+              .optional(),
+          ])
+          .describe('Tools, apps, or resources to help with this task'),
       })
     )
-    .describe('Array of suggested action items from the session'),
+    .describe('Array of action items discussed in the session'),
+  complementaryTasks: z
+    .array(
+      z.object({
+        description: z.string().describe('A clear, actionable task description'),
+        category: z.string().optional().describe('Optional category for the task'),
+        target: z.string().optional().describe('Optional target or goal for the task'),
+        frequency: z.string().optional().describe('Optional schedule or frequency for the task'),
+        weeklyRepetitions: z.number().optional().describe('Number of times per week this should be done'),
+        isMandatory: z.boolean().optional().describe('Whether this is a mandatory task'),
+        whyImportant: z.string().optional().describe('Why this task is important for the client'),
+        recommendedActions: z.string().optional().describe('Specific steps to complete this task'),
+        toolsToHelp: z
+          .union([
+            z.string().optional(),
+            z
+              .array(
+                z.object({
+                  name: z.string(),
+                  whatItEnables: z.string(),
+                  link: z.string().optional(),
+                })
+              )
+              .optional(),
+          ])
+          .describe('Tools, apps, or resources to help with this task'),
+      })
+    )
+    .describe('Array of complementary action items suggested by AI'),
 });
 
 export type SessionSummary = z.infer<typeof summarySchema>;
@@ -45,6 +86,45 @@ export class AiService {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     this.model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+  }
+
+  private convertToolsToHelpToString(toolsToHelp: unknown): string | undefined {
+    if (!toolsToHelp) return undefined;
+
+    // If it's already a string, return as is
+    if (typeof toolsToHelp === 'string') return toolsToHelp;
+
+    // If it's an array, convert to formatted string
+    if (Array.isArray(toolsToHelp)) {
+      return toolsToHelp
+        .map((tool) => {
+          if (tool.link) {
+            return `${tool.name} (${tool.whatItEnables}) - ${tool.link}`;
+          } else {
+            return `${tool.name} (${tool.whatItEnables})`;
+          }
+        })
+        .join('\n');
+    }
+
+    return undefined;
+  }
+
+  private processActionItemSuggestions(suggestions: ActionItemSuggestions): ActionItemSuggestions {
+    const processed = {
+      sessionTasks:
+        suggestions.sessionTasks?.map((task) => ({
+          ...task,
+          toolsToHelp: this.convertToolsToHelpToString(task.toolsToHelp),
+        })) || [],
+      complementaryTasks:
+        suggestions.complementaryTasks?.map((task) => ({
+          ...task,
+          toolsToHelp: this.convertToolsToHelpToString(task.toolsToHelp),
+        })) || [],
+    };
+
+    return processed;
   }
 
   async filterTranscript(rawTranscript: string): Promise<string> {
@@ -121,7 +201,7 @@ export class AiService {
 
   async suggestActionItems(filteredTranscript: string): Promise<ActionItemSuggestions> {
     if (!filteredTranscript || filteredTranscript.trim().length === 0) {
-      return { suggestions: [] };
+      return { sessionTasks: [], complementaryTasks: [] };
     }
 
     const prompt = this.getActionItemSuggestionPrompt();
@@ -136,7 +216,7 @@ export class AiService {
     const suggestionText = result.response.text();
 
     if (!suggestionText) {
-      return { suggestions: [] };
+      return { sessionTasks: [], complementaryTasks: [] };
     }
 
     let parsedSuggestions: ActionItemSuggestions;
@@ -147,10 +227,10 @@ export class AiService {
       }
       parsedSuggestions = actionItemSuggestionsSchema.parse(JSON.parse(jsonMatch[0]));
     } catch {
-      parsedSuggestions = { suggestions: [] };
+      parsedSuggestions = { sessionTasks: [], complementaryTasks: [] };
     }
 
-    return parsedSuggestions;
+    return this.processActionItemSuggestions(parsedSuggestions);
   }
 
   async processSession(rawTranscript: string): Promise<{
@@ -165,7 +245,7 @@ export class AiService {
           title: 'Session Summary',
           summary: 'No transcript content available to process.',
         },
-        actionItemSuggestions: { suggestions: [] },
+        actionItemSuggestions: { sessionTasks: [], complementaryTasks: [] },
       };
     }
 
