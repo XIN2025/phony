@@ -34,10 +34,6 @@ async function bootstrap() {
     })
   );
 
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/',
-  });
-
   const swaggerConfig = new DocumentBuilder()
     .setTitle('NestJS API')
     .setDescription('API for NestJS')

@@ -33,6 +33,8 @@ services:
     restart: on-failure:5
     networks:
       - app_network
+    volumes:
+      - ./apps/server/uploads:/app/apps/server/uploads
     command: ['pnpm', '--filter', 'server', 'run', 'start']
 
 networks:
