@@ -4,6 +4,8 @@ import { Input } from '@repo/ui/components/input';
 import { Textarea } from '@repo/ui/components/textarea';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { Button } from '@repo/ui/components/button';
+import { useDropzone } from 'react-dropzone';
+import type { FileWithPath } from 'react-dropzone';
 
 const DAYS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
 
@@ -13,6 +15,12 @@ export interface TaskEditorDialogProps {
   onSave: (values: any) => void;
   initialValues?: any;
   readOnly?: boolean;
+}
+
+interface Resource {
+  type: 'LINK' | 'PDF' | 'IMAGE' | 'DOCX';
+  url: string;
+  title?: string;
 }
 
 export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
@@ -33,6 +41,12 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
     recommendedActions: initialValues?.recommendedActions || '',
     toolsToHelp: initialValues?.toolsToHelp || '',
   });
+
+  const [resources, setResources] = useState<Resource[]>(initialValues?.resources || []);
+  const [newFiles, setNewFiles] = useState<FileWithPath[]>([]);
+  const [newLinks, setNewLinks] = useState<Resource[]>([]);
+  const [linkInput, setLinkInput] = useState<string>('');
+  const [showLinkInput, setShowLinkInput] = useState<boolean>(false);
 
   // Update form when initialValues change
   React.useEffect(() => {
@@ -64,8 +78,30 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
     });
   };
 
+  const onDrop = (acceptedFiles: FileWithPath[]) => {
+    setNewFiles((prev: FileWithPath[]) => [...prev, ...acceptedFiles]);
+  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+
+  const handleAddLink = () => {
+    if (linkInput.trim()) {
+      setNewLinks((prev: Resource[]) => [...prev, { url: linkInput.trim(), type: 'LINK' }]);
+      setLinkInput('');
+      setShowLinkInput(false);
+    }
+  };
+  const handleRemoveFile = (idx: number) => {
+    setNewFiles((prev: FileWithPath[]) => prev.filter((_, i) => i !== idx));
+  };
+  const handleRemoveLink = (idx: number) => {
+    setNewLinks((prev: Resource[]) => prev.filter((_, i) => i !== idx));
+  };
+  const handleRemoveExistingResource = (idx: number) => {
+    setResources((prev: Resource[]) => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSave = () => {
-    onSave(form);
+    onSave({ ...form, resources, newFiles, newLinks });
   };
 
   return (
@@ -83,14 +119,6 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
             <DialogDescription className='text-base font-medium mb-4'>Daily Targeted Goals</DialogDescription>
           </DialogHeader>
           <div className='space-y-4'>
-            <div className='flex items-center gap-2'>
-              <Checkbox
-                checked={form.isMandatory}
-                onCheckedChange={(checked) => !readOnly && handleChange('isMandatory', checked === true)}
-                disabled={readOnly}
-              />
-              <span className='font-medium text-gray-900'>Task</span>
-            </div>
             <Input
               placeholder='Task name'
               value={form.description}
@@ -151,13 +179,106 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
             </div>
             <div>
               <div className='font-medium mb-2'>Tools to help</div>
-              <Input
-                placeholder='Add Description'
-                value={form.toolsToHelp}
-                onChange={(e) => handleChange('toolsToHelp', e.target.value)}
-                className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
-                disabled={readOnly}
-              />
+              <div className='flex gap-2 items-center'>
+                <Input
+                  placeholder='Add Description'
+                  value={form.toolsToHelp}
+                  onChange={(e) => handleChange('toolsToHelp', e.target.value)}
+                  className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base flex-1 ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
+                  disabled={readOnly}
+                />
+                {/* File upload button */}
+                <div
+                  {...getRootProps()}
+                  className='flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 border border-gray-300 cursor-pointer hover:bg-gray-200'
+                >
+                  <input {...getInputProps()} />
+                  <span role='img' aria-label='Attach file'>
+                    📎
+                  </span>
+                </div>
+                {/* Link add button */}
+                <button
+                  type='button'
+                  onClick={() => setShowLinkInput(true)}
+                  className='w-8 h-8 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center hover:bg-gray-200'
+                >
+                  <span role='img' aria-label='Add link'>
+                    🔗
+                  </span>
+                </button>
+              </div>
+              {/* Link input, only shown when typing a link */}
+              {showLinkInput && (
+                <div className='flex gap-2 mt-2'>
+                  <Input
+                    placeholder='Paste a link (https://...)'
+                    value={linkInput}
+                    onChange={(e) => setLinkInput(e.target.value)}
+                    className='flex-1'
+                  />
+                  <Button type='button' onClick={handleAddLink} className='px-3'>
+                    Add
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() => {
+                      setShowLinkInput(false);
+                      setLinkInput('');
+                    }}
+                    className='px-3'
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+              {/* Show all attachments as chips/icons below the input */}
+              <div className='flex flex-wrap gap-2 mt-2'>
+                {newFiles.map((file, idx) => (
+                  <div key={idx} className='flex items-center gap-1 px-2 py-1 bg-gray-200 rounded-full text-xs'>
+                    <span role='img' aria-label='File'>
+                      📄
+                    </span>{' '}
+                    {file.name}
+                    <button type='button' onClick={() => handleRemoveFile(idx)} className='ml-1 text-red-500'>
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {resources.map((res, idx) => (
+                  <div key={idx} className='flex items-center gap-1 px-2 py-1 bg-gray-200 rounded-full text-xs'>
+                    {res.type === 'LINK' ? (
+                      <span role='img' aria-label='Link'>
+                        🔗
+                      </span>
+                    ) : (
+                      <span role='img' aria-label='File'>
+                        📄
+                      </span>
+                    )}
+                    {res.title || res.url}
+                    <button
+                      type='button'
+                      onClick={() => handleRemoveExistingResource(idx)}
+                      className='ml-1 text-red-500'
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {newLinks.map((link, idx) => (
+                  <div key={idx} className='flex items-center gap-1 px-2 py-1 bg-gray-200 rounded-full text-xs'>
+                    <span role='img' aria-label='Link'>
+                      🔗
+                    </span>{' '}
+                    {link.url}
+                    <button type='button' onClick={() => handleRemoveLink(idx)} className='ml-1 text-red-500'>
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <div className='flex justify-end mt-8'>

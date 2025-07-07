@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Patch, UseGuards, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { PlanService } from './plan.service';
 import { ActionItemSource } from '@repo/db';
@@ -152,5 +152,40 @@ export class PlanController {
   @ApiResponse({ status: 200, description: 'Plan generated successfully.' })
   async generatePlanFromSession(@Body() body: { sessionId: string }) {
     return await this.planService.generatePlanFromSession(body.sessionId);
+  }
+
+  @Patch(':planId/action-items/:actionItemId')
+  @ApiOperation({ summary: 'Update an action item in a plan' })
+  @ApiResponse({ status: 200, description: 'Action item updated successfully.' })
+  async updateActionItem(
+    @Param('planId') planId: string,
+    @Param('actionItemId') actionItemId: string,
+    @Body()
+    updateData: {
+      description?: string;
+      category?: string;
+      target?: string;
+      frequency?: string;
+      weeklyRepetitions?: number;
+      isMandatory?: boolean;
+      whyImportant?: string;
+      recommendedActions?: string;
+      toolsToHelp?: string;
+      resources?: {
+        type: 'LINK' | 'PDF' | 'IMAGE' | 'DOCX';
+        url: string;
+        title?: string;
+      }[];
+      daysOfWeek?: string[];
+    }
+  ) {
+    return await this.planService.updateActionItem(planId, actionItemId, updateData);
+  }
+
+  @Delete(':planId/action-items/:actionItemId')
+  @ApiOperation({ summary: 'Delete an action item from a plan' })
+  @ApiResponse({ status: 200, description: 'Action item deleted successfully.' })
+  async deleteActionItem(@Param('planId') planId: string, @Param('actionItemId') actionItemId: string) {
+    return await this.planService.deleteActionItem(planId, actionItemId);
   }
 }

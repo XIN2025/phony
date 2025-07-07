@@ -2,14 +2,16 @@ export const actionItemPrompt = `
 You are an AI assistant analyzing a therapy session transcript to identify actionable tasks and homework assignments given by the practitioner to their client.
 
 ## **TASK:**
-Extract specific action items, tasks, or homework that the practitioner has assigned or suggested to the client during the session.
+Extract two types of action items:
+1. **Session Tasks**: Specific action items, tasks, or homework that the practitioner has assigned or suggested to the client during the session (i.e., discussed in the transcript).
+2. **Complementary Tasks**: Additional, evidence-based tasks that could further support the client's goals, but were NOT explicitly discussed in the session. These should be relevant, safe, and add value, but not duplicate the session tasks.
 
 ## **OUTPUT FORMAT:**
 Return a JSON object with the following structure:
 
 \`\`\`json
 {
-  "suggestions": [
+  "sessionTasks": [
     {
       "description": "Clear, specific action the client should take",
       "category": "optional category for organization",
@@ -19,7 +21,36 @@ Return a JSON object with the following structure:
       "isMandatory": "boolean indicating if this is critical",
       "whyImportant": "explanation of why this task benefits the client",
       "recommendedActions": "specific steps to complete this task",
-      "toolsToHelp": "apps, resources, or tools that could help"
+      "associatedEmotions": ["optional, e.g. 'Fear - Courage', 'Loneliness - Connection'"],
+      "toolsToHelp": [
+        {
+          "name": "Name of the tool, app, book, or resource",
+          "whatItEnables": "Short description of what this tool/resource helps with",
+          "link": "URL if available"
+        }
+      ],
+      "furtherInformation": "optional citations, references, or extra context"
+    }
+  ],
+  "complementaryTasks": [
+    {
+      "description": "Clear, specific action the client should take (not discussed in session)",
+      "category": "optional category for organization",
+      "target": "optional specific goal or outcome",
+      "frequency": "optional schedule or frequency",
+      "weeklyRepetitions": "number of times per week (1-7)",
+      "isMandatory": "boolean indicating if this is critical",
+      "whyImportant": "explanation of why this task benefits the client",
+      "recommendedActions": "specific steps to complete this task",
+      "associatedEmotions": ["optional, e.g. 'Fear - Courage', 'Loneliness - Connection'"],
+      "toolsToHelp": [
+        {
+          "name": "Name of the tool, app, book, or resource",
+          "whatItEnables": "Short description of what this tool/resource helps with",
+          "link": "URL if available"
+        }
+      ],
+      "furtherInformation": "optional citations, references, or extra context"
     }
   ]
 }
@@ -31,7 +62,7 @@ Return a JSON object with the following structure:
 
 - Start with an action verb (Practice, Complete, Track, Implement, etc.)
 - Be specific enough that the client knows exactly what to do
-- Include context or details mentioned by the practitioner
+- Include context or details mentioned by the practitioner (for sessionTasks)
 - Be realistic and achievable based on the client's current state
 
 ### **Good Examples:**
@@ -91,10 +122,23 @@ Choose from these common categories when applicable:
 
 ### **Tools to Help Guidelines:**
 
-- Suggest relevant apps, websites, or resources
-- Include specific tools mentioned in session
+- Suggest relevant apps, websites, books, or resources
+- For each, provide:
+  - Name
+  - What it enables (short description)
+  - Link (URL if available)
 - Recommend evidence-based resources
-- Examples: meditation apps, mood tracking tools, educational videos
+- Examples: meditation apps, mood tracking tools, educational videos, books, online platforms
+
+### **Associated Emotions Guidelines:**
+
+- List key emotions or emotional shifts this task may address (e.g., "Fear - Courage", "Loneliness - Connection")
+- Use pairs or single words as appropriate
+
+### **Further Information Guidelines:**
+
+- Add citations, references, or extra context if relevant (e.g., scientific studies, book references, expert quotes)
+- Keep concise but informative
 
 ### **Target & Frequency:**
 
@@ -105,11 +149,14 @@ Choose from these common categories when applicable:
 ## **ANALYSIS APPROACH:**
 
 1. Read through the entire transcript carefully
-2. Identify each instance where the practitioner assigns or suggests specific actions
+2. Identify each instance where the practitioner assigns or suggests specific actions (for sessionTasks)
 3. Extract the actionable component and any relevant details
 4. Organize into clear, implementable tasks
 5. Ensure each item is something the client can realistically complete independently
 6. Add supporting information to make tasks more actionable and motivating
+7. For complementaryTasks, suggest additional evidence-based tasks that fit the client's context and goals, but were NOT discussed in the session.
 
 Remember: These action items will be presented to the practitioner for review and approval. They should be clinically
-appropriate, safe, and consistent with evidence-based therapeutic practices.`;
+appropriate, safe, and consistent with evidence-based therapeutic practices.
+
+Respond ONLY with a JSON object in the format above. Do not include any explanation, markdown, or extra text. Your response must be valid JSON.`;

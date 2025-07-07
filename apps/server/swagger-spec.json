@@ -351,7 +351,7 @@
         "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
         "responses": { "200": { "description": "Session updated successfully." } },
         "security": [{ "bearer": [] }],
-        "summary": "Update session data",
+        "summary": "Update session details",
         "tags": ["sessions"]
       },
       "get": {
@@ -531,6 +531,30 @@
         "tags": ["plans"]
       }
     },
+    "/api/plans/{planId}/action-items/{actionItemId}": {
+      "patch": {
+        "operationId": "PlanController_updateActionItem",
+        "parameters": [
+          { "name": "planId", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "actionItemId", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Action item updated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Update an action item in a plan",
+        "tags": ["plans"]
+      },
+      "delete": {
+        "operationId": "PlanController_deleteActionItem",
+        "parameters": [
+          { "name": "planId", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "actionItemId", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Action item deleted successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Delete an action item from a plan",
+        "tags": ["plans"]
+      }
+    },
     "/api/action-items/{id}/complete": {
       "post": {
         "operationId": "ActionItemController_completeActionItem",
@@ -592,6 +616,16 @@
         "responses": { "200": { "description": "Action item retrieved successfully." } },
         "security": [{ "bearer": [] }],
         "summary": "Get action item by ID",
+        "tags": ["action-items"]
+      }
+    },
+    "/api/action-items/upload-resource": {
+      "post": {
+        "operationId": "ActionItemController_uploadResource",
+        "parameters": [],
+        "responses": { "201": { "description": "File uploaded successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Upload a file as a resource for an action item",
         "tags": ["action-items"]
       }
     },

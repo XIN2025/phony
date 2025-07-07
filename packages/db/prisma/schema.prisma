@@ -173,7 +173,7 @@ model Session {
   transcriptionJobId String?
   plan               Plan?
   durationSeconds    Int?
-  summary            String?
+  summaryTitle       String?
   @@map("sessions")
 }
 
@@ -249,6 +249,7 @@ model ActionItem {
   source            ActionItemSource @default(MANUAL)
   resources         Resource[]
   completions       ActionItemCompletion[]
+  daysOfWeek        String[]
   @@map("action_items")
 }
 

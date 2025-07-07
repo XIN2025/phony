@@ -6,6 +6,19 @@ import { AiService } from '@/ai/ai.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
+function normalizeToolsToHelp(toolsToHelp: unknown): string | undefined {
+  if (!toolsToHelp) return undefined;
+  if (typeof toolsToHelp === 'string') return toolsToHelp;
+  if (Array.isArray(toolsToHelp)) {
+    return toolsToHelp
+      .map((tool) =>
+        tool.link ? `${tool.name} (${tool.whatItEnables}) - ${tool.link}` : `${tool.name} (${tool.whatItEnables})`
+      )
+      .join('\n');
+  }
+  return undefined;
+}
+
 @Injectable()
 export class SessionService {
   private readonly logger = new Logger(SessionService.name);
@@ -15,14 +28,14 @@ export class SessionService {
     private aiService: AiService
   ) {}
 
-  async createSession(practitionerId: string, clientId: string, title: string, notes?: string, summary?: string) {
+  async createSession(practitionerId: string, clientId: string, title: string, notes?: string, summaryTitle?: string) {
     return await this.prisma.session.create({
       data: {
         practitionerId,
         clientId,
         title,
         notes,
-        aiSummary: summary,
+        summaryTitle,
         status: SessionStatus.UPLOADING,
       },
     });
@@ -111,13 +124,10 @@ export class SessionService {
 
   private async transcribeAndUpdateStatus(sessionId: string, audioFileUrl: string) {
     try {
-      this.logger.log(`Starting background transcription for session: ${sessionId}`);
       const fullFilePath = path.join(process.cwd(), 'uploads', path.basename(audioFileUrl));
       const transcript = await this.transcriptionService.transcribeAudio(fullFilePath);
 
       if (transcript && transcript.trim().length > 0) {
-        this.logger.log(`Transcription successful for session: ${sessionId}. Starting AI processing.`);
-
         await this.prisma.session.update({
           where: { id: sessionId },
           data: {
@@ -131,12 +141,7 @@ export class SessionService {
             this.logger.error(`Caught unhandled error in AI processing for session ${sessionId}:`, err.stack);
           });
         }, 0);
-
-        this.logger.log(`Successfully updated session ${sessionId} with transcript and started AI processing.`);
       } else {
-        this.logger.error(
-          `Transcription failed or returned empty for session: ${sessionId}. Marking as TRANSCRIPTION_FAILED.`
-        );
         await this.prisma.session.update({
           where: { id: sessionId },
           data: {
@@ -154,49 +159,46 @@ export class SessionService {
 
   private async processWithAI(sessionId: string, transcript: string) {
     try {
-      this.logger.log(`Starting AI processing for session: ${sessionId}`);
-
       const aiResults = await this.aiService.processSession(transcript);
-
-      this.logger.log(`AI results received for session ${sessionId}:`, {
-        hasFilteredTranscript: !!aiResults.filteredTranscript,
-        hasSummary: !!aiResults.summary,
-        summaryTitle: aiResults.summary?.title,
-        summaryLength: aiResults.summary?.summary?.length,
-        actionItemsCount: aiResults.actionItemSuggestions?.suggestions?.length || 0,
-      });
 
       await this.prisma.session.update({
         where: { id: sessionId },
         data: {
           filteredTranscript: aiResults.filteredTranscript || transcript,
           aiSummary: aiResults.summary?.summary || 'AI summary generation failed',
+          summaryTitle: aiResults.summary?.title || null,
           status: SessionStatus.REVIEW_READY,
         },
       });
 
-      if (aiResults.actionItemSuggestions?.suggestions?.length > 0) {
-        await this.createSuggestedActionItems(sessionId, aiResults.actionItemSuggestions.suggestions);
+      if (aiResults.actionItemSuggestions?.complementaryTasks?.length > 0) {
+        const normalizedSuggestions = aiResults.actionItemSuggestions.complementaryTasks.map((suggestion) => ({
+          ...suggestion,
+          toolsToHelp: normalizeToolsToHelp(suggestion.toolsToHelp),
+        }));
+        await this.createSuggestedActionItems(sessionId, normalizedSuggestions);
       }
-
-      this.logger.log(`AI processing completed successfully for session: ${sessionId}. Audio file saved to disk.`);
     } catch (error) {
       this.logger.error(`Unexpected error in AI processing for session: ${sessionId}`, error);
       this.logger.error('Error details:', {
         message: error.message,
         stack: error.stack,
         name: error.name,
+        cause: error.cause,
       });
 
-      await this.prisma.session.update({
-        where: { id: sessionId },
-        data: {
-          filteredTranscript: transcript,
-          aiSummary: 'AI processing failed - please try again',
-          status: SessionStatus.REVIEW_READY,
-        },
-      });
-      this.logger.log(`AI processing failed for session ${sessionId}, but audio file was saved to disk.`);
+      try {
+        await this.prisma.session.update({
+          where: { id: sessionId },
+          data: {
+            filteredTranscript: transcript,
+            aiSummary: `AI processing failed - ${error.message || 'Unknown error'}`,
+            status: SessionStatus.REVIEW_READY,
+          },
+        });
+      } catch (updateError) {
+        this.logger.error(`Failed to update session ${sessionId} after AI processing error:`, updateError);
+      }
     }
   }
 
@@ -225,21 +227,12 @@ export class SessionService {
         return;
       }
 
-      let planId = session.plan?.id;
-
-      if (!planId) {
-        const newPlan = await this.prisma.plan.create({
-          data: {
-            sessionId: sessionId,
-            practitionerId: session.practitionerId,
-            clientId: session.clientId,
-          },
-        });
-        planId = newPlan.id;
+      if (!session.plan) {
+        return;
       }
 
       const suggestedItems = suggestions.map((suggestion) => ({
-        planId: planId,
+        planId: session.plan!.id,
         description: suggestion.description,
         category: suggestion.category,
         target: suggestion.target,
@@ -248,14 +241,12 @@ export class SessionService {
         isMandatory: suggestion.isMandatory || false,
         whyImportant: suggestion.whyImportant,
         recommendedActions: suggestion.recommendedActions,
-        toolsToHelp: suggestion.toolsToHelp,
+        toolsToHelp: normalizeToolsToHelp(suggestion.toolsToHelp),
       }));
 
       await this.prisma.suggestedActionItem.createMany({
         data: suggestedItems,
       });
-
-      this.logger.log(`Created ${suggestions.length} suggested action items for session: ${sessionId}`);
     } catch (error) {
       this.logger.error(`Failed to create suggested action items for session: ${sessionId}`, error);
     }
@@ -291,8 +282,11 @@ export class SessionService {
           recordedAt: true,
           status: true,
           title: true,
+          durationSeconds: true,
           plan: {
             select: {
+              id: true,
+              status: true,
               actionItems: {
                 select: {
                   id: true,
@@ -349,12 +343,13 @@ export class SessionService {
     });
   }
 
-  async updateSession(sessionId: string, data: { aiSummary?: string; notes?: string }) {
+  async updateSession(sessionId: string, data: { aiSummary?: string; notes?: string; summaryTitle?: string }) {
     return await this.prisma.session.update({
       where: { id: sessionId },
       data: {
         ...(data.aiSummary !== undefined ? { aiSummary: data.aiSummary } : {}),
         ...(data.notes !== undefined ? { notes: data.notes } : {}),
+        ...(data.summaryTitle !== undefined ? { summaryTitle: data.summaryTitle } : {}),
       },
     });
   }

@@ -8,20 +8,7 @@ export default function SessionDebugger() {
   const router = useRouter();
 
   useEffect(() => {
-    console.log('[SessionDebugger] Session update:', {
-      status,
-      hasSession: !!session,
-      user: session?.user
-        ? {
-            id: session.user.id,
-            email: session.user.email,
-            role: session.user.role,
-            firstName: session.user.firstName,
-            lastName: session.user.lastName,
-          }
-        : null,
-      expires: session?.expires,
-    });
+    // Session debug logging removed
   }, [session, status]);
 
   if (process.env.NODE_ENV !== 'development') {

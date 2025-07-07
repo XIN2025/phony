@@ -1,25 +1,23 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Button } from '@repo/ui/components/button';
-import { Input } from '@repo/ui/components/input';
-import { Textarea } from '@repo/ui/components/textarea';
 import { Checkbox } from '@repo/ui/components/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@repo/ui/components/dialog';
-import { Badge } from '@repo/ui/components/badge';
-import { Plus, Trash2, Edit, Check, X, AlertCircle, Info } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { ApiClient } from '@/lib/api-client';
 import { TaskEditorDialog } from './TaskEditorDialog';
+import {
+  useGetPlanWithSuggestions,
+  useGetPlanStatus,
+  useApproveSuggestion,
+  useRejectSuggestion,
+  useUpdateSuggestion,
+  useAddCustomActionItem,
+  useDeleteActionItem,
+  useUpdateActionItem,
+  usePublishPlan,
+} from '@/lib/hooks/use-api';
 
 interface ActionItem {
   id: string;
@@ -70,11 +68,61 @@ interface PlanEditorProps {
 
 const DAYS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
 
+const ToolsToHelpDisplay: React.FC<{ toolsToHelp?: string }> = ({ toolsToHelp }) => {
+  if (!toolsToHelp) return null;
+
+  const parseToolsToHelp = (text: string) => {
+    const lines = text.split('\n').filter((line) => line.trim());
+    return lines.map((line) => {
+      const urlMatch = line.match(/(https?:\/\/[^\s]+)/);
+      if (urlMatch) {
+        const url = urlMatch[1];
+        const description = line
+          .replace(url || '', '')
+          .replace(/\s*-\s*$/, '')
+          .trim();
+        return { description, url };
+      }
+      return { description: line, url: null };
+    });
+  };
+
+  const tools = parseToolsToHelp(toolsToHelp);
+
+  return (
+    <div className='mt-2'>
+      <span className='text-xs text-muted-foreground'>Tools to help:</span>
+      <div className='flex flex-wrap gap-2 mt-1'>
+        {tools.map((tool, index) =>
+          tool.url ? (
+            <a
+              key={index}
+              href={tool.url}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='flex items-center gap-1 px-2 py-1 bg-gray-200 rounded-full text-xs font-medium hover:bg-gray-300 transition-colors border border-gray-300'
+              style={{ textDecoration: 'none' }}
+            >
+              <span role='img' aria-label='Link'>
+                🔗
+              </span>
+              {tool.description || tool.url}
+            </a>
+          ) : (
+            <span
+              key={index}
+              className='px-2 py-1 bg-gray-100 rounded-full text-xs text-muted-foreground border border-gray-200'
+            >
+              {tool.description}
+            </span>
+          ),
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clientId, onPlanUpdated }) => {
-  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
-  const [suggestedItems, setSuggestedItems] = useState<SuggestedActionItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isPublishing, setIsPublishing] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<ActionItem | null>(null);
   const [editingSuggestion, setEditingSuggestion] = useState<SuggestedActionItem | null>(null);
@@ -84,6 +132,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [viewingSuggestion, setViewingSuggestion] = useState<SuggestedActionItem | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const [formData, setFormData] = useState({
     description: '',
@@ -97,97 +146,151 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
     toolsToHelp: '',
   });
 
-  useEffect(() => {
-    loadPlanData();
-  }, [planId]);
+  const router = useRouter();
 
-  const loadPlanData = async () => {
-    try {
-      setIsLoading(true);
-      const planData = await ApiClient.get<PlanData>(`/api/plans/${planId}/with-suggestions`);
+  const {
+    data: planStatusData,
+    isLoading: isPlanStatusLoading,
+    error: planStatusError,
+    refetch: refetchPlanStatus,
+  } = useGetPlanStatus(planId);
 
-      setActionItems(planData.actionItems || []);
-      setSuggestedItems(planData.suggestedActionItems || []);
-    } catch (error) {
-      console.error('Failed to load plan data:', error);
-      toast.error('Failed to load plan data');
-    } finally {
-      setIsLoading(false);
-    }
+  const {
+    data: planData,
+    isLoading: isPlanDataLoading,
+    error: planDataError,
+    refetch: refetchPlanData,
+  } = useGetPlanWithSuggestions(planId);
+
+  const approveSuggestionMutation = useApproveSuggestion();
+  const rejectSuggestionMutation = useRejectSuggestion();
+  const editSuggestionMutation = useUpdateSuggestion();
+  const addCustomActionMutation = useAddCustomActionItem();
+  const deleteActionItemMutation = useDeleteActionItem();
+  const publishPlanMutation = usePublishPlan();
+  const saveTaskMutation = useUpdateActionItem();
+
+  const handleApproveSuggestion = (suggestionId: string) => {
+    approveSuggestionMutation.mutate(suggestionId, {
+      onSuccess: () => {
+        toast.success('Action item approved');
+        onPlanUpdated?.();
+      },
+      onError: () => {
+        toast.error('Failed to approve action item');
+      },
+    });
   };
 
-  const handleApproveSuggestion = async (suggestionId: string) => {
-    try {
-      await ApiClient.post(`/api/plans/suggestions/${suggestionId}/approve`);
-      toast.success('Action item approved');
-      loadPlanData();
-      onPlanUpdated?.();
-    } catch (error) {
-      console.error('Failed to approve suggestion:', error);
-      toast.error('Failed to approve action item');
-    }
+  const handleRejectSuggestion = (suggestionId: string) => {
+    rejectSuggestionMutation.mutate(suggestionId, {
+      onSuccess: () => {
+        toast.success('Action item rejected');
+      },
+      onError: () => {
+        toast.error('Failed to reject action item');
+      },
+    });
   };
 
-  const handleRejectSuggestion = async (suggestionId: string) => {
-    try {
-      await ApiClient.post(`/api/plans/suggestions/${suggestionId}/reject`);
-      toast.success('Action item rejected');
-      loadPlanData();
-    } catch (error) {
-      console.error('Failed to reject suggestion:', error);
-      toast.error('Failed to reject action item');
-    }
+  const handleEditSuggestion = (suggestionId: string, updatedData: Partial<SuggestedActionItem>) => {
+    editSuggestionMutation.mutate(
+      { suggestionId, updatedData },
+      {
+        onSuccess: () => {
+          toast.success('Suggestion updated');
+        },
+        onError: () => {
+          toast.error('Failed to update suggestion');
+        },
+      },
+    );
   };
 
-  const handleEditSuggestion = async (suggestionId: string, updatedData: Partial<SuggestedActionItem>) => {
-    try {
-      await ApiClient.patch(`/api/plans/suggestions/${suggestionId}`, updatedData);
-      toast.success('Suggestion updated');
-      loadPlanData();
-    } catch (error) {
-      console.error('Failed to update suggestion:', error);
-      toast.error('Failed to update suggestion');
-    }
+  const handleAddCustomAction = () => {
+    addCustomActionMutation.mutate(
+      { planId, data: formData },
+      {
+        onSuccess: () => {
+          toast.success('Custom action item added');
+          setShowAddDialog(false);
+          resetForm();
+          onPlanUpdated?.();
+        },
+        onError: () => {
+          toast.error('Failed to add action item');
+        },
+      },
+    );
   };
 
-  const handleAddCustomAction = async () => {
-    try {
-      await ApiClient.post(`/api/plans/${planId}/action-items`, formData);
-      toast.success('Custom action item added');
-      setShowAddDialog(false);
-      resetForm();
-      loadPlanData();
-      onPlanUpdated?.();
-    } catch (error) {
-      console.error('Failed to add custom action item:', error);
-      toast.error('Failed to add action item');
-    }
+  const handleDeleteActionItem = (itemId: string) => {
+    deleteActionItemMutation.mutate(
+      { planId, itemId },
+      {
+        onSuccess: () => {
+          toast.success('Action item deleted');
+          onPlanUpdated?.();
+        },
+        onError: () => {
+          toast.error('Failed to delete action item');
+        },
+      },
+    );
   };
 
-  const handleDeleteActionItem = async (itemId: string) => {
-    try {
-      await ApiClient.delete(`/api/plans/${planId}/action-items/${itemId}`);
-      toast.success('Action item deleted');
-      loadPlanData();
-      onPlanUpdated?.();
-    } catch (error) {
-      console.error('Failed to delete action item:', error);
-      toast.error('Failed to delete action item');
-    }
+  const handlePublishPlan = () => {
+    setIsPublishing(true);
+    publishPlanMutation.mutate(planId, {
+      onSuccess: () => {
+        toast.success('Plan published to client!');
+        onPlanUpdated?.();
+        router.push(`/practitioner/clients/${clientId}/plans/${planId}`);
+      },
+      onError: () => {
+        toast.error('Failed to publish plan');
+      },
+      onSettled: () => {
+        setIsPublishing(false);
+      },
+    });
   };
 
-  const handlePublishPlan = async () => {
-    try {
-      setIsPublishing(true);
-      await ApiClient.patch(`/api/plans/${planId}/publish`);
-      toast.success('Plan published to client!');
-      await loadPlanData();
-      onPlanUpdated?.();
-    } catch (error) {
-      console.error('Failed to publish plan:', error);
-      toast.error('Failed to publish plan');
-    } finally {
-      setIsPublishing(false);
+  const handleTaskDialogSave = (values: any) => {
+    if (isEditingTask && editingTaskId) {
+      saveTaskMutation.mutate(
+        { planId, itemId: editingTaskId, data: values },
+        {
+          onSuccess: () => {
+            toast.success('Task updated');
+            setShowTaskDialog(false);
+            setTaskDialogInitialValues(null);
+            setIsEditingTask(false);
+            setEditingTaskId(null);
+            onPlanUpdated?.();
+          },
+          onError: () => {
+            toast.error('Failed to save task');
+          },
+        },
+      );
+    } else {
+      addCustomActionMutation.mutate(
+        { planId, data: values },
+        {
+          onSuccess: () => {
+            toast.success('Task added');
+            setShowTaskDialog(false);
+            setTaskDialogInitialValues(null);
+            setIsEditingTask(false);
+            setEditingTaskId(null);
+            onPlanUpdated?.();
+          },
+          onError: () => {
+            toast.error('Failed to save task');
+          },
+        },
+      );
     }
   };
 
@@ -205,178 +308,25 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
     });
   };
 
-  function isSuggestedActionItem(item: any): item is SuggestedActionItem {
-    return item && typeof item === 'object' && 'status' in item;
-  }
-
-  const renderActionItemRow = (item: ActionItem, isSuggested = false) => (
-    <div key={item.id} className='flex items-center gap-4 p-4 border rounded-lg bg-background'>
-      <div className='flex-1'>
-        <div className='flex items-start gap-3'>
-          <div className='flex-1'>
-            <p className='font-medium text-sm'>{item.description}</p>
-            <div className='flex flex-wrap gap-2 mt-2'>
-              {item.category && (
-                <Badge variant='secondary' className='text-xs'>
-                  {item.category}
-                </Badge>
-              )}
-              {item.target && (
-                <Badge variant='outline' className='text-xs'>
-                  Target: {item.target}
-                </Badge>
-              )}
-              {item.frequency && (
-                <Badge variant='outline' className='text-xs'>
-                  {item.frequency}
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          <div className='flex items-center gap-2'>
-            <Select value={item.weeklyRepetitions?.toString() || '1'} onValueChange={(value) => {}}>
-              <SelectTrigger className='w-20 h-8'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[1, 2, 3, 4, 5, 6, 7].map((num) => (
-                  <SelectItem key={num} value={num.toString()}>
-                    {num}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Checkbox checked={!!item.isMandatory} onCheckedChange={(checked) => {}} />
-
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => {
-                if (isSuggested && isSuggestedActionItem(item)) {
-                  setEditingSuggestion(item);
-                } else {
-                  setEditingItem(item);
-                }
-              }}
-            >
-              <Edit className='h-4 w-4' />
-            </Button>
-
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => handleDeleteActionItem(item.id)}
-              className='text-destructive hover:text-destructive'
-            >
-              <Trash2 className='h-4 w-4' />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderSuggestedItemRow = (item: SuggestedActionItem) => (
-    <div key={item.id} className='flex items-center gap-4 p-4 border rounded-lg bg-muted/20'>
-      <div className='flex-1'>
-        <div className='flex items-start gap-3'>
-          <div className='flex-1'>
-            <p className='font-medium text-sm'>{item.description}</p>
-            <div className='flex flex-wrap gap-2 mt-2'>
-              {item.category && (
-                <Badge variant='secondary' className='text-xs'>
-                  {item.category}
-                </Badge>
-              )}
-              {item.target && (
-                <Badge variant='outline' className='text-xs'>
-                  Target: {item.target}
-                </Badge>
-              )}
-              {item.frequency && (
-                <Badge variant='outline' className='text-xs'>
-                  {item.frequency}
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          <div className='flex items-center gap-2'>
-            <Select
-              value={item.weeklyRepetitions?.toString() || '1'}
-              onValueChange={(value) => {
-                handleEditSuggestion(item.id, { weeklyRepetitions: parseInt(value) });
-              }}
-            >
-              <SelectTrigger className='w-20 h-8'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[1, 2, 3, 4, 5, 6, 7].map((num) => (
-                  <SelectItem key={num} value={num.toString()}>
-                    {num}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Checkbox
-              checked={!!item.isMandatory}
-              onCheckedChange={(checked) => {
-                handleEditSuggestion(item.id, { isMandatory: checked === true });
-              }}
-            />
-
-            <Button variant='ghost' size='sm' onClick={() => setEditingSuggestion(item)}>
-              <Edit className='h-4 w-4' />
-            </Button>
-
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => handleApproveSuggestion(item.id)}
-              className='text-green-600 hover:text-green-700'
-            >
-              <Check className='h-4 w-4' />
-            </Button>
-
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => handleRejectSuggestion(item.id)}
-              className='text-destructive hover:text-destructive'
-            >
-              <X className='h-4 w-4' />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Helper to toggle days
-  function toggleDay(item: any, day: string, isSessionTask: boolean) {
-    const key = 'daysOfWeek';
-    const days = item[key] || [];
-    const newDays = days.includes(day) ? days.filter((d: string) => d !== day) : [...days, day];
-    if (isSessionTask) {
-      setActionItems((prev) => prev.map((t) => (t.id === item.id ? { ...t, [key]: newDays } : t)));
-    } else {
-      setSuggestedItems((prev) => prev.map((t) => (t.id === item.id ? { ...t, [key]: newDays } : t)));
-    }
-  }
-
-  // Open dialog for new task
   const handleAddTaskClick = () => {
-    setTaskDialogInitialValues(null);
+    setTaskDialogInitialValues({
+      description: '',
+      category: '',
+      target: '',
+      frequency: '',
+      weeklyRepetitions: 1,
+      isMandatory: false,
+      whyImportant: '',
+      recommendedActions: '',
+      toolsToHelp: '',
+      daysOfWeek: [],
+      resources: [],
+    });
     setIsEditingTask(false);
     setEditingTaskId(null);
     setShowTaskDialog(true);
   };
 
-  // Open dialog for editing
   const handleEditTaskClick = (item: ActionItem) => {
     setTaskDialogInitialValues(item);
     setIsEditingTask(true);
@@ -384,28 +334,25 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
     setShowTaskDialog(true);
   };
 
-  // Save handler for dialog
-  const handleTaskDialogSave = async (values: any) => {
-    try {
-      if (isEditingTask && editingTaskId) {
-        await ApiClient.patch(`/api/plans/${planId}/action-items/${editingTaskId}`, values);
-        toast.success('Task updated');
-      } else {
-        await ApiClient.post(`/api/plans/${planId}/action-items`, values);
-        toast.success('Task added');
-      }
-      setShowTaskDialog(false);
-      setTaskDialogInitialValues(null);
-      setIsEditingTask(false);
-      setEditingTaskId(null);
-      loadPlanData();
-      onPlanUpdated?.();
-    } catch (error) {
-      toast.error('Failed to save task');
+  function toggleDay(item: ActionItem | SuggestedActionItem, day: string, isSessionTask: boolean) {
+    const key = 'daysOfWeek';
+    const days = item[key] || [];
+    const newDays = days.includes(day) ? days.filter((d: string) => d !== day) : [...days, day];
+    if (isSessionTask) {
+      saveTaskMutation.mutate({
+        planId,
+        itemId: item.id,
+        data: { ...item, [key]: newDays },
+      });
+    } else {
+      editSuggestionMutation.mutate({
+        suggestionId: item.id,
+        updatedData: { ...item, [key]: newDays },
+      });
     }
-  };
+  }
 
-  if (isLoading) {
+  if (isPlanDataLoading) {
     return (
       <div className='flex items-center justify-center py-8'>
         <div className='text-center'>
@@ -416,9 +363,22 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
     );
   }
 
+  const actionItems = planData?.actionItems || [];
+  const suggestedItems = planData?.suggestedActionItems || [];
+
   return (
-    <div className='space-y-8 w-full px-2 sm:px-6 md:px-10   '>
-      {/* Tasks mentioned during session */}
+    <div className='space-y-8 w-full px-2 sm:px-6 md:px-10'>
+      {planStatusData === 'DRAFT' && actionItems.length > 0 && (
+        <div className='flex justify-end mb-2'>
+          <Button
+            onClick={handlePublishPlan}
+            disabled={isPublishing || isPlanStatusLoading || publishPlanMutation.isPending}
+            className='bg-primary text-white rounded-full px-6 py-2 font-semibold shadow-none hover:bg-primary/90'
+          >
+            {isPublishing || publishPlanMutation.isPending ? 'Publishing...' : 'Publish Plan'}
+          </Button>
+        </div>
+      )}
       <div
         className='rounded-3xl border-2 border-gray-700 shadow-sm bg-white p-4 sm:p-6 w-full mx-0'
         style={{ borderColor: '#B0B3B8' }}
@@ -432,9 +392,8 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
           </Button>
         </div>
         <div className='space-y-0 divide-y divide-gray-200'>
-          {actionItems.map((item) => (
+          {actionItems.map((item: ActionItem) => (
             <div key={item.id} className='flex flex-col py-4 w-full'>
-              {/* Top line: Task name + actions */}
               <div className='flex flex-row items-center w-full'>
                 <div className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-[140px] flex-1'>
                   {item.description}
@@ -454,40 +413,39 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
                     size='icon'
                     className='hover:bg-gray-100 text-destructive'
                     onClick={() => handleDeleteActionItem(item.id)}
+                    disabled={deleteActionItemMutation.isPending}
                   >
                     <Trash2 className='h-4 w-4' />
                   </Button>
                 </div>
               </div>
-              {/* Bottom line: Duration, Days, Mandatory Task */}
               <div className='flex flex-row items-center w-full mt-1 text-xs'>
                 <div className='text-gray-700 min-w-[110px]'>
                   Duration: <span className='font-medium'>15 Minutes</span>
                 </div>
-                {/* Centered Days */}
                 <div className='flex-1 flex justify-center'>
                   <div className='flex items-center gap-1 min-w-[220px]'>
                     Weekly Repetition (Days):
                     {DAYS.map((d) => (
                       <span
                         key={d}
-                        className={`w-7 h-7 flex items-center justify-center rounded-full border text-xs font-semibold ml-1 cursor-pointer transition-colors ${item.daysOfWeek?.includes(d) ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}
-                        onClick={() => toggleDay(item, d, true)}
+                        className={`w-7 h-7 flex items-center justify-center rounded-full border text-xs font-semibold ml-1 ${item.daysOfWeek?.includes(d) ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300'}`}
                       >
                         {d}
                       </span>
                     ))}
                   </div>
                 </div>
-                {/* Mandatory Task */}
                 <div className='flex items-center gap-1 min-w-[120px] justify-end pr-2'>
                   <Checkbox
                     checked={!!item.isMandatory}
-                    onCheckedChange={(checked) =>
-                      setActionItems((prev) =>
-                        prev.map((t) => (t.id === item.id ? { ...t, isMandatory: checked === true } : t)),
-                      )
-                    }
+                    onCheckedChange={(checked) => {
+                      saveTaskMutation.mutate({
+                        planId,
+                        itemId: item.id,
+                        data: { ...item, isMandatory: checked === true },
+                      });
+                    }}
                     className='scale-90'
                   />
                   <span className='text-gray-700 text-xs'>Mandatory Task?</span>
@@ -497,7 +455,6 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
           ))}
         </div>
       </div>
-      {/* Complementary Tasks */}
       <div
         className='rounded-3xl border-2 border-gray-900 shadow-sm bg-white p-4 sm:p-6 w-full mx-0 mt-8'
         style={{ borderColor: '#B0B3B8' }}
@@ -511,7 +468,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
           </Button>
         </div>
         <div className='space-y-0 divide-y divide-gray-200'>
-          {suggestedItems.map((item) => (
+          {suggestedItems.map((item: SuggestedActionItem) => (
             <div key={item.id} className='flex flex-col py-4 w-full'>
               <div className='flex flex-row items-center w-full'>
                 <div
@@ -527,40 +484,38 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
                     variant='outline'
                     className='font-medium border-2 border-gray-800 rounded-lg'
                     onClick={() => handleApproveSuggestion(item.id)}
+                    disabled={approveSuggestionMutation.isPending}
                   >
                     Add to Action Plan
                   </Button>
                 </div>
               </div>
-              {/* Bottom line: Duration, Days, Mandatory Task */}
               <div className='flex flex-row items-center w-full mt-1 text-xs'>
                 <div className='text-gray-700 min-w-[110px]'>
                   Duration: <span className='font-medium'>15 Minutes</span>
                 </div>
-                {/* Centered Days */}
                 <div className='flex-1 flex justify-center'>
                   <div className='flex items-center gap-1 min-w-[220px]'>
                     Weekly Repetition (Days):
                     {DAYS.map((d) => (
                       <span
                         key={d}
-                        className={`w-7 h-7 flex items-center justify-center rounded-full border text-xs font-semibold ml-1 cursor-pointer transition-colors ${item.daysOfWeek?.includes(d) ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}
-                        onClick={() => toggleDay(item, d, false)}
+                        className={`w-7 h-7 flex items-center justify-center rounded-full border text-xs font-semibold ml-1 ${item.daysOfWeek?.includes(d) ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300'}`}
                       >
                         {d}
                       </span>
                     ))}
                   </div>
                 </div>
-                {/* Mandatory Task */}
                 <div className='flex items-center gap-1 min-w-[120px] justify-end pr-2'>
                   <Checkbox
                     checked={!!item.isMandatory}
-                    onCheckedChange={(checked) =>
-                      setSuggestedItems((prev) =>
-                        prev.map((t) => (t.id === item.id ? { ...t, isMandatory: checked === true } : t)),
-                      )
-                    }
+                    onCheckedChange={(checked) => {
+                      editSuggestionMutation.mutate({
+                        suggestionId: item.id,
+                        updatedData: { ...item, isMandatory: checked === true },
+                      });
+                    }}
                     className='scale-90'
                   />
                   <span className='text-gray-700 text-xs'>Mandatory Task?</span>
@@ -570,14 +525,12 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
           ))}
         </div>
       </div>
-      {/* Task Editor Dialog for editing/adding */}
       <TaskEditorDialog
         open={showTaskDialog}
         onClose={() => setShowTaskDialog(false)}
         onSave={handleTaskDialogSave}
         initialValues={taskDialogInitialValues}
       />
-      {/* Task Editor Dialog for viewing complementary task (read-only) */}
       <TaskEditorDialog
         open={!!viewingSuggestion}
         onClose={() => setViewingSuggestion(null)}

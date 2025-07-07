@@ -1,8 +1,22 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  Query,
+  UseGuards,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ActionItemService } from './action-item.service';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-// import { CurrentUser } from '../auth/decorators/user.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { saveFileToUploads, generateUniqueFilename, validateFileUpload } from '../common/utils/user.utils';
+import { extname } from 'path';
 
 interface CreateCompletionDto {
   actionItemId: string;
@@ -71,5 +85,24 @@ export class ActionItemController {
   @ApiResponse({ status: 200, description: 'Action item retrieved successfully.' })
   async getActionItemById(@Param('id') actionItemId: string) {
     return await this.actionItemService.getActionItemById(actionItemId);
+  }
+
+  @Post('upload-resource')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload a file as a resource for an action item' })
+  @ApiResponse({ status: 201, description: 'File uploaded successfully.' })
+  async uploadResource(@UploadedFile() file: Express.Multer.File) {
+    const { isValid, error } = validateFileUpload(file);
+    if (!isValid) {
+      throw new Error(error || 'Invalid file upload');
+    }
+    const ext = extname(file.originalname).toLowerCase();
+    let type: 'PDF' | 'IMAGE' | 'DOCX' = 'PDF';
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) type = 'IMAGE';
+    else if (['.doc', '.docx'].includes(ext)) type = 'DOCX';
+    else if (ext === '.pdf') type = 'PDF';
+    const filename = generateUniqueFilename(file.originalname);
+    const url = await saveFileToUploads(file, filename, 'uploads');
+    return { url, type, title: file.originalname };
   }
 }

@@ -50,6 +50,12 @@ export function useUpdateProfile() {
   });
 }
 
+export function useCompleteProfile() {
+  return useMutation({
+    mutationFn: (formData: FormData) => ApiClient.post<LoginResponse>('/api/auth/profile/complete', formData),
+  });
+}
+
 export function useGetCurrentUser() {
   return useQuery({
     queryKey: ['currentUser'],
@@ -562,43 +568,260 @@ export function useRemoveReaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ messageId, emoji, currentUserId }: { messageId: string; emoji: string; currentUserId?: string }) =>
-      ApiClient.delete<{ success: boolean }>(`/api/chat/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`),
-    onMutate: async ({ messageId, emoji, currentUserId }) => {
-      await queryClient.cancelQueries({ queryKey: ['messages'] });
-
-      const previousData = queryClient.getQueriesData({ queryKey: ['messages'] });
-
-      queryClient.setQueriesData({ queryKey: ['messages'] }, (old: any) => {
-        if (!old) return old;
-
-        return {
-          ...old,
-          messages: old.messages.map((msg: any) => {
-            if (msg.id === messageId) {
-              const filteredReactions = (msg.reactions || []).filter(
-                (reaction: any) => !(reaction.emoji === emoji && reaction.userId === currentUserId),
-              );
-              return {
-                ...msg,
-                reactions: filteredReactions,
-              };
-            }
-            return msg;
-          }),
-        };
-      });
-
-      return { previousData };
-    },
-    onError: (err, variables, context) => {
-      if (context?.previousData) {
-        context.previousData.forEach(([queryKey, data]) => {
-          queryClient.setQueryData(queryKey, data);
-        });
-      }
+    mutationFn: ({ messageId, reactionId }: { messageId: string; reactionId: string }) =>
+      ApiClient.delete<{ message: string }>(`/api/messages/${messageId}/reactions/${reactionId}`),
+    onSuccess: (_, { messageId }) => {
+      queryClient.invalidateQueries({ queryKey: ['messages', messageId] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
   });
 }
 
 export { useCreateOrGetConversation as useGetOrCreateConversation };
+
+// Session hooks
+export function useGetSessionsByClient(clientId: string) {
+  return useQuery({
+    queryKey: ['sessions', 'client', clientId],
+    queryFn: () => ApiClient.get<any[]>(`/api/sessions/client/${clientId}`),
+    enabled: !!clientId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useGetMySessions() {
+  return useQuery({
+    queryKey: ['sessions', 'practitioner', 'me'],
+    queryFn: () => ApiClient.get<any[]>('/api/sessions/practitioner/me'),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useGetSession(sessionId: string) {
+  return useQuery({
+    queryKey: ['session', sessionId],
+    queryFn: () => ApiClient.get<any>(`/api/sessions/${sessionId}`),
+    enabled: !!sessionId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useGetSessionForPolling(sessionId: string) {
+  return useQuery({
+    queryKey: ['session', sessionId],
+    queryFn: () => ApiClient.get<any>(`/api/sessions/${sessionId}`),
+    enabled: !!sessionId,
+    staleTime: 0, // Always refetch
+    refetchInterval: 2000, // Refetch every 2 seconds
+    refetchIntervalInBackground: true,
+  });
+}
+
+export function useCreateSession() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { clientId: string; title: string; notes?: string }) =>
+      ApiClient.post<{ id: string }>('/api/sessions', data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['sessions', 'client', variables.clientId] });
+    },
+  });
+}
+
+export function useUploadSessionAudio() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ sessionId, formData }: { sessionId: string; formData: FormData }) =>
+      ApiClient.post(`/api/sessions/${sessionId}/upload`, formData, {}),
+    onSuccess: (_, { sessionId }) => {
+      queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    },
+  });
+}
+
+export function useUpdateSession() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ sessionId, data }: { sessionId: string; data: any }) =>
+      ApiClient.put<any>(`/api/sessions/${sessionId}`, data),
+    onSuccess: (_, { sessionId }) => {
+      queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    },
+  });
+}
+
+export function usePublishPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (planId: string) => ApiClient.patch<any>(`/api/plans/${planId}/publish`),
+    onSuccess: (_, planId) => {
+      queryClient.invalidateQueries({ queryKey: ['plans'] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+      queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+      queryClient.invalidateQueries({ queryKey: ['planStatus', planId] });
+    },
+  });
+}
+
+export function useGeneratePlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ sessionId }: { sessionId: string }) => ApiClient.post<any>('/api/plans/generate', { sessionId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['plans'] });
+    },
+  });
+}
+
+// Additional Plan hooks for PlanEditor
+export function useGetPlanWithSuggestions(planId: string) {
+  return useQuery({
+    queryKey: ['planData', planId],
+    queryFn: () => ApiClient.get<any>(`/api/plans/${planId}/with-suggestions`),
+    enabled: !!planId,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useGetPlanStatus(planId: string) {
+  return useQuery({
+    queryKey: ['planStatus', planId],
+    queryFn: async () => {
+      const plan = await ApiClient.get<{ status: 'DRAFT' | 'PUBLISHED' }>(`/api/plans/${planId}`);
+      return plan.status;
+    },
+    enabled: !!planId,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useApproveSuggestion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (suggestionId: string) => ApiClient.post(`/api/plans/suggestions/${suggestionId}/approve`),
+    onSuccess: (_, planId) => {
+      queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+    },
+  });
+}
+
+export function useRejectSuggestion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (suggestionId: string) => ApiClient.post(`/api/plans/suggestions/${suggestionId}/reject`),
+    onSuccess: (_, planId) => {
+      queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+    },
+  });
+}
+
+export function useUpdateSuggestion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ suggestionId, updatedData }: { suggestionId: string; updatedData: any }) =>
+      ApiClient.patch(`/api/plans/suggestions/${suggestionId}`, updatedData),
+    onSuccess: (_, planId) => {
+      queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+    },
+  });
+}
+
+export function useAddCustomActionItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ planId, data }: { planId: string; data: any }) =>
+      ApiClient.post(`/api/plans/${planId}/action-items`, data),
+    onSuccess: (_, { planId }) => {
+      queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+    },
+  });
+}
+
+export function useDeleteActionItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ planId, itemId }: { planId: string; itemId: string }) =>
+      ApiClient.delete(`/api/plans/${planId}/action-items/${itemId}`),
+    onSuccess: (_, { planId }) => {
+      queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+    },
+  });
+}
+
+export function useUpdateActionItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ planId, itemId, data }: { planId: string; itemId: string; data: any }) =>
+      ApiClient.patch(`/api/plans/${planId}/action-items/${itemId}`, data),
+    onSuccess: (_, { planId }) => {
+      queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+    },
+  });
+}
+
+// Plan hooks
+export function useGetPlan(planId: string) {
+  return useQuery({
+    queryKey: ['plan', planId],
+    queryFn: () => ApiClient.get<any>(`/api/plans/${planId}`),
+    enabled: !!planId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useUpdatePlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ planId, data }: { planId: string; data: any }) => ApiClient.put<any>(`/api/plans/${planId}`, data),
+    onSuccess: (_, { planId }) => {
+      queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    },
+  });
+}
+
+// Client hooks
+export function useGetClient(clientId: string) {
+  return useQuery({
+    queryKey: ['client', clientId],
+    queryFn: () => ApiClient.get<any>(`/api/users/${clientId}`),
+    enabled: !!clientId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useGetClientPlans(clientId: string) {
+  return useQuery({
+    queryKey: ['client-plans', clientId],
+    queryFn: () => ApiClient.get<any[]>(`/api/plans/client/${clientId}`),
+    enabled: !!clientId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCompleteActionItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ taskId, completionData }: { taskId: string; completionData: any }) =>
+      ApiClient.post(`/api/action-items/${taskId}/complete`, completionData),
+    onSuccess: (_, { taskId }) => {
+      // Invalidate client plans to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['client-plans'] });
+    },
+  });
+}

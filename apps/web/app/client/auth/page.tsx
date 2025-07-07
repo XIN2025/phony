@@ -1,15 +1,14 @@
 ﻿'use client';
 
-import { signIn, useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import { useState, useEffect } from 'react';
-
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Button } from '@repo/ui/components/button';
 import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Alert, AlertDescription } from '@repo/ui/components/alert';
 import { Loader2 } from 'lucide-react';
-import { ApiClient } from '@/lib/api-client';
+import { useSendOtp } from '@/lib/hooks/use-api';
 
 export default function ClientAuthPage() {
   const { data: session, status } = useSession();
@@ -17,19 +16,19 @@ export default function ClientAuthPage() {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [showOTP, setShowOTP] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const sendOTPMutation = useSendOtp();
 
   useEffect(() => {
     console.log('[ClientAuth] Session status changed:', {
       status,
       hasSession: !!session,
       userRole: session?.user?.role,
-      isLoading,
       showOTP,
       cookies: document.cookie,
     });
-  }, [status, session, isLoading, showOTP]);
+  }, [status, session, showOTP]);
 
   useEffect(() => {
     console.log('[ClientAuth] Session update - detailed:', {
@@ -65,23 +64,21 @@ export default function ClientAuthPage() {
       return;
     }
 
-    setIsLoading(true);
-    setError('');
-
-    try {
-      console.log('[ClientAuth] Sending OTP...', { email, role: 'CLIENT' });
-      await ApiClient.post('/api/auth/otp', {
-        email,
-        role: 'CLIENT',
-      });
-      setShowOTP(true);
-      console.log('[ClientAuth] OTP sent successfully');
-    } catch (err: any) {
-      console.error('[ClientAuth] OTP sending failed:', err);
-      setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    console.log('[ClientAuth] Sending OTP...', { email, role: 'CLIENT' });
+    sendOTPMutation.mutate(
+      { email },
+      {
+        onSuccess: () => {
+          setShowOTP(true);
+          setError('');
+          console.log('[ClientAuth] OTP sent successfully');
+        },
+        onError: (err: any) => {
+          console.error('[ClientAuth] OTP sending failed:', err);
+          setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
+        },
+      },
+    );
   };
 
   const handleLogin = async () => {
@@ -90,7 +87,6 @@ export default function ClientAuthPage() {
       return;
     }
 
-    setIsLoading(true);
     setError('');
 
     try {
@@ -114,8 +110,6 @@ export default function ClientAuthPage() {
     } catch (err: any) {
       console.error('[ClientAuth] Login failed:', err);
       setError('Invalid OTP code. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -170,8 +164,8 @@ export default function ClientAuthPage() {
                     onKeyPress={(e) => e.key === 'Enter' && handleSendOTP()}
                   />
                 </div>
-                <Button onClick={handleSendOTP} disabled={isLoading} className='w-full'>
-                  {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                <Button onClick={handleSendOTP} disabled={sendOTPMutation.isPending} className='w-full'>
+                  {sendOTPMutation.isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
                   Send Verification Code
                 </Button>
               </div>
@@ -190,11 +184,11 @@ export default function ClientAuthPage() {
                   />
                 </div>
                 <div className='flex space-x-2'>
-                  <Button onClick={handleLogin} disabled={isLoading} className='flex-1'>
-                    {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                  <Button onClick={handleLogin} disabled={sendOTPMutation.isPending} className='flex-1'>
+                    {sendOTPMutation.isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
                     Verify & Sign In
                   </Button>
-                  <Button variant='outline' onClick={handleResendOTP} disabled={isLoading}>
+                  <Button variant='outline' onClick={handleResendOTP} disabled={sendOTPMutation.isPending}>
                     Resend
                   </Button>
                 </div>

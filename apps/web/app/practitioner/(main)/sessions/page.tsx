@@ -2,10 +2,9 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { ApiClient } from '@/lib/api-client';
 import { useRouter } from 'next/navigation';
 import { AudioRecorder } from '@/components/recorder/AudioRecorder';
+import { useGetMySessions, useUploadSessionAudio } from '@/lib/hooks/use-api';
 
 interface Session {
   id: string;
@@ -25,30 +24,16 @@ export default function PractitionerSessionsPage() {
   const [mockNotes, setMockNotes] = useState<string>('');
   const [mockTranscript, setMockTranscript] = useState<string>('');
 
-  const { data: sessions, refetch } = useQuery<Session[]>({
-    queryKey: ['sessions'],
-    queryFn: async () => {
-      const result = await ApiClient.get<Session[]>('/sessions/practitioner/me');
-      console.log('Sessions data:', result);
-      return result;
-    },
-  });
-
-  const uploadMutation = useMutation({
-    mutationFn: async ({ sessionId, file }: { sessionId: string; file: File }) => {
-      const formData = new FormData();
-      formData.append('audio', file);
-      await ApiClient.post(`/sessions/${sessionId}/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-    },
-    onSuccess: () => refetch(),
-  });
+  // Use React Query hooks from use-api.ts
+  const { data: sessions, refetch } = useGetMySessions();
+  const uploadAudioMutation = useUploadSessionAudio();
 
   const handleFileChange = (sessionId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      uploadMutation.mutate({ sessionId, file });
+      const formData = new FormData();
+      formData.append('audio', file);
+      uploadAudioMutation.mutate({ sessionId, formData });
     }
   };
 

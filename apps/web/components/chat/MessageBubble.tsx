@@ -44,11 +44,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
   const handleReactionClick = (emoji: string, hasReacted: boolean) => {
     if (hasReacted) {
-      removeReaction.mutate({
-        messageId: message.id,
-        emoji,
-        currentUserId: session?.user?.id,
-      });
+      // Find the reaction to remove
+      const reactionToRemove = message.reactions?.find((r) => r.emoji === emoji && r.userId === session?.user?.id);
+      if (reactionToRemove) {
+        removeReaction.mutate({
+          messageId: message.id,
+          reactionId: reactionToRemove.id,
+        });
+      }
     } else {
       addReaction.mutate({
         messageId: message.id,

@@ -2,7 +2,14 @@
 import { TaskDetailModal } from '@/components/practitioner/TaskDetailModal';
 import { AudioRecorder, AudioRecorderHandle } from '@/components/recorder/AudioRecorder';
 import { AudioRecorderProvider, useAudioRecorder } from '@/context/AudioRecorderContext';
-import { ApiClient } from '@/lib/api-client';
+import {
+  useGetClient,
+  useGetSessionsByClient,
+  useGetSessionForPolling,
+  useCreateSession,
+  useUploadSessionAudio,
+  useGetPlan,
+} from '@/lib/hooks/use-api';
 import { ActionItem, ActionItemCompletion, Plan, Resource, Session, User } from '@repo/db';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
@@ -14,10 +21,10 @@ import { Tabs, TabsContent, TabsList } from '@repo/ui/components/tabs';
 import { TabTrigger } from '@/components/TabTrigger';
 import { ArrowLeft, MessageCircle, Plus, Target, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
+import { PlanEditor } from '@/components/practitioner/PlanEditor';
 
 import {
   Dialog,
@@ -36,6 +43,7 @@ type PopulatedSession = Session & { plan: PopulatedPlan | null };
 
 const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedTask, setSelectedTask] = useState<PopulatedActionItem | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [showNewSession, setShowNewSession] = useState(false);
@@ -46,10 +54,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sessionTitle, setSessionTitle] = useState('');
   const [sessionNotes, setSessionNotes] = useState('');
-
-  const [client, setClient] = useState<User | null>(null);
-  const [sessions, setSessions] = useState<PopulatedSession[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   const [showProcessingModal, setShowProcessingModal] = useState(false);
   const [showEndSessionModal, setShowEndSessionModal] = useState(false);
@@ -66,44 +70,59 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<null | (() => void)>(null);
 
+  // Handle editPlan parameter
+  const editPlanId = searchParams.get('editPlan');
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(editPlanId);
+
   const [processingSessionId, setProcessingSessionId] = useState<string | null>(null);
 
   const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null);
   const [pendingDuration, setPendingDuration] = useState<string>('');
 
-  const { data: session } = useQuery({
-    queryKey: ['session-status', processingSessionId],
-    queryFn: () =>
-      processingSessionId ? ApiClient.get<DBSession>(`/api/sessions/${processingSessionId}`) : Promise.resolve(null),
-    enabled: !!processingSessionId && showProcessingModal,
-    refetchInterval: showProcessingModal ? 2000 : false,
-  });
+  // React Query hooks
+  const { data: client, isLoading: isClientLoading } = useGetClient(clientId);
+  const { data: sessions = [], isLoading: isSessionsLoading } = useGetSessionsByClient(clientId);
+  const { data: processingSession } = useGetSessionForPolling(processingSessionId || '');
+  const { data: editingPlan, isLoading: isEditingPlanLoading } = useGetPlan(editingPlanId || '');
+  const createSessionMutation = useCreateSession();
+  const uploadAudioMutation = useUploadSessionAudio();
+
+  const isLoading = isClientLoading || isSessionsLoading;
+
+  // Sync tab state with URL
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && ['dashboard', 'sessions', 'plans', 'journal'].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
+  // Update URL when tab changes
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+
+    // Update URL with shallow routing
+    const newUrl = new URL(window.location.href);
+    if (newTab === 'dashboard') {
+      newUrl.searchParams.delete('tab');
+    } else {
+      newUrl.searchParams.set('tab', newTab);
+    }
+    router.replace(newUrl.pathname + newUrl.search);
+  };
+
+  // Update editingPlanId when searchParams changes
+  useEffect(() => {
+    const newEditPlanId = searchParams.get('editPlan');
+    setEditingPlanId(newEditPlanId);
+  }, [searchParams]);
 
   useEffect(() => {
-    if (session && session.status === 'REVIEW_READY') {
+    if (processingSession && processingSession.status === 'REVIEW_READY') {
       setShowProcessingModal(false);
       router.push(`/practitioner/sessions/${processingSessionId}`);
     }
-  }, [session, processingSessionId, router]);
-
-  useEffect(() => {
-    if (clientId) {
-      const fetchData = async () => {
-        setIsLoading(true);
-        try {
-          const clientData = await ApiClient.get<User>(`/api/users/${clientId}`);
-          setClient(clientData);
-          const sessionsData = await ApiClient.get<PopulatedSession[]>(`/api/sessions/client/${clientId}`);
-          setSessions(sessionsData);
-        } catch (error) {
-          console.error('Failed to fetch client data', error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchData();
-    }
-  }, [clientId]);
+  }, [processingSession, processingSessionId, router]);
 
   const { stats, allTasks } = useMemo(() => {
     if (!sessions || sessions.length === 0) {
@@ -133,20 +152,16 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     toast.info('Saving session...');
     try {
       // 1. Create the session metadata
-      const newSession = await ApiClient.post<{ id: string }>('/api/sessions', {
+      const newSession = await createSessionMutation.mutateAsync({
         clientId: clientId,
         title: sessionTitle,
         notes: sessionNotes,
       });
       setNewSessionId(newSession.id);
-
       toast.success('Session saved and sent for transcription!');
       setSessionTitle('');
       setSessionNotes('');
-      // Optionally, refetch sessions to update the list
-      const sessionsData = await ApiClient.get<PopulatedSession[]>(`/api/sessions/client/${clientId}`);
-      setSessions(sessionsData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save session', error);
       setErrorMessage('Failed to create session. Please check your internet connection and try again.');
       setShowErrorModal(true);
@@ -163,7 +178,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   };
 
   const handleNewSession = () => {
-    setActiveTab('sessions');
+    handleTabChange('sessions');
     setShowNewSession(true);
     // Reset form state
     setSessionTitle('');
@@ -197,21 +212,18 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   };
 
   const handleEndSession = async (audioBlob: Blob, duration: string) => {
-    console.log('handleEndSession called', { audioBlob, duration });
     setSessionDuration(duration);
     setProcessingStep('uploading');
     setProcessingError(null);
     setSessionTranscript(null);
-
     try {
       // 1. Create the session
-      const newSession = await ApiClient.post<{ id: string }>('/api/sessions', {
+      const newSession = await createSessionMutation.mutateAsync({
         clientId: clientId,
         title: sessionTitle,
         notes: sessionNotes,
       });
       setNewSessionId(newSession.id);
-
       // 2. Upload the audio
       const formData = new FormData();
       formData.append('audio', audioBlob, `session_${newSession.id}.webm`);
@@ -225,14 +237,13 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
         formData.append('durationSeconds', String(durationSeconds));
       }
       setProcessingStep('uploading');
-      await ApiClient.post(`/api/sessions/${newSession.id}/upload`, formData, {});
+      await uploadAudioMutation.mutateAsync({ sessionId: newSession.id, formData });
       setProcessingSessionId(newSession.id);
       setShowProcessingModal(true);
     } catch (err: any) {
       setProcessingStep('error');
       setProcessingError(err.message || 'Failed to upload audio or create session');
       toast.error(err.message || 'Failed to upload audio or create session');
-      // Do not close the modal so the user can retry
     }
   };
 
@@ -278,8 +289,160 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
   const handleDiscardUnsaved = () => {
     setShowUnsavedModal(false);
-    if (pendingNavigation) pendingNavigation();
+    if (pendingNavigation) {
+      pendingNavigation();
+      setPendingNavigation(null);
+    }
   };
+
+  const handleClosePlanEditor = () => {
+    setEditingPlanId(null);
+    // Remove the editPlan parameter from URL
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.delete('editPlan');
+    router.replace(newUrl.pathname + newUrl.search);
+  };
+
+  // --- Plans Tab Table State ---
+  const [planSearch, setPlanSearch] = useState('');
+
+  // Helper to get plans from sessions
+  const plans = useMemo(() => {
+    return sessions
+      .filter((s) => s.plan)
+      .map((s) => ({
+        sessionId: s.id,
+        sessionTitle: s.title,
+        recordedAt: s.recordedAt,
+        plan: s.plan as PopulatedPlan,
+      }));
+  }, [sessions]);
+
+  // Filter plans by search
+  const filteredPlans = useMemo(() => {
+    if (!planSearch.trim()) return plans;
+    return plans.filter((p) => (p.sessionTitle || '').toLowerCase().includes(planSearch.trim().toLowerCase()));
+  }, [plans, planSearch]);
+
+  // Dummy feedback calculation (replace with real logic if available)
+  function getAvgFeedback(plan: PopulatedPlan) {
+    // TODO: Replace with real feedback logic
+    // For now, cycle through options for demo
+    const idx = plans.findIndex((p) => p.plan && p.plan.id === plan.id);
+    const options = ['Nil', 'Happy', 'Neutral', 'Sad'];
+    return options[idx % options.length];
+  }
+
+  // --- Plans Tab Table ---
+  const renderPlansTab = () => (
+    <TabsContent value='plans' className='mt-0'>
+      <div className='flex flex-col gap-6'>
+        <div className='flex justify-between items-center mb-2'>
+          <h2 className='text-lg sm:text-xl font-semibold'>Plans</h2>
+          <input
+            type='text'
+            placeholder='Search Plan'
+            value={planSearch}
+            onChange={(e) => setPlanSearch(e.target.value)}
+            className='border rounded-full px-4 py-2 w-60 text-sm outline-none focus:ring-2 focus:ring-black/10'
+            style={{ minWidth: 180 }}
+          />
+        </div>
+        <div className='overflow-x-auto'>
+          <table className='min-w-full border border-gray-300 rounded-2xl overflow-hidden bg-white'>
+            <thead>
+              <tr className='bg-white'>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 border-b'>Date</th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 border-b'>Session Title</th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 border-b'>Tasks</th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 border-b'>Avg Task Feedback</th>
+                <th className='px-6 py-3 text-center text-xs font-semibold text-gray-700 border-b'>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPlans.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className='text-center text-gray-400 py-8'>
+                    No plans found.
+                  </td>
+                </tr>
+              ) : (
+                filteredPlans.map(({ sessionId, sessionTitle, recordedAt, plan }) => {
+                  if (!plan) return null;
+                  const completed = plan.actionItems.filter((t) => t.completions && t.completions.length > 0).length;
+                  const total = plan.actionItems.length;
+                  const avgFeedback = getAvgFeedback(plan);
+                  return (
+                    <tr key={plan.id} className='border-b last:border-b-0 hover:bg-gray-50 transition-colors'>
+                      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                        {recordedAt
+                          ? new Date(recordedAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: '2-digit',
+                            })
+                          : '--'}
+                      </td>
+                      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                        {sessionTitle || 'Untitled Session'}
+                      </td>
+                      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                        {completed}/{total}
+                      </td>
+                      <td className='px-6 py-4 whitespace-nowrap'>
+                        <span
+                          className={`inline-block rounded-full px-4 py-1 text-xs font-semibold bg-gray-200 text-gray-700`}
+                        >
+                          {avgFeedback}
+                        </span>
+                      </td>
+                      <td className='px-6 py-4 whitespace-nowrap text-center'>
+                        <button
+                          className='inline-flex items-center justify-center rounded-full p-2 hover:bg-gray-100 mr-2'
+                          title='View Plan'
+                          onClick={() => router.push(`/practitioner/clients/${clientId}/plans/${plan.id}`)}
+                        >
+                          <svg
+                            width='18'
+                            height='18'
+                            fill='none'
+                            stroke='currentColor'
+                            strokeWidth='2'
+                            viewBox='0 0 24 24'
+                          >
+                            <circle cx='12' cy='12' r='10' />
+                            <circle cx='12' cy='12' r='4' />
+                          </svg>
+                        </button>
+                        <button
+                          className='inline-flex items-center justify-center rounded-full p-2 hover:bg-gray-100'
+                          title='Edit Plan'
+                          onClick={() =>
+                            router.replace(`/practitioner/clients/${clientId}/dashboard?editPlan=${plan.id}`)
+                          }
+                        >
+                          <svg
+                            width='18'
+                            height='18'
+                            fill='none'
+                            stroke='currentColor'
+                            strokeWidth='2'
+                            viewBox='0 0 24 24'
+                          >
+                            <path d='M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h6v-2H5v-2H3v4z' />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </TabsContent>
+  );
 
   const renderDashboardTab = () => (
     <TabsContent value='dashboard' className='mt-0'>
@@ -380,8 +543,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                     const secs = session.durationSeconds % 60;
                     duration = `${mins}m ${secs.toString().padStart(2, '0')}s`;
                   }
-                  const summary =
-                    session.summary || session.aiSummary || 'More control on anxiety than in past sessions.';
+                  const summary = session.summaryTitle || session.title || 'No summary available.';
                   return (
                     <TableRow
                       key={session.id}
@@ -409,93 +571,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     </TabsContent>
   );
 
-  const renderPlansTab = () => (
-    <TabsContent value='plans' className='mt-0'>
-      <div className='space-y-6'>
-        {sessions && sessions.length > 0 ? (
-          sessions
-            .filter((session) => session.plan)
-            .map((session) => (
-              <Card key={session.id} className='bg-background border border-border rounded-xl shadow-none'>
-                <CardContent className='p-6'>
-                  <div className='flex items-start justify-between mb-4'>
-                    <div>
-                      <h3 className='font-semibold text-lg'>{session.title || 'Untitled Session'}</h3>
-                      <p className='text-sm text-muted-foreground'>
-                        {new Date(session.recordedAt).toLocaleDateString()}
-                      </p>
-                      <div className='flex items-center gap-2 mt-2'>
-                        <Badge
-                          variant={
-                            session.plan?.status === 'PUBLISHED'
-                              ? 'default'
-                              : session.plan?.status === 'DRAFT'
-                                ? 'secondary'
-                                : 'outline'
-                          }
-                        >
-                          {session.plan?.status || 'No Plan'}
-                        </Badge>
-                        {session.plan?.actionItems && (
-                          <span className='text-sm text-muted-foreground'>
-                            {session.plan.actionItems.length} action items
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => router.push(`/practitioner/sessions/${session.id}`)}
-                    >
-                      View Details
-                    </Button>
-                  </div>
-
-                  {session.plan?.actionItems && session.plan.actionItems.length > 0 && (
-                    <div className='space-y-2'>
-                      <h4 className='font-medium text-sm'>Action Items:</h4>
-                      <div className='space-y-1'>
-                        {session.plan.actionItems.slice(0, 3).map((item) => (
-                          <div key={item.id} className='flex items-center gap-2 text-sm'>
-                            <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                            <span className='flex-1'>{item.description}</span>
-                            {item.isMandatory && (
-                              <Badge variant='destructive' className='text-xs'>
-                                Mandatory
-                              </Badge>
-                            )}
-                          </div>
-                        ))}
-                        {session.plan.actionItems.length > 3 && (
-                          <p className='text-xs text-muted-foreground'>
-                            +{session.plan.actionItems.length - 3} more items
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-        ) : (
-          <div className='text-center py-12'>
-            <div className='max-w-md mx-auto'>
-              <Target className='h-16 w-16 mx-auto mb-6 text-muted-foreground opacity-50' />
-              <h3 className='text-lg font-semibold mb-2'>No action plans yet</h3>
-              <p className='text-muted-foreground mb-6'>
-                Create your first session to start building action plans for your client.
-              </p>
-              <Button onClick={handleNewSession} className='bg-foreground text-background hover:bg-foreground/90'>
-                <Plus className='h-4 w-4 mr-2' />
-                Record First Session
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-    </TabsContent>
-  );
   const renderJournalTab = () => (
     <TabsContent value='journal' className='mt-0'>
       <div className='text-center text-muted-foreground'>Journal entries will be shown here.</div>
@@ -503,7 +578,60 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   );
 
   const renderContent = () => {
-    console.log('[Dashboard] render', { showNewSession, activeTab, isLoading });
+    console.log('[Dashboard] render', { showNewSession, activeTab, isLoading, editingPlanId, editingPlan });
+
+    // Show PlanEditor if editing a plan
+    if (editingPlanId) {
+      if (isEditingPlanLoading) {
+        return (
+          <div className='min-h-screen bg-background flex flex-col'>
+            <div className='flex items-center justify-between px-8 pt-8 pb-4 border-b bg-background'>
+              <div className='flex items-center gap-4 min-w-0'>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  onClick={handleClosePlanEditor}
+                  className='h-8 w-8'
+                  aria-label='Back'
+                >
+                  <ArrowLeft className='h-4 w-4' />
+                </Button>
+                <div className='flex flex-col min-w-0'>
+                  <h1 className='text-2xl font-bold truncate'>Edit Action Plan</h1>
+                </div>
+              </div>
+            </div>
+            <div className='flex-1 w-full px-4 sm:px-8 py-4 max-w-6xl mx-auto flex flex-col gap-8'>
+              <div className='flex items-center justify-center py-8'>
+                <div className='text-center'>
+                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto'></div>
+                  <p className='mt-2 text-sm text-muted-foreground'>Loading plan editor...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className='min-h-screen bg-background flex flex-col'>
+          <div className='flex items-center justify-between px-8 pt-8 pb-4 border-b bg-background'>
+            <div className='flex items-center gap-4 min-w-0'>
+              <Button variant='ghost' size='icon' onClick={handleClosePlanEditor} className='h-8 w-8' aria-label='Back'>
+                <ArrowLeft className='h-4 w-4' />
+              </Button>
+              <div className='flex flex-col min-w-0'>
+                <h1 className='text-2xl font-bold truncate'>Edit Action Plan</h1>
+              </div>
+            </div>
+          </div>
+          <div className='flex-1 w-full px-4 sm:px-8 py-4 max-w-6xl mx-auto flex flex-col gap-8'>
+            <PlanEditor planId={editingPlanId} sessionId={editingPlan?.sessionId || ''} clientId={clientId} />
+          </div>
+        </div>
+      );
+    }
+
     if (showNewSession) {
       return (
         <div className='min-h-screen bg-background flex flex-col'>
@@ -629,7 +757,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           <div className='flex-1 w-full flex py-4 sm:py-8 bg-background'>
             <div className='w-full px-4 sm:px-8 lg:px-16 flex flex-col gap-6 sm:gap-8'>
               <div className='w-full'>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
+                <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full'>
                   <TabsList className='flex gap-1 bg-transparent p-0 justify-start w-full sm:w-fit mb-6 overflow-x-auto'>
                     <TabTrigger value='dashboard'>Dashboard</TabTrigger>
                     <TabTrigger value='sessions'>Sessions</TabTrigger>
@@ -734,8 +862,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
             </DialogContent>
           </Dialog>
         )}
-        {/* Add debug log for modal state */}
-        console.log('showEndSessionModal', showEndSessionModal);
       </>
     );
   };
