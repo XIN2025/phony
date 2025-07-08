@@ -166,6 +166,7 @@ export class PlanService {
           select: {
             id: true,
             recordedAt: true,
+            title: true,
             status: true,
             transcript: true,
           },
