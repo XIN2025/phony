@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -20,12 +19,6 @@ import { MulterModule } from '@nestjs/platform-express';
     }),
     MailModule,
     MulterModule.register({ dest: './uploads' }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 10,
-      },
-    ]),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

@@ -16,7 +16,6 @@ import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -32,7 +31,6 @@ export class AuthController {
 
   @Post('otp')
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiResponse({ type: Boolean, description: 'Whether the OTP was sent successfully' })
   async otpAuth(@Body() body: OtpAuthDto): Promise<{ success: boolean }> {
     return await this.authService.sendOtp(body.email);
