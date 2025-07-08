@@ -7,8 +7,7 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({
     req: request,
     secret: envConfigServer.nextAuthSecret || 'fallback-secret-for-build',
-    secureCookie: false,
-    cookieName: 'next-auth.session-token',
+    secureCookie: request.nextUrl.protocol === 'https:',
   });
   const { pathname } = request.nextUrl;
 
