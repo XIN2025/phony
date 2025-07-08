@@ -1,4 +1,5 @@
 'use client';
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -35,8 +36,11 @@ export default function IntakePage() {
   const [answers, setAnswers] = useState<FormAnswers>({});
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const { data: form, isLoading, error } = useGetClientIntakeForm();
+  const shouldFetchForm = !hasSubmitted && !isRedirecting;
+
+  const { data: form, isLoading, error } = useGetClientIntakeForm(shouldFetchForm);
   const { mutate: submitForm, isPending: isSubmitting } = useSubmitIntakeForm();
 
   useEffect(() => {
@@ -71,7 +75,7 @@ export default function IntakePage() {
   useEffect(() => {
     if (error && !isRedirecting) {
       const errorMessage = error.message;
-      if (errorMessage.includes('Client has already completed intake')) {
+      if (errorMessage.includes('Client has already completed intake') || errorMessage.includes('already completed')) {
         setIsRedirecting(true);
         toast.info('You have already completed your intake form.');
         router.push('/client');
@@ -85,6 +89,21 @@ export default function IntakePage() {
       }
     }
   }, [error, router, isRedirecting]);
+
+  React.useEffect(() => {
+    return () => {
+      setHasSubmitted(false);
+      setIsRedirecting(false);
+      setIsProcessing(false);
+
+      if (processingTimeoutRef.current) {
+        clearTimeout(processingTimeoutRef.current);
+        processingTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const processingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const handleAnswerChange = (questionId: string, value: string | string[] | boolean | number | undefined) => {
     setAnswers((prev) => ({
@@ -155,7 +174,7 @@ export default function IntakePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (hasSubmitted || isSubmitting || isRedirecting) {
+    if (hasSubmitted || isSubmitting || isRedirecting || isProcessing) {
       return;
     }
 
@@ -166,8 +185,14 @@ export default function IntakePage() {
       return;
     }
 
+    setIsProcessing(true);
     setHasSubmitted(true);
-    setIsRedirecting(true);
+
+    processingTimeoutRef.current = setTimeout(() => {
+      setIsProcessing(false);
+      setHasSubmitted(false);
+      toast.error('Request timed out. Please try again.');
+    }, 30000);
 
     submitForm(
       {
@@ -176,7 +201,14 @@ export default function IntakePage() {
       },
       {
         onSuccess: async (data: { success: boolean; submissionId: string; clientStatus: string }) => {
+          if (processingTimeoutRef.current) {
+            clearTimeout(processingTimeoutRef.current);
+            processingTimeoutRef.current = null;
+          }
+
           try {
+            setIsRedirecting(true);
+
             await update({
               ...session,
               user: {
@@ -186,15 +218,33 @@ export default function IntakePage() {
             });
 
             toast.success('Intake form submitted successfully!');
-            router.push('/client');
-          } catch {
+
+            setTimeout(() => {
+              router.push('/client');
+            }, 100);
+          } catch (error) {
             router.push('/client');
           }
         },
-        onError: async () => {
+        onError: async (error: any) => {
+          if (processingTimeoutRef.current) {
+            clearTimeout(processingTimeoutRef.current);
+            processingTimeoutRef.current = null;
+          }
+
           setHasSubmitted(false);
-          setIsRedirecting(false);
-          toast.error('Failed to submit form. Please try again.');
+          setIsProcessing(false);
+
+          const errorMessage =
+            error?.message || error?.response?.data?.message || 'Failed to submit form. Please try again.';
+
+          if (errorMessage.includes('already been submitted') || errorMessage.includes('already completed')) {
+            toast.info('You have already completed your intake form.');
+            setIsRedirecting(true);
+            router.push('/client');
+          } else {
+            toast.error(errorMessage);
+          }
         },
       },
     );
@@ -301,7 +351,6 @@ export default function IntakePage() {
           >
             {Array.isArray(question.options) &&
               question.options.map((option, index) => {
-                // Handle both string options and object options
                 const optionValue =
                   typeof option === 'string' ? option : option?.value || option?.label || String(option);
                 const optionLabel =
@@ -322,7 +371,6 @@ export default function IntakePage() {
           <div className='mt-2 space-y-2'>
             {Array.isArray(question.options) &&
               question.options.map((option, index) => {
-                // Handle both string options and object options
                 const optionValue =
                   typeof option === 'string' ? option : option?.value || option?.label || String(option);
                 const optionLabel =
@@ -387,7 +435,7 @@ export default function IntakePage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isRedirecting) {
     return (
       <div className='min-h-screen bg-background flex items-center justify-center p-4'>
         <div className='w-full max-w-2xl text-center'>
@@ -396,8 +444,14 @@ export default function IntakePage() {
           </div>
           <div className='bg-card rounded-lg shadow-lg p-8'>
             <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4' />
-            <h2 className='text-xl font-semibold mb-2'>Loading your intake form...</h2>
-            <p className='text-muted-foreground'>Please wait while we load your personalized intake form.</p>
+            <h2 className='text-xl font-semibold mb-2'>
+              {isRedirecting ? 'Redirecting...' : 'Loading your intake form...'}
+            </h2>
+            <p className='text-muted-foreground'>
+              {isRedirecting
+                ? 'Please wait while we redirect you to your dashboard.'
+                : 'Please wait while we load your personalized intake form.'}
+            </p>
           </div>
         </div>
       </div>
@@ -478,13 +532,17 @@ export default function IntakePage() {
               type='button'
               variant='outline'
               onClick={() => router.push('/client')}
-              disabled={isSubmitting || hasSubmitted}
+              disabled={isSubmitting || hasSubmitted || isProcessing || isRedirecting}
             >
               Cancel
             </Button>
-            <Button type='submit' disabled={isSubmitting || hasSubmitted} key='submit-button'>
-              {isSubmitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-              {hasSubmitted ? 'Submitted' : 'Submit Form'}
+            <Button
+              type='submit'
+              disabled={isSubmitting || hasSubmitted || isProcessing || isRedirecting}
+              key='submit-button'
+            >
+              {(isSubmitting || isProcessing) && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+              {hasSubmitted || isProcessing ? 'Submitting...' : 'Submit Form'}
             </Button>
           </div>
         </form>

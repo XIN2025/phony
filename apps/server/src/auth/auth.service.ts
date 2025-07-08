@@ -18,8 +18,6 @@ import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginResponseDto, ProfileUpdateBody } from './dto/auth.dto';
 
-// Removed duplicate interface - using the one from auth.controller.ts
-
 interface ProfileUpdateData {
   firstName?: string;
   lastName?: string;
@@ -55,14 +53,6 @@ export class AuthService {
     validateRequiredFields({ email }, ['email']);
     const normalizedEmail = normalizeEmail(email);
 
-    const existingOtp = await this.prismaService.otp.findUnique({
-      where: { email: normalizedEmail },
-    });
-
-    if (existingOtp && existingOtp.expiresAt > new Date()) {
-      return { success: true };
-    }
-
     const otp = generateOtp();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -72,9 +62,7 @@ export class AuthService {
         update: { otp, expiresAt },
         create: { email: normalizedEmail, otp, expiresAt },
       });
-      console.log(`[AuthService] Successfully saved OTP for ${normalizedEmail} to database.`);
     } catch (error) {
-      console.error('[AuthService] Error saving OTP to database:', error);
       throwAuthError('Failed to process OTP request.', 'badRequest');
     }
 
@@ -85,12 +73,10 @@ export class AuthService {
         templateName: 'OTP',
         context: {
           otp: otp,
-          validity: 10, // 10 minutes validity
+          validity: 10,
         },
       });
-      console.log(`[AuthService] Successfully sent OTP email to ${normalizedEmail}.`);
     } catch (error) {
-      console.error('[AuthService] Error sending OTP email:', error);
       throwAuthError('Failed to send OTP email.', 'badRequest');
     }
 

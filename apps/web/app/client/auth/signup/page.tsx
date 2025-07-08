@@ -28,6 +28,12 @@ export default function ClientSignUpPage() {
   const { mutate: handleSignup, isPending: isSigningUp } = useClientSignup();
 
   useEffect(() => {
+    if (!token) {
+      toast.error('Invalid invitation link. Please contact your practitioner for a valid invitation.');
+      router.push('/client/auth');
+      return;
+    }
+
     if (invitationData) {
       setEmail(invitationData.clientEmail);
       if (invitationData.isAccepted) {
@@ -35,7 +41,7 @@ export default function ClientSignUpPage() {
         router.push(`/client/auth?email=${encodeURIComponent(invitationData.clientEmail)}`);
       }
     }
-  }, [invitationData, router]);
+  }, [invitationData, router, token]);
 
   useEffect(() => {
     if (error) {
@@ -69,6 +75,13 @@ export default function ClientSignUpPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!token) {
+      toast.error('Invalid invitation link. Please contact your practitioner for a valid invitation.');
+      router.push('/client/auth');
+      return;
+    }
+
     if (!firstName.trim()) {
       toast.error('Please enter your first name.');
       return;

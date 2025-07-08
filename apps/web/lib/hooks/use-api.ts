@@ -238,11 +238,12 @@ export interface ClientIntakeForm {
   questions: IntakeFormQuestion[];
 }
 
-export function useGetClientIntakeForm() {
+export function useGetClientIntakeForm(enabled: boolean = true) {
   return useQuery({
     queryKey: ['clientIntakeForm'],
     queryFn: () => ApiClient.get<ClientIntakeForm>('/api/client/intake-form'),
     staleTime: 5 * 60 * 1000,
+    enabled: enabled,
   });
 }
 
@@ -256,7 +257,6 @@ export function useSubmitIntakeForm() {
         data,
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clientIntakeForm'] });
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
     },
   });
@@ -579,7 +579,6 @@ export function useRemoveReaction() {
 
 export { useCreateOrGetConversation as useGetOrCreateConversation };
 
-// Session hooks
 export function useGetSessionsByClient(clientId: string) {
   return useQuery({
     queryKey: ['sessions', 'client', clientId],
@@ -611,8 +610,8 @@ export function useGetSessionForPolling(sessionId: string) {
     queryKey: ['session', sessionId],
     queryFn: () => ApiClient.get<any>(`/api/sessions/${sessionId}`),
     enabled: !!sessionId,
-    staleTime: 0, // Always refetch
-    refetchInterval: 2000, // Refetch every 2 seconds
+    staleTime: 0,
+    refetchInterval: 2000,
     refetchIntervalInBackground: true,
   });
 }
@@ -680,7 +679,6 @@ export function useGeneratePlan() {
   });
 }
 
-// Additional Plan hooks for PlanEditor
 export function useGetPlanWithSuggestions(planId: string) {
   return useQuery({
     queryKey: ['planData', planId],
@@ -772,7 +770,6 @@ export function useUpdateActionItem() {
   });
 }
 
-// Plan hooks
 export function useGetPlan(planId: string) {
   return useQuery({
     queryKey: ['plan', planId],
@@ -794,7 +791,6 @@ export function useUpdatePlan() {
   });
 }
 
-// Client hooks
 export function useGetClient(clientId: string) {
   return useQuery({
     queryKey: ['client', clientId],
@@ -820,7 +816,6 @@ export function useCompleteActionItem() {
     mutationFn: ({ taskId, completionData }: { taskId: string; completionData: any }) =>
       ApiClient.post(`/api/action-items/${taskId}/complete`, completionData),
     onSuccess: (_, { taskId }) => {
-      // Invalidate client plans to refresh the data
       queryClient.invalidateQueries({ queryKey: ['client-plans'] });
     },
   });
