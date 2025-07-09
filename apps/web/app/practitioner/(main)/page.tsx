@@ -1,23 +1,21 @@
 ﻿'use client';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
-import { getInitials, getAvatarUrl } from '@/lib/utils';
+import {
+  InvitationResponse,
+  useCleanupExpiredInvitations,
+  useDeleteInvitation,
+  useGetInvitations,
+  useResendInvitation,
+  useGetClients,
+} from '@/lib/hooks/use-api';
+import { getAvatarUrl, getInitials } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Button } from '@repo/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
+import { Card, CardContent } from '@repo/ui/components/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/tooltip';
-import { Loader2, MessageSquare, Plus, Trash2, Users } from 'lucide-react';
+import { Eye, Loader2, MessageSquare } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import {
-  useGetInvitations,
-  useDeleteInvitation,
-  useResendInvitation,
-  useCleanupExpiredInvitations,
-  InvitationResponse,
-} from '@/lib/hooks/use-api';
 import { useEffect, useState } from 'react';
 
 const LoadingSpinner = () => (
@@ -38,6 +36,7 @@ export default function PractitionerDashboard() {
   const router = useRouter();
 
   const { data: invitations = [], isLoading: isInvitationsLoading } = useGetInvitations();
+  const { data: clients = [] } = useGetClients();
   const { mutate: deleteInvitation, isPending: isDeleting } = useDeleteInvitation();
   const { mutate: resendInvitation, isPending: isResending } = useResendInvitation();
   const { mutate: cleanupExpiredInvitations, isPending: isCleaningUp } = useCleanupExpiredInvitations();
@@ -91,6 +90,30 @@ export default function PractitionerDashboard() {
     }
   }, [status, session?.user?.role, router]);
 
+  // Mock data for Unread Messages and Unread Journals
+  const unreadMessages = 2;
+  const unreadJournals = 5;
+
+  const pendingInvitations = invitations.filter((inv) => inv.status === 'PENDING');
+  const joinedClients = invitations.filter((inv) => inv.status === 'JOINED');
+  const totalClients = invitations.length;
+
+  // Helper for Plan Engagement badge
+  const getPlanEngagement = (client: any) => {
+    // For now, cycle through High/Medium/Low for demo
+    const idx = joinedClients.findIndex((c) => c.id === client.id);
+    const options = ['High', 'Medium', 'Low'];
+    return options[idx % options.length];
+  };
+  const getPlanBadgeColor = (level: string) => {
+    if (level === 'High') return 'bg-green-200 text-green-800';
+    if (level === 'Medium') return 'bg-blue-200 text-blue-800';
+    if (level === 'Low') return 'bg-red-200 text-red-800';
+    return 'bg-gray-200 text-gray-800';
+  };
+  const getLastSession = (client: any) => 'May 10, 2025';
+  const getLastActive = (client: any) => 'May 10, 2025';
+
   if (
     status === 'loading' ||
     status === 'unauthenticated' ||
@@ -101,201 +124,135 @@ export default function PractitionerDashboard() {
     return <LoadingSpinner />;
   }
 
-  const pendingInvitations = invitations.filter((inv) => inv.status === 'PENDING');
-  const joinedClients = invitations.filter((inv) => inv.status === 'JOINED');
-  const totalClients = invitations.length;
-
-  console.log('[PractitionerDashboard] Rendering dashboard for user:', session?.user);
-
   return (
-    <>
-      <header className='flex h-auto flex-col gap-4 border-b bg-background p-4 sm:h-auto sm:flex-row sm:items-center sm:justify-between sm:p-6'>
-        <div className='flex items-center gap-2'>
-          <SidebarToggleButton />
-          <h1 className='text-xl font-bold tracking-tight sm:text-2xl md:text-3xl'>
-            Welcome Back{session?.user?.firstName ? ` Dr. ${session.user.firstName}` : ''}
-          </h1>
-        </div>
-        <div className='flex justify-start sm:justify-end gap-2'>
-          <Link href='/practitioner/invite'>
-            <Button className='w-full sm:w-auto'>
-              <Plus className='mr-2 h-4 w-4' />
-              Invite Client
-            </Button>
-          </Link>
-        </div>
-      </header>
-      <div className='space-y-4 p-4 sm:space-y-6 sm:p-6 md:p-8'>
-        <div className='grid gap-4 sm:gap-6 md:grid-cols-2'>
-          <Card className='relative'>
-            <Users className='absolute right-4 top-1/2 -translate-y-1/2 h-16 w-16 text-gray-100 sm:right-6 sm:h-20 sm:w-20' />
-            <CardHeader className='pb-2 sm:pb-4'>
-              <CardTitle className='text-base sm:text-lg'>Total Clients</CardTitle>
-              <CardDescription className='text-sm'>All invited clients</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className='text-3xl font-bold sm:text-4xl'>{totalClients}</p>
-            </CardContent>
-          </Card>
-          <Card className='relative'>
-            <MessageSquare className='absolute right-4 top-1/2 -translate-y-1/2 h-16 w-16 text-gray-100 sm:right-6 sm:h-20 sm:w-20' />
-            <CardHeader className='pb-2 sm:pb-4'>
-              <CardTitle className='text-base sm:text-lg'>Active Clients</CardTitle>
-              <CardDescription className='text-sm'>Successfully joined clients</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className='text-3xl font-bold sm:text-4xl'>{joinedClients.length}</p>
-            </CardContent>
-          </Card>
-        </div>
-        <div>
-          <Card>
-            <CardHeader>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <CardTitle>Pending Invitations</CardTitle>
-                  <CardDescription>You have {pendingInvitations.length} pending invitations.</CardDescription>
-                </div>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() =>
-                    cleanupExpiredInvitations(undefined, {
-                      onSuccess: () => {
-                        toast.success('Expired invitations cleaned up successfully.');
-                      },
-                      onError: (error: Error) => {
-                        toast.error(`Failed to cleanup expired invitations: ${error.message}`);
-                      },
-                    })
-                  }
-                  disabled={isCleaningUp}
-                  className='flex items-center gap-2'
-                >
-                  {isCleaningUp ? <Loader2 className='h-4 w-4 animate-spin' /> : <Trash2 className='h-4 w-4' />}
-                  Cleanup Expired
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className='overflow-x-auto'>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className='w-[200px] sm:w-[250px]'>Client Email</TableHead>
-                      <TableHead className='hidden sm:table-cell'>Sent Date</TableHead>
-                      <TableHead className='text-right'>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pendingInvitations.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={3} className='text-center h-24 text-muted-foreground'>
-                          No pending invitations.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      pendingInvitations.map((client) => (
-                        <TableRow key={client.id}>
-                          <TableCell>
-                            <div className='flex items-center gap-3'>
-                              <Avatar className='h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0'>
-                                <AvatarImage src={getAvatarUrl(client.avatar)} />
-                                <AvatarFallback className='text-xs sm:text-sm'>
-                                  {getInitials(client.clientEmail)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className='min-w-0 flex-1'>
-                                <p className='font-medium text-sm sm:text-base truncate'>{client.clientEmail}</p>
-                                <p className='text-xs sm:text-sm text-muted-foreground truncate'>
-                                  {getClientDisplayName(client)}
-                                </p>
-                                <p className='text-xs text-muted-foreground sm:hidden'>{client.invited || 'N/A'}</p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className='text-sm text-muted-foreground hidden sm:table-cell'>
-                            {client.invited || 'N/A'}
-                          </TableCell>
-                          <TableCell className='text-right'>
-                            <div className='flex items-center justify-end gap-1 sm:gap-2'>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant='ghost'
-                                      size='sm'
-                                      onClick={() =>
-                                        resendInvitation(client.id, {
-                                          onSuccess: () => {
-                                            toast.success('Invitation resent successfully.');
-                                          },
-                                          onError: (error: Error) => {
-                                            toast.error(`Failed to resend invitation: ${error.message}`);
-                                          },
-                                        })
-                                      }
-                                      disabled={isResending}
-                                      className='h-8 w-8 sm:h-9 sm:w-9 p-0'
-                                    >
-                                      {isResending ? (
-                                        <Loader2 className='h-4 w-4 animate-spin' />
-                                      ) : (
-                                        <MessageSquare className='h-4 w-4' />
-                                      )}
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Resend invitation</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant='ghost'
-                                      size='sm'
-                                      className='h-8 w-8 sm:h-9 sm:w-9 p-0'
-                                      onClick={() => {
-                                        console.log('Delete invitation clicked for:', client.id);
-                                        deleteInvitation(client.id, {
-                                          onSuccess: () => {
-                                            console.log('Invitation deleted successfully');
-                                            toast.success('Invitation deleted successfully.');
-                                          },
-                                          onError: (error: Error) => {
-                                            console.error('Failed to delete invitation:', error);
-                                            toast.error(`Failed to delete invitation: ${error.message}`);
-                                          },
-                                        });
-                                      }}
-                                      disabled={isDeleting}
-                                    >
-                                      {isDeleting ? (
-                                        <Loader2 className='h-4 w-4 animate-spin' />
-                                      ) : (
-                                        <Trash2 className='h-4 w-4' />
-                                      )}
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Delete invitation</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+    <div className='flex flex-col w-full px-0 py-0 font-sans'>
+      {/* Header */}
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 px-8 pt-10 w-full'>
+        <h1 className='text-3xl font-semibold mb-4 sm:mb-0'>
+          Welcome Back{session?.user?.firstName ? ` Dr. ${session.user.firstName}` : ''}
+        </h1>
+        <Button
+          className='rounded-full px-6 py-2 text-base font-medium bg-black text-white hover:bg-gray-900 shadow'
+          asChild
+        >
+          <Link href='/practitioner/invite'>+ Invite Client</Link>
+        </Button>
       </div>
-    </>
+      {/* Stat Cards */}
+      <div className='grid grid-cols-1 sm:grid-cols-3 gap-8 mb-10 px-8 w-full'>
+        {/* Total Clients Card */}
+        <Card className='relative flex flex-col justify-between min-h-[120px] shadow-2xl rounded-2xl border-0 w-full'>
+          <CardContent className='p-7'>
+            <span className='text-sm font-semibold text-gray-700 mb-1'>Total Clients</span>
+            <span className='text-3xl font-bold mb-1'>{totalClients}</span>
+            <span className='text-xs text-green-600'>+2 from last month</span>
+          </CardContent>
+        </Card>
+        {/* Unread Messages Card */}
+        <Card className='relative flex flex-col justify-between min-h-[120px] shadow-2xl rounded-2xl border-0 w-full'>
+          <CardContent className='p-7'>
+            <span className='text-sm font-semibold text-gray-700 mb-1'>Unread Messages</span>
+            <span className='text-3xl font-bold mb-1'>{unreadMessages}</span>
+            <span className='text-xs text-gray-400'>&nbsp;</span>
+            <span className='absolute right-4 bottom-4 opacity-30'>
+              {/* Large mail icon */}
+              <svg width='56' height='56' viewBox='0 0 56 56' fill='none'>
+                <rect x='8' y='16' width='40' height='24' rx='6' stroke='#b7a9a3' strokeWidth='4' />
+                <path d='M8 20l20 14 20-14' stroke='#b7a9a3' strokeWidth='3' fill='none' />
+              </svg>
+            </span>
+          </CardContent>
+        </Card>
+        {/* Unread Journals Card */}
+        <Card className='relative flex flex-col justify-between min-h-[120px] shadow-2xl rounded-2xl border-0 w-full'>
+          <CardContent className='p-7'>
+            <span className='text-sm font-semibold text-gray-700 mb-1'>Unread Journals</span>
+            <span className='text-3xl font-bold mb-1'>{unreadJournals}</span>
+            <span className='text-xs text-gray-400'>&nbsp;</span>
+            <span className='absolute right-4 bottom-4 opacity-30'>
+              {/* Large journal/book icon */}
+              <svg width='56' height='56' viewBox='0 0 56 56' fill='none'>
+                <rect x='14' y='10' width='28' height='36' rx='6' stroke='#b7a9a3' strokeWidth='4' />
+                <path d='M22 18h12M22 28h12M22 38h12' stroke='#b7a9a3' strokeWidth='3' />
+              </svg>
+            </span>
+          </CardContent>
+        </Card>
+      </div>
+      {/* Last Active Clients Table */}
+      <Card className='rounded-2xl shadow-2xl border-0 mx-8 mb-10 w-full'>
+        <CardContent className='p-8'>
+          <h2 className='text-lg font-semibold mb-6'>Last Active Clients</h2>
+          <div className='overflow-x-auto'>
+            <Table className='min-w-full text-sm'>
+              <TableHeader>
+                <TableRow className='border-b'>
+                  <TableHead className='py-2 px-4 text-left font-medium'>Member</TableHead>
+                  <TableHead className='py-2 px-4 text-left font-medium'>Last Session</TableHead>
+                  <TableHead className='py-2 px-4 text-left font-medium'>Plan Engagement</TableHead>
+                  <TableHead className='py-2 px-4 text-left font-medium'>Last Active</TableHead>
+                  <TableHead className='py-2 px-4 text-left font-medium'>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {clients.map((client: any) => {
+                  const planLevel = getPlanEngagement(client);
+                  return (
+                    <TableRow key={client.id} className='border-b last:border-b-0 hover:bg-gray-50 transition-colors'>
+                      <TableCell className='py-3 px-4 flex items-center gap-3'>
+                        <Avatar className='h-8 w-8 rounded-full'>
+                          <AvatarImage
+                            src={getAvatarUrl(client.avatarUrl, {
+                              firstName: client.firstName,
+                              lastName: client.lastName,
+                            })}
+                          />
+                          <AvatarFallback>
+                            {getInitials({ firstName: client.firstName, lastName: client.lastName })}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className='font-medium'>
+                          {client.firstName} {client.lastName}
+                        </span>
+                      </TableCell>
+                      <TableCell className='py-3 px-4'>{getLastSession(client)}</TableCell>
+                      <TableCell className='py-3 px-4'>
+                        <span
+                          className={`rounded-full px-4 py-1 text-xs font-semibold ${getPlanBadgeColor(planLevel || '')}`}
+                        >
+                          {planLevel}
+                        </span>
+                      </TableCell>
+                      <TableCell className='py-3 px-4'>{getLastActive(client)}</TableCell>
+                      <TableCell className='py-3 px-4'>
+                        <div className='flex gap-2'>
+                          <Link
+                            href={`/practitioner/clients/${client.id}/messages`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Button variant='ghost' size='icon' className='rounded-full p-2'>
+                              <MessageSquare className='h-4 w-4' />
+                            </Button>
+                          </Link>
+                          <Link
+                            href={`/practitioner/clients/${client.id}/dashboard`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Button variant='ghost' size='icon' className='rounded-full p-2'>
+                              <Eye className='h-4 w-4' />
+                            </Button>
+                          </Link>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+      {/* Pending Invitations Section (optional, can be moved below or removed) */}
+    </div>
   );
 }

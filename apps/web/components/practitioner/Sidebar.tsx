@@ -65,25 +65,29 @@ export const SidebarContent = ({
     );
   };
   return (
-    <div className='flex h-full flex-col'>
-      <div className='flex h-[60px] items-center px-6'>
-        <Link href='/' className='flex items-center gap-2 text-lg font-logo font-semibold'>
+    <div
+      className='flex h-full flex-col font-sans'
+      style={{ boxShadow: 'none', borderRight: 'none', background: 'transparent' }}
+    >
+      <div className='flex h-[64px] items-center px-8 mb-4'>
+        <Link href='/' className='flex items-center gap-2 text-2xl font-logo font-semibold text-black'>
           <ContinuumIcon />
           <span>Continuum</span>
         </Link>
       </div>
       <div className='flex-1 py-2'>
-        <nav className='grid items-start px-4 text-base'>
+        <nav className='grid items-start px-2 text-base gap-1'>
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 rounded-full px-4 py-3 transition-all ${
+              className={`flex items-center gap-3 rounded-full px-7 py-3 transition-all font-medium ${
                 pathname === link.href
-                  ? 'border border-gray-700 bg-background font-semibold text-foreground shadow-sm'
-                  : 'font-medium text-muted-foreground hover:text-foreground'
+                  ? 'bg-[#b7a9a3] text-white font-semibold shadow-sm' // brownish highlight
+                  : 'text-[#a6a6a6] hover:text-black hover:bg-[#ede6e3]'
               }`}
+              style={{ minHeight: 44, justifyContent: 'flex-start' }}
             >
               <link.icon className='h-5 w-5' />
               {link.label}
@@ -91,22 +95,14 @@ export const SidebarContent = ({
           ))}
         </nav>
       </div>
-      <div className='mt-auto p-4 space-y-3'>
-        <Link
-          href={settingsPath}
-          onClick={() => setSidebarOpen(false)}
-          className={`block rounded-lg p-2 transition-all ${
-            pathname === settingsPath
-              ? 'border border-border bg-background font-semibold text-foreground shadow-sm'
-              : 'hover:bg-muted'
-          }`}
-        >
+      <div className='border-t border-[#e5d6d0] mt-auto px-8 pb-4 pt-6 flex flex-col gap-3'>
+        <div className='flex items-center gap-3'>
           <UserProfile />
-        </Link>
+        </div>
         <Button
           variant='ghost'
           size='sm'
-          className='w-full justify-start gap-2 text-muted-foreground hover:text-foreground'
+          className='w-full justify-start gap-2 text-[#a6a6a6] hover:text-black'
           onClick={() => signOut({ callbackUrl: signOutCallbackUrl })}
         >
           <LogOut className='h-4 w-4' />
