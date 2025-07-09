@@ -58,6 +58,16 @@ interface Plan {
   actionItems: ActionItem[];
 }
 
+// Add a type for demo tasks
+interface DemoTask {
+  id: string;
+  title: string;
+  duration: string;
+  feedback?: boolean;
+  mandatory?: boolean;
+  completed: boolean;
+}
+
 const ClientPage = () => {
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
@@ -208,9 +218,11 @@ const ClientPage = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<'happy' | 'neutral' | 'sad' | null>(null);
 
-  const handleTaskCardClick = () => {
+  // Update handleTaskCardClick to use the correct type
+  const handleTaskCardClick = (task: DemoTask) => {
     setFeedbackOpen(true);
     setSelectedFeedback(null);
+    setSelectedTask(task as any); // keep selectedTask logic for now
   };
 
   const handleFeedbackSelect = (type: 'happy' | 'neutral' | 'sad') => {
@@ -272,7 +284,11 @@ const ClientPage = () => {
           <h2 className='text-lg font-semibold mb-2'>Mandatory tasks for the week</h2>
           <div className='flex flex-col gap-3'>
             {mandatoryTasks.map((task) => (
-              <Card key={task.id} className='border border-border cursor-pointer'>
+              <Card
+                key={task.id}
+                className='border border-border cursor-pointer hover:shadow-lg transition'
+                onClick={() => handleTaskCardClick(task)}
+              >
                 <CardContent className='flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 gap-2'>
                   <div className='flex items-start gap-2 w-full flex-col sm:flex-row sm:items-center'>
                     <Checkbox checked={task.completed} disabled className='mb-2 sm:mb-0' />
@@ -302,7 +318,11 @@ const ClientPage = () => {
           <h2 className='text-lg font-semibold mb-2'>Daily Tasks</h2>
           <div className='flex flex-col gap-3'>
             {dailyTasks.map((task) => (
-              <Card key={task.id} className='border border-border cursor-pointer'>
+              <Card
+                key={task.id}
+                className='border border-border cursor-pointer hover:shadow-lg transition'
+                onClick={() => handleTaskCardClick(task)}
+              >
                 <CardContent className='flex flex-col sm:flex-row items-center justify-between p-4 gap-2'>
                   <div className='flex items-center gap-2 w-full'>
                     <Checkbox checked={task.completed} disabled />

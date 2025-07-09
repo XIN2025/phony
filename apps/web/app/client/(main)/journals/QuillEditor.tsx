@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 
-// Register custom font sizes and fonts (only once per module)
 const Font = (Quill as any).import('formats/font');
 if (Font) {
   Font.whitelist = ['roboto', 'serif', 'sans-serif', 'monospace'];
@@ -69,13 +68,11 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(
 
     useEffect(() => {
       if (!editorRef.current) return;
-      // Clean up previous instance
       if (quillRef.current) {
         quillRef.current.off('text-change');
         quillRef.current = null;
         editorRef.current.innerHTML = '';
       }
-      // Setup modules
       const modules = {
         toolbar: isActive ? `#${toolbarId}` : false,
         history: {
@@ -84,19 +81,16 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(
           userOnly: false,
         },
       };
-      // Create Quill instance
       const quill = new Quill(editorRef.current, {
         theme: 'snow',
         modules,
         readOnly: !isActive,
       });
       quillRef.current = quill;
-      // Set initial value
       if (value && value !== quill.root.innerHTML) {
         const delta = quill.clipboard.convert({ html: value });
         quill.setContents(delta);
       }
-      // Listen for changes
       quill.on('text-change', () => {
         const html = quill.root.innerHTML;
         if (html !== lastValueRef.current) {
@@ -104,16 +98,13 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(
           onChange(html);
         }
       });
-      // Clean up
       return () => {
         quill.off('text-change');
         quillRef.current = null;
         if (editorRef.current) editorRef.current.innerHTML = '';
       };
-      // eslint-disable-next-line
     }, [isActive, toolbarId]);
 
-    // Update value if changed from outside
     useEffect(() => {
       if (quillRef.current && value !== lastValueRef.current) {
         const quill = quillRef.current;

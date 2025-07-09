@@ -26,7 +26,7 @@ export default function ClientSettingsPage() {
     if (user) {
       setFullName(getUserDisplayName(user));
       setEmail(user.email || '');
-      setPhone(user.phoneNumber || '');
+      setPhone(''); // Remove reference to user.phoneNumber for now
     }
   }, [user]);
 

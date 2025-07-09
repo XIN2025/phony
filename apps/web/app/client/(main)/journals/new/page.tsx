@@ -26,7 +26,6 @@ import 'quill/dist/quill.snow.css';
 import { useEffect, useRef, useState } from 'react';
 import QuillEditor, { QuillEditorHandles } from '../QuillEditor';
 
-// Register custom font sizes and fonts
 const Font = (Quill as any).import('formats/font');
 if (Font) {
   Font.whitelist = ['roboto', 'serif', 'sans-serif', 'monospace'];
@@ -42,14 +41,11 @@ const DEFAULT_FONT_SIZE = 14;
 
 const NUM_NOTES = 3;
 
-// Add a type for note state
 interface NoteState {
   content: string;
   history: {
     undo: any[];
     redo: any[];
-    // Optionally, track last recorded timestamp
-    // lastRecorded: number;
   };
 }
 
@@ -66,7 +62,6 @@ const JournalEditors = () => {
   const [fontSize, setFontSize] = useState<number>(DEFAULT_FONT_SIZE);
   const [activeIndex, setActiveIndex] = useState(0);
   const quillEditorRef = useRef<QuillEditorHandles>(null);
-  // Store both content and history for each note
   const [notes, setNotes] = useState<NoteState[]>(
     Array(NUM_NOTES)
       .fill(null)
@@ -76,28 +71,15 @@ const JournalEditors = () => {
       })),
   );
 
-  // Remove useEffect for Quill initialization
-
-  // Save the current note's content and history before switching
-  // (Remove quillRef usage, just update activeIndex)
   const handleSwitchNote = (newIndex: number) => {
     setActiveIndex(newIndex);
   };
 
-  // Save content and history on unmount (optional, for safety)
-  // (Remove quillRef usage)
   useEffect(() => {
-    return () => {
-      // No-op: QuillEditor handles its own cleanup
-    };
-    // eslint-disable-next-line
+    return () => {};
   }, []);
 
-  // Font size and toolbar handlers
-  // (Remove quillRef usage in applyFontSize, handleUndo, handleRedo)
-  const applyFontSize = (size: number) => {
-    // No direct Quill access here; consider lifting font size logic into QuillEditor if needed
-  };
+  const applyFontSize = (size: number) => {};
   const handleFontSizeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value)) {
@@ -143,7 +125,6 @@ const JournalEditors = () => {
 
   const NOTE_TITLES = ['How are you feeling?', 'Task Feedback', "What's on your mind?"];
 
-  // Add Quill font CSS mapping for font selection to work
   if (typeof window !== 'undefined') {
     const styleId = 'quill-custom-fonts';
     if (!document.getElementById(styleId)) {
@@ -161,7 +142,6 @@ const JournalEditors = () => {
 
   return (
     <div className='flex flex-col flex-1 h-full w-full p-6 gap-6'>
-      {/* Header with back button, date heading, and publish button */}
       <div className='flex items-center justify-between w-full py-4 px-2 md:px-0'>
         <div className='flex items-center gap-3 min-w-0'>
           <Link
@@ -181,7 +161,6 @@ const JournalEditors = () => {
         </button>
       </div>
       <div className='border-b border-gray-200 mb-2' />
-      {/* All notes side by side (responsive) */}
       <div className='flex flex-col md:flex-row gap-6'>
         {[...Array(NUM_NOTES)].map((_, i) => {
           const toolbarId = `quill-toolbar-${i}`;
@@ -194,7 +173,6 @@ const JournalEditors = () => {
               }
               style={{ outline: 'none', cursor: 'pointer' }}
               onClick={() => {
-                // Save current note before switching
                 if (activeIndex !== i && window && (window as any).quillRef) {
                   const quill = (window as any).quillRef;
                   if (quill) {
@@ -213,18 +191,15 @@ const JournalEditors = () => {
               }}
               tabIndex={0}
             >
-              {/* Folded corner effect */}
               <div className='absolute top-0 right-0 w-8 h-8'>
                 <svg width='32' height='32' className='absolute top-0 right-0 pointer-events-none'>
                   <polygon points='0,0 32,0 32,32' fill='#e5e7eb' />
                   <polyline points='0,0 32,0 32,32' fill='none' stroke='#d1d5db' strokeWidth='2' />
                 </svg>
               </div>
-              {/* Note header/title */}
               <div className='font-medium text-sm text-gray-700 mb-2 select-none'>{NOTE_TITLES[i]}</div>
               {activeIndex === i ? (
                 <>
-                  {/* Toolbar for this note (always before QuillEditor) */}
                   <div
                     id={toolbarId}
                     className='flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2 shadow mb-4'
