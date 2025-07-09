@@ -24,10 +24,12 @@ export const SidebarContent = ({
   navLinks,
   pathname,
   signOutCallbackUrl = '/practitioner/auth',
+  settingsPath = '/practitioner/settings',
 }: {
   navLinks: Array<{ href: string; icon: React.ElementType; label: string }>;
   pathname: string;
   signOutCallbackUrl?: string;
+  settingsPath?: string;
 }) => {
   const { setSidebarOpen } = useSidebar();
   const { data: session, status } = useSession();
@@ -91,10 +93,10 @@ export const SidebarContent = ({
       </div>
       <div className='mt-auto p-4 space-y-3'>
         <Link
-          href='/practitioner/settings'
+          href={settingsPath}
           onClick={() => setSidebarOpen(false)}
           className={`block rounded-lg p-2 transition-all ${
-            pathname === '/practitioner/settings'
+            pathname === settingsPath
               ? 'border border-border bg-background font-semibold text-foreground shadow-sm'
               : 'hover:bg-muted'
           }`}

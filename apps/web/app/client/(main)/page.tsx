@@ -7,12 +7,26 @@ import { Checkbox } from '@repo/ui/components/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@repo/ui/components/dialog';
 import { Textarea } from '@repo/ui/components/textarea';
 import { Label } from '@repo/ui/components/label';
-import { Star, Calendar, Target, Clock, Menu, AlertCircle, Info, ExternalLink, RefreshCw } from 'lucide-react';
+import {
+  Star,
+  Calendar,
+  Target,
+  Clock,
+  Menu,
+  AlertCircle,
+  Info,
+  ExternalLink,
+  RefreshCw,
+  Smile,
+  Meh,
+  Frown,
+} from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSidebar } from '@/context/SidebarContext';
 import Link from 'next/link';
 import { Badge } from '@repo/ui/components/badge';
-import { useGetClientPlans, useCompleteActionItem } from '@/lib/hooks/use-api';
+import { useGetClientPlans, useCompleteActionItem, useGetCurrentUser } from '@/lib/hooks/use-api';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface ActionItem {
   id: string;
@@ -153,369 +167,193 @@ const ClientPage = () => {
     );
   }
 
-  const user = session?.user;
-  const completedTasks = sortedTasks.filter((task) => task.isCompleted).length;
-  const totalTasks = sortedTasks.length;
-  const mandatoryTasks = sortedTasks.filter((task) => task.isMandatory);
+  // --- GET REAL USER DATA ---
+  const { data: currentUser, isLoading: userLoading } = useGetCurrentUser();
+  const avgCompletion = 85;
+  const tasksPending = 4;
+  const mandatoryTasks = [
+    {
+      id: '1',
+      title: 'Meditation',
+      duration: '15 Minutes',
+      feedback: true,
+      mandatory: true,
+      completed: true,
+    },
+    {
+      id: '2',
+      title: 'Meditation',
+      duration: '15 Minutes',
+      feedback: false,
+      mandatory: true,
+      completed: false,
+    },
+  ];
+  const dailyTasks = [
+    {
+      id: '3',
+      title: 'Meditation',
+      duration: '15 Minutes',
+      completed: false,
+    },
+    {
+      id: '4',
+      title: 'Meditation',
+      duration: '15 Minutes',
+      completed: false,
+    },
+  ];
 
-  if (plansError) {
-    return (
-      <div className='flex h-full w-full flex-col'>
-        <div className='p-4 sm:p-6 border-b border-border/60 bg-muted/5 flex-shrink-0'>
-          <div className='flex items-center gap-4'>
-            <Button variant='ghost' size='icon' className='lg:hidden' onClick={() => setSidebarOpen(true)}>
-              <Menu className='h-6 w-6' />
-              <span className='sr-only'>Toggle sidebar</span>
-            </Button>
-            <div>
-              <h1 className='text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white'>
-                Welcome back, {user?.firstName}!
-              </h1>
-              <p className='text-gray-600 dark:text-gray-400 mt-2'>Here&apos;s your plan for today</p>
-            </div>
-          </div>
-        </div>
-        <div className='flex-1 overflow-auto p-4 sm:p-6'>
-          <div className='mx-auto max-w-4xl'>
-            <Card className='border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800'>
-              <CardContent className='p-6 text-center'>
-                <AlertCircle className='h-12 w-12 text-red-500 mx-auto mb-4' />
-                <h3 className='text-lg font-semibold text-red-800 dark:text-red-200 mb-2'>Failed to load your tasks</h3>
-                <p className='text-red-600 dark:text-red-300 mb-4'>
-                  There was an error loading your action items. Please try again.
-                </p>
-                <Button onClick={() => refetchPlans()} className='flex items-center gap-2'>
-                  <RefreshCw className='h-4 w-4' />
-                  Retry
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Feedback modal state
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [selectedFeedback, setSelectedFeedback] = useState<'happy' | 'neutral' | 'sad' | null>(null);
+
+  const handleTaskCardClick = () => {
+    setFeedbackOpen(true);
+    setSelectedFeedback(null);
+  };
+
+  const handleFeedbackSelect = (type: 'happy' | 'neutral' | 'sad') => {
+    setSelectedFeedback(type);
+  };
+
+  const handleFeedbackSubmit = () => {
+    setFeedbackOpen(false);
+    setSelectedFeedback(null);
+    // TODO: send feedback to backend
+  };
 
   return (
-    <div className='flex h-full w-full flex-col'>
-      <div className='p-4 sm:p-6 border-b border-border/60 bg-muted/5 flex-shrink-0'>
-        <div className='flex items-center gap-4'>
+    <div className='p-4 sm:p-6 flex flex-col flex-1 h-full w-full gap-4'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2'>
+        <div className='flex items-center gap-2'>
           <Button variant='ghost' size='icon' className='lg:hidden' onClick={() => setSidebarOpen(true)}>
             <Menu className='h-6 w-6' />
             <span className='sr-only'>Toggle sidebar</span>
           </Button>
-          <div>
-            <h1 className='text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white'>
-              Welcome back, {user?.firstName}!
-            </h1>
-            <p className='text-gray-600 dark:text-gray-400 mt-2'>Here&apos;s your plan for today</p>
+          <h1 className='text-2xl font-bold'>
+            {userLoading ? 'Loading...' : `Good Morning ${currentUser?.firstName || 'User'}`}
+          </h1>
+        </div>
+      </div>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2 w-full max-w-xl'>
+        <Card>
+          <CardContent className='flex flex-col items-start justify-center p-4'>
+            <span className='text-2xl font-bold'>{avgCompletion}%</span>
+            <span className='text-xs text-muted-foreground'>Avg Daily Tasks Completion</span>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className='flex flex-col items-start justify-center p-4'>
+            <span className='text-2xl font-bold'>{tasksPending}</span>
+            <span className='text-xs text-muted-foreground'>Tasks Pending</span>
+          </CardContent>
+        </Card>
+      </div>
+      <div className='rounded-xl border border-gray-400 dark:border-gray-700 p-4 sm:p-6 flex flex-col gap-6'>
+        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2'>
+          <h2 className='text-lg font-semibold mb-2 sm:mb-0'>Tasks</h2>
+          <div className='flex flex-wrap gap-2 sm:justify-end'>
+            <Button variant='outline' size='sm'>
+              Select Date
+            </Button>
+            <Button variant='outline' size='sm'>
+              All Tasks
+            </Button>
+            <Button variant='outline' size='sm'>
+              Pending
+            </Button>
+            <Button variant='outline' size='sm'>
+              Completed
+            </Button>
+          </div>
+        </div>
+        <div>
+          <h2 className='text-lg font-semibold mb-2'>Mandatory tasks for the week</h2>
+          <div className='flex flex-col gap-3'>
+            {mandatoryTasks.map((task) => (
+              <Card key={task.id} className='border border-border cursor-pointer'>
+                <CardContent className='flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 gap-2'>
+                  <div className='flex items-start gap-2 w-full flex-col sm:flex-row sm:items-center'>
+                    <Checkbox checked={task.completed} disabled className='mb-2 sm:mb-0' />
+                    <div className='flex-1'>
+                      <span className='font-semibold text-base'>{task.title}</span>
+                      <span className='block text-xs text-muted-foreground'>Duration: {task.duration}</span>
+                      {task.feedback && (
+                        <span className='block text-xs text-muted-foreground flex items-center gap-1 mt-1'>
+                          Feedback <Info className='h-3 w-3' />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className='flex flex-wrap items-center gap-2 mt-2 sm:mt-0'>
+                    {task.mandatory && (
+                      <Badge variant='outline' className='text-xs'>
+                        Mandatory
+                      </Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h2 className='text-lg font-semibold mb-2'>Daily Tasks</h2>
+          <div className='flex flex-col gap-3'>
+            {dailyTasks.map((task) => (
+              <Card key={task.id} className='border border-border cursor-pointer'>
+                <CardContent className='flex flex-col sm:flex-row items-center justify-between p-4 gap-2'>
+                  <div className='flex items-center gap-2 w-full'>
+                    <Checkbox checked={task.completed} disabled />
+                    <div className='flex flex-col'>
+                      <span className='font-semibold text-base'>{task.title}</span>
+                      <span className='text-xs text-muted-foreground'>Duration: {task.duration}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </div>
-      <div className='flex-1 overflow-auto p-4 sm:p-6'>
-        <div className='mx-auto max-w-4xl'>
-          {plansLoading && (
-            <div className='mb-6'>
-              <Card>
-                <CardContent className='p-6 text-center'>
-                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4'></div>
-                  <p className='text-gray-600'>Loading your tasks...</p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Progress Card */}
-          {!plansLoading && (
-            <div className='mb-6'>
-              <Card>
-                <CardHeader className='pb-3 sm:pb-4'>
-                  <CardTitle className='flex items-center gap-2 text-lg sm:text-xl'>
-                    <Calendar className='h-5 w-5' />
-                    Today&apos;s Progress
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0'>
-                    <div className='text-center sm:text-left'>
-                      <div className='text-3xl sm:text-4xl font-bold'>
-                        {completedTasks}/{totalTasks}
-                      </div>
-                      <div className='text-sm text-muted-foreground'>Tasks completed</div>
-                    </div>
-                    <div className='text-center sm:text-right'>
-                      <div className='text-3xl sm:text-4xl font-bold'>
-                        {totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}%
-                      </div>
-                      <div className='text-sm text-muted-foreground'>Completion rate</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {!plansLoading && (
-            <div className='space-y-6 sm:space-y-8'>
-              {mandatoryTasks.length > 0 && (
-                <div>
-                  <h2 className='text-xl font-semibold mb-4 flex items-center gap-2'>
-                    <AlertCircle className='h-5 w-5 text-red-500' />
-                    Priority Tasks
-                  </h2>
-                  <div className='space-y-3'>
-                    {mandatoryTasks.map((task) => (
-                      <Card
-                        key={task.id}
-                        className={
-                          task.isCompleted
-                            ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
-                            : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
-                        }
-                      >
-                        <CardContent className='p-4'>
-                          <div className='flex items-start gap-3'>
-                            <Checkbox
-                              checked={task.isCompleted}
-                              onCheckedChange={() => handleTaskToggle(task)}
-                              disabled={task.isCompleted}
-                            />
-                            <div className='flex-1'>
-                              <div className='flex items-start justify-between'>
-                                <div className='flex-1'>
-                                  <h3 className='font-medium text-sm sm:text-base'>{task.description}</h3>
-                                  <div className='flex flex-wrap gap-2 mt-2'>
-                                    {task.category && (
-                                      <Badge variant='secondary' className='text-xs'>
-                                        {task.category}
-                                      </Badge>
-                                    )}
-                                    {task.target && (
-                                      <Badge variant='outline' className='text-xs'>
-                                        {task.target}
-                                      </Badge>
-                                    )}
-                                    <Badge variant='destructive' className='text-xs'>
-                                      Priority
-                                    </Badge>
-                                  </div>
-                                  {task.whyImportant && (
-                                    <p className='text-xs text-muted-foreground mt-2'>
-                                      <strong>Why important:</strong> {task.whyImportant}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className='flex items-center gap-2'>
-                                  <Target className='h-4 w-4 text-muted-foreground' />
-                                  <span className='text-xs text-muted-foreground'>
-                                    {task.weeklyRepetitions || 1}x/week
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <h2 className='text-xl font-semibold mb-4'>Daily Tasks</h2>
-                <div className='space-y-3'>
-                  {sortedTasks
-                    .filter((task) => !task.isMandatory)
-                    .map((task) => (
-                      <Card
-                        key={task.id}
-                        className={
-                          task.isCompleted
-                            ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
-                            : 'bg-background border-border'
-                        }
-                      >
-                        <CardContent className='p-4'>
-                          <div className='flex items-start gap-3'>
-                            <Checkbox
-                              checked={task.isCompleted}
-                              onCheckedChange={() => handleTaskToggle(task)}
-                              disabled={task.isCompleted}
-                            />
-                            <div className='flex-1'>
-                              <div className='flex items-start justify-between'>
-                                <div className='flex-1'>
-                                  <h3 className='font-medium text-sm sm:text-base'>{task.description}</h3>
-                                  <div className='flex flex-wrap gap-2 mt-2'>
-                                    {task.category && (
-                                      <Badge variant='secondary' className='text-xs'>
-                                        {task.category}
-                                      </Badge>
-                                    )}
-                                    {task.target && (
-                                      <Badge variant='outline' className='text-xs'>
-                                        {task.target}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  {task.whyImportant && (
-                                    <p className='text-xs text-muted-foreground mt-2'>
-                                      <strong>Why important:</strong> {task.whyImportant}
-                                    </p>
-                                  )}
-                                  {task.resources && task.resources.length > 0 && (
-                                    <div className='flex gap-2 mt-2'>
-                                      {task.resources.map((resource, index) => (
-                                        <Button
-                                          key={index}
-                                          variant='outline'
-                                          size='sm'
-                                          className='h-6 text-xs'
-                                          onClick={() => window.open(resource.url, '_blank')}
-                                        >
-                                          <ExternalLink className='h-3 w-3 mr-1' />
-                                          {resource.title || 'Resource'}
-                                        </Button>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                                <div className='flex items-center gap-2'>
-                                  <Target className='h-4 w-4 text-muted-foreground' />
-                                  <span className='text-xs text-muted-foreground'>
-                                    {task.weeklyRepetitions || 1}x/week
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                </div>
-              </div>
-
-              {sortedTasks.length === 0 && !plansLoading && (
-                <Card>
-                  <CardContent className='p-6 text-center'>
-                    <Target className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-                    <h3 className='text-lg font-semibold text-gray-600 mb-2'>No tasks available</h3>
-                    <p className='text-gray-500'>
-                      You don&apos;t have any action items assigned yet. Check back later or contact your practitioner.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
-        <DialogContent className='max-w-2xl'>
-          <DialogHeader>
-            <DialogTitle>Complete Task</DialogTitle>
-            <DialogDescription>Mark this task as complete and provide feedback.</DialogDescription>
-          </DialogHeader>
-          {selectedTask && (
-            <div className='space-y-6'>
-              <div>
-                <h3 className='font-medium mb-2'>{selectedTask.description}</h3>
-                {selectedTask.recommendedActions && (
-                  <div className='bg-muted p-3 rounded-lg mb-4'>
-                    <h4 className='font-medium text-sm mb-2'>Recommended Steps:</h4>
-                    <pre className='text-sm whitespace-pre-wrap'>{selectedTask.recommendedActions}</pre>
-                  </div>
-                )}
-                {selectedTask.toolsToHelp && (
-                  <div className='bg-blue-50 p-3 rounded-lg mb-4'>
-                    <h4 className='font-medium text-sm mb-2 flex items-center gap-1'>
-                      <Info className='h-4 w-4' />
-                      Tools to Help:
-                    </h4>
-                    <div className='text-sm space-y-1'>
-                      {selectedTask.toolsToHelp
-                        .split('\n')
-                        .filter((line) => line.trim())
-                        .map((line, index) => {
-                          const urlMatch = line.match(/(https?:\/\/[^\s]+)/);
-                          if (urlMatch) {
-                            const url = urlMatch[1];
-                            const description = line
-                              .replace(url || '', '')
-                              .replace(/\s*-\s*$/, '')
-                              .trim();
-                            return (
-                              <div key={index}>
-                                <a
-                                  href={url}
-                                  target='_blank'
-                                  rel='noopener noreferrer'
-                                  className='text-blue-600 hover:text-blue-800 underline'
-                                >
-                                  {description}
-                                </a>
-                              </div>
-                            );
-                          }
-                          return <div key={index}>{line}</div>;
-                        })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className='space-y-4'>
-                <div>
-                  <Label htmlFor='rating'>How helpful was this task? (1-5 stars)</Label>
-                  <div className='flex gap-1 mt-2'>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Button
-                        key={star}
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => setCompletionData({ ...completionData, rating: star })}
-                        className={completionData.rating >= star ? 'text-yellow-500' : 'text-gray-300'}
-                      >
-                        <Star className='h-5 w-5 fill-current' />
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor='journalEntry'>How did it go? (Optional)</Label>
-                  <Textarea
-                    id='journalEntry'
-                    value={completionData.journalEntry}
-                    onChange={(e) => setCompletionData({ ...completionData, journalEntry: e.target.value })}
-                    placeholder='Share your experience with this task...'
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor='achievedValue'>What did you achieve? (Optional)</Label>
-                  <Textarea
-                    id='achievedValue'
-                    value={completionData.achievedValue}
-                    onChange={(e) => setCompletionData({ ...completionData, achievedValue: e.target.value })}
-                    placeholder='Describe what you accomplished...'
-                    rows={2}
-                  />
-                </div>
-              </div>
-
-              <div className='flex justify-end gap-2'>
-                <Button variant='outline' onClick={() => setSelectedTask(null)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleCompleteTask} disabled={completeTaskMutation.isPending}>
-                  {completeTaskMutation.isPending ? 'Completing...' : 'Mark Complete'}
-                </Button>
-              </div>
-            </div>
-          )}
+      {/* Feedback Modal */}
+      <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
+        <DialogContent className='test-center-modal max-w-md p-8 flex flex-col items-center rounded-2xl'>
+          <DialogTitle asChild>
+            <VisuallyHidden>Was this task helpful?</VisuallyHidden>
+          </DialogTitle>
+          <div className='text-xl font-semibold mb-6 text-center'>Was this task helpful?</div>
+          <div className='flex items-center justify-center gap-8 mb-6'>
+            <button
+              aria-label='Happy'
+              className={`rounded-full p-2 border-2 ${selectedFeedback === 'happy' ? 'border-black' : 'border-transparent'} transition`}
+              onClick={() => handleFeedbackSelect('happy')}
+            >
+              <Smile className='w-10 h-10' />
+            </button>
+            <button
+              aria-label='Neutral'
+              className={`rounded-full p-2 border-2 ${selectedFeedback === 'neutral' ? 'border-black' : 'border-transparent'} transition`}
+              onClick={() => handleFeedbackSelect('neutral')}
+            >
+              <Meh className='w-10 h-10' />
+            </button>
+            <button
+              aria-label='Sad'
+              className={`rounded-full p-2 border-2 ${selectedFeedback === 'sad' ? 'border-black' : 'border-transparent'} transition`}
+              onClick={() => handleFeedbackSelect('sad')}
+            >
+              <Frown className='w-10 h-10' />
+            </button>
+          </div>
+          <button
+            className='w-full bg-black text-white rounded-full py-2 text-base font-medium disabled:opacity-50 transition'
+            onClick={handleFeedbackSubmit}
+            disabled={!selectedFeedback}
+          >
+            Submit
+          </button>
         </DialogContent>
       </Dialog>
     </div>

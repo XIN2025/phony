@@ -1,7 +1,7 @@
 'use client';
-import { Home, MessageSquare, Menu, History, User } from 'lucide-react';
+import { Home, MessageSquare, Menu, Book } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { SidebarContent } from '@/components/practitioner/Sidebar';
+import { SidebarContent as PractitionerSidebarContent } from '@/components/practitioner/Sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/sheet';
 import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
 import { Button } from '@repo/ui/components/button';
@@ -14,9 +14,8 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
 
   const navLinks = [
     { href: '/client', icon: Home, label: 'Home' },
-    { href: '/client/journey', icon: History, label: 'My Journey' },
     { href: '/client/messages', icon: MessageSquare, label: 'Messages' },
-    { href: '/client/profile', icon: User, label: 'Profile & Settings' },
+    { href: '/client/journals', icon: Book, label: 'Journals' },
   ];
 
   // Show loading state during authentication checks
@@ -46,14 +45,24 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className='grid min-h-screen w-full lg:grid-cols-[280px_1fr]'>
       <div className='hidden bg-background lg:block'>
-        <SidebarContent navLinks={navLinks} pathname={pathname} signOutCallbackUrl='/client/auth' />
+        <PractitionerSidebarContent
+          navLinks={navLinks}
+          pathname={pathname}
+          signOutCallbackUrl='/client/auth'
+          settingsPath='/client/settings'
+        />
       </div>
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side='left' className='w-[280px] p-0'>
           <SheetHeader className='sr-only'>
             <SheetTitle>Navigation Menu</SheetTitle>
           </SheetHeader>
-          <SidebarContent navLinks={navLinks} pathname={pathname} signOutCallbackUrl='/client/auth' />
+          <PractitionerSidebarContent
+            navLinks={navLinks}
+            pathname={pathname}
+            signOutCallbackUrl='/client/auth'
+            settingsPath='/client/settings'
+          />
         </SheetContent>
       </Sheet>
       <div className='flex flex-1 flex-col'>
