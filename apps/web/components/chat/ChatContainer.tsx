@@ -765,12 +765,10 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
 
   return (
     <div
-      className={cn(
-        'flex bg-background border border-gray-700 rounded-lg shadow-sm overflow-hidden w-full h-full',
-        className,
-      )}
+      className={cn('flex bg-background border border-gray-700 rounded-lg shadow-sm overflow-hidden w-full', className)}
+      style={{ height, maxHeight: height }}
     >
-      <div className={cn('flex w-full h-full overflow-hidden', participantId ? 'flex-col' : 'flex-row')}>
+      <div className={cn('flex w-full h-full overflow-hidden max-h-full', participantId ? 'flex-col' : 'flex-row')}>
         {/* Sidebar - Always visible on desktop, collapsible on mobile */}
         {!participantId && (
           <>
@@ -828,7 +826,7 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
         )}
 
         {/* Main Chat Area */}
-        <div className='flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden'>
+        <div className='flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden max-h-full'>
           {selectedConversation ? (
             <>
               {/* Chat Header */}
@@ -879,9 +877,9 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
               </div>
 
               {/* Messages Area */}
-              <div className='flex-1 min-h-0 overflow-hidden'>
-                <ScrollArea className='h-full'>
-                  <div className='p-3 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 lg:space-y-4 min-h-full'>
+              <div className='flex-1 min-h-0 max-h-full overflow-hidden'>
+                <ScrollArea className='h-full w-full'>
+                  <div className='p-3 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 lg:space-y-4'>
                     {isLoadingMessages ? (
                       <div className='space-y-4'>
                         {[...Array(3)].map((_, i) => (

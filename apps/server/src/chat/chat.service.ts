@@ -46,48 +46,20 @@ export class ChatService {
   }
 
   async getOrCreateConversation(practitionerId: string, clientId: string) {
-    // First check if the users exist
-    const practitioner = await this.prisma.user.findUnique({ where: { id: practitionerId } });
-    const client = await this.prisma.user.findUnique({ where: { id: clientId } });
+    try {
+      // First check if the users exist
+      const practitioner = await this.prisma.user.findUnique({ where: { id: practitionerId } });
+      const client = await this.prisma.user.findUnique({ where: { id: clientId } });
 
-    if (!practitioner) {
-      throw new NotFoundException(`Practitioner with ID ${practitionerId} not found`);
-    }
-    if (!client) {
-      throw new NotFoundException(`Client with ID ${clientId} not found`);
-    }
+      if (!practitioner) {
+        throw new NotFoundException(`Practitioner with ID ${practitionerId} not found`);
+      }
+      if (!client) {
+        throw new NotFoundException(`Client with ID ${clientId} not found`);
+      }
 
-    let conversation = await this.prisma.conversation.findFirst({
-      where: {
-        practitionerId,
-        clientId,
-      },
-      include: {
-        practitioner: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            role: true,
-            profession: true,
-            avatarUrl: true,
-          },
-        },
-        client: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            role: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    });
-
-    if (!conversation) {
-      conversation = await this.prisma.conversation.create({
-        data: {
+      let conversation = await this.prisma.conversation.findFirst({
+        where: {
           practitionerId,
           clientId,
         },
@@ -113,9 +85,77 @@ export class ChatService {
           },
         },
       });
-    }
 
-    return conversation;
+      if (!conversation) {
+        try {
+          conversation = await this.prisma.conversation.create({
+            data: {
+              practitionerId,
+              clientId,
+            },
+            include: {
+              practitioner: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  role: true,
+                  profession: true,
+                  avatarUrl: true,
+                },
+              },
+              client: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  role: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          });
+        } catch (createError) {
+          // If creation fails due to unique constraint, try to find the conversation again
+          if (createError.code === 'P2002') {
+            conversation = await this.prisma.conversation.findFirst({
+              where: {
+                practitionerId,
+                clientId,
+              },
+              include: {
+                practitioner: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    role: true,
+                    profession: true,
+                    avatarUrl: true,
+                  },
+                },
+                client: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    role: true,
+                    avatarUrl: true,
+                  },
+                },
+              },
+            });
+          } else {
+            throw createError;
+          }
+        }
+      }
+
+      return conversation;
+    } catch (error) {
+      this.logger.error('Failed to get or create conversation:', error);
+      throw error;
+    }
   }
 
   async sendMessage(data: SendMessageData): Promise<ChatMessage> {
@@ -214,8 +254,34 @@ export class ChatService {
   }
 
   async getConversationsByPractitioner(practitionerId: string) {
-    const conversations = await this.prisma.conversation.findMany({
+    // First get all conversation IDs for this practitioner
+    const conversationIds = await this.prisma.conversation.findMany({
       where: { practitionerId },
+      select: { id: true, clientId: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    // Check which client IDs still exist
+    const validClientIds = await this.prisma.user.findMany({
+      where: {
+        id: { in: conversationIds.map((c) => c.clientId) },
+        role: 'CLIENT',
+      },
+      select: { id: true },
+    });
+
+    const validClientIdSet = new Set(validClientIds.map((u) => u.id));
+    const validConversationIds = conversationIds.filter((c) => validClientIdSet.has(c.clientId)).map((c) => c.id);
+
+    if (validConversationIds.length === 0) {
+      return [];
+    }
+
+    // Now get the full conversation data only for valid conversations
+    const conversations = await this.prisma.conversation.findMany({
+      where: {
+        id: { in: validConversationIds },
+      },
       include: {
         client: {
           select: {
@@ -235,7 +301,7 @@ export class ChatService {
             readAt: true,
           },
           orderBy: { createdAt: 'desc' },
-          take: 1, // Only get the latest message
+          take: 1,
         },
         _count: {
           select: { messages: true },
@@ -251,8 +317,36 @@ export class ChatService {
   }
 
   async getConversationsByClient(clientId: string) {
-    const conversations = await this.prisma.conversation.findMany({
+    // First get all conversation IDs for this client
+    const conversationIds = await this.prisma.conversation.findMany({
       where: { clientId },
+      select: { id: true, practitionerId: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    // Check which practitioner IDs still exist
+    const validPractitionerIds = await this.prisma.user.findMany({
+      where: {
+        id: { in: conversationIds.map((c) => c.practitionerId) },
+        role: 'PRACTITIONER',
+      },
+      select: { id: true },
+    });
+
+    const validPractitionerIdSet = new Set(validPractitionerIds.map((u) => u.id));
+    const validConversationIds = conversationIds
+      .filter((c) => validPractitionerIdSet.has(c.practitionerId))
+      .map((c) => c.id);
+
+    if (validConversationIds.length === 0) {
+      return [];
+    }
+
+    // Now get the full conversation data only for valid conversations
+    const conversations = await this.prisma.conversation.findMany({
+      where: {
+        id: { in: validConversationIds },
+      },
       include: {
         practitioner: {
           select: {
@@ -272,7 +366,7 @@ export class ChatService {
             readAt: true,
           },
           orderBy: { createdAt: 'desc' },
-          take: 1, // Only get the latest message
+          take: 1,
         },
         _count: {
           select: { messages: true },

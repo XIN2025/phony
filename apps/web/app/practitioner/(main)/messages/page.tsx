@@ -59,7 +59,7 @@ export default function PractitionerMessagesPage() {
       </div>
 
       <div className='flex-1 min-h-0 overflow-hidden p-1'>
-        <ChatContainer height='100%' className='w-full h-full' />
+        <ChatContainer height='calc(100vh - 200px)' className='w-full h-full' />
       </div>
     </div>
   );

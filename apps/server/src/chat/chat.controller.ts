@@ -42,29 +42,36 @@ export class ChatController {
   @ApiOperation({ summary: 'Get conversations for the authenticated user' })
   @ApiResponse({ status: 200, description: 'List of conversations.' })
   async getConversations(@Request() req: AuthenticatedRequest) {
-    const userId = req.user?.id || req.headers['x-user-id'];
-    const userRole = req.user?.role;
+    try {
+      const userId = req.user?.id || req.headers['x-user-id'];
+      const userRole = req.user?.role;
 
-    if (!userId) {
-      throw new BadRequestException('User authentication required');
-    }
+      if (!userId) {
+        throw new BadRequestException('User authentication required');
+      }
 
-    let role = userRole;
-    if (!role) {
-      const user = await this.chatService.getUserById(userId);
-      role = user?.role;
-    }
+      let role = userRole;
+      if (!role) {
+        const user = await this.chatService.getUserById(userId);
+        role = user?.role;
+      }
 
-    if (!role) {
-      throw new BadRequestException('User role not found');
-    }
+      if (!role) {
+        throw new BadRequestException('User role not found');
+      }
 
-    if (role === 'PRACTITIONER') {
-      const conversations = await this.chatService.getConversationsByPractitioner(userId);
-      return { conversations };
-    } else {
-      const conversations = await this.chatService.getConversationsByClient(userId);
-      return { conversations };
+      if (role === 'PRACTITIONER') {
+        const conversations = await this.chatService.getConversationsByPractitioner(userId);
+        return { conversations };
+      } else {
+        const conversations = await this.chatService.getConversationsByClient(userId);
+        return { conversations };
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to get conversations');
     }
   }
 

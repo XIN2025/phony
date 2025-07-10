@@ -128,7 +128,7 @@ export default function PractitionerDashboard() {
   }
 
   return (
-    <div className='flex flex-col w-full'>
+    <div className='flex flex-col w-full pt-6 px-4 sm:px-6 lg:px-8'>
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 w-full'>
         <h1 className='text-3xl font-semibold mb-4 sm:mb-0'>

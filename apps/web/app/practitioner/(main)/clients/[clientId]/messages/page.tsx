@@ -68,7 +68,7 @@ export default function ClientMessagesPage({ params }: { params: Promise<{ clien
           </button>
           <div className='flex-1'>
             <h1 className='text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white'>
-              Messages with {clientDisplayName}
+              Messages with {clientId}
             </h1>
             <p className='text-gray-600 dark:text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base'>
               Direct messaging with your client
@@ -78,7 +78,7 @@ export default function ClientMessagesPage({ params }: { params: Promise<{ clien
       </div>
 
       <div className='flex-1 min-h-0 overflow-hidden p-1'>
-        <ChatContainer participantId={clientId} height='100%' className='w-full h-full' />
+        <ChatContainer participantId={clientId} height='calc(100vh - 200px)' className='w-full h-full' />
       </div>
     </div>
   );
