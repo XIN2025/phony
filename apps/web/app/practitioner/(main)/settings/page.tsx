@@ -17,6 +17,7 @@ import { Switch } from '@repo/ui/components/switch';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { User } from '@repo/shared-types';
+import { PageHeader } from '@/components/PageHeader';
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -118,12 +119,11 @@ export default function SettingsPage() {
 
   return (
     <div className='flex flex-col bg-transparent text-foreground'>
-      <header className='flex flex-col gap-0 border-b bg-transparent px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
-        <div className='flex items-center justify-between gap-4'>
-          <div className='flex items-center gap-2'>
-            <SidebarToggleButton />
-            <h1 className='text-xl font-bold tracking-tight sm:text-2xl'>Profile Settings</h1>
-          </div>
+      <PageHeader
+        title='Profile Settings'
+        showBackButton={false}
+        leftElement={<SidebarToggleButton />}
+        children={
           <Button
             className='bg-foreground text-background hover:bg-foreground/90 rounded-md'
             onClick={handleSaveChanges}
@@ -132,8 +132,8 @@ export default function SettingsPage() {
             {isUpdatingProfile && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
           </Button>
-        </div>
-      </header>
+        }
+      />
 
       <main className='flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8'>
         <Tabs defaultValue='profile' className='w-full'>

@@ -74,10 +74,7 @@ export const SidebarContent = ({
     );
   };
   return (
-    <div
-      className='flex h-full flex-col font-sans'
-      style={{ boxShadow: 'none', borderRight: 'none', background: 'transparent' }}
-    >
+    <div className='flex h-full flex-col font-sans bg-white sm:bg-transparent shadow-lg sm:shadow-none border-r sm:border-none'>
       <div className='flex h-[64px] items-center px-8 mb-4'>
         <Link href='/' className='flex items-center gap-2 text-2xl font-logo font-semibold text-black'>
           <ContinuumIcon />

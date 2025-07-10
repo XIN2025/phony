@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useGetCurrentUser } from '@/lib/hooks/use-api';
+import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 
 const LoadingSpinner = () => (
   <div className='flex h-screen items-center justify-center'>
@@ -108,9 +109,12 @@ export default function PractitionerDashboard() {
   return (
     <div className='flex flex-col w-full pt-6 px-4 sm:px-6 lg:px-8'>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 w-full'>
-        <h1 className='text-3xl font-semibold mb-4 sm:mb-0'>
-          Welcome Back{user?.firstName ? ` Dr. ${user.firstName}` : ''}
-        </h1>
+        <div className='flex items-center gap-2'>
+          <SidebarToggleButton />
+          <h1 className='text-3xl font-semibold mb-4 sm:mb-0'>
+            Welcome Back{user?.firstName ? ` Dr. ${user.firstName}` : ''}
+          </h1>
+        </div>
         <Button
           className='rounded-full px-6 py-3 text-base font-medium bg-black text-white hover:bg-gray-800 shadow-sm'
           asChild

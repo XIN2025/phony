@@ -63,11 +63,11 @@ export default function PractitionerSessionsPage() {
     <div className='min-h-screen'>
       {/* Consent Modal */}
       {showConsentModal && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm'>
-          <div className='bg-white rounded-xl shadow-xl px-8 py-10 flex flex-col items-center min-w-[320px]'>
-            <h2 className='text-xl font-semibold mb-2'>Consent</h2>
-            <div className='mb-4'>Client Consent</div>
-            <label className='flex items-center mb-4'>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm p-4'>
+          <div className='bg-white rounded-xl shadow-xl px-4 sm:px-8 py-6 sm:py-10 flex flex-col items-center w-full max-w-sm'>
+            <h2 className='text-lg sm:text-xl font-semibold mb-2 text-center'>Consent</h2>
+            <div className='mb-4 text-sm sm:text-base text-center'>Client Consent</div>
+            <label className='flex items-center mb-4 text-sm sm:text-base'>
               <input
                 type='checkbox'
                 checked={consentGiven}
@@ -77,7 +77,7 @@ export default function PractitionerSessionsPage() {
               Client has consented for session recording
             </label>
             <button
-              className='bg-black text-white px-4 py-2 rounded w-full'
+              className='bg-black text-white px-4 py-2 rounded w-full text-sm sm:text-base'
               disabled={!consentGiven}
               onClick={() => setShowConsentModal(false)}
             >
@@ -88,39 +88,43 @@ export default function PractitionerSessionsPage() {
       )}
       {/* Processing Modal */}
       {showProcessingModal && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm'>
-          <div className='bg-white rounded-xl shadow-xl px-8 py-10 flex flex-col items-center min-w-[320px]'>
-            <h2 className='text-2xl font-semibold mb-2'>Session Ended</h2>
-            <div className='text-3xl font-bold mb-2'>56m 27s</div>
-            <div className='text-base text-muted-foreground mb-1'>Processing Audio & Transcript...</div>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm p-4'>
+          <div className='bg-white rounded-xl shadow-xl px-4 sm:px-8 py-6 sm:py-10 flex flex-col items-center w-full max-w-sm'>
+            <h2 className='text-xl sm:text-2xl font-semibold mb-2 text-center'>Session Ended</h2>
+            <div className='text-2xl sm:text-3xl font-bold mb-2 text-center'>56m 27s</div>
+            <div className='text-sm sm:text-base text-muted-foreground mb-1 text-center'>
+              Processing Audio & Transcript...
+            </div>
           </div>
         </div>
       )}
       {/* Main UI */}
-      <div className='flex flex-col md:flex-row gap-6 p-8'>
-        <div className='flex-1 space-y-6'>
-          <div className='bg-white rounded-2xl shadow-lg p-6'>
-            <div className='font-semibold mb-2'>Session Details</div>
-            <div className='mb-2'>
+      <div className='flex flex-col lg:flex-row gap-4 sm:gap-6 p-4 sm:p-6 lg:p-8'>
+        <div className='flex-1 space-y-4 sm:space-y-6'>
+          <div className='bg-white rounded-2xl shadow-lg p-4 sm:p-6'>
+            <div className='font-semibold mb-2 text-sm sm:text-base'>Session Details</div>
+            <div className='mb-2 text-sm sm:text-base'>
               Client: <span className='font-bold'>Sophie Bennett</span>
             </div>
-            <input className='border rounded px-2 py-1 w-full mb-2' placeholder='Session Title' />
+            <input className='border rounded px-2 py-1 w-full mb-2 text-sm sm:text-base' placeholder='Session Title' />
           </div>
-          <div className='bg-white rounded-2xl shadow-lg p-6'>
-            <div className='font-semibold mb-2'>Session Notes</div>
+          <div className='bg-white rounded-2xl shadow-lg p-4 sm:p-6'>
+            <div className='font-semibold mb-2 text-sm sm:text-base'>Session Notes</div>
             <textarea
-              className='border rounded px-2 py-1 w-full min-h-[120px]'
+              className='border rounded px-2 py-1 w-full min-h-[120px] text-sm sm:text-base'
               placeholder='Start typing your session notes here'
             />
           </div>
         </div>
-        <div className='flex-1 space-y-6'>
-          <div className='bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center'>
+        <div className='flex-1 space-y-4 sm:space-y-6'>
+          <div className='bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col items-center'>
             <AudioRecorder />
           </div>
-          <div className='bg-white rounded-2xl shadow-lg p-6'>
-            <div className='font-semibold mb-2'>Transcript</div>
-            <div className='text-muted-foreground'>Once recording starts, the transcript will appear here</div>
+          <div className='bg-white rounded-2xl shadow-lg p-4 sm:p-6'>
+            <div className='font-semibold mb-2 text-sm sm:text-base'>Transcript</div>
+            <div className='text-muted-foreground text-sm sm:text-base'>
+              Once recording starts, the transcript will appear here
+            </div>
           </div>
         </div>
       </div>

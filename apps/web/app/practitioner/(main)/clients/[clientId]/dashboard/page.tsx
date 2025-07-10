@@ -38,6 +38,8 @@ import {
 } from '@repo/ui/components/dialog';
 
 import type { Session as DBSession } from '@repo/db';
+import { PageHeader } from '@/components/PageHeader';
+import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 
 type PopulatedActionItem = ActionItem & { resources: Resource[]; completions: ActionItemCompletion[] };
 type PopulatedPlan = Plan & { actionItems: PopulatedActionItem[] };
@@ -359,6 +361,46 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     return options[idx % options.length];
   }
 
+  // --- Feedback and Journal Badge Helpers ---
+  const feedbackBadge = (feedback: string) => {
+    let badgeClass = 'bg-gray-200 text-gray-700';
+    let emoji = '';
+    if (feedback === 'Happy') {
+      badgeClass = 'bg-green-100 text-green-800';
+      emoji = '😊';
+    } else if (feedback === 'Neutral') {
+      badgeClass = 'bg-yellow-100 text-yellow-800';
+      emoji = '😐';
+    } else if (feedback === 'Sad') {
+      badgeClass = 'bg-red-100 text-red-800';
+      emoji = '🙁';
+    } else if (feedback === 'Nil') {
+      badgeClass = 'bg-gray-200 text-gray-700';
+      emoji = '';
+    }
+    return (
+      <span className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold ${badgeClass}`}>
+        {emoji && <span className='mr-1'>{emoji}</span>}
+        {feedback}
+      </span>
+    );
+  };
+
+  const journalBadge = (journal: string) => {
+    if (journal === 'Yes') {
+      return (
+        <span className='inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-800'>
+          Yes
+        </span>
+      );
+    }
+    return (
+      <span className='inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-600'>
+        No
+      </span>
+    );
+  };
+
   // --- Plans Tab Table ---
   const renderPlansTab = () => (
     <TabsContent value='plans' className='mt-0'>
@@ -500,136 +542,82 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     </TabsContent>
   );
 
-  const renderDashboardTab = () => {
-    // Group tasks by mandatory and daily
-    const mandatoryTasks = allTasks.filter((t) => t.isMandatory);
-    const dailyTasks = allTasks.filter((t) => !t.isMandatory);
-    return (
-      <TabsContent value='dashboard' className='mt-0'>
-        <div className='flex flex-col gap-4 w-full mb-6 sm:mb-8'>
-          <div className='flex flex-col md:flex-row md:items-center md:justify-between w-full gap-3 md:gap-0'>
-            <h2 className='text-lg sm:text-xl font-semibold mb-0'>Tasks Overview</h2>
-          </div>
-          <div className='flex flex-col sm:flex-row gap-4 w-full'>
-            <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background'>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-sm sm:text-base font-semibold'>Avg Tasks Completion</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='text-2xl sm:text-3xl font-extrabold'>{stats.completion}%</div>
-              </CardContent>
-            </Card>
-            <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background'>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-sm sm:text-base font-semibold'>Tasks Pending</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='text-2xl sm:text-3xl font-extrabold'>{stats.pending}</div>
-              </CardContent>
-            </Card>
-          </div>
+  const renderDashboardTab = () => (
+    <TabsContent value='dashboard' className='mt-0'>
+      <div className='flex flex-col gap-4 w-full mb-6 sm:mb-8'>
+        <div className='flex flex-col md:flex-row md:items-center md:justify-between w-full gap-3 md:gap-0'>
+          <h2 className='text-lg sm:text-xl font-semibold mb-0'>Tasks Overview</h2>
         </div>
-        <div className='flex flex-col sm:flex-row gap-6   w-full'>
-          {/* Mandatory Tasks Card */}
-          <Card className='flex-1 bg-white rounded-2xl p-0 border-0 '>
+        <div className='flex flex-col sm:flex-row gap-4 w-full'>
+          <Card className='flex-1 min-w-0 border border-border rounded-2xl shadow-none bg-background'>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-lg font-semibold'>Mandatory tasks for the week</CardTitle>
+              <CardTitle className='text-sm sm:text-base font-semibold'>Avg Tasks Completion</CardTitle>
             </CardHeader>
-            <CardContent className='flex flex-col gap-0 p-0'>
-              {mandatoryTasks.length === 0 ? (
-                <div className='text-muted-foreground text-sm mb-4 px-6 py-6'>No mandatory tasks.</div>
-              ) : (
-                mandatoryTasks.map((task, idx) => (
-                  <div
-                    key={task.id}
-                    className={`flex items-start gap-3 px-6 py-4 ${idx !== mandatoryTasks.length - 1 ? 'border-b border-[#ececec]' : ''}`}
-                  >
-                    <Checkbox checked={task.completions && task.completions.length > 0} disabled className='mt-1' />
-                    <div className='flex-1'>
-                      <div
-                        className={`font-medium text-base flex items-center gap-2 ${task.completions && task.completions.length > 0 ? 'line-through text-muted-foreground' : ''}`}
-                      >
-                        {task.description}
-                        {task.whyImportant && (
-                          <span className='ml-1 text-xs text-muted-foreground' title={task.whyImportant}>
-                            <svg
-                              width='16'
-                              height='16'
-                              fill='none'
-                              stroke='currentColor'
-                              strokeWidth='2'
-                              viewBox='0 0 24 24'
-                            >
-                              <circle cx='12' cy='12' r='10' />
-                              <line x1='12' y1='16' x2='12' y2='12' />
-                              <line x1='12' y1='8' x2='12' y2='8' />
-                            </svg>
-                          </span>
-                        )}
-                      </div>
-                      <div className='text-xs text-muted-foreground mt-1 flex items-center gap-2'>
-                        <span>⏱ {task.duration || '15 Minutes'}</span>
-                        {/* Feedback icon placeholder if needed */}
-                        {task.feedback && <span className='ml-2'>😊</span>}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+            <CardContent>
+              <div className='text-2xl sm:text-3xl font-extrabold'>{stats.completion}%</div>
             </CardContent>
           </Card>
-          {/* Daily Tasks Card */}
-          <Card className='flex-1 bg-white rounded-2xl p-0 border-0 shadow-none'>
+          <Card className='flex-1 min-w-0 border border-border rounded-2xl shadow-none bg-background'>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-lg font-semibold'>Daily Tasks</CardTitle>
+              <CardTitle className='text-sm sm:text-base font-semibold'>Journal Entries</CardTitle>
             </CardHeader>
-            <CardContent className='flex flex-col gap-0 p-0'>
-              {dailyTasks.length === 0 ? (
-                <div className='text-muted-foreground text-sm mb-4 px-6 py-6'>No daily tasks.</div>
-              ) : (
-                dailyTasks.map((task, idx) => (
-                  <div
-                    key={task.id}
-                    className={`flex items-start gap-3 px-6 py-4 ${idx !== dailyTasks.length - 1 ? 'border-b border-[#ececec]' : ''}`}
-                  >
-                    <Checkbox checked={task.completions && task.completions.length > 0} disabled className='mt-1' />
-                    <div className='flex-1'>
-                      <div
-                        className={`font-medium text-base flex items-center gap-2 ${task.completions && task.completions.length > 0 ? 'line-through text-muted-foreground' : ''}`}
-                      >
-                        {task.description}
-                        {task.whyImportant && (
-                          <span className='ml-1 text-xs text-muted-foreground' title={task.whyImportant}>
-                            <svg
-                              width='16'
-                              height='16'
-                              fill='none'
-                              stroke='currentColor'
-                              strokeWidth='2'
-                              viewBox='0 0 24 24'
-                            >
-                              <circle cx='12' cy='12' r='10' />
-                              <line x1='12' y1='16' x2='12' y2='12' />
-                              <line x1='12' y1='8' x2='12' y2='8' />
-                            </svg>
-                          </span>
-                        )}
-                      </div>
-                      <div className='text-xs text-muted-foreground mt-1 flex items-center gap-2'>
-                        <span>⏱ {task.duration || '15 Minutes'}</span>
-                        {/* Feedback icon placeholder if needed */}
-                        {task.feedback && <span className='ml-2'>😊</span>}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+            <CardContent>
+              <div className='text-2xl sm:text-3xl font-extrabold'>3</div>
             </CardContent>
           </Card>
         </div>
-      </TabsContent>
-    );
-  };
+      </div>
+      {/* Daily Stats Table */}
+      <div className='mt-8'>
+        <div className='bg-white rounded-2xl shadow-md p-0 border border-[#ececec] overflow-x-auto'>
+          <Table className='min-w-full bg-white rounded-2xl overflow-hidden min-w-0'>
+            <TableHeader>
+              <TableRow className='bg-white'>
+                <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  Date
+                </TableHead>
+                <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  Tasks
+                </TableHead>
+                <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  All Mandatory Tasks
+                </TableHead>
+                <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  Avg Task Feedback
+                </TableHead>
+                <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  Journal Entry
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {/* Mock data for now */}
+              {[
+                { date: '2025-06-16', tasks: '0/7', mandatory: 'Not Done', feedback: 'Nil', journal: 'No' },
+                { date: '2025-06-15', tasks: '4/6', mandatory: 'Done', feedback: 'Happy', journal: 'No' },
+                { date: '2025-06-14', tasks: '5/5', mandatory: 'Done', feedback: 'Neutral', journal: 'Yes' },
+                { date: '2025-06-13', tasks: '3/5', mandatory: 'Not Done', feedback: 'Sad', journal: 'Yes' },
+              ].map((row) => (
+                <TableRow
+                  key={row.date}
+                  className='cursor-pointer hover:bg-gray-50 transition-colors border-b last:border-b-0 border-[#ececec]'
+                  onClick={() => router.push(`/practitioner/clients/${clientId}/tasks/${row.date}`)}
+                >
+                  <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
+                    {new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </TableCell>
+                  <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>{row.tasks}</TableCell>
+                  <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>{row.mandatory}</TableCell>
+                  <TableCell className='px-7 py-5 whitespace-nowrap'>{feedbackBadge(row.feedback)}</TableCell>
+                  <TableCell className='px-7 py-5 whitespace-nowrap'>{journalBadge(row.journal)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    </TabsContent>
+  );
 
   const renderSessionsTab = () => (
     <TabsContent value='sessions' className='mt-0'>
@@ -645,19 +633,19 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
         </div>
         <div className='overflow-x-auto'>
           <div className='bg-white rounded-2xl shadow-md p-0'>
-            <Table className='min-w-full bg-white rounded-2xl overflow-hidden'>
+            <Table className='min-w-full bg-white rounded-2xl overflow-hidden min-w-0'>
               <TableHeader>
                 <TableRow className='bg-white'>
-                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                     Session Title
                   </TableHead>
-                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                     Date
                   </TableHead>
-                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                     Duration
                   </TableHead>
-                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                     Summary
                   </TableHead>
                 </TableRow>
@@ -880,7 +868,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     return (
       <>
         <div className='flex flex-col min-h-screen'>
-          <div className='flex flex-col gap-0 border-b px-2 sm:px-8 pt-1 sm:pt-2 pb-3 sm:pb-4'>
+          <div className='flex flex-col gap-0 border-b px-2  pt-6 sm:pt- pb-3 sm:pb-4'>
             <div className='w-full flex items-center'>
               <button
                 type='button'
@@ -931,7 +919,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           </div>
 
           <div className='flex-1 w-full flex py-4 sm:py-8'>
-            <div className='w-full px-4 sm:px-8 lg:px-16 flex flex-col gap-6 sm:gap-8'>
+            <div className='w-full px-2 sm:px-8 lg:px-16 flex flex-col gap-6 sm:gap-8'>
               <div className='w-full'>
                 <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full'>
                   <TabsList className='flex gap-1 bg-transparent p-0 justify-start w-full sm:w-fit mb-6 overflow-x-auto'>
@@ -1061,8 +1049,18 @@ export default function ClientDashboardPage({ params }: { params: Promise<{ clie
   }
 
   return (
-    <AudioRecorderProvider>
-      <ClientDashboardContent clientId={clientId} />
-    </AudioRecorderProvider>
+    <div className='flex flex-col h-screen w-full overflow-hidden'>
+      <PageHeader
+        title='Dashboard'
+        subtitle='Overview and actions for your client'
+        showBackButton={false}
+        className='bg-muted/5'
+      >
+        <SidebarToggleButton />
+      </PageHeader>
+      <AudioRecorderProvider>
+        <ClientDashboardContent clientId={clientId} />
+      </AudioRecorderProvider>
+    </div>
   );
 }

@@ -34,7 +34,7 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
       {/* Main Content */}
       <div className='flex flex-1 flex-col'>
         <main className='flex-1 flex justify-center items-start bg-transparent'>
-          <div className='w-full max-w-[1450px]'>{children}</div>
+          <div className='w-full '>{children}</div>
         </main>
       </div>
     </div>
