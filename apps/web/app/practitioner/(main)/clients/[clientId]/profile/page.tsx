@@ -33,9 +33,8 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
         showBackButton={true}
         onBack={() => router.back()}
         className='bg-transparent w-full mb-4'
-      >
-        <SidebarToggleButton />
-      </PageHeader>
+        leftElement={<SidebarToggleButton />}
+      />
       <div className='w-full flex flex-col gap-8'>
         {/* Top section: Personal Details & Client Info */}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>

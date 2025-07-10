@@ -17,14 +17,14 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
   ];
 
   return (
-    <div className='grid min-h-screen w-full lg:grid-cols-[260px_1fr]'>
+    <div className='grid min-h-screen w-full lg:grid-cols-[260px_1fr] xl:grid-cols-[300px_1fr]'>
       {/* Sidebar */}
       <div className='hidden lg:block h-full'>
         <SidebarContent navLinks={navLinks} pathname={pathname} signOutCallbackUrl='/practitioner/auth' />
       </div>
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side='left' className='w-[260px] p-0 bg-transparent'>
+        <SheetContent side='left' className='w-[260px] sm:w-[300px] p-0 bg-transparent'>
           <SheetHeader className='sr-only'>
             <SheetTitle>Navigation Menu</SheetTitle>
           </SheetHeader>
@@ -32,9 +32,9 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
         </SheetContent>
       </Sheet>
       {/* Main Content */}
-      <div className='flex flex-1 flex-col'>
-        <main className='flex-1 flex justify-center items-start bg-transparent'>
-          <div className='w-full '>{children}</div>
+      <div className='flex flex-1 flex-col min-w-0'>
+        <main className='flex-1 flex justify-center items-start bg-transparent min-w-0'>
+          <div className='w-full min-w-0'>{children}</div>
         </main>
       </div>
     </div>

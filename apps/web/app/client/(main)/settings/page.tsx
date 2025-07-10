@@ -68,94 +68,96 @@ export default function ClientSettingsPage() {
   };
 
   return (
-    <div className='flex flex-col h-screen bg-background text-foreground'>
-      <header className='flex flex-col gap-0 border-b bg-background px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
-        <div className='flex items-center justify-between gap-4'>
-          <h1 className='text-xl font-bold tracking-tight sm:text-2xl'>Profile Settings</h1>
+    <div className='flex flex-col h-screen bg-background text-foreground min-w-0'>
+      <header className='flex flex-col gap-0 border-b bg-background px-3 sm:px-4 lg:px-6 xl:px-8 pt-3 sm:pt-4 lg:pt-6 pb-2 sm:pb-3 lg:pb-4'>
+        <div className='flex items-center justify-between gap-3 sm:gap-4 min-w-0'>
+          <h1 className='text-lg sm:text-xl lg:text-2xl font-bold tracking-tight truncate'>Profile Settings</h1>
           <Button
-            className='bg-foreground text-background hover:bg-foreground/90 rounded-md'
+            className='bg-foreground text-background hover:bg-foreground/90 rounded-md text-sm sm:text-base px-3 sm:px-4 py-2'
             onClick={handleSaveChanges}
           >
             Save Changes
           </Button>
         </div>
       </header>
-      <main className='flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8'>
+      <main className='flex-1 overflow-y-auto p-3 sm:p-4 lg:px-6 xl:px-8 min-w-0'>
         <Tabs defaultValue='profile' className='w-full'>
-          <TabsList className='bg-muted p-1 rounded-lg inline-flex items-center'>
+          <TabsList className='bg-muted p-1 rounded-lg inline-flex items-center w-full sm:w-auto'>
             <TabsTrigger
               value='profile'
-              className='px-4 py-1.5 text-sm font-medium rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm'
+              className='px-2 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1 sm:flex-none'
             >
               Profile
             </TabsTrigger>
             <TabsTrigger
               value='medical'
-              className='px-4 py-1.5 text-sm font-medium rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm'
+              className='px-2 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1 sm:flex-none'
             >
               Medical History
             </TabsTrigger>
             <TabsTrigger
               value='notifications'
-              className='px-4 py-1.5 text-sm font-medium rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm'
+              className='px-2 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1 sm:flex-none'
             >
               Notifications
             </TabsTrigger>
           </TabsList>
-          <TabsContent value='profile' className='mt-6'>
+          <TabsContent value='profile' className='mt-4 sm:mt-6'>
             {user && (
               <div className='flex justify-center'>
-                <div className='max-w-3xl w-full'>
+                <div className='max-w-3xl w-full min-w-0'>
                   <UserProfileCard userId={user.id} mode='client' />
                 </div>
               </div>
             )}
           </TabsContent>
-          <TabsContent value='medical' className='mt-6'>
-            <Card className='border border-border rounded-2xl shadow-none'>
-              <CardContent className='p-6 sm:p-8'>
-                <h2 className='text-lg font-semibold'>Medical History</h2>
-                <p className='text-muted-foreground text-sm mt-1 mb-6'>Update your medical history</p>
-                <div className='space-y-6'>
+          <TabsContent value='medical' className='mt-4 sm:mt-6'>
+            <Card className='border border-border rounded-xl sm:rounded-2xl shadow-none min-w-0'>
+              <CardContent className='p-4 sm:p-6 lg:p-8'>
+                <h2 className='text-base sm:text-lg font-semibold'>Medical History</h2>
+                <p className='text-muted-foreground text-xs sm:text-sm mt-1 mb-4 sm:mb-6'>
+                  Update your medical history
+                </p>
+                <div className='space-y-4 sm:space-y-6'>
                   <div>
-                    <Label>Known Allergies</Label>
-                    <Input placeholder='Enter allergies' className='mb-2' />
+                    <Label className='text-sm sm:text-base'>Known Allergies</Label>
+                    <Input placeholder='Enter allergies' className='mb-2 text-sm sm:text-base' />
                     <div className='flex flex-wrap gap-2 mt-2'>
                       {allergies.map((a, i) => (
-                        <span key={i} className='px-3 py-1 rounded-full border text-xs'>
+                        <span key={i} className='px-2 sm:px-3 py-1 rounded-full border text-xs'>
                           {a}
                         </span>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <Label>Relevant Medical History</Label>
-                    <Input placeholder='Enter medical history' className='mb-2' />
+                    <Label className='text-sm sm:text-base'>Relevant Medical History</Label>
+                    <Input placeholder='Enter medical history' className='mb-2 text-sm sm:text-base' />
                     <div className='flex flex-wrap gap-2 mt-2'>
                       {medicalHistory.map((m, i) => (
-                        <span key={i} className='px-3 py-1 rounded-full border text-xs'>
+                        <span key={i} className='px-2 sm:px-3 py-1 rounded-full border text-xs'>
                           {m}
                         </span>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <Label>Current Symptoms</Label>
-                    <Input placeholder='Enter current symptoms' className='mb-2' />
+                    <Label className='text-sm sm:text-base'>Current Symptoms</Label>
+                    <Input placeholder='Enter current symptoms' className='mb-2 text-sm sm:text-base' />
                     <div className='flex flex-wrap gap-2 mt-2'>
                       {symptoms.map((s, i) => (
-                        <span key={i} className='px-3 py-1 rounded-full border text-xs'>
+                        <span key={i} className='px-2 sm:px-3 py-1 rounded-full border text-xs'>
                           {s}
                         </span>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <Label>Current Medications</Label>
-                    <Input placeholder='Enter current medications' className='mb-2' />
+                    <Label className='text-sm sm:text-base'>Current Medications</Label>
+                    <Input placeholder='Enter current medications' className='mb-2 text-sm sm:text-base' />
                     <div className='flex flex-wrap gap-2 mt-2'>
                       {medications.map((m, i) => (
-                        <span key={i} className='px-3 py-1 rounded-full border text-xs'>
+                        <span key={i} className='px-2 sm:px-3 py-1 rounded-full border text-xs'>
                           {m}
                         </span>
                       ))}
@@ -165,18 +167,20 @@ export default function ClientSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value='notifications' className='mt-6'>
-            <Card className='border border-border rounded-2xl shadow-none'>
-              <CardContent className='p-6 sm:p-8'>
-                <h2 className='text-lg font-semibold'>Email Notifications</h2>
-                <p className='text-muted-foreground text-sm mt-1 mb-6'>Manage how you receive notifications</p>
-                <div className='space-y-6'>
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <Label htmlFor='emailReminders' className='font-medium'>
+          <TabsContent value='notifications' className='mt-4 sm:mt-6'>
+            <Card className='border border-border rounded-xl sm:rounded-2xl shadow-none min-w-0'>
+              <CardContent className='p-4 sm:p-6 lg:p-8'>
+                <h2 className='text-base sm:text-lg font-semibold'>Email Notifications</h2>
+                <p className='text-muted-foreground text-xs sm:text-sm mt-1 mb-4 sm:mb-6'>
+                  Manage how you receive notifications
+                </p>
+                <div className='space-y-4 sm:space-y-6'>
+                  <div className='flex items-center justify-between gap-3'>
+                    <div className='min-w-0 flex-1'>
+                      <Label htmlFor='emailReminders' className='font-medium text-sm sm:text-base'>
                         Email Reminders
                       </Label>
-                      <p className='text-sm text-muted-foreground'>
+                      <p className='text-xs sm:text-sm text-muted-foreground'>
                         When your practitioner sends a new Action Plan or makes changes in tasks
                       </p>
                     </div>
@@ -186,12 +190,12 @@ export default function ClientSettingsPage() {
                       onCheckedChange={() => handleNotificationChange('emailReminders')}
                     />
                   </div>
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <Label htmlFor='practitionerMessages' className='font-medium'>
+                  <div className='flex items-center justify-between gap-3'>
+                    <div className='min-w-0 flex-1'>
+                      <Label htmlFor='practitionerMessages' className='font-medium text-sm sm:text-base'>
                         Practitioner Messages
                       </Label>
-                      <p className='text-sm text-muted-foreground'>When your practitioner messages you</p>
+                      <p className='text-xs sm:text-sm text-muted-foreground'>When your practitioner messages you</p>
                     </div>
                     <Switch
                       id='practitionerMessages'

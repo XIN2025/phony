@@ -122,8 +122,12 @@ export default function SettingsPage() {
       <PageHeader
         title='Profile Settings'
         showBackButton={false}
-        leftElement={<SidebarToggleButton />}
-        children={
+        leftElement={
+          <div className='sm:hidden'>
+            <SidebarToggleButton />
+          </div>
+        }
+        rightElement={
           <Button
             className='bg-foreground text-background hover:bg-foreground/90 rounded-md'
             onClick={handleSaveChanges}
@@ -200,31 +204,9 @@ export default function SettingsPage() {
                             <Input id='email' type='email' defaultValue={user.email} disabled />
                           </div>
                         </div>
-                        <div className='space-y-2'>
-                          <Label htmlFor='profession'>Profession</Label>
-                          <Input id='profession' value={profession} onChange={(e) => setProfession(e.target.value)} />
-                        </div>
-                        <div className='space-y-2'>
-                          <Label htmlFor='verification'>Verification Proof</Label>
-                          <div className='flex items-center gap-2'>
-                            <Input value={(user as User).idProofUrl ? 'Govt_ID.pdf' : 'Not uploaded yet'} disabled />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className='mt-8 pt-6 border-t'>
-                        <Button
-                          variant='default'
-                          className='bg-foreground text-background hover:bg-foreground/90'
-                          onClick={() => signOut({ callbackUrl: '/practitioner/auth' })}
-                        >
-                          Logout
-                        </Button>
                       </div>
                     </>
-                  ) : (
-                    <div className='text-red-500 text-center py-10'>Failed to load user profile.</div>
-                  )}
+                  ) : null}
                 </div>
               </CardContent>
             </Card>

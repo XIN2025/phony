@@ -59,15 +59,28 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
   return (
     <div className='w-full min-h-screen flex flex-col bg-transparent'>
       <PageHeader
-        title='Action Plan'
+        title={
+          <span className='flex justify-between  items-center gap-2'>
+            Action Plan
+            {plan.status !== 'DRAFT' && (
+              <Button
+                variant='ghost'
+                size='sm'
+                aria-label='Edit Plan'
+                onClick={() => router.push(`/practitioner/clients/${clientId}/dashboard?editPlan=${planId}`)}
+                className='ml-2 px-2 py-1 h-8 text-sm font-medium flex items-center gap-1'
+              >
+                <Edit2 className='h-4 w-4 mr-1' /> Edit Plan
+              </Button>
+            )}
+          </span>
+        }
         subtitle={plan.session?.title || plan.sessionTitle || ''}
         showBackButton={true}
         onBack={() => router.back()}
         className='bg-transparent'
-      >
-        <SidebarToggleButton />
-      </PageHeader>
-      <div className='w-full flex flex-col sm:flex-row gap-8 mt-6 bg-transparent'>
+      />
+      <div className='w-full flex flex-col sm:flex-row gap-8 px-8  mt-6 bg-transparent'>
         {/* Mandatory Tasks Card */}
         <div className='flex-1 flex flex-col gap-0 bg-transparent'>
           <div className='bg-white rounded-2xl shadow-md p-6 flex flex-col gap-0'>

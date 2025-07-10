@@ -61,9 +61,8 @@ export default function ClientMessagesPage({ params }: { params: Promise<{ clien
         subtitle='Direct messaging with your client'
         onBack={() => router.push('/practitioner/clients')}
         className='bg-muted/5'
-      >
-        <SidebarToggleButton />
-      </PageHeader>
+        leftElement={<SidebarToggleButton />}
+      />
 
       <div className='flex-1 min-h-0 px-14 overflow-hidden p-1'>
         <ChatContainer participantId={clientId} height='calc(100vh - 200px)' className='w-full h-full' />

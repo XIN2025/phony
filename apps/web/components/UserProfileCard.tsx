@@ -64,10 +64,10 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({ userId, mode }
   }
 
   return (
-    <div className='w-full bg-transparent'>
-      <h2 className='text-lg font-semibold mb-1'>Profile Information</h2>
-      <p className='text-muted-foreground text-sm mb-6'>Update your profile details</p>
-      <div className='flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-8'>
+    <div className='w-full bg-transparent min-w-0'>
+      <h2 className='text-base sm:text-lg font-semibold mb-1'>Profile Information</h2>
+      <p className='text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6'>Update your profile details</p>
+      <div className='flex flex-col sm:flex-row items-center gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8'>
         <div className='relative group'>
           <button
             type='button'
@@ -76,53 +76,72 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({ userId, mode }
             className='focus:outline-none rounded-full transition-shadow focus:ring-2 focus:ring-black/30 hover:shadow-lg'
             style={{ boxShadow: '0 0 0 0 transparent' }}
           >
-            <Avatar className='h-20 w-20 border-2 border-primary'>
+            <Avatar className='h-16 w-16 sm:h-20 sm:w-20 border-2 border-primary'>
               <AvatarImage src={avatarPreview || getAvatarUrl(user.avatarUrl, user)} />
-              <AvatarFallback className='text-2xl'>
+              <AvatarFallback className='text-lg sm:text-2xl'>
                 {getInitials({ firstName: user.firstName, lastName: user.lastName })}
               </AvatarFallback>
             </Avatar>
             <input type='file' ref={fileInputRef} onChange={handleFileChange} className='hidden' accept='image/*' />
-            <span className='absolute bottom-0 right-0 bg-background border rounded-full p-1.5 shadow-sm group-hover:shadow-md transition'>
-              <Edit className='h-3.5 w-3.5' />
+            <span className='absolute bottom-0 right-0 bg-background border rounded-full p-1 sm:p-1.5 shadow-sm group-hover:shadow-md transition'>
+              <Edit className='h-3 w-3 sm:h-3.5 sm:w-3.5' />
             </span>
           </button>
         </div>
-        <div className='flex items-center gap-2'>
-          <h3 className='text-lg font-semibold'>{getUserDisplayName(user)}</h3>
-          {user.isEmailVerified && <CheckCircle className='h-5 w-5 text-green-500' />}
+        <div className='flex items-center gap-2 min-w-0'>
+          <h3 className='text-base sm:text-lg font-semibold truncate'>{getUserDisplayName(user)}</h3>
+          {user.isEmailVerified && <CheckCircle className='h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0' />}
         </div>
       </div>
-      <div className='space-y-6'>
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+      <div className='space-y-4 sm:space-y-6'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6'>
           <div className='space-y-2'>
-            <Label htmlFor='fullName'>Full Name</Label>
-            <Input id='fullName' value={fullName} onChange={(e) => setFullName(e.target.value)} />
+            <Label htmlFor='fullName' className='text-sm sm:text-base'>
+              Full Name
+            </Label>
+            <Input
+              id='fullName'
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className='text-sm sm:text-base'
+            />
           </div>
           <div className='space-y-2'>
-            <Label htmlFor='email'>Email ID</Label>
-            <Input id='email' type='email' value={email} disabled />
+            <Label htmlFor='email' className='text-sm sm:text-base'>
+              Email ID
+            </Label>
+            <Input id='email' type='email' value={email} disabled className='text-sm sm:text-base' />
           </div>
         </div>
         <div className='space-y-2'>
-          <Label htmlFor='profession'>Profession</Label>
-          <Input id='profession' value={profession} onChange={(e) => setProfession(e.target.value)} />
+          <Label htmlFor='profession' className='text-sm sm:text-base'>
+            Profession
+          </Label>
+          <Input
+            id='profession'
+            value={profession}
+            onChange={(e) => setProfession(e.target.value)}
+            className='text-sm sm:text-base'
+          />
         </div>
         {/* Add more fields as needed, e.g., verification proof, etc. */}
       </div>
-      <div className='mt-8 pt-6 border-t flex gap-4'>
+      <div className='mt-6 sm:mt-8 pt-4 sm:pt-6 border-t flex flex-col sm:flex-row gap-3 sm:gap-4 min-w-0'>
         <Button
           variant='default'
-          className='bg-foreground text-background hover:bg-foreground/90'
+          className='bg-foreground text-background hover:bg-foreground/90 text-sm sm:text-base'
           onClick={() => signOut({ callbackUrl: mode === 'client' ? '/client/auth' : '/practitioner/auth' })}
         >
           Logout
         </Button>
-        <Button variant='destructive' className='bg-red-500/10 text-red-500 hover:bg-red-500/20'>
+        <Button variant='destructive' className='bg-red-500/10 text-red-500 hover:bg-red-500/20 text-sm sm:text-base'>
           <Trash2 className='h-4 w-4 mr-2' />
           Delete Account
         </Button>
-        <Button className='ml-auto bg-black text-white rounded-full px-6 py-2' onClick={handleSaveChanges}>
+        <Button
+          className='sm:ml-auto bg-black text-white rounded-full px-4 sm:px-6 py-2 text-sm sm:text-base'
+          onClick={handleSaveChanges}
+        >
           Save Changes
         </Button>
       </div>

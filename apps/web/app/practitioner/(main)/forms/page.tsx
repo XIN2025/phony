@@ -29,18 +29,18 @@ export default function FormsPage() {
   const filteredForms = forms?.filter((form) => form.title.toLowerCase().includes(searchQuery.toLowerCase())) || [];
 
   return (
-    <div className='flex flex-col min-h-screen'>
+    <div className='flex flex-col min-h-screen min-w-0'>
       {/* Header */}
-      <div className='flex flex-col gap-0 border-b px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
-        <div className='flex flex-col sm:flex-row sm:items-center bg-transparent sm:justify-between gap-4'>
-          <div className='flex items-center gap-2'>
+      <div className='flex flex-col gap-0 border-b px-3 sm:px-4 lg:px-6 xl:px-8 pt-3 sm:pt-4 lg:pt-6 pb-2 sm:pb-3 lg:pb-4'>
+        <div className='flex flex-col sm:flex-row sm:items-center bg-transparent sm:justify-between gap-3 sm:gap-4'>
+          <div className='flex items-center gap-2 min-w-0'>
             <SidebarToggleButton />
-            <h1 className='text-2xl font-bold tracking-tight sm:text-3xl'>My Forms</h1>
+            <h1 className='text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight truncate'>My Forms</h1>
           </div>
           <div className='flex items-center gap-2'>
             <Button
               onClick={handleNewForm}
-              className='bg-black text-white hover:bg-neutral-800 rounded-full px-6 py-2 text-base font-semibold shadow-md transition-all'
+              className='bg-black text-white hover:bg-neutral-800 rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-md transition-all w-full sm:w-auto'
             >
               <Plus className='h-4 w-4 mr-2' />
               New Intake Form
@@ -50,19 +50,19 @@ export default function FormsPage() {
       </div>
 
       {/* Content */}
-      <div className='flex-1 w-full py-4 sm:py-6 lg:py-8'>
-        <div className='w-full px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8'>
+      <div className='flex-1 w-full py-3 sm:py-4 lg:py-6 xl:py-8 min-w-0'>
+        <div className='w-full px-3 sm:px-4 lg:px-6 xl:px-8 space-y-4 sm:space-y-6 lg:space-y-8 min-w-0'>
           {/* Search and View Controls */}
-          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-            <div className='relative flex-1 max-w-md'>
+          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4'>
+            <div className='relative flex-1 max-w-md min-w-0'>
               <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
                 <Search className='h-4 w-4 text-muted-foreground' />
               </div>
               <Input
-                placeholder='Search Clients'
+                placeholder='Search Forms'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-10 rounded-full border border-[#e5e7eb] bg-white shadow-sm focus:ring-2 focus:ring-black/10 text-base h-12'
+                className='pl-10 rounded-full border border-[#e5e7eb] bg-white shadow-sm focus:ring-2 focus:ring-black/10 text-sm sm:text-base h-10 sm:h-12'
               />
             </div>
             <div className='flex items-center gap-2'>
@@ -70,7 +70,7 @@ export default function FormsPage() {
                 variant={viewMode === 'grid' ? 'default' : 'outline'}
                 size='sm'
                 onClick={() => setViewMode('grid')}
-                className='rounded-lg bg-white border border-[#e5e7eb] shadow-sm'
+                className='rounded-lg bg-white border border-[#e5e7eb] shadow-sm h-8 w-8 sm:h-10 sm:w-10 p-0'
               >
                 <Grid className='h-4 w-4' />
               </Button>
@@ -78,31 +78,34 @@ export default function FormsPage() {
                 variant={viewMode === 'list' ? 'default' : 'outline'}
                 size='sm'
                 onClick={() => setViewMode('list')}
-                className='rounded-lg bg-white border border-[#e5e7eb] shadow-sm'
+                className='rounded-lg bg-white border border-[#e5e7eb] shadow-sm h-8 w-8 sm:h-10 sm:w-10 p-0'
               >
                 <List className='h-4 w-4' />
               </Button>
             </div>
           </div>
 
-          <div className='space-y-4'>
+          <div className='space-y-3 sm:space-y-4'>
             {isLoading ? (
-              <div className='flex items-center justify-center py-8'>
-                <Loader2 className='h-8 w-8 animate-spin' />
+              <div className='flex items-center justify-center py-6 sm:py-8'>
+                <Loader2 className='h-6 w-6 sm:h-8 sm:w-8 animate-spin' />
               </div>
             ) : error ? (
-              <div className='text-center py-12'>
+              <div className='text-center py-8 sm:py-12'>
                 <div className='max-w-md mx-auto'>
-                  <FileText className='h-16 w-16 mx-auto mb-6 text-muted-foreground opacity-50' />
-                  <h3 className='text-lg font-semibold mb-2'>Failed to load forms</h3>
-                  <p className='text-muted-foreground mb-6'>
+                  <FileText className='h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 sm:mb-6 text-muted-foreground opacity-50' />
+                  <h3 className='text-base sm:text-lg font-semibold mb-2'>Failed to load forms</h3>
+                  <p className='text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6'>
                     We couldn't load your forms. Check your connection and try again, or create a new form.
                   </p>
                   <div className='flex flex-col sm:flex-row gap-3 justify-center'>
-                    <Button onClick={() => window.location.reload()} variant='outline'>
+                    <Button onClick={() => window.location.reload()} variant='outline' className='text-sm sm:text-base'>
                       Try Again
                     </Button>
-                    <Button onClick={handleNewForm} className='bg-foreground text-background hover:bg-foreground/90'>
+                    <Button
+                      onClick={handleNewForm}
+                      className='bg-foreground text-background hover:bg-foreground/90 text-sm sm:text-base'
+                    >
                       <Plus className='h-4 w-4 mr-2' />
                       Create New Form
                     </Button>
@@ -110,13 +113,13 @@ export default function FormsPage() {
                 </div>
               </div>
             ) : filteredForms.length === 0 ? (
-              <div className='text-center py-12'>
+              <div className='text-center py-8 sm:py-12'>
                 <div className='max-w-md mx-auto'>
-                  <FileText className='h-16 w-16 mx-auto mb-6 text-muted-foreground opacity-50' />
-                  <h3 className='text-lg font-semibold mb-2'>
+                  <FileText className='h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 sm:mb-6 text-muted-foreground opacity-50' />
+                  <h3 className='text-base sm:text-lg font-semibold mb-2'>
                     {searchQuery ? 'No forms match your search' : 'No forms yet'}
                   </h3>
-                  <p className='text-muted-foreground mb-6'>
+                  <p className='text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6'>
                     {searchQuery
                       ? `Try adjusting your search terms or create a new form.`
                       : 'Get started by creating your first intake form. You can use it to collect information from your clients.'}
@@ -124,13 +127,13 @@ export default function FormsPage() {
                   <div className='flex flex-col sm:flex-row gap-3 justify-center'>
                     <Button
                       onClick={handleNewForm}
-                      className='bg-black text-white hover:bg-neutral-800 rounded-full px-6 py-2 text-base font-semibold shadow-md transition-all'
+                      className='bg-black text-white hover:bg-neutral-800 rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-md transition-all'
                     >
                       <Plus className='h-4 w-4 mr-2' />
                       Create Your First Form
                     </Button>
                     {searchQuery && (
-                      <Button variant='outline' onClick={() => setSearchQuery('')}>
+                      <Button variant='outline' onClick={() => setSearchQuery('')} className='text-sm sm:text-base'>
                         Clear Search
                       </Button>
                     )}
@@ -138,21 +141,21 @@ export default function FormsPage() {
                 </div>
               </div>
             ) : viewMode === 'grid' ? (
-              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 min-w-0'>
                 {filteredForms.map((form) => (
                   <Card
                     key={form.id}
-                    className='bg-white rounded-2xl shadow-md cursor-pointer hover:bg-gray-100 transition-colors border-0'
+                    className='bg-white rounded-xl sm:rounded-2xl shadow-md cursor-pointer hover:bg-gray-100 transition-colors border-0 min-w-0'
                     onClick={() => handleFormClick(form.id)}
                   >
-                    <CardContent className='p-4 sm:p-6'>
-                      <div className='aspect-[4/3] bg-muted rounded-lg mb-4 flex items-center justify-center'>
-                        <FileText className='h-8 w-8 text-muted-foreground' />
+                    <CardContent className='p-3 sm:p-4 lg:p-6'>
+                      <div className='aspect-[4/3] bg-muted rounded-lg mb-3 sm:mb-4 flex items-center justify-center'>
+                        <FileText className='h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground' />
                       </div>
                       <div className='space-y-2'>
                         <div className='flex items-start justify-between'>
-                          <div className='flex-1'>
-                            <h3 className='font-medium text-sm sm:text-base line-clamp-2'>{form.title}</h3>
+                          <div className='flex-1 min-w-0'>
+                            <h3 className='font-medium text-sm sm:text-base line-clamp-2 truncate'>{form.title}</h3>
                             <p className='text-xs text-muted-foreground'>
                               {format(new Date(form.updatedAt), 'MMM d, yyyy')}
                             </p>
@@ -169,7 +172,7 @@ export default function FormsPage() {
                           <Button
                             variant='ghost'
                             size='sm'
-                            className='p-1 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10'
+                            className='p-1 h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0'
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteForm(form.id, {
@@ -183,7 +186,7 @@ export default function FormsPage() {
                             }}
                             disabled={isDeleting}
                           >
-                            <Trash2 className='h-4 w-4' />
+                            <Trash2 className='h-3 w-3 sm:h-4 sm:w-4' />
                           </Button>
                         </div>
                       </div>
@@ -192,22 +195,22 @@ export default function FormsPage() {
                 ))}
               </div>
             ) : (
-              <div className='space-y-3'>
+              <div className='space-y-2 sm:space-y-3'>
                 {filteredForms.map((form) => (
                   <Card
                     key={form.id}
-                    className='bg-white rounded-xl shadow-md cursor-pointer hover:bg-gray-100 transition-colors border-0'
+                    className='bg-white rounded-lg sm:rounded-xl shadow-md cursor-pointer hover:bg-gray-100 transition-colors border-0 min-w-0'
                     onClick={() => handleFormClick(form.id)}
                   >
-                    <CardContent className='p-4 sm:p-6'>
+                    <CardContent className='p-3 sm:p-4'>
                       <div className='flex items-center justify-between'>
-                        <div className='flex items-center gap-4 flex-1'>
-                          <div className='w-12 h-12 bg-muted rounded-lg flex items-center justify-center flex-shrink-0'>
-                            <FileText className='h-6 w-6 text-muted-foreground' />
+                        <div className='flex items-center gap-3 min-w-0 flex-1'>
+                          <div className='h-10 w-10 sm:h-12 sm:w-12 bg-muted rounded-lg flex items-center justify-center flex-shrink-0'>
+                            <FileText className='h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground' />
                           </div>
-                          <div className='flex-1 min-w-0'>
-                            <h3 className='font-medium text-base line-clamp-1'>{form.title}</h3>
-                            <p className='text-sm text-muted-foreground'>
+                          <div className='min-w-0 flex-1'>
+                            <h3 className='font-medium text-sm sm:text-base truncate'>{form.title}</h3>
+                            <p className='text-xs text-muted-foreground'>
                               {format(new Date(form.updatedAt), 'MMM d, yyyy')}
                             </p>
                             <div className='flex items-center gap-2 mt-1'>
@@ -224,7 +227,7 @@ export default function FormsPage() {
                         <Button
                           variant='ghost'
                           size='sm'
-                          className='p-1 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0'
+                          className='p-1 h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0'
                           onClick={(e) => {
                             e.stopPropagation();
                             deleteForm(form.id, {
@@ -238,7 +241,7 @@ export default function FormsPage() {
                           }}
                           disabled={isDeleting}
                         >
-                          <Trash2 className='h-4 w-4' />
+                          <Trash2 className='h-3 w-3 sm:h-4 sm:w-4' />
                         </Button>
                       </div>
                     </CardContent>

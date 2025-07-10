@@ -43,30 +43,35 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className='grid min-h-screen w-full lg:grid-cols-[280px_1fr]'>
-      <div className='hidden bg-background lg:block'>
-        <PractitionerSidebarContent
-          navLinks={navLinks}
-          pathname={pathname}
-          signOutCallbackUrl='/client/auth'
-          settingsPath='/client/settings'
-        />
-      </div>
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side='left' className='w-[280px] p-0'>
-          <SheetHeader className='sr-only'>
-            <SheetTitle>Navigation Menu</SheetTitle>
-          </SheetHeader>
+    <div className='relative min-h-screen w-full'>
+      {/* Simple background for main client area */}
+      <div className='absolute inset-0 z-0 bg-background' />
+      <div className='relative z-20 grid min-h-screen w-full lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr]'>
+        <div className='hidden bg-transparent lg:block'>
           <PractitionerSidebarContent
             navLinks={navLinks}
             pathname={pathname}
             signOutCallbackUrl='/client/auth'
             settingsPath='/client/settings'
           />
-        </SheetContent>
-      </Sheet>
-      <div className='flex flex-1 flex-col'>
-        <main className='flex-1'>{children}</main>
+        </div>
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetContent side='left' className='w-[280px] sm:w-[320px] p-0'>
+            <SheetHeader className='sr-only'>
+              <SheetTitle>Navigation Menu</SheetTitle>
+            </SheetHeader>
+            <PractitionerSidebarContent
+              navLinks={navLinks}
+              pathname={pathname}
+              signOutCallbackUrl='/client/auth'
+              settingsPath='/client/settings'
+            />
+          </SheetContent>
+        </Sheet>
+        <div className='flex flex-1 flex-col min-w-0'>
+          {/* Removed logo at the top for mobile/tablet */}
+          <main className='flex-1 min-w-0'>{children}</main>
+        </div>
       </div>
     </div>
   );

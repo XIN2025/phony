@@ -334,12 +334,12 @@ export function IntakeFormBuilder({
         type='button'
         onClick={addQuestion}
         variant='ghost'
-        className='rounded-full border border-dashed border-gray-300 py-3 px-6 text-gray-700 hover:bg-gray-50 w-fit self-start'
+        className='rounded-full border border-dashed border-gray-300   px-6 text-gray-700 hover:bg-gray-50 w-fit self-start'
       >
         + Add Question
       </Button>
       {/* Action Buttons */}
-      <div className='flex flex-col gap-4 pt-8 sm:flex-row sm:justify-between'>
+      <div className='flex flex-col gap-4 -mt-4  sm:flex-row sm:justify-between'>
         {onBack && (
           <Button
             type='button'

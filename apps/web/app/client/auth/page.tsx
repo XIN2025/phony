@@ -41,13 +41,15 @@ export default function ClientAuthEmailPage() {
 
   return (
     <>
-      <div className='text-center mb-8'>
-        <h1 className='text-2xl font-bold mb-2'>Welcome to Continuum</h1>
-        <p className='text-muted-foreground'>Bridging care and connection, one session at a time.</p>
+      <div className='text-center mb-6 sm:mb-8'>
+        <h1 className='text-xl sm:text-2xl font-bold mb-2'>Welcome to Continuum</h1>
+        <p className='text-sm sm:text-base text-muted-foreground'>
+          Bridging care and connection, one session at a time.
+        </p>
       </div>
-      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4 sm:space-y-6'>
         <div className='text-center'>
-          <h2 className='text-lg font-semibold mb-6'>Sign In</h2>
+          <h2 className='text-base sm:text-lg font-semibold mb-4 sm:mb-6'>Sign In</h2>
         </div>
         <div>
           <label htmlFor='email' className='block text-sm font-medium mb-1'>
@@ -60,17 +62,18 @@ export default function ClientAuthEmailPage() {
             {...form.register('email')}
             autoComplete='email'
             required
+            className='text-sm sm:text-base'
           />
           {form.formState.errors.email && (
-            <p className='text-sm text-destructive mt-1'>{form.formState.errors.email.message}</p>
+            <p className='text-xs sm:text-sm text-destructive mt-1'>{form.formState.errors.email.message}</p>
           )}
         </div>
-        <Button type='submit' className='w-full rounded-full' disabled={isPending}>
+        <Button type='submit' className='w-full rounded-full py-2 sm:py-3 text-sm sm:text-base' disabled={isPending}>
           {isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
           Send OTP
         </Button>
         <div className='text-center'>
-          <p className='text-sm text-muted-foreground'>
+          <p className='text-xs sm:text-sm text-muted-foreground'>
             New client? You should have received an invitation link from your practitioner.
           </p>
         </div>

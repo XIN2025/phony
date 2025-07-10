@@ -139,7 +139,7 @@ export default function PractitionerAuthPage() {
   const renderContent = () => {
     if (showOTP) {
       return (
-        <motion.div key='otp' className='space-y-6'>
+        <motion.div key='otp' className='space-y-4 sm:space-y-6'>
           <FormField
             control={form.control}
             name='otp'
@@ -147,7 +147,7 @@ export default function PractitionerAuthPage() {
               <FormItem>
                 <FormControl>
                   <InputOTP {...field} maxLength={6}>
-                    <InputOTPGroup className='w-full justify-center gap-2'>
+                    <InputOTPGroup className='w-full justify-center gap-1 sm:gap-2'>
                       {[...Array(6)].map((_, i) => (
                         <InputOTPSlot key={i} index={i} />
                       ))}
@@ -158,17 +158,17 @@ export default function PractitionerAuthPage() {
               </FormItem>
             )}
           />
-          <div className='flex justify-between text-sm'>
-            <Button type='button' variant='link' className='p-0' onClick={() => setShowOTP(false)}>
+          <div className='flex justify-between text-xs sm:text-sm'>
+            <Button type='button' variant='link' className='p-0 text-xs sm:text-sm' onClick={() => setShowOTP(false)}>
               Change Email
             </Button>
             {resendTimer > 0 ? (
-              <span className='text-muted-foreground'>Resend code in {resendTimer}s</span>
+              <span className='text-muted-foreground text-xs sm:text-sm'>Resend code in {resendTimer}s</span>
             ) : (
               <Button
                 type='button'
                 variant='link'
-                className='p-0'
+                className='p-0 text-xs sm:text-sm'
                 onClick={() =>
                   handleSendOTP(
                     { email: form.getValues('email') },
@@ -189,7 +189,7 @@ export default function PractitionerAuthPage() {
               </Button>
             )}
           </div>
-          <Button type='submit' className='w-full' disabled={isLoading}>
+          <Button type='submit' className='w-full py-2 sm:py-3 text-sm sm:text-base' disabled={isLoading}>
             {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             Sign In
           </Button>
@@ -197,23 +197,23 @@ export default function PractitionerAuthPage() {
       );
     }
     return (
-      <motion.div key='email' className='space-y-6'>
+      <motion.div key='email' className='space-y-4 sm:space-y-6'>
         <FormField
           control={form.control}
           name='email'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email Address</FormLabel>
+              <FormLabel className='text-sm sm:text-base'>Email</FormLabel>
               <FormControl>
-                <Input placeholder='you@example.com' {...field} />
+                <Input {...field} type='email' placeholder='Enter your email' className='text-sm sm:text-base' />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type='submit' className='w-full' disabled={isSendingOTP}>
+        <Button type='submit' className='w-full py-2 sm:py-3 text-sm sm:text-base' disabled={isSendingOTP}>
           {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-          Continue with Email
+          Send Verification Code
         </Button>
       </motion.div>
     );

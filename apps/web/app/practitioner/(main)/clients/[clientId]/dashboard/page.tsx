@@ -38,8 +38,6 @@ import {
 } from '@repo/ui/components/dialog';
 
 import type { Session as DBSession } from '@repo/db';
-import { PageHeader } from '@/components/PageHeader';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 
 type PopulatedActionItem = ActionItem & { resources: Resource[]; completions: ActionItemCompletion[] };
 type PopulatedPlan = Plan & { actionItems: PopulatedActionItem[] };
@@ -549,7 +547,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           <h2 className='text-lg sm:text-xl font-semibold mb-0'>Tasks Overview</h2>
         </div>
         <div className='flex flex-col sm:flex-row gap-4 w-full'>
-          <Card className='flex-1 min-w-0 border border-border rounded-2xl shadow-none bg-background'>
+          <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background'>
             <CardHeader className='pb-2'>
               <CardTitle className='text-sm sm:text-base font-semibold'>Avg Tasks Completion</CardTitle>
             </CardHeader>
@@ -557,7 +555,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               <div className='text-2xl sm:text-3xl font-extrabold'>{stats.completion}%</div>
             </CardContent>
           </Card>
-          <Card className='flex-1 min-w-0 border border-border rounded-2xl shadow-none bg-background'>
+          <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background'>
             <CardHeader className='pb-2'>
               <CardTitle className='text-sm sm:text-base font-semibold'>Journal Entries</CardTitle>
             </CardHeader>
@@ -569,23 +567,23 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
       </div>
       {/* Daily Stats Table */}
       <div className='mt-8'>
-        <div className='bg-white rounded-2xl shadow-md p-0 border border-[#ececec] overflow-x-auto'>
-          <Table className='min-w-full bg-white rounded-2xl overflow-hidden min-w-0'>
+        <div className='bg-white rounded-2xl shadow-md p-0 border border-[#ececec]'>
+          <Table className='min-w-full bg-white rounded-2xl overflow-hidden'>
             <TableHeader>
               <TableRow className='bg-white'>
-                <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                   Date
                 </TableHead>
-                <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                   Tasks
                 </TableHead>
-                <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                   All Mandatory Tasks
                 </TableHead>
-                <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                   Avg Task Feedback
                 </TableHead>
-                <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                   Journal Entry
                 </TableHead>
               </TableRow>
@@ -626,26 +624,26 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           <h2 className='text-lg sm:text-xl font-semibold'>Past Sessions</h2>
           <Button
             onClick={handleNewSession}
-            className='w-full sm:w-auto bg-foreground text-background hover:bg-foreground/90 rounded-full px-6 py-2'
+            className='bg-foreground text-background hover:bg-foreground/90 rounded-full px-4 sm:px-6 py-2 text-sm sm:text-base'
           >
             + New Session
           </Button>
         </div>
         <div className='overflow-x-auto'>
-          <div className='bg-white rounded-2xl shadow-md p-0'>
-            <Table className='min-w-full bg-white rounded-2xl overflow-hidden min-w-0'>
+          <div className='bg-white rounded-2xl shadow-md p-0 min-w-[400px] sm:min-w-0'>
+            <Table className='min-w-[600px] sm:min-w-full bg-white rounded-2xl overflow-hidden'>
               <TableHeader>
                 <TableRow className='bg-white'>
-                  <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  <TableHead className='px-3 sm:px-7 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                     Session Title
                   </TableHead>
-                  <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  <TableHead className='px-3 sm:px-7 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                     Date
                   </TableHead>
-                  <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  <TableHead className='px-3 sm:px-7 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                     Duration
                   </TableHead>
-                  <TableHead className='px-2 sm:px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  <TableHead className='px-3 sm:px-7 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                     Summary
                   </TableHead>
                 </TableRow>
@@ -676,14 +674,18 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                         className='cursor-pointer hover:bg-gray-50 transition-colors border-b last:border-b-0 border-[#ececec]'
                         onClick={() => router.push(`/practitioner/sessions/${session.id}`)}
                       >
-                        <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
+                        <TableCell className='px-3 sm:px-7 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900'>
                           {session.title || 'Untitled Session'}
                         </TableCell>
-                        <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
+                        <TableCell className='px-3 sm:px-7 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900'>
                           {new Date(session.recordedAt).toLocaleDateString()}
                         </TableCell>
-                        <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>{duration}</TableCell>
-                        <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>{summary}</TableCell>
+                        <TableCell className='px-3 sm:px-7 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900'>
+                          {duration}
+                        </TableCell>
+                        <TableCell className='px-3 sm:px-7 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900'>
+                          {summary}
+                        </TableCell>
                       </TableRow>
                     );
                   })
@@ -760,8 +762,8 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
       return (
         <div className='min-h-screen bg-transparent flex flex-col'>
-          <div className='w-full max-w-[1350px] mx-auto px-2 sm:px-6 md:px-10'>
-            <div className='flex flex-col gap-0 border-b pt-1 sm:pt-2 pb-3 sm:pb-4'>
+          <div className='w-full   mx-auto px-2 sm:px-6 md:px-10'>
+            <div className='flex flex-col gap-0 border-b pt-1 mb-10 sm:pt-2 pb-3 sm:pb-4'>
               <div className='flex items-center'>
                 <button
                   type='button'
@@ -880,7 +882,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                 <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
               </button>
             </div>
-            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-2 sm:px-0 mt-2'>
+            <div className='flex justify-between items-start sm:items-center gap-2 px-2 sm:px-0 mt-2'>
               {isLoading ? (
                 <div>
                   <Skeleton className='h-8 w-48' />
@@ -901,7 +903,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                 </div>
               )}
 
-              <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mt-2 sm:mt-0'>
+              <div className='flex items-center gap-2 sm:gap-3'>
                 <Link href={`/practitioner/clients/${clientId}/messages`}>
                   <Button variant='outline' className='rounded-full p-2 border border-border'>
                     <MessageCircle className='h-4 w-4' />
@@ -919,7 +921,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           </div>
 
           <div className='flex-1 w-full flex py-4 sm:py-8'>
-            <div className='w-full px-2 sm:px-8 lg:px-16 flex flex-col gap-6 sm:gap-8'>
+            <div className='w-full px-4 sm:px-8 lg:px-16 flex flex-col gap-6 sm:gap-8'>
               <div className='w-full'>
                 <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full'>
                   <TabsList className='flex gap-1 bg-transparent p-0 justify-start w-full sm:w-fit mb-6 overflow-x-auto'>
@@ -1049,18 +1051,8 @@ export default function ClientDashboardPage({ params }: { params: Promise<{ clie
   }
 
   return (
-    <div className='flex flex-col h-screen w-full overflow-hidden'>
-      <PageHeader
-        title='Dashboard'
-        subtitle='Overview and actions for your client'
-        showBackButton={false}
-        className='bg-muted/5'
-      >
-        <SidebarToggleButton />
-      </PageHeader>
-      <AudioRecorderProvider>
-        <ClientDashboardContent clientId={clientId} />
-      </AudioRecorderProvider>
-    </div>
+    <AudioRecorderProvider>
+      <ClientDashboardContent clientId={clientId} />
+    </AudioRecorderProvider>
   );
 }
