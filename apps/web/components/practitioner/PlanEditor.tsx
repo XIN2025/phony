@@ -64,6 +64,9 @@ interface PlanEditorProps {
   sessionId: string;
   clientId: string;
   onPlanUpdated?: () => void;
+  showHeader?: boolean;
+  onPublishClick?: () => void;
+  isPublishing?: boolean;
 }
 
 const DAYS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
@@ -122,7 +125,35 @@ const ToolsToHelpDisplay: React.FC<{ toolsToHelp?: string }> = ({ toolsToHelp })
   );
 };
 
-export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clientId, onPlanUpdated }) => {
+export function PublishPlanButton({
+  onClick,
+  disabled,
+  isPublishing,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  isPublishing: boolean;
+}) {
+  return (
+    <Button
+      onClick={onClick}
+      disabled={disabled}
+      className='bg-primary text-white rounded-full px-6 py-2 font-semibold shadow-none hover:bg-primary/90'
+    >
+      {isPublishing ? 'Publishing...' : 'Publish Plan'}
+    </Button>
+  );
+}
+
+export const PlanEditor: React.FC<PlanEditorProps> = ({
+  planId,
+  sessionId,
+  clientId,
+  onPlanUpdated,
+  showHeader = true,
+  onPublishClick,
+  isPublishing,
+}) => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<ActionItem | null>(null);
   const [editingSuggestion, setEditingSuggestion] = useState<SuggestedActionItem | null>(null);
@@ -132,7 +163,6 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [viewingSuggestion, setViewingSuggestion] = useState<SuggestedActionItem | null>(null);
-  const [isPublishing, setIsPublishing] = useState(false);
 
   const [formData, setFormData] = useState({
     description: '',
@@ -240,20 +270,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
   };
 
   const handlePublishPlan = () => {
-    setIsPublishing(true);
-    publishPlanMutation.mutate(planId, {
-      onSuccess: () => {
-        toast.success('Plan published to client!');
-        onPlanUpdated?.();
-        router.push(`/practitioner/clients/${clientId}/plans/${planId}`);
-      },
-      onError: () => {
-        toast.error('Failed to publish plan');
-      },
-      onSettled: () => {
-        setIsPublishing(false);
-      },
-    });
+    onPublishClick?.();
   };
 
   const handleTaskDialogSave = (values: any) => {
@@ -367,22 +384,8 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
   const suggestedItems = planData?.suggestedActionItems || [];
 
   return (
-    <div className='space-y-8 w-full px-2 sm:px-6 md:px-10'>
-      {planStatusData === 'DRAFT' && actionItems.length > 0 && (
-        <div className='flex justify-end mb-2'>
-          <Button
-            onClick={handlePublishPlan}
-            disabled={isPublishing || isPlanStatusLoading || publishPlanMutation.isPending}
-            className='bg-primary text-white rounded-full px-6 py-2 font-semibold shadow-none hover:bg-primary/90'
-          >
-            {isPublishing || publishPlanMutation.isPending ? 'Publishing...' : 'Publish Plan'}
-          </Button>
-        </div>
-      )}
-      <div
-        className='rounded-3xl border-2 border-gray-700 shadow-sm bg-white p-4 sm:p-6 w-full mx-0'
-        style={{ borderColor: '#B0B3B8' }}
-      >
+    <div className='space-y-8 w-full max-w-[1350px] mx-auto px-2 sm:px-6 md:px-10'>
+      <div className='rounded-3xl shadow-2xl bg-white p-6 sm:p-10 w-full mx-0' style={{ borderColor: '#B0B3B8' }}>
         <div className='flex items-center justify-between mb-2 sm:mb-4 border-b pb-2'>
           <div className='font-bold text-lg sm:text-xl text-gray-900 text-left underline underline-offset-4'>
             Tasks mentioned during session
@@ -455,10 +458,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({ planId, sessionId, clien
           ))}
         </div>
       </div>
-      <div
-        className='rounded-3xl border-2 border-gray-900 shadow-sm bg-white p-4 sm:p-6 w-full mx-0 mt-8'
-        style={{ borderColor: '#B0B3B8' }}
-      >
+      <div className='rounded-3xl shadow-2xl bg-white p-6 sm:p-10 w-full mx-0 mt-8' style={{ borderColor: '#B0B3B8' }}>
         <div className='flex items-center justify-between mb-2 sm:mb-4 border-b pb-2'>
           <div className='font-bold text-lg sm:text-xl flex items-center gap-2 text-gray-900 text-left underline underline-offset-4'>
             <span>✧</span> Complementary Tasks

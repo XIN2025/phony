@@ -3,36 +3,32 @@ import { cn } from '@repo/ui/lib/utils';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
-  image?: React.ReactNode;
 }
 
-export function AuthLayout({ children, image }: AuthLayoutProps) {
+export function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <div className='bg-background w-full lg:grid lg:min-h-screen lg:grid-cols-2'>
-      {/* Left side panel */}
-      <div className='relative hidden h-full items-center justify-center bg-zinc-900 p-10 text-white lg:flex'>
-        <div className='absolute inset-0' />
-        {image && <div className='relative z-20'>{image}</div>}
-      </div>
+    <div className='bg-background flex min-h-screen w-full'>
+      {/* Left side gray panel */}
+      <div className='hidden w-1/2 bg-zinc-200 lg:block' />
 
       {/* Right side form */}
-      <div className='flex min-h-screen items-center justify-center p-4 sm:p-6 lg:min-h-0 lg:p-8'>
-        <div className='mx-auto w-full max-w-md space-y-6'>{children}</div>
+      <div className='flex flex-1 items-center justify-center p-4'>
+        <div className='w-full max-w-lg space-y-8'>{children}</div>
       </div>
     </div>
   );
 }
 
-function Logo({ className }: { className?: string }) {
+export function AuthHeader({ title }: { title: string }) {
   return (
-    <svg
-      className={cn('h-6 w-6', className)}
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-      xmlns='http://www.w3.org/2000/svg'
-    >
-      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 10V3L4 14h7v7l9-11h-7z' />
-    </svg>
+    <>
+      <div className='mb-8 text-center'>
+        <h1 className='mb-2 text-2xl font-bold'>Welcome to Continuum</h1>
+        <p className='text-muted-foreground'>Bridging care and connection, one session at a time.</p>
+      </div>
+      <div className='text-center'>
+        <h2 className='mb-6 text-lg font-semibold'>{title}</h2>
+      </div>
+    </>
   );
 }

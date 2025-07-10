@@ -1,237 +1,80 @@
-﻿'use client';
-
+'use client';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { signIn, useSession } from 'next-auth/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@repo/ui/components/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@repo/ui/components/form';
 import { Input } from '@repo/ui/components/input';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input-otp';
-import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
-import { emailSchema, otpSchema } from '@repo/shared-types';
 import { useSendOtp } from '@/lib/hooks/use-api';
-import { handleLoginError } from '@/lib/auth-utils';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
-export default function ClientAuthPage() {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [showOTP, setShowOTP] = React.useState(false);
-  const [email, setEmail] = React.useState('');
-  const [resendTimer, setResendTimer] = React.useState(0);
-  const timerCleanupRef = React.useRef<(() => void) | null>(null);
+const emailSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+});
+
+export default function ClientAuthEmailPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { mutate: sendOtp, isPending } = useSendOtp();
 
-  React.useEffect(() => {
-    if (status === 'authenticated' && session) {
-      const targetDashboard = session.user.role === 'PRACTITIONER' ? '/practitioner' : '/client';
-      router.replace(targetDashboard);
-    }
-  }, [status, session?.user?.role, router]);
-
-  const { mutate: handleSendOTP, isPending: isSendingOTP } = useSendOtp();
-
-  const form = useForm<z.infer<typeof emailSchema>>({
-    resolver: zodResolver(showOTP ? otpSchema : emailSchema),
-    defaultValues: {
-      email: '',
-      otp: '',
-    },
+  const form = useForm<{ email: string }>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: { email: '' },
   });
 
-  const startResendTimer = () => {
-    if (timerCleanupRef.current) {
-      timerCleanupRef.current();
-    }
-
-    setResendTimer(60);
-    const interval = setInterval(() => {
-      setResendTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          timerCleanupRef.current = null;
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    timerCleanupRef.current = () => clearInterval(interval);
-  };
-
-  React.useEffect(() => {
-    return () => {
-      if (timerCleanupRef.current) {
-        timerCleanupRef.current();
-      }
-    };
-  }, []);
-
-  async function onSubmit(values: z.infer<typeof emailSchema>) {
-    if (!showOTP) {
-      setEmail(values.email);
-      handleSendOTP(
-        { email: values.email },
-        {
-          onSuccess: () => {
-            toast.success('OTP sent successfully');
-            startResendTimer();
-            setShowOTP(true);
-          },
-          onError: (error: Error) => {
-            setIsLoading(false);
-            toast.error(error.message ?? 'Failed to send verification code.');
-          },
+  function onSubmit(values: { email: string }) {
+    sendOtp(
+      { email: values.email },
+      {
+        onSuccess: () => {
+          toast.success('OTP sent to your email');
+          router.push(`/client/auth/otp?email=${encodeURIComponent(values.email)}`);
         },
-      );
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const res = await signIn('credentials', {
-        email: email,
-        otp: values.otp,
-        role: 'CLIENT',
-        redirect: false,
-      });
-
-      if (res?.error) {
-        const errorMessage = handleLoginError(res.error, 'CLIENT');
-        toast.error(errorMessage);
-      } else if (res?.ok) {
-        toast.success('Logged in successfully');
-      } else {
-        toast.error('Login failed - unexpected response');
-      }
-    } catch (error: unknown) {
-      toast.error('An error occurred during sign in');
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  const renderContent = () => {
-    if (showOTP) {
-      return (
-        <motion.div key='otp' className='space-y-6'>
-          <FormField
-            control={form.control}
-            name='otp'
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <InputOTP {...field} maxLength={6}>
-                    <InputOTPGroup className='w-full justify-center gap-2'>
-                      {[...Array(6)].map((_, i) => (
-                        <InputOTPSlot key={i} index={i} />
-                      ))}
-                    </InputOTPGroup>
-                  </InputOTP>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className='flex justify-between text-sm'>
-            <Button type='button' variant='link' className='p-0' onClick={() => setShowOTP(false)}>
-              Change Email
-            </Button>
-            {resendTimer > 0 ? (
-              <span className='text-muted-foreground'>Resend code in {resendTimer}s</span>
-            ) : (
-              <Button
-                type='button'
-                variant='link'
-                className='p-0'
-                onClick={() =>
-                  handleSendOTP(
-                    { email: form.getValues('email') },
-                    {
-                      onSuccess: () => {
-                        toast.success('OTP resent successfully');
-                        startResendTimer();
-                      },
-                      onError: (error: Error) => {
-                        toast.error(error.message ?? 'Failed to resend verification code');
-                      },
-                    },
-                  )
-                }
-                disabled={isSendingOTP}
-              >
-                Resend code
-              </Button>
-            )}
-          </div>
-          <Button type='submit' className='w-full' disabled={isLoading}>
-            {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-            Sign In
-          </Button>
-        </motion.div>
-      );
-    }
-    return (
-      <motion.div key='email' className='space-y-6'>
-        <FormField
-          control={form.control}
-          name='email'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email Address</FormLabel>
-              <FormControl>
-                <Input placeholder='you@example.com' {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type='submit' className='w-full' disabled={isSendingOTP}>
-          {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-          Continue with Email
-        </Button>
-      </motion.div>
-    );
-  };
-
-  if (status === 'loading') {
-    return (
-      <div className='flex items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin' />
-      </div>
-    );
-  }
-
-  if (status === 'authenticated') {
-    return (
-      <div className='flex items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin' />
-      </div>
+        onError: (error: any) => {
+          const errorMessage = error?.message || 'Failed to send OTP. Please try again.';
+          toast.error(errorMessage);
+        },
+      },
     );
   }
 
   return (
     <>
-      <div className='flex flex-col space-y-2 text-center'>
-        <h1 className='text-2xl font-bold tracking-tight'>{showOTP ? 'Check your email' : 'Client Login'}</h1>
-        <p className='text-muted-foreground'>
-          {showOTP ? `We've sent a code to ${email}` : 'Welcome back! Please sign in to your account.'}
-        </p>
+      <div className='text-center mb-8'>
+        <h1 className='text-2xl font-bold mb-2'>Welcome to Continuum</h1>
+        <p className='text-muted-foreground'>Bridging care and connection, one session at a time.</p>
       </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='w-full'>
-          <AnimatePresence mode='wait'>{renderContent()}</AnimatePresence>
-        </form>
-      </Form>
-      <div className='text-center text-sm'>
-        <p className='text-muted-foreground'>Need an account? Contact your practitioner for an invitation.</p>
-      </div>
+      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+        <div className='text-center'>
+          <h2 className='text-lg font-semibold mb-6'>Sign In</h2>
+        </div>
+        <div>
+          <label htmlFor='email' className='block text-sm font-medium mb-1'>
+            Email ID
+          </label>
+          <Input
+            id='email'
+            type='email'
+            placeholder='Your Email ID'
+            {...form.register('email')}
+            autoComplete='email'
+            required
+          />
+          {form.formState.errors.email && (
+            <p className='text-sm text-destructive mt-1'>{form.formState.errors.email.message}</p>
+          )}
+        </div>
+        <Button type='submit' className='w-full rounded-full' disabled={isPending}>
+          {isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+          Send OTP
+        </Button>
+        <div className='text-center'>
+          <p className='text-sm text-muted-foreground'>
+            New client? You should have received an invitation link from your practitioner.
+          </p>
+        </div>
+      </form>
     </>
   );
 }

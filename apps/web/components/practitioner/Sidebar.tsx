@@ -3,10 +3,12 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Button } from '@repo/ui/components/button';
 import { LogOut } from 'lucide-react';
-import { signOut, useSession } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 import { getUserDisplayName, getAvatarUrl, getInitials } from '@/lib/utils';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { useSidebar } from '@/context/SidebarContext';
+import { useRouter } from 'next/navigation';
+import { useGetCurrentUser } from '@/lib/hooks/use-api';
 
 const ContinuumIcon = () => (
   <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg' className='h-6 w-6'>
@@ -32,9 +34,10 @@ export const SidebarContent = ({
   settingsPath?: string;
 }) => {
   const { setSidebarOpen } = useSidebar();
-  const { data: session, status } = useSession();
+  const { data: user, isLoading } = useGetCurrentUser();
+  const router = useRouter();
   const UserProfile = () => {
-    if (status === 'loading') {
+    if (isLoading) {
       return (
         <div className='flex items-center gap-3'>
           <Skeleton className='h-9 w-9 rounded-full' />
@@ -45,23 +48,29 @@ export const SidebarContent = ({
         </div>
       );
     }
-    const userName = getUserDisplayName(session?.user);
-    const userEmail = session?.user?.email;
-    const avatarUrl = getAvatarUrl(session?.user?.avatarUrl, session?.user);
+    const userName = getUserDisplayName(user);
+    const userEmail = user?.email;
+    const avatarUrl = getAvatarUrl(user?.avatarUrl, user);
 
     return (
-      <div className='flex items-center gap-3'>
+      <button
+        className='flex items-center gap-3 w-full text-left focus:outline-none rounded-lg p-1.5 cursor-pointer'
+        onClick={() => {
+          setSidebarOpen(false);
+          router.push('/practitioner/settings');
+        }}
+        aria-label='View Profile'
+        type='button'
+      >
         <Avatar className='h-9 w-9 border'>
           <AvatarImage src={avatarUrl} alt={`${userName}'s avatar`} />
-          <AvatarFallback>
-            {getInitials({ firstName: session?.user?.firstName, lastName: session?.user?.lastName })}
-          </AvatarFallback>
+          <AvatarFallback>{getInitials({ firstName: user?.firstName, lastName: user?.lastName })}</AvatarFallback>
         </Avatar>
         <div className='flex flex-col'>
           <span className='font-semibold text-sm leading-tight'>{userName}</span>
           <span className='text-xs text-muted-foreground leading-tight'>{userEmail}</span>
         </div>
-      </div>
+      </button>
     );
   };
   return (
@@ -84,7 +93,7 @@ export const SidebarContent = ({
               onClick={() => setSidebarOpen(false)}
               className={`flex items-center gap-3 rounded-full px-7 py-3 transition-all font-medium ${
                 pathname === link.href
-                  ? 'bg-[#b7a9a3] text-white font-semibold shadow-sm' // brownish highlight
+                  ? 'bg-[#807171] text-white font-semibold shadow-sm' // darker brown highlight
                   : 'text-[#a6a6a6] hover:text-black hover:bg-[#ede6e3]'
               }`}
               style={{ minHeight: 44, justifyContent: 'flex-start' }}

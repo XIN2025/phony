@@ -12,11 +12,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar'
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
-import { Eye, Loader2, MessageSquare } from 'lucide-react';
+import { Eye, Loader2, MessageSquare, Users, BookText, Inbox } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useGetCurrentUser } from '@/lib/hooks/use-api';
 
 const LoadingSpinner = () => (
   <div className='flex h-screen items-center justify-center'>
@@ -33,6 +34,7 @@ const getClientDisplayName = (client: InvitationResponse): string => {
 
 export default function PractitionerDashboard() {
   const { data: session, status } = useSession();
+  const { data: user, isLoading: isUserLoading } = useGetCurrentUser();
   const router = useRouter();
 
   const { data: invitations = [], isLoading: isInvitationsLoading } = useGetInvitations();
@@ -106,10 +108,10 @@ export default function PractitionerDashboard() {
     return options[idx % options.length];
   };
   const getPlanBadgeColor = (level: string) => {
-    if (level === 'High') return 'bg-green-200 text-green-800';
-    if (level === 'Medium') return 'bg-blue-200 text-blue-800';
-    if (level === 'Low') return 'bg-red-200 text-red-800';
-    return 'bg-gray-200 text-gray-800';
+    if (level === 'High') return 'bg-green-100 text-green-700';
+    if (level === 'Medium') return 'bg-blue-100 text-blue-700';
+    if (level === 'Low') return 'bg-red-100 text-red-700';
+    return 'bg-gray-100 text-gray-700';
   };
   const getLastSession = (client: any) => 'May 10, 2025';
   const getLastActive = (client: any) => 'May 10, 2025';
@@ -119,88 +121,93 @@ export default function PractitionerDashboard() {
     status === 'unauthenticated' ||
     session?.error ||
     (status === 'authenticated' && session?.user?.role !== 'PRACTITIONER') ||
-    isInvitationsLoading
+    isInvitationsLoading ||
+    isUserLoading
   ) {
     return <LoadingSpinner />;
   }
 
   return (
-    <div className='flex flex-col w-full px-0 py-0 font-sans'>
+    <div className='flex flex-col w-full'>
       {/* Header */}
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 px-8 pt-10 w-full'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 w-full'>
         <h1 className='text-3xl font-semibold mb-4 sm:mb-0'>
-          Welcome Back{session?.user?.firstName ? ` Dr. ${session.user.firstName}` : ''}
+          Welcome Back{user?.firstName ? ` Dr. ${user.firstName}` : ''}
         </h1>
         <Button
-          className='rounded-full px-6 py-2 text-base font-medium bg-black text-white hover:bg-gray-900 shadow'
+          className='rounded-full px-6 py-3 text-base font-medium bg-black text-white hover:bg-gray-800 shadow-sm'
           asChild
         >
           <Link href='/practitioner/invite'>+ Invite Client</Link>
         </Button>
       </div>
       {/* Stat Cards */}
-      <div className='grid grid-cols-1 sm:grid-cols-3 gap-8 mb-10 px-8 w-full'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 w-full'>
         {/* Total Clients Card */}
-        <Card className='relative flex flex-col justify-between min-h-[120px] shadow-2xl rounded-2xl border-0 w-full'>
-          <CardContent className='p-7'>
-            <span className='text-sm font-semibold text-gray-700 mb-1'>Total Clients</span>
-            <span className='text-3xl font-bold mb-1'>{totalClients}</span>
-            <span className='text-xs text-green-600'>+2 from last month</span>
-          </CardContent>
+        <Card className='flex flex-col justify-between p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50'>
+          <div className='flex justify-between items-start'>
+            <div className='flex flex-col'>
+              <span className='text-sm font-medium text-gray-600'>Total Clients</span>
+              <span className='text-4xl font-bold'>{totalClients}</span>
+              <span className='text-xs text-green-600 mt-1'>+2 from last month</span>
+            </div>
+            <div className='p-3 bg-gray-200/50 rounded-full'>
+              <Users className='h-6 w-6 text-gray-700' />
+            </div>
+          </div>
         </Card>
         {/* Unread Messages Card */}
-        <Card className='relative flex flex-col justify-between min-h-[120px] shadow-2xl rounded-2xl border-0 w-full'>
-          <CardContent className='p-7'>
-            <span className='text-sm font-semibold text-gray-700 mb-1'>Unread Messages</span>
-            <span className='text-3xl font-bold mb-1'>{unreadMessages}</span>
-            <span className='text-xs text-gray-400'>&nbsp;</span>
-            <span className='absolute right-4 bottom-4 opacity-30'>
-              {/* Large mail icon */}
-              <svg width='56' height='56' viewBox='0 0 56 56' fill='none'>
-                <rect x='8' y='16' width='40' height='24' rx='6' stroke='#b7a9a3' strokeWidth='4' />
-                <path d='M8 20l20 14 20-14' stroke='#b7a9a3' strokeWidth='3' fill='none' />
-              </svg>
-            </span>
-          </CardContent>
+        <Card className='flex flex-col justify-between p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50'>
+          <div className='flex justify-between items-start'>
+            <div className='flex flex-col'>
+              <span className='text-sm font-medium text-gray-600'>Unread Messages</span>
+              <span className='text-4xl font-bold'>{unreadMessages}</span>
+              <span className='text-xs text-transparent mt-1'>&nbsp;</span>
+            </div>
+            <div className='p-3 bg-gray-200/50 rounded-full'>
+              <Inbox className='h-6 w-6 text-gray-700' />
+            </div>
+          </div>
         </Card>
         {/* Unread Journals Card */}
-        <Card className='relative flex flex-col justify-between min-h-[120px] shadow-2xl rounded-2xl border-0 w-full'>
-          <CardContent className='p-7'>
-            <span className='text-sm font-semibold text-gray-700 mb-1'>Unread Journals</span>
-            <span className='text-3xl font-bold mb-1'>{unreadJournals}</span>
-            <span className='text-xs text-gray-400'>&nbsp;</span>
-            <span className='absolute right-4 bottom-4 opacity-30'>
-              {/* Large journal/book icon */}
-              <svg width='56' height='56' viewBox='0 0 56 56' fill='none'>
-                <rect x='14' y='10' width='28' height='36' rx='6' stroke='#b7a9a3' strokeWidth='4' />
-                <path d='M22 18h12M22 28h12M22 38h12' stroke='#b7a9a3' strokeWidth='3' />
-              </svg>
-            </span>
-          </CardContent>
+        <Card className='flex flex-col justify-between p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50'>
+          <div className='flex justify-between items-start'>
+            <div className='flex flex-col'>
+              <span className='text-sm font-medium text-gray-600'>Unread Journals</span>
+              <span className='text-4xl font-bold'>{unreadJournals}</span>
+              <span className='text-xs text-transparent mt-1'>&nbsp;</span>
+            </div>
+            <div className='p-3 bg-gray-200/50 rounded-full'>
+              <BookText className='h-6 w-6 text-gray-700' />
+            </div>
+          </div>
         </Card>
       </div>
       {/* Last Active Clients Table */}
-      <Card className='rounded-2xl shadow-2xl border-0 mx-8 mb-10 w-full'>
-        <CardContent className='p-8'>
-          <h2 className='text-lg font-semibold mb-6'>Last Active Clients</h2>
+      <Card className='rounded-2xl shadow-xl border-white/50 border bg-white/60 backdrop-blur-sm w-full'>
+        <CardContent className='p-6'>
+          <h2 className='text-xl font-semibold mb-4'>Last Active Clients</h2>
           <div className='overflow-x-auto'>
             <Table className='min-w-full text-sm'>
               <TableHeader>
-                <TableRow className='border-b'>
-                  <TableHead className='py-2 px-4 text-left font-medium'>Member</TableHead>
-                  <TableHead className='py-2 px-4 text-left font-medium'>Last Session</TableHead>
-                  <TableHead className='py-2 px-4 text-left font-medium'>Plan Engagement</TableHead>
-                  <TableHead className='py-2 px-4 text-left font-medium'>Last Active</TableHead>
-                  <TableHead className='py-2 px-4 text-left font-medium'>Actions</TableHead>
+                <TableRow className='border-b border-gray-200/60'>
+                  <TableHead className='py-3 px-4 text-left font-semibold text-gray-600'>Member</TableHead>
+                  <TableHead className='py-3 px-4 text-left font-semibold text-gray-600'>Last Session</TableHead>
+                  <TableHead className='py-3 px-4 text-left font-semibold text-gray-600'>Plan Engagement</TableHead>
+                  <TableHead className='py-3 px-4 text-left font-semibold text-gray-600'>Last Active</TableHead>
+                  <TableHead className='py-3 px-4 text-left font-semibold text-gray-600'>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {clients.map((client: any) => {
                   const planLevel = getPlanEngagement(client);
                   return (
-                    <TableRow key={client.id} className='border-b last:border-b-0 hover:bg-gray-50 transition-colors'>
-                      <TableCell className='py-3 px-4 flex items-center gap-3'>
-                        <Avatar className='h-8 w-8 rounded-full'>
+                    <TableRow
+                      key={client.id}
+                      className='border-b border-gray-200/40 last:border-b-0 hover:bg-gray-50/30 transition-colors'
+                    >
+                      <TableCell className='py-4 px-4 flex items-center gap-3'>
+                        <Avatar className='h-9 w-9 rounded-full'>
                           <AvatarImage
                             src={getAvatarUrl(client.avatarUrl, {
                               firstName: client.firstName,
@@ -211,35 +218,37 @@ export default function PractitionerDashboard() {
                             {getInitials({ firstName: client.firstName, lastName: client.lastName })}
                           </AvatarFallback>
                         </Avatar>
-                        <span className='font-medium'>
+                        <span className='font-medium text-gray-800'>
                           {client.firstName} {client.lastName}
                         </span>
                       </TableCell>
-                      <TableCell className='py-3 px-4'>{getLastSession(client)}</TableCell>
-                      <TableCell className='py-3 px-4'>
+                      <TableCell className='py-4 px-4 text-gray-700'>{getLastSession(client)}</TableCell>
+                      <TableCell className='py-4 px-4'>
                         <span
-                          className={`rounded-full px-4 py-1 text-xs font-semibold ${getPlanBadgeColor(planLevel || '')}`}
+                          className={`rounded-full px-3 py-1.5 text-xs font-semibold ${getPlanBadgeColor(
+                            planLevel || '',
+                          )}`}
                         >
                           {planLevel}
                         </span>
                       </TableCell>
-                      <TableCell className='py-3 px-4'>{getLastActive(client)}</TableCell>
-                      <TableCell className='py-3 px-4'>
+                      <TableCell className='py-4 px-4 text-gray-700'>{getLastActive(client)}</TableCell>
+                      <TableCell className='py-4 px-4'>
                         <div className='flex gap-2'>
                           <Link
                             href={`/practitioner/clients/${client.id}/messages`}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <Button variant='ghost' size='icon' className='rounded-full p-2'>
-                              <MessageSquare className='h-4 w-4' />
+                            <Button variant='ghost' size='icon' className='rounded-full p-2 hover:bg-gray-200/50'>
+                              <MessageSquare className='h-5 w-5 text-gray-600' />
                             </Button>
                           </Link>
                           <Link
                             href={`/practitioner/clients/${client.id}/dashboard`}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <Button variant='ghost' size='icon' className='rounded-full p-2'>
-                              <Eye className='h-4 w-4' />
+                            <Button variant='ghost' size='icon' className='rounded-full p-2 hover:bg-gray-200/50'>
+                              <Eye className='h-5 w-5 text-gray-600' />
                             </Button>
                           </Link>
                         </div>
@@ -247,6 +256,56 @@ export default function PractitionerDashboard() {
                     </TableRow>
                   );
                 })}
+                {pendingInvitations.map((invitation) => (
+                  <TableRow
+                    key={invitation.id}
+                    className='border-b border-gray-200/40 last:border-b-0 hover:bg-gray-50/30 transition-colors'
+                  >
+                    <TableCell className='py-4 px-4 flex items-center gap-3'>
+                      <Avatar className='h-9 w-9 rounded-full'>
+                        <AvatarImage
+                          src={getAvatarUrl(null, {
+                            firstName: invitation.clientFirstName,
+                            lastName: invitation.clientLastName,
+                          })}
+                        />
+                        <AvatarFallback>{getInitials(getClientDisplayName(invitation))}</AvatarFallback>
+                      </Avatar>
+                      <span className='font-medium text-gray-800'>{getClientDisplayName(invitation)}</span>
+                    </TableCell>
+                    <TableCell className='py-4 px-4 text-gray-700'>-</TableCell>
+                    <TableCell className='py-4 px-4'>
+                      <span className='rounded-full px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-700'>
+                        Invitation Pending
+                      </span>
+                    </TableCell>
+                    <TableCell className='py-4 px-4 text-gray-700'>-</TableCell>
+                    <TableCell className='py-4 px-4'>
+                      <div className='flex gap-2'>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={() => resendInvitation(invitation.id)}
+                          disabled={isResending || isDeleting}
+                          className='text-xs font-semibold text-gray-600 hover:bg-gray-200/50'
+                        >
+                          {isResending ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
+                          Resend
+                        </Button>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={() => deleteInvitation(invitation.id)}
+                          disabled={isResending || isDeleting}
+                          className='text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-100/50'
+                        >
+                          {isDeleting ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>

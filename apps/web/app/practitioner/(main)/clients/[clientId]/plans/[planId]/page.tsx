@@ -55,19 +55,26 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
   }
 
   return (
-    <div className='w-full min-h-screen bg-white flex flex-col'>
-      <div className='flex flex-col flex-1 w-full max-w-[1430px] mx-auto'>
-        <div className='flex flex-col gap-0 border-b bg-white px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
-          <div className='flex flex-col items-start mb-4'>
-            <button
-              type='button'
-              aria-label='Back'
-              onClick={() => router.back()}
-              className='text-muted-foreground hover:text-foreground focus:outline-none mb-2'
-              style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
-            </button>
+    <div className='w-full min-h-screen flex flex-col bg-transparent'>
+      <div className='flex flex-col flex-1 w-full max-w-[1330px] mx-auto'>
+        {/* Back button row at the very top */}
+        <div className='flex items-center pt-4'>
+          <button
+            type='button'
+            aria-label='Back'
+            onClick={() => router.back()}
+            className='text-muted-foreground hover:text-foreground focus:outline-none'
+            style={{ width: 44, height: 44, display: 'flex' }}
+          >
+            <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
+          </button>
+        </div>
+        {/* Title and Edit Plan button row */}
+        <div
+          className='w-full flex flex-row items-center justify-between px-0 sm:px-0 lg:px-0 mt-2 mb-4'
+          style={{ maxWidth: '100%' }}
+        >
+          <div className='flex flex-col'>
             <h1 className='text-[22px] font-bold leading-tight mb-1' style={{ letterSpacing: 0, textAlign: 'left' }}>
               Action Plan
             </h1>
@@ -83,85 +90,120 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
               )}
             </div>
           </div>
-          <div className='flex flex-row items-center justify-end w-full'>
-            <button
-              className='flex items-center gap-2 rounded-full border border-gray-400 px-5 py-2 text-[15px] font-semibold shadow-none hover:bg-gray-100 bg-white'
-              onClick={() => router.push(`/practitioner/clients/${clientId}/dashboard?editPlan=${planId}`)}
-              type='button'
-            >
-              <Edit2 className='h-4 w-4' /> Edit Plan
-            </button>
-          </div>
-        </div>
-        <div className='w-full'>
-          <div
-            className='border border-gray-400 rounded-2xl w-full overflow-hidden bg-white'
-            style={{ minHeight: 300 }}
+          <button
+            className='flex items-center gap-2 rounded-full border-none px-5 py-2 text-[15px] font-semibold shadow-none hover:underline bg-transparent text-[#222]'
+            onClick={() => router.push(`/practitioner/clients/${clientId}/dashboard?editPlan=${planId}`)}
+            type='button'
+            style={{ boxShadow: 'none', background: 'transparent' }}
           >
-            {plan.actionItems && plan.actionItems.length > 0 ? (
-              <div>
-                {plan.actionItems.map((task: any, idx: number) => (
+            <Edit2 className='h-4 w-4' /> Edit Plan
+          </button>
+        </div>
+        <div className='w-full flex flex-col sm:flex-row gap-8 mt-6 bg-transparent'>
+          {/* Mandatory Tasks Card */}
+          <div className='flex-1 flex flex-col gap-0 bg-transparent'>
+            <div className='bg-white rounded-2xl shadow-md p-6 flex flex-col gap-0'>
+              <div className='font-bold text-lg mb-4 text-[#222]'>Mandatory tasks for the week</div>
+              {plan.actionItems?.filter((t: any) => t.isMandatory).length === 0 && (
+                <div className='text-muted-foreground text-sm mb-4'>No mandatory tasks.</div>
+              )}
+              {plan.actionItems
+                ?.filter((t: any) => t.isMandatory)
+                .map((task: any, idx: number, arr: any[]) => (
                   <div
                     key={task.id}
-                    className={`flex flex-col md:flex-row items-start md:items-center justify-between px-8 py-6 ${idx !== plan.actionItems.length - 1 ? 'border-b border-gray-300' : ''}`}
-                    style={{ gap: 0 }}
+                    className={`py-4 ${idx !== arr.length - 1 ? 'border-b border-[#e5e5e5]' : ''} cursor-pointer`}
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setIsTaskModalOpen(true);
+                    }}
                   >
-                    <div className='flex flex-col gap-1 flex-1'>
-                      <div className='flex items-center gap-2 mb-1'>
-                        <span
-                          className='font-bold text-[17px] underline underline-offset-2 cursor-pointer hover:text-primary transition-colors'
-                          onClick={() => {
-                            setSelectedTask(task);
-                            setIsTaskModalOpen(true);
-                          }}
-                        >
-                          {task.description}
+                    <div className='font-semibold text-[17px] flex items-center gap-2 underline underline-offset-2'>
+                      {task.description}
+                      {task.whyImportant && (
+                        <span className='ml-1 text-xs text-muted-foreground' title={task.whyImportant}>
+                          i
                         </span>
-                        {task.whyImportant && task.recommendedActions && <FileText className='h-5 w-5 text-gray-500' />}
+                      )}
+                    </div>
+                    <div className='flex flex-row flex-wrap gap-4 mt-2 text-[15px] text-[#444] items-center'>
+                      <div>
+                        Weekly Repetition (Days):{' '}
+                        {task.daysOfWeek?.map((d: string) => (
+                          <span
+                            key={d}
+                            className='inline-block mx-1 px-2 py-0.5 border border-[#bdbdbd] rounded-full text-xs'
+                          >
+                            {d}
+                          </span>
+                        ))}
                       </div>
-                      <div className='flex flex-row items-center w-full mt-2'>
-                        {/* Left: Duration */}
-                        <div className='text-[15px] text-[#222] flex-1 text-left'>Duration: 15 Minutes</div>
-                        {/* Center: Days */}
-                        <div className='flex-1 flex justify-center'>
-                          <div className='flex items-center gap-2'>
-                            <span className='text-[15px] text-[#222]'>Weekly Repetition: </span>
-                            {DAYS.map((d) => (
-                              <span
-                                key={d}
-                                className={`inline-block w-8 h-8 rounded-full border border-gray-400 text-center leading-8 mx-0.5 text-[15px] font-semibold ${task.daysOfWeek && task.daysOfWeek.includes(d) ? 'bg-black text-white border-black' : 'bg-white text-black'}`}
-                              >
-                                {d}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        {/* Right: Mandatory */}
-                        <div className='flex-1 flex justify-end'>
-                          {task.isMandatory && (
-                            <span className='text-[13px] px-5 py-1 border border-gray-400 rounded-full font-semibold bg-white'>
-                              Mandatory
-                            </span>
-                          )}
-                        </div>
+                      <div className='flex items-center gap-1'>
+                        <span className='text-[15px]'>⏱</span> {task.duration || '15 Minutes'}
                       </div>
                     </div>
                   </div>
                 ))}
-              </div>
-            ) : (
-              <div className='text-center text-gray-400 py-10'>No tasks in this plan.</div>
-            )}
+            </div>
+          </div>
+          {/* Divider between columns */}
+          <div className='hidden sm:block w-px bg-[#e5e5e5] mx-2' style={{ minHeight: 300 }} />
+          {/* Daily Tasks Card */}
+          <div className='flex-1 flex flex-col gap-0 bg-transparent'>
+            <div className='bg-white rounded-2xl shadow-md p-6 flex flex-col gap-0'>
+              <div className='font-bold text-lg mb-4 text-[#222]'>Daily Tasks</div>
+              {plan.actionItems?.filter((t: any) => !t.isMandatory).length === 0 && (
+                <div className='text-muted-foreground text-sm mb-4'>No daily tasks.</div>
+              )}
+              {plan.actionItems
+                ?.filter((t: any) => !t.isMandatory)
+                .map((task: any, idx: number, arr: any[]) => (
+                  <div
+                    key={task.id}
+                    className={`py-4 ${idx !== arr.length - 1 ? 'border-b border-[#e5e5e5]' : ''} cursor-pointer`}
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setIsTaskModalOpen(true);
+                    }}
+                  >
+                    <div className='font-semibold text-[17px] flex items-center gap-2 underline underline-offset-2'>
+                      {task.description}
+                      {task.whyImportant && (
+                        <span className='ml-1 text-xs text-muted-foreground' title={task.whyImportant}>
+                          i
+                        </span>
+                      )}
+                    </div>
+                    <div className='flex flex-row flex-wrap gap-4 mt-2 text-[15px] text-[#444] items-center'>
+                      <div>
+                        Weekly Repetition (Days):{' '}
+                        {task.daysOfWeek?.map((d: string) => (
+                          <span
+                            key={d}
+                            className='inline-block mx-1 px-2 py-0.5 border border-[#bdbdbd] rounded-full text-xs'
+                          >
+                            {d}
+                          </span>
+                        ))}
+                      </div>
+                      <div className='flex items-center gap-1'>
+                        <span className='text-[15px]'>⏱</span> {task.duration || '15 Minutes'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
         </div>
+        {/* Task detail modal remains unchanged */}
+        <TaskEditorDialog
+          open={isTaskModalOpen}
+          onClose={() => setIsTaskModalOpen(false)}
+          onSave={() => {}}
+          initialValues={selectedTask}
+          readOnly={true}
+        />
       </div>
-      <TaskEditorDialog
-        open={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
-        onSave={() => {}}
-        initialValues={selectedTask}
-        readOnly={true}
-      />
     </div>
   );
 }

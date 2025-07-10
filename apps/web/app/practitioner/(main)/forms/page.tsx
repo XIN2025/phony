@@ -29,28 +29,28 @@ export default function FormsPage() {
   const filteredForms = forms?.filter((form) => form.title.toLowerCase().includes(searchQuery.toLowerCase())) || [];
 
   return (
-    <div className='flex flex-col min-h-screen bg-background'>
+    <div className='flex flex-col min-h-screen'>
       {/* Header */}
-      <div className='flex flex-col gap-0 border-b bg-background px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+      <div className='flex flex-col gap-0 border-b px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
+        <div className='flex flex-col sm:flex-row sm:items-center bg-transparent sm:justify-between gap-4'>
           <div className='flex items-center gap-2'>
             <SidebarToggleButton />
-            <h1 className='text-xl font-bold tracking-tight sm:text-2xl'>My Forms</h1>
+            <h1 className='text-2xl font-bold tracking-tight sm:text-3xl'>My Forms</h1>
           </div>
           <div className='flex items-center gap-2'>
             <Button
               onClick={handleNewForm}
-              className='bg-foreground text-background hover:bg-foreground/90 rounded-full px-4 sm:px-6 py-2 text-sm font-medium'
+              className='bg-black text-white hover:bg-neutral-800 rounded-full px-6 py-2 text-base font-semibold shadow-md transition-all'
             >
               <Plus className='h-4 w-4 mr-2' />
-              New Form
+              New Intake Form
             </Button>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className='flex-1 w-full py-4 sm:py-6 lg:py-8 bg-background'>
+      <div className='flex-1 w-full py-4 sm:py-6 lg:py-8'>
         <div className='w-full px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8'>
           {/* Search and View Controls */}
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
@@ -59,10 +59,10 @@ export default function FormsPage() {
                 <Search className='h-4 w-4 text-muted-foreground' />
               </div>
               <Input
-                placeholder='Search Content'
+                placeholder='Search Clients'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-10 rounded-full border-border'
+                className='pl-10 rounded-full border border-[#e5e7eb] bg-white shadow-sm focus:ring-2 focus:ring-black/10 text-base h-12'
               />
             </div>
             <div className='flex items-center gap-2'>
@@ -70,7 +70,7 @@ export default function FormsPage() {
                 variant={viewMode === 'grid' ? 'default' : 'outline'}
                 size='sm'
                 onClick={() => setViewMode('grid')}
-                className='rounded-lg'
+                className='rounded-lg bg-white border border-[#e5e7eb] shadow-sm'
               >
                 <Grid className='h-4 w-4' />
               </Button>
@@ -78,7 +78,7 @@ export default function FormsPage() {
                 variant={viewMode === 'list' ? 'default' : 'outline'}
                 size='sm'
                 onClick={() => setViewMode('list')}
-                className='rounded-lg'
+                className='rounded-lg bg-white border border-[#e5e7eb] shadow-sm'
               >
                 <List className='h-4 w-4' />
               </Button>
@@ -122,7 +122,10 @@ export default function FormsPage() {
                       : 'Get started by creating your first intake form. You can use it to collect information from your clients.'}
                   </p>
                   <div className='flex flex-col sm:flex-row gap-3 justify-center'>
-                    <Button onClick={handleNewForm} className='bg-foreground text-background hover:bg-foreground/90'>
+                    <Button
+                      onClick={handleNewForm}
+                      className='bg-black text-white hover:bg-neutral-800 rounded-full px-6 py-2 text-base font-semibold shadow-md transition-all'
+                    >
                       <Plus className='h-4 w-4 mr-2' />
                       Create Your First Form
                     </Button>
@@ -135,11 +138,11 @@ export default function FormsPage() {
                 </div>
               </div>
             ) : viewMode === 'grid' ? (
-              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
                 {filteredForms.map((form) => (
                   <Card
                     key={form.id}
-                    className='bg-background border border-border rounded-2xl shadow-none cursor-pointer hover:bg-muted/20 transition-colors'
+                    className='bg-white rounded-2xl shadow-md cursor-pointer hover:bg-gray-100 transition-colors border-0'
                     onClick={() => handleFormClick(form.id)}
                   >
                     <CardContent className='p-4 sm:p-6'>
@@ -193,7 +196,7 @@ export default function FormsPage() {
                 {filteredForms.map((form) => (
                   <Card
                     key={form.id}
-                    className='bg-background border border-border rounded-xl shadow-none cursor-pointer hover:bg-muted/20 transition-colors'
+                    className='bg-white rounded-xl shadow-md cursor-pointer hover:bg-gray-100 transition-colors border-0'
                     onClick={() => handleFormClick(form.id)}
                   >
                     <CardContent className='p-4 sm:p-6'>

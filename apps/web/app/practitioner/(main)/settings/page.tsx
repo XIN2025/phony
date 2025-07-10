@@ -117,8 +117,8 @@ export default function SettingsPage() {
   );
 
   return (
-    <div className='flex flex-col h-screen bg-background text-foreground'>
-      <header className='flex flex-col gap-0 border-b bg-background px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
+    <div className='flex flex-col bg-transparent text-foreground'>
+      <header className='flex flex-col gap-0 border-b bg-transparent px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
         <div className='flex items-center justify-between gap-4'>
           <div className='flex items-center gap-2'>
             <SidebarToggleButton />

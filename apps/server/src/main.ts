@@ -7,7 +7,6 @@ import { writeFileSync } from 'fs';
 import { config } from './common/config';
 import { GlobalExceptionFilter } from './common/filters/global-exception-handler';
 import { json, urlencoded } from 'express';
-import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {

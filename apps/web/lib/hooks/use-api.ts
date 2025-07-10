@@ -27,6 +27,20 @@ export function useVerifyOtp() {
   });
 }
 
+export function useVerifyInvitationOtp() {
+  return useMutation({
+    mutationFn: (data: { email: string; otp: string; invitationToken: string }) =>
+      ApiClient.post<{ success: boolean; invitation: any }>('/api/auth/otp/verify-invitation', data),
+  });
+}
+
+export function useCheckInvitationIntakeForm() {
+  return useMutation({
+    mutationFn: (data: { invitationToken: string }) =>
+      ApiClient.post<{ hasIntakeForm: boolean }>('/api/auth/invitation/check-intake-form', data),
+  });
+}
+
 export function usePractitionerSignup() {
   return useMutation({
     mutationFn: (formData: FormData) => ApiClient.post<LoginResponse>('/api/auth/practitioner/signup', formData),

@@ -20,9 +20,6 @@ export default function PractitionerSessionsPage() {
   const [showProcessingModal, setShowProcessingModal] = useState(false);
   const [recordingEnded, setRecordingEnded] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [mockSummary, setMockSummary] = useState<string>('');
-  const [mockNotes, setMockNotes] = useState<string>('');
-  const [mockTranscript, setMockTranscript] = useState<string>('');
 
   // Use React Query hooks from use-api.ts
   const { data: sessions, refetch } = useGetMySessions();
@@ -63,7 +60,7 @@ export default function PractitionerSessionsPage() {
   console.log('Rendering sessions:', sessions);
 
   return (
-    <div className='min-h-screen bg-background relative'>
+    <div className='min-h-screen'>
       {/* Consent Modal */}
       {showConsentModal && (
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm'>
@@ -102,14 +99,14 @@ export default function PractitionerSessionsPage() {
       {/* Main UI */}
       <div className='flex flex-col md:flex-row gap-6 p-8'>
         <div className='flex-1 space-y-6'>
-          <div className='border rounded-lg p-6'>
+          <div className='bg-white rounded-2xl shadow-lg p-6'>
             <div className='font-semibold mb-2'>Session Details</div>
             <div className='mb-2'>
               Client: <span className='font-bold'>Sophie Bennett</span>
             </div>
             <input className='border rounded px-2 py-1 w-full mb-2' placeholder='Session Title' />
           </div>
-          <div className='border rounded-lg p-6'>
+          <div className='bg-white rounded-2xl shadow-lg p-6'>
             <div className='font-semibold mb-2'>Session Notes</div>
             <textarea
               className='border rounded px-2 py-1 w-full min-h-[120px]'
@@ -118,10 +115,10 @@ export default function PractitionerSessionsPage() {
           </div>
         </div>
         <div className='flex-1 space-y-6'>
-          <div className='border rounded-lg p-6 flex flex-col items-center'>
+          <div className='bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center'>
             <AudioRecorder />
           </div>
-          <div className='border rounded-lg p-6'>
+          <div className='bg-white rounded-2xl shadow-lg p-6'>
             <div className='font-semibold mb-2'>Transcript</div>
             <div className='text-muted-foreground'>Once recording starts, the transcript will appear here</div>
           </div>

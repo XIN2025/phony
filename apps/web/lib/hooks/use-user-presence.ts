@@ -15,7 +15,6 @@ interface UserPresence {
 export function useUserPresence() {
   const [userStatuses, setUserStatuses] = useState<Map<string, UserPresence>>(new Map());
   const socketRef = useRef<Socket | null>(null);
-  const requestedUsers = useRef<Set<string>>(new Set());
 
   // Listen for user status changes
   const socket = useSocket('userStatusChange', (data: unknown) => {

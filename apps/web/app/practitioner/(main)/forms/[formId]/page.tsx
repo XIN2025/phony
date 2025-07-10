@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { IntakeFormBuilder } from '@/components/invite/IntakeFormBuilder';
@@ -10,27 +10,42 @@ import { InviteContextProvider, InviteData, useInviteContext } from '@/context/I
 import { Button } from '@repo/ui/components/button';
 import { Skeleton } from '@repo/ui/components/skeleton';
 
-function FormWrapper({ children, formData }: { children: React.ReactNode; formData: CreateIntakeFormDto | null }) {
-  if (!formData) return <>{children}</>;
-
+function IntakeFormPageLayout({
+  title,
+  onBack,
+  children,
+}: {
+  title: string;
+  onBack: () => void;
+  children: React.ReactNode;
+}) {
   return (
-    <InviteContextProvider>
-      <FormDataInjector formData={formData}>{children}</FormDataInjector>
-    </InviteContextProvider>
+    <div className='flex flex-col min-h-screen'>
+      {/* Header */}
+      <div className='flex flex-col gap-0 border-b px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
+        <div className='w-full flex items-center mb-4'>
+          <button
+            type='button'
+            aria-label='Back'
+            onClick={onBack}
+            className='text-muted-foreground hover:text-foreground focus:outline-none'
+            style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
+          </button>
+        </div>
+        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+          <div>
+            <h1 className='text-xl sm:text-2xl md:text-3xl font-bold leading-tight'>{title}</h1>
+          </div>
+        </div>
+      </div>
+      {/* Content */}
+      <div className='flex-1 w-full py-4 sm:py-6 lg:py-8'>
+        <div className='w-full px-4 sm:px-6 lg:px-8  mx-auto'>{children}</div>
+      </div>
+    </div>
   );
-}
-function FormDataInjector({ children, formData }: { children: React.ReactNode; formData: CreateIntakeFormDto }) {
-  const { setInviteData } = useInviteContext();
-
-  useEffect(() => {
-    setInviteData({
-      newIntakeForm: formData,
-      includeIntakeForm: true,
-      intakeFormId: 'existing-form',
-    });
-  }, [formData, setInviteData]);
-
-  return <>{children}</>;
 }
 
 export default function EditFormPage({ params }: { params: Promise<{ formId: string }> }) {
@@ -41,6 +56,7 @@ export default function EditFormPage({ params }: { params: Promise<{ formId: str
   const { data: form, isLoading: isLoadingForm } = useGetIntakeForm(formId);
   const { mutate: updateForm, isPending: isUpdating } = useUpdateIntakeForm();
   const { mutate: deleteForm } = useDeleteIntakeForm();
+  const { setInviteData } = useInviteContext ? useInviteContext() : { setInviteData: undefined };
 
   useEffect(() => {
     params.then((resolvedParams) => {
@@ -126,41 +142,18 @@ export default function EditFormPage({ params }: { params: Promise<{ formId: str
   }
 
   return (
-    <div className='flex flex-col min-h-screen bg-background'>
-      {/* Header */}
-      <div className='flex flex-col gap-0 border-b bg-background px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
-        <div className='w-full flex items-center mb-4'>
-          <button
-            type='button'
-            aria-label='Back'
-            onClick={handleBack}
-            className='text-muted-foreground hover:text-foreground focus:outline-none'
-            style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
-          </button>
-        </div>
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-          <div>
-            <h1 className='text-xl sm:text-2xl md:text-3xl font-bold leading-tight'>Edit Form</h1>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className='flex-1 w-full py-4 sm:py-6 lg:py-8 bg-background'>
-        <div className='w-full px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto'>
-          <FormWrapper formData={formData}>
-            <IntakeFormBuilder
-              onSubmit={handleSubmit}
-              onBack={handleBack}
-              onDelete={handleDeleteForm}
-              isLoading={isUpdating}
-              isEditMode={true}
-            />
-          </FormWrapper>
-        </div>
-      </div>
-    </div>
+    <InviteContextProvider>
+      <IntakeFormPageLayout title='Edit Form' onBack={handleBack}>
+        <IntakeFormBuilder
+          onSubmit={handleSubmit}
+          onBack={handleBack}
+          onDelete={handleDeleteForm}
+          isLoading={isUpdating}
+          isEditMode={true}
+          initialFormData={formData}
+          buttonText='Save Changes'
+        />
+      </IntakeFormPageLayout>
+    </InviteContextProvider>
   );
 }

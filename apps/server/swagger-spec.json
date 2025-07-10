@@ -26,6 +26,32 @@
         "tags": ["auth"]
       }
     },
+    "/api/auth/otp/verify-invitation": {
+      "post": {
+        "operationId": "AuthController_verifyInvitationOtp",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Whether the invitation OTP was verified successfully",
+            "content": { "application/json": { "schema": { "type": "boolean" } } }
+          }
+        },
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/invitation/check-intake-form": {
+      "post": {
+        "operationId": "AuthController_checkInvitationIntakeForm",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Whether the invitation has an intake form attached",
+            "content": { "application/json": { "schema": { "type": "boolean" } } }
+          }
+        },
+        "tags": ["auth"]
+      }
+    },
     "/api/auth/otp": {
       "post": {
         "operationId": "AuthController_otpAuth",

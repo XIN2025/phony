@@ -60,19 +60,21 @@ export default function ClientsPage() {
   if (isLoading) {
     return (
       <>
-        <header className='flex flex-col gap-4 border-b bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6'>
+        <header className='flex flex-col gap-4 border-b bg-transparent p-6 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex items-center gap-2'>
             <SidebarToggleButton />
-            <h1 className='text-xl font-bold tracking-tight sm:text-2xl'>Clients</h1>
+            <h1 className='text-2xl font-bold tracking-tight'>Clients</h1>
           </div>
           <div className='flex items-center gap-2'>
             <Link href='/practitioner/invite'>
-              <Button className='whitespace-nowrap'>+ Invite Client</Button>
+              <Button className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'>
+                + Invite Client
+              </Button>
             </Link>
           </div>
         </header>
-        <div className='flex items-center justify-center p-8'>
-          <Loader2 className='h-6 w-6 animate-spin' />
+        <div className='flex items-center justify-center p-16'>
+          <Loader2 className='h-8 w-8 animate-spin text-[#b7a9a3]' />
         </div>
       </>
     );
@@ -103,118 +105,142 @@ export default function ClientsPage() {
 
   return (
     <>
-      <header className='flex flex-col gap-4 border-b bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6'>
+      <header className='flex flex-col gap-4 border-b bg-transparent p-6 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex items-center gap-2'>
           <SidebarToggleButton />
-          <h1 className='text-xl font-bold tracking-tight sm:text-2xl'>Clients</h1>
+          <h1 className='text-2xl font-bold tracking-tight'>Clients</h1>
         </div>
         <div className='flex items-center gap-2'>
           <Link href='/practitioner/invite'>
-            <Button className='whitespace-nowrap'>+ Invite Client</Button>
+            <Button className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'>
+              + Invite Client
+            </Button>
           </Link>
         </div>
       </header>
 
-      <div className='p-4 sm:p-6 md:p-8'>
-        <div className='mb-6'>
-          <div className='relative w-full max-w-sm'>
-            <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4'>
-              <Search className='h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground' />
+      <div className='p-6 md:p-10 flex flex-col items-center min-h-[80vh]'>
+        <div className='w-full max-w-[1450px]'>
+          <div className='mb-8'>
+            <div className='relative w-full max-w-md ml-0'>
+              <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4'>
+                <Search className='h-5 w-5 text-muted-foreground' />
+              </div>
+              <Input
+                placeholder='Search Clients'
+                className='pl-12 w-full rounded-full border border-[#E5D6D0] bg-white py-3 text-base shadow-sm focus:ring-2 focus:ring-[#E5D6D0]'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            <Input
-              placeholder='Search Clients'
-              className='pl-10 sm:pl-12 w-full rounded-full border-input bg-background py-2 sm:py-3 text-sm'
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
           </div>
-        </div>
 
-        <Card className='w-full overflow-hidden'>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Member</TableHead>
-                <TableHead className='hidden sm:table-cell'>Email</TableHead>
-                <TableHead className='hidden md:table-cell'>Phone</TableHead>
-                <TableHead>Activity</TableHead>
-                <TableHead className='hidden lg:table-cell'>Last Session</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClients.map((client) => (
-                <TableRow key={client.id} className='cursor-pointer' onClick={() => handleClientRowClick(client.id)}>
-                  <TableCell>
-                    <div className='flex items-center gap-2 sm:gap-3'>
-                      <Avatar className='h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0'>
-                        <AvatarImage
-                          src={getAvatarUrl(client.avatarUrl, {
-                            firstName: client.firstName,
-                            lastName: client.lastName,
+          <Card className='w-full bg-white rounded-3xl shadow-2xl border-0 p-0 overflow-hidden'>
+            <div className='px-8 pt-8 pb-2'>
+              <h2 className='text-lg font-bold mb-6'>Last Active Clients</h2>
+              <Table>
+                <TableHeader>
+                  <TableRow className='[&>*]:py-4'>
+                    <TableHead className='text-base font-semibold text-black'>Member</TableHead>
+                    <TableHead className='hidden sm:table-cell text-base font-semibold text-black'>Email ID</TableHead>
+                    <TableHead className='hidden md:table-cell text-base font-semibold text-black'>Phone</TableHead>
+                    <TableHead className='text-base font-semibold text-black'>Plan Engagement</TableHead>
+                    <TableHead className='hidden lg:table-cell text-base font-semibold text-black'>
+                      Last Active
+                    </TableHead>
+                    <TableHead className='text-base font-semibold text-black'>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredClients.map((client) => (
+                    <TableRow
+                      key={client.id}
+                      className='group cursor-pointer hover:bg-[#F7F4F2] transition'
+                      onClick={() => handleClientRowClick(client.id)}
+                    >
+                      <TableCell className='py-4'>
+                        <div className='flex items-center gap-3'>
+                          <Avatar className='h-9 w-9 flex-shrink-0 bg-[#E5D6D0]'>
+                            <AvatarImage
+                              src={getAvatarUrl(client.avatarUrl, {
+                                firstName: client.firstName,
+                                lastName: client.lastName,
+                              })}
+                            />
+                            <AvatarFallback className='text-sm font-medium'>
+                              {getInitials({ firstName: client.firstName, lastName: client.lastName })}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className='min-w-0 flex-1'>
+                            <span className='text-base font-medium block truncate text-black'>
+                              {client.firstName} {client.lastName}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className='hidden sm:table-cell py-4'>
+                        <span className='text-base text-black'>{client.email}</span>
+                      </TableCell>
+                      <TableCell className='hidden md:table-cell py-4'>
+                        <span className='text-base text-black'>N/A</span>
+                      </TableCell>
+                      <TableCell className='py-4'>
+                        {(() => {
+                          const label = getActivityLabel(client.clientStatus, client.hasCompletedIntake);
+                          let badgeColor = 'bg-[#E5D6D0] text-black';
+                          if (label === 'High') badgeColor = 'bg-[#C7E8D4] text-black';
+                          if (label === 'Medium') badgeColor = 'bg-[#C7D7F8] text-black';
+                          if (label === 'Low') badgeColor = 'bg-[#F8D7D7] text-black';
+                          return (
+                            <span className={`px-4 py-1 rounded-full text-sm font-semibold ${badgeColor}`}>
+                              {label}
+                            </span>
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell className='hidden lg:table-cell py-4'>
+                        <span className='text-base text-black'>
+                          {new Date(client.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
                           })}
-                        />
-                        <AvatarFallback className='text-xs sm:text-sm font-medium'>
-                          {getInitials({ firstName: client.firstName, lastName: client.lastName })}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className='min-w-0 flex-1'>
-                        <span className='text-xs sm:text-sm font-medium block truncate'>
-                          {client.firstName} {client.lastName}
                         </span>
-                        <span className='text-xs text-muted-foreground block truncate sm:hidden'>{client.email}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className='hidden sm:table-cell'>
-                    <span className='text-xs sm:text-sm text-muted-foreground'>{client.email}</span>
-                  </TableCell>
-                  <TableCell className='hidden md:table-cell'>
-                    <span className='text-xs sm:text-sm'>N/A</span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getActivityBadgeVariant(client.clientStatus)} className='text-xs px-2 py-1'>
-                      {getActivityLabel(client.clientStatus, client.hasCompletedIntake) === 'Invitation Pending'
-                        ? 'Pending'
-                        : getActivityLabel(client.clientStatus, client.hasCompletedIntake)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className='hidden lg:table-cell'>
-                    <span className='text-xs sm:text-sm'>
-                      {new Date(client.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className='flex items-center gap-1 sm:gap-2'>
-                      <Link href={`/practitioner/clients/${client.id}/messages`} onClick={(e) => e.stopPropagation()}>
-                        <Button variant='ghost' size='sm' className='p-1.5 sm:p-2 h-7 w-7 sm:h-8 sm:w-8'>
-                          <MessageCircle className='h-3 w-3 sm:h-4 sm:w-4' />
-                        </Button>
-                      </Link>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+                      </TableCell>
+                      <TableCell className='py-4'>
+                        <div className='flex items-center gap-2'>
+                          <Link
+                            href={`/practitioner/clients/${client.id}/messages`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Button variant='ghost' size='icon' className='rounded-full hover:bg-[#E5D6D0]'>
+                              <MessageCircle className='h-5 w-5 text-[#b7a9a3] group-hover:text-black transition' />
+                            </Button>
+                          </Link>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
-        {filteredClients.length === 0 && (
-          <div className='text-center py-8 sm:py-12'>
-            <p className='text-muted-foreground mb-4 text-sm sm:text-base'>
-              {searchTerm ? 'No clients found matching your search.' : 'No clients found.'}
-            </p>
-            {!searchTerm && (
-              <Link href='/practitioner/invite'>
-                <Button className='text-sm sm:text-base'>+ Invite Your First Client</Button>
-              </Link>
+            {filteredClients.length === 0 && (
+              <div className='text-center py-16'>
+                <p className='text-muted-foreground mb-6 text-lg'>
+                  {searchTerm ? 'No clients found matching your search.' : 'No clients found.'}
+                </p>
+                {!searchTerm && (
+                  <Link href='/practitioner/invite'>
+                    <Button className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'>
+                      + Invite Your First Client
+                    </Button>
+                  </Link>
+                )}
+              </div>
             )}
-          </div>
-        )}
+          </Card>
+        </div>
       </div>
     </>
   );

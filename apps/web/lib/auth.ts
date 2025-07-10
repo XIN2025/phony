@@ -93,8 +93,46 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      if (trigger === 'update' && session?.user) {
-        return { ...token, ...session.user };
+      if (trigger === 'update') {
+        // When session is manually updated, refresh user data from backend
+        const tokenToUse = session?.user?.token || token.token;
+        if (tokenToUse) {
+          try {
+            const res = await ApiClient.get<LoginResponse['user']>(
+              '/api/auth/me',
+              {
+                headers: {
+                  Authorization: `Bearer ${tokenToUse}`,
+                },
+              },
+              null,
+            );
+
+            // Update token with fresh user data
+            token.id = res.id;
+            token.email = res.email;
+            token.firstName = res.firstName;
+            token.lastName = res.lastName;
+            token.role = res.role;
+            token.profession = res.profession;
+            token.avatarUrl = res.avatarUrl || '';
+            token.clientStatus = res.clientStatus;
+            token.practitionerId = res.practitionerId;
+            token.isEmailVerified = res.isEmailVerified;
+            token.idProofUrl = res.idProofUrl;
+
+            return token;
+          } catch (error) {
+            console.warn('Failed to refresh user data on session update:', error);
+            // Return existing token on error
+            return token;
+          }
+        }
+        // If no token available but session update was triggered, merge session data
+        if (session?.user) {
+          return { ...token, ...session.user };
+        }
+        return token;
       }
       if (user) {
         token.id = user.id;

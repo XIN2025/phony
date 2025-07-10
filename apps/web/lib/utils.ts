@@ -56,7 +56,7 @@ export function getAvatarUrl(
 }
 
 export function getInitials(
-  input: string | { firstName?: string; lastName?: string | null; user?: User } | User | {},
+  input: string | { firstName?: string; lastName?: string | null; user?: User } | User | object,
 ): string {
   // Helper function to extract initials from first and last name
   const extractInitials = (firstName?: string, lastName?: string | null): string => {

@@ -91,6 +91,7 @@ interface IntakeFormBuilderProps {
   isLoading?: boolean;
   isEditMode?: boolean;
   buttonText?: string;
+  initialFormData?: CreateIntakeFormDto | null;
 }
 
 const questionTypeOptions = [
@@ -111,6 +112,7 @@ export function IntakeFormBuilder({
   isLoading,
   isEditMode = false,
   buttonText,
+  initialFormData,
 }: IntakeFormBuilderProps) {
   const { inviteData, setInviteData } = useInviteContext();
 
@@ -119,19 +121,20 @@ export function IntakeFormBuilder({
   const form = useForm({
     resolver: zodResolver(intakeFormSchema),
     mode: 'onChange',
-    defaultValues: inviteData.newIntakeForm || {
-      title: '',
-      description: '',
-      questions: [
-        {
-          id: crypto.randomUUID(),
-          title: '',
-          type: QuestionType.MULTIPLE_CHOICE,
-          required: true,
-          options: [{ id: crypto.randomUUID(), label: '', value: '' }],
-        },
-      ],
-    },
+    defaultValues: initialFormData ||
+      inviteData.newIntakeForm || {
+        title: '',
+        description: '',
+        questions: [
+          {
+            id: crypto.randomUUID(),
+            title: '',
+            type: QuestionType.MULTIPLE_CHOICE,
+            required: true,
+            options: [{ id: crypto.randomUUID(), label: '', value: '' }],
+          },
+        ],
+      },
   });
 
   useEffect(() => {
@@ -217,78 +220,80 @@ export function IntakeFormBuilder({
   };
 
   return (
-    <div className='space-y-6 max-w-none'>
-      <div className='space-y-2'>
-        <Label htmlFor='form-title' className='text-lg font-semibold'>
-          Form Title
-        </Label>
-        <Input
-          id='form-title'
-          placeholder='Enter the form title'
-          {...form.register('title')}
-          className='text-xl border-gray-700'
-        />
-        {form.formState.errors.title && (
-          <p className='text-sm text-destructive'>{form.formState.errors.title?.message as string}</p>
-        )}
+    <form onSubmit={form.handleSubmit(handleFormSubmit)} className='w-full max-w-[1250px] mx-auto flex flex-col gap-8'>
+      {/* Form Title & Description Card */}
+      <div className='bg-white rounded-2xl shadow p-8 flex flex-col gap-6'>
+        <div className='flex flex-col gap-2'>
+          <Label htmlFor='title' className='text-base font-semibold'>
+            Form Title
+          </Label>
+          <Input
+            id='title'
+            {...form.register('title')}
+            className='rounded-lg shadow-sm'
+            placeholder='Add Form Title Here'
+          />
+        </div>
+        <div className='flex flex-col gap-2'>
+          <Label htmlFor='form-description' className='text-base font-semibold'>
+            Form Description
+          </Label>
+          <Textarea
+            id='form-description'
+            placeholder='Enter a description for this form (optional)'
+            {...form.register('description')}
+            className='rounded-lg shadow-sm'
+            rows={3}
+          />
+          {form.formState.errors.description && (
+            <p className='text-sm text-destructive'>{form.formState.errors.description?.message as string}</p>
+          )}
+        </div>
       </div>
-      <div className='space-y-2'>
-        <Label htmlFor='form-description' className='text-lg font-semibold'>
-          Form Description
-        </Label>
-        <Textarea
-          id='form-description'
-          placeholder='Enter a description for this form (optional)'
-          {...form.register('description')}
-          className='text-base border-gray-700'
-          rows={3}
-        />
-        {form.formState.errors.description && (
-          <p className='text-sm text-destructive'>{form.formState.errors.description?.message as string}</p>
-        )}
-      </div>
-      <div className='space-y-4'>
+      {/* Question Cards */}
+      <div className='flex flex-col gap-6'>
         {fields.map((field, index) => (
-          <div key={field.id} className='rounded-xl border border-gray-700 bg-card p-4 sm:p-6 text-card-foreground'>
-            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              <div className='space-y-2'>
-                <Label htmlFor={`question-${index}`}>Question</Label>
+          <div key={field.id} className='bg-white rounded-2xl shadow p-8 flex flex-col gap-4'>
+            <div className='flex flex-col md:flex-row gap-4'>
+              <div className='flex-1'>
+                <Label>Question</Label>
                 <Input
-                  id={`question-${index}`}
-                  placeholder='Why do you want to begin therapy?'
                   {...form.register(`questions.${index}.title`)}
-                  className='text-base'
+                  className='rounded-lg shadow-sm'
+                  placeholder='Type your question here'
                 />
-                {form.formState.errors.questions?.[index]?.title && (
-                  <p className='text-sm text-destructive'>
-                    {form.formState.errors.questions[index]?.title?.message as string}
-                  </p>
-                )}
               </div>
-              <div className='space-y-2'>
-                <Label htmlFor={`question-type-${index}`}>Type of question</Label>
+              <div className='flex-1'>
+                <Label>Type of question</Label>
                 <Controller
                   control={form.control}
                   name={`questions.${index}.type`}
-                  render={({ field: selectField }) => (
-                    <Select value={selectField.value || ''} onValueChange={selectField.onChange}>
-                      <SelectTrigger className='w-full'>
-                        <SelectValue
-                          placeholder={
-                            <div className='flex items-center gap-2 text-muted-foreground'>
-                              <GripVertical className='h-5 w-5' />
-                              <span>-- select --</span>
-                            </div>
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      value={value}
+                      onValueChange={(val) => {
+                        onChange(val);
+                        // If switching to a type that doesn't use options, clear options
+                        if (!['MULTIPLE_CHOICE', 'CHECKBOXES', 'DROPDOWN'].includes(val)) {
+                          form.setValue(`questions.${index}.options`, []);
+                        } else if (['MULTIPLE_CHOICE', 'CHECKBOXES', 'DROPDOWN'].includes(val)) {
+                          // If switching to a type that uses options and options are empty, add one
+                          const options = form.getValues(`questions.${index}.options`);
+                          if (!options || options.length === 0) {
+                            form.setValue(`questions.${index}.options`, [
+                              { id: crypto.randomUUID(), label: '', value: '' },
+                            ]);
                           }
-                        />
+                        }
+                      }}
+                    >
+                      <SelectTrigger className='rounded-lg shadow-sm'>
+                        <SelectValue placeholder='-- select --' />
                       </SelectTrigger>
                       <SelectContent>
-                        {questionTypeOptions.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            <div className='flex items-center gap-2'>
-                              <GripVertical className='h-5 w-5 text-muted-foreground' />
-                              <span>{opt.label}</span>
-                            </div>
+                        {questionTypeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -324,27 +329,35 @@ export function IntakeFormBuilder({
           </div>
         ))}
       </div>
-      <Button type='button' variant='link' onClick={addQuestion} className='p-0 h-auto font-semibold'>
-        <Plus className='h-4 w-4 mr-2' />
-        Add Question
+      {/* Add Question Button */}
+      <Button
+        type='button'
+        onClick={addQuestion}
+        variant='ghost'
+        className='rounded-full border border-dashed border-gray-300 py-3 px-6 text-gray-700 hover:bg-gray-50 w-fit self-start'
+      >
+        + Add Question
       </Button>
-      <div className='flex justify-end pt-4'>
+      {/* Action Buttons */}
+      <div className='flex flex-col gap-4 pt-8 sm:flex-row sm:justify-between'>
+        {onBack && (
+          <Button
+            type='button'
+            variant='outline'
+            onClick={onBack}
+            className='w-full rounded-full px-8 py-2 border border-black text-black bg-white hover:bg-gray-100 shadow-sm sm:w-auto'
+          >
+            Cancel
+          </Button>
+        )}
         <Button
-          type='button'
+          type='submit'
           disabled={isLoading}
-          className='w-full sm:w-auto'
-          onClick={async () => {
-            const isValid = await form.trigger();
-            if (isValid) {
-              const formData = form.getValues();
-              handleFormSubmit(formData);
-            }
-          }}
+          className='w-full rounded-full px-8 py-2 bg-black text-white shadow-sm hover:bg-gray-900 sm:w-auto'
         >
-          {buttonText ||
-            (isLoading ? (isEditMode ? 'Updating...' : 'Saving...') : isEditMode ? 'Update Form' : 'Preview')}
+          {buttonText || 'Preview'}
         </Button>
       </div>
-    </div>
+    </form>
   );
 }

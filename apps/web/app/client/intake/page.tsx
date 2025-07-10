@@ -2,20 +2,19 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@repo/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';
 import { Textarea } from '@repo/ui/components/textarea';
 import { RadioGroup, RadioGroupItem } from '@repo/ui/components/radio-group';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { Slider } from '@repo/ui/components/slider';
-import { Progress } from '@repo/ui/components/progress';
-import { Loader2, Star, Upload } from 'lucide-react';
-import { Logo } from '@repo/ui/components/logo';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGetClientIntakeForm, useSubmitIntakeForm } from '@/lib/hooks/use-api';
+import { AuthLayout, AuthHeader } from '@repo/ui/components/auth-layout';
 
 interface Question {
   id: string;
@@ -32,6 +31,8 @@ interface FormAnswers {
 
 export default function IntakePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');
   const { status, data: session, update } = useSession();
   const [answers, setAnswers] = useState<FormAnswers>({});
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -47,12 +48,14 @@ export default function IntakePage() {
     if (status === 'loading') return;
 
     if (status === 'unauthenticated') {
-      router.push('/client/auth');
+      toast.error('Please complete account creation first.');
+      router.push(`/client/auth/signup?token=${token}`);
       return;
     }
 
     if (!session?.user) {
-      router.push('/client/auth');
+      toast.error('Please complete account creation first.');
+      router.push(`/client/auth/signup?token=${token}`);
       return;
     }
 
@@ -70,7 +73,7 @@ export default function IntakePage() {
       router.push('/client');
       return;
     }
-  }, [status, session, router]);
+  }, [status, session, router, token]);
 
   useEffect(() => {
     if (error && !isRedirecting) {
@@ -120,6 +123,8 @@ export default function IntakePage() {
         const answer = answers[question.id];
 
         switch (question.type) {
+          case 'SHORT_ANSWER':
+          case 'LONG_ANSWER':
           case 'SHORT_TEXT':
           case 'LONG_TEXT':
           case 'TEXT':
@@ -134,6 +139,7 @@ export default function IntakePage() {
             break;
 
           case 'MULTIPLE_CHOICE':
+          case 'DROPDOWN':
           case 'SELECT':
           case 'RADIO':
             if (!answer || (typeof answer === 'string' && answer.trim() === '')) {
@@ -141,21 +147,36 @@ export default function IntakePage() {
             }
             break;
 
-          case 'CHECKBOX':
           case 'CHECKBOXES':
+          case 'CHECKBOX':
+          case 'TICK_BOX_GRID':
             if (!Array.isArray(answer) || answer.length === 0) {
               return false;
             }
             break;
 
-          case 'DATE':
-          case 'TIME':
+          case 'SCALE':
+          case 'RATING':
+          case 'SLIDER':
+            if (typeof answer !== 'number' || answer === 0) {
+              return false;
+            }
+            break;
+
+          case 'MULTIPLE_CHOICE_GRID':
             if (!answer || (typeof answer === 'string' && answer.trim() === '')) {
               return false;
             }
             break;
 
           case 'FILE_UPLOAD':
+            if (!answer || (typeof answer === 'string' && answer.trim() === '')) {
+              return false;
+            }
+            break;
+
+          case 'DATE':
+          case 'TIME':
             if (!answer || (typeof answer === 'string' && answer.trim() === '')) {
               return false;
             }
@@ -197,50 +218,40 @@ export default function IntakePage() {
     submitForm(
       {
         formId: form?.id || '',
-        answers: answers,
+        answers,
       },
       {
-        onSuccess: async (data: { success: boolean; submissionId: string; clientStatus: string }) => {
+        onSuccess: async (response) => {
           if (processingTimeoutRef.current) {
             clearTimeout(processingTimeoutRef.current);
             processingTimeoutRef.current = null;
           }
 
+          // Set redirecting state immediately to prevent form from re-rendering
+          setIsRedirecting(true);
+          toast.success('Intake form submitted successfully!');
+
+          // Update session to reflect the new INTAKE_COMPLETED status
           try {
-            setIsRedirecting(true);
-
-            await update({
-              ...session,
-              user: {
-                ...session?.user,
-                clientStatus: data.clientStatus,
-              },
-            });
-
-            toast.success('Intake form submitted successfully!');
-
-            setTimeout(() => {
-              router.push('/client');
-            }, 100);
+            await update();
           } catch (error) {
-            router.push('/client');
+            console.warn('Failed to update session after intake submission:', error);
           }
+
+          // Redirect to response sent page
+          router.replace(`/client/response-sent?token=${token}`);
         },
-        onError: async (error: any) => {
+        onError: (error: any) => {
           if (processingTimeoutRef.current) {
             clearTimeout(processingTimeoutRef.current);
             processingTimeoutRef.current = null;
           }
 
-          setHasSubmitted(false);
           setIsProcessing(false);
+          setHasSubmitted(false);
 
-          const errorMessage =
-            error?.message || error?.response?.data?.message || 'Failed to submit form. Please try again.';
-
-          if (errorMessage.includes('already been submitted') || errorMessage.includes('already completed')) {
-            toast.info('You have already completed your intake form.');
-            setIsRedirecting(true);
+          const errorMessage = error?.message || 'Failed to submit form. Please try again.';
+          if (errorMessage.includes('already completed')) {
             router.push('/client');
           } else {
             toast.error(errorMessage);
@@ -251,302 +262,343 @@ export default function IntakePage() {
   };
 
   const renderQuestion = (question: Question) => {
-    const currentAnswer = answers[question.id];
+    const { id, text, type, options, isRequired } = question;
+    const value = answers[id];
 
-    switch (question.type) {
+    const commonLabel = (
+      <Label htmlFor={id} className='block text-sm font-medium mb-2'>
+        {text}
+        {isRequired && <span className='text-destructive ml-1'>*</span>}
+      </Label>
+    );
+
+    switch (type) {
+      case 'SHORT_ANSWER':
       case 'SHORT_TEXT':
       case 'TEXT':
         return (
-          <Input
-            value={(currentAnswer as string) || ''}
-            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            placeholder='Enter your answer'
-            className='mt-2'
-          />
+          <div key={id} className='space-y-2'>
+            {commonLabel}
+            <Input
+              id={id}
+              value={(value as string) || ''}
+              onChange={(e) => handleAnswerChange(id, e.target.value)}
+              required={isRequired}
+              className='w-full'
+            />
+          </div>
         );
-
+      case 'LONG_ANSWER':
       case 'LONG_TEXT':
       case 'TEXTAREA':
         return (
-          <Textarea
-            value={(currentAnswer as string) || ''}
-            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            placeholder='Enter your detailed answer'
-            className='mt-2'
-            rows={4}
-          />
+          <div key={id} className='space-y-2'>
+            {commonLabel}
+            <Textarea
+              id={id}
+              value={(value as string) || ''}
+              onChange={(e) => handleAnswerChange(id, e.target.value)}
+              required={isRequired}
+              className='min-h-[100px] w-full'
+            />
+          </div>
         );
-
-      case 'EMAIL':
-        return (
-          <Input
-            type='email'
-            value={(currentAnswer as string) || ''}
-            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            placeholder='Enter your email'
-            className='mt-2'
-          />
-        );
-
-      case 'PHONE':
-        return (
-          <Input
-            type='tel'
-            value={(currentAnswer as string) || ''}
-            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            placeholder='Enter your phone number'
-            className='mt-2'
-          />
-        );
-
       case 'NUMBER':
         return (
-          <Input
-            type='number'
-            value={(currentAnswer as string) || ''}
-            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            placeholder='Enter a number'
-            className='mt-2'
-          />
+          <div key={id} className='space-y-2'>
+            {commonLabel}
+            <Input
+              id={id}
+              type='number'
+              value={(value as number) || ''}
+              onChange={(e) => handleAnswerChange(id, e.target.value)}
+              required={isRequired}
+              className='w-full'
+            />
+          </div>
         );
-
-      case 'DATE':
-        return (
-          <Input
-            type='date'
-            value={(currentAnswer as string) || ''}
-            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            className='mt-2'
-          />
-        );
-
-      case 'TIME':
-        return (
-          <Input
-            type='time'
-            value={(currentAnswer as string) || ''}
-            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            className='mt-2'
-          />
-        );
-
-      case 'URL':
-        return (
-          <Input
-            type='url'
-            value={(currentAnswer as string) || ''}
-            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            placeholder='Enter a URL'
-            className='mt-2'
-          />
-        );
-
       case 'MULTIPLE_CHOICE':
       case 'RADIO':
         return (
-          <RadioGroup
-            value={(currentAnswer as string) || ''}
-            onValueChange={(value) => handleAnswerChange(question.id, value)}
-            className='mt-2'
-          >
-            {Array.isArray(question.options) &&
-              question.options.map((option, index) => {
-                const optionValue =
-                  typeof option === 'string' ? option : option?.value || option?.label || String(option);
-                const optionLabel =
-                  typeof option === 'string' ? option : option?.label || option?.value || String(option);
-
+          <fieldset key={id} className='space-y-3'>
+            <legend className='block text-sm font-medium mb-2'>
+              {text}
+              {isRequired && <span className='text-destructive ml-1'>*</span>}
+            </legend>
+            <RadioGroup
+              value={value as string}
+              onValueChange={(val) => handleAnswerChange(id, val)}
+              required={isRequired}
+              className='space-y-2'
+            >
+              {options.map((option, index) => {
+                const optionValue = typeof option === 'string' ? option : option.value || `option-${index}`;
+                const optionLabel = typeof option === 'string' ? option : option.label || `Option ${index + 1}`;
                 return (
-                  <div key={index} className='flex items-center space-x-2'>
-                    <RadioGroupItem value={optionValue} id={`${question.id}-${index}`} />
-                    <Label htmlFor={`${question.id}-${index}`}>{optionLabel}</Label>
+                  <div key={optionValue} className='flex items-center space-x-2'>
+                    <RadioGroupItem value={optionValue} id={`${id}-${optionValue}`} />
+                    <Label htmlFor={`${id}-${optionValue}`} className='text-sm'>
+                      {optionLabel}
+                    </Label>
                   </div>
                 );
               })}
-          </RadioGroup>
+            </RadioGroup>
+          </fieldset>
         );
 
+      case 'CHECKBOXES':
       case 'CHECKBOX':
+        const checkedValues = (Array.isArray(value) ? value : []) as string[];
         return (
-          <div className='mt-2 space-y-2'>
-            {Array.isArray(question.options) &&
-              question.options.map((option, index) => {
-                const optionValue =
-                  typeof option === 'string' ? option : option?.value || option?.label || String(option);
-                const optionLabel =
-                  typeof option === 'string' ? option : option?.label || option?.value || String(option);
-
+          <fieldset key={id} className='space-y-3'>
+            <legend className='block text-sm font-medium mb-2'>
+              {text}
+              {isRequired && <span className='text-destructive ml-1'>*</span>}
+            </legend>
+            <div className='space-y-2'>
+              {options.map((option, index) => {
+                const optionValue = typeof option === 'string' ? option : option.value || `option-${index}`;
+                const optionLabel = typeof option === 'string' ? option : option.label || `Option ${index + 1}`;
                 return (
-                  <div key={index} className='flex items-center space-x-2'>
+                  <div key={optionValue} className='flex items-center space-x-2'>
                     <Checkbox
-                      id={`${question.id}-${index}`}
-                      checked={Array.isArray(currentAnswer) && currentAnswer.includes(optionValue)}
+                      id={`${id}-${optionValue}`}
+                      checked={checkedValues.includes(optionValue)}
                       onCheckedChange={(checked) => {
-                        const currentArray = Array.isArray(currentAnswer) ? (currentAnswer as string[]) : [];
-                        if (checked) {
-                          handleAnswerChange(question.id, [...currentArray, optionValue]);
-                        } else {
-                          handleAnswerChange(
-                            question.id,
-                            currentArray.filter((item: string) => item !== optionValue),
-                          );
-                        }
+                        const newValues = checked
+                          ? [...checkedValues, optionValue]
+                          : checkedValues.filter((v) => v !== optionValue);
+                        handleAnswerChange(id, newValues);
                       }}
                     />
-                    <Label htmlFor={`${question.id}-${index}`}>{optionLabel}</Label>
+                    <Label htmlFor={`${id}-${optionValue}`} className='text-sm'>
+                      {optionLabel}
+                    </Label>
                   </div>
                 );
               })}
+            </div>
+          </fieldset>
+        );
+
+      case 'DROPDOWN':
+        return (
+          <div key={id} className='space-y-2'>
+            {commonLabel}
+            <Select value={(value as string) || ''} onValueChange={(val) => handleAnswerChange(id, val)}>
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder='Select an option...' />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((option, index) => {
+                  const optionValue = typeof option === 'string' ? option : option.value || `option-${index}`;
+                  const optionLabel = typeof option === 'string' ? option : option.label || `Option ${index + 1}`;
+                  return (
+                    <SelectItem key={optionValue} value={optionValue}>
+                      {optionLabel}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        );
+
+      case 'SCALE':
+      case 'SLIDER':
+        const scaleOptions = options
+          .map((o) =>
+            typeof o === 'string'
+              ? parseInt(o)
+              : typeof o === 'object' && o.value
+                ? parseInt(o.value)
+                : parseInt(String(o)),
+          )
+          .filter((o) => !isNaN(o));
+        const minValue = scaleOptions.length >= 2 ? Math.min(...scaleOptions) : 1;
+        const maxValue = scaleOptions.length >= 2 ? Math.max(...scaleOptions) : 10;
+        const scaleValue = typeof value === 'number' ? value : minValue;
+        return (
+          <div key={id} className='space-y-2'>
+            {commonLabel}
+            <Slider
+              id={id}
+              min={minValue}
+              max={maxValue}
+              step={1}
+              value={[scaleValue]}
+              onValueChange={([val]) => handleAnswerChange(id, val)}
+              className='my-4'
+            />
+            <div className='text-center text-sm text-muted-foreground'>
+              {scaleValue} / {maxValue}
+            </div>
+          </div>
+        );
+
+      case 'RATING':
+        const maxRating = options.length > 0 ? parseInt(options[0] as string) || 5 : 5;
+        const ratingValue = typeof value === 'number' ? value : 0;
+        return (
+          <div key={id} className='space-y-2'>
+            {commonLabel}
+            <div className='flex space-x-1'>
+              {Array.from({ length: maxRating }, (_, i) => i + 1).map((rating) => (
+                <button
+                  key={rating}
+                  type='button'
+                  onClick={() => handleAnswerChange(id, rating)}
+                  className={`w-8 h-8 text-xl ${
+                    rating <= ratingValue ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-200'
+                  } transition-colors`}
+                >
+                  ⭐
+                </button>
+              ))}
+            </div>
+            <div className='text-sm text-muted-foreground'>
+              {ratingValue > 0 ? `${ratingValue} / ${maxRating} stars` : 'Click to rate'}
+            </div>
           </div>
         );
 
       case 'FILE_UPLOAD':
         return (
-          <div className='mt-2'>
-            <div className='border-2 border-dashed border-gray-300 rounded-lg p-4 text-center'>
-              <Upload className='mx-auto h-8 w-8 text-gray-400 mb-2' />
-              <p className='text-sm text-gray-600'>Click to upload or drag and drop</p>
-              <input
-                type='file'
-                onChange={(e) => handleAnswerChange(question.id, e.target.files?.[0]?.name || '')}
-                className='hidden'
-                id={`file-${question.id}`}
-              />
-              <label
-                htmlFor={`file-${question.id}`}
-                className='mt-2 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer'
-              >
-                Choose File
-              </label>
-            </div>
-            {currentAnswer && <p className='mt-2 text-sm text-gray-600'>Selected: {currentAnswer}</p>}
+          <div key={id} className='space-y-2'>
+            {commonLabel}
+            <Input
+              id={id}
+              type='file'
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleAnswerChange(id, file.name);
+                }
+              }}
+              required={isRequired}
+              className='w-full'
+            />
+            {value && <div className='text-sm text-muted-foreground'>Selected: {value as string}</div>}
           </div>
+        );
+
+      case 'MULTIPLE_CHOICE_GRID':
+        // For now, treat as multiple choice until we implement grid UI
+        return (
+          <fieldset key={id} className='space-y-3'>
+            <legend className='block text-sm font-medium mb-2'>
+              {text}
+              {isRequired && <span className='text-destructive ml-1'>*</span>}
+            </legend>
+            <div className='p-4 border rounded-md'>
+              <p className='text-sm text-muted-foreground mb-2'>Grid format (simplified view):</p>
+              <RadioGroup
+                value={value as string}
+                onValueChange={(val) => handleAnswerChange(id, val)}
+                required={isRequired}
+                className='space-y-2'
+              >
+                {options.map((option, index) => {
+                  const optionValue = typeof option === 'string' ? option : option.value || `option-${index}`;
+                  const optionLabel = typeof option === 'string' ? option : option.label || `Option ${index + 1}`;
+                  return (
+                    <div key={optionValue} className='flex items-center space-x-2'>
+                      <RadioGroupItem value={optionValue} id={`${id}-${optionValue}`} />
+                      <Label htmlFor={`${id}-${optionValue}`} className='text-sm'>
+                        {optionLabel}
+                      </Label>
+                    </div>
+                  );
+                })}
+              </RadioGroup>
+            </div>
+          </fieldset>
+        );
+
+      case 'TICK_BOX_GRID':
+        // For now, treat as checkboxes until we implement grid UI
+        const gridCheckedValues = (Array.isArray(value) ? value : []) as string[];
+        return (
+          <fieldset key={id} className='space-y-3'>
+            <legend className='block text-sm font-medium mb-2'>
+              {text}
+              {isRequired && <span className='text-destructive ml-1'>*</span>}
+            </legend>
+            <div className='p-4 border rounded-md'>
+              <p className='text-sm text-muted-foreground mb-2'>Grid format (simplified view):</p>
+              <div className='space-y-2'>
+                {options.map((option, index) => {
+                  const optionValue = typeof option === 'string' ? option : option.value || `option-${index}`;
+                  const optionLabel = typeof option === 'string' ? option : option.label || `Option ${index + 1}`;
+                  return (
+                    <div key={optionValue} className='flex items-center space-x-2'>
+                      <Checkbox
+                        id={`${id}-${optionValue}`}
+                        checked={gridCheckedValues.includes(optionValue)}
+                        onCheckedChange={(checked) => {
+                          const newValues = checked
+                            ? [...gridCheckedValues, optionValue]
+                            : gridCheckedValues.filter((v) => v !== optionValue);
+                          handleAnswerChange(id, newValues);
+                        }}
+                      />
+                      <Label htmlFor={`${id}-${optionValue}`} className='text-sm'>
+                        {optionLabel}
+                      </Label>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </fieldset>
         );
 
       default:
-        return (
-          <Input
-            value={(currentAnswer as string) || ''}
-            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            placeholder='Enter your answer'
-            className='mt-2'
-          />
-        );
+        return <div key={id}>Unsupported question type: {type}</div>;
     }
   };
 
-  if (isLoading || isRedirecting) {
+  const isFormLoading = isLoading || status === 'loading' || !form;
+
+  if (isRedirecting) {
     return (
-      <div className='min-h-screen bg-background flex items-center justify-center p-4'>
-        <div className='w-full max-w-2xl text-center'>
-          <div className='mb-8 text-center'>
-            <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10' />
-          </div>
-          <div className='bg-card rounded-lg shadow-lg p-8'>
-            <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4' />
-            <h2 className='text-xl font-semibold mb-2'>
-              {isRedirecting ? 'Redirecting...' : 'Loading your intake form...'}
-            </h2>
-            <p className='text-muted-foreground'>
-              {isRedirecting
-                ? 'Please wait while we redirect you to your dashboard.'
-                : 'Please wait while we load your personalized intake form.'}
-            </p>
-          </div>
-        </div>
+      <div className='min-h-[200px] flex items-center justify-center'>
+        <Loader2 className='h-8 w-8 animate-spin' />
       </div>
     );
   }
-
-  if (!form || !form.questions) {
-    return (
-      <div className='min-h-screen bg-background flex items-center justify-center p-4'>
-        <div className='w-full max-w-2xl text-center'>
-          <div className='mb-8 text-center'>
-            <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10' />
-          </div>
-          <div className='bg-card rounded-lg shadow-lg p-8'>
-            <h2 className='text-xl font-semibold mb-2'>No Intake Form Available</h2>
-            <p className='text-muted-foreground mb-4'>
-              No intake form has been assigned to you. Please contact your practitioner.
-            </p>
-            <Button onClick={() => router.push('/client')}>Go to Dashboard</Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const completedQuestions =
-    form.questions && Array.isArray(form.questions)
-      ? form.questions.filter((q) => {
-          const answer = answers[q.id];
-          return answer !== undefined && answer !== null && answer !== '';
-        }).length
-      : 0;
-
-  const progress = form.questions && form.questions.length > 0 ? (completedQuestions / form.questions.length) * 100 : 0;
-
-  const renderQuestions =
-    form.questions && Array.isArray(form.questions)
-      ? form.questions.map((question, index) => (
-          <Card key={question.id}>
-            <CardHeader>
-              <CardTitle className='flex items-start gap-2'>
-                <span className='text-sm text-muted-foreground min-w-[2rem]'>{index + 1}.</span>
-                <span className='flex-1'>
-                  {question.text}
-                  {question.isRequired && <span className='text-red-500 ml-1'>*</span>}
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>{renderQuestion(question)}</CardContent>
-          </Card>
-        ))
-      : null;
 
   return (
-    <div className='min-h-screen bg-background p-4'>
-      <div className='max-w-4xl mx-auto'>
-        <div className='mb-8 text-center'>
-          <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10 mb-4' />
-          <h1 className='text-2xl font-bold mb-2'>{form.title}</h1>
-          {form.description && <p className='text-muted-foreground max-w-2xl mx-auto'>{form.description}</p>}
-        </div>
-
-        <div className='mb-6'>
-          <div className='flex justify-between items-center mb-2'>
-            <span className='text-sm font-medium'>Progress</span>
-            <span className='text-sm text-muted-foreground'>
-              {completedQuestions} of {form.questions?.length || 0} questions completed
-            </span>
+    <AuthLayout>
+      <AuthHeader title={form?.title || 'Intake Survey'} />
+      <form className='space-y-6' onSubmit={handleSubmit}>
+        {isFormLoading ? (
+          <div className='flex justify-center items-center h-48'>
+            <Loader2 className='h-8 w-8 animate-spin' />
           </div>
-          <Progress value={progress} className='h-2' />
-        </div>
-
-        <form key='intake-form' onSubmit={handleSubmit} className='space-y-6'>
-          {renderQuestions}
-
-          <div className='flex justify-end gap-4 pt-6'>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => router.push('/client')}
-              disabled={isSubmitting || hasSubmitted || isProcessing || isRedirecting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type='submit'
-              disabled={isSubmitting || hasSubmitted || isProcessing || isRedirecting}
-              key='submit-button'
-            >
-              {(isSubmitting || isProcessing) && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-              {hasSubmitted || isProcessing ? 'Submitting...' : 'Submit Form'}
-            </Button>
+        ) : error ? (
+          <div className='text-destructive text-center p-4'>
+            <p>There was an error loading the intake form.</p>
+            <p className='text-sm text-muted-foreground'>{error.message}</p>
           </div>
-        </form>
-      </div>
-    </div>
+        ) : (
+          <>
+            {form?.description && (
+              <div className='text-center mb-6'>
+                <p className='text-muted-foreground'>{form.description}</p>
+              </div>
+            )}
+            <div className='space-y-8'>{form?.questions.sort((a, b) => a.order - b.order).map(renderQuestion)}</div>
+            <div className='pt-6'>
+              <Button type='submit' disabled={isSubmitting || hasSubmitted} className='w-full rounded-full'>
+                {isSubmitting || hasSubmitted ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
+                {hasSubmitted ? 'Submitting...' : 'Submit'}
+              </Button>
+            </div>
+          </>
+        )}
+      </form>
+    </AuthLayout>
   );
 }

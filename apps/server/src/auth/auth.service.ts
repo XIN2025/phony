@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@repo/db';
+import { User, Invitation } from '@repo/db';
 import { User as UserDto } from '@repo/shared-types';
 import { generateOtp } from '../common/utils/auth.utils';
 import {
@@ -62,7 +62,7 @@ export class AuthService {
         update: { otp, expiresAt },
         create: { email: normalizedEmail, otp, expiresAt },
       });
-    } catch (error) {
+    } catch {
       throwAuthError('Failed to process OTP request.', 'badRequest');
     }
 
@@ -76,7 +76,7 @@ export class AuthService {
           validity: 10,
         },
       });
-    } catch (error) {
+    } catch {
       throwAuthError('Failed to send OTP email.', 'badRequest');
     }
 
@@ -135,6 +135,46 @@ export class AuthService {
     return {
       user: this.toUserDto(user),
       token,
+    };
+  }
+
+  async verifyInvitationOtp(
+    email: string,
+    otp: string,
+    invitationToken: string
+  ): Promise<{ success: boolean; invitation: Record<string, unknown> }> {
+    validateRequiredFields({ email, otp, invitationToken }, ['email', 'otp', 'invitationToken']);
+    const normalizedEmail = normalizeEmail(email);
+
+    // Validate the invitation first
+    const { invitation } = await this.validateInvitation(invitationToken);
+
+    // Check if email matches invitation
+    if (invitation.clientEmail.toLowerCase() !== normalizedEmail) {
+      throwAuthError('Email does not match the invitation', 'unauthorized');
+    }
+
+    // Validate OTP (but don't delete it yet, we'll delete it when account is created)
+    await this.validateOtp(email, otp, true);
+
+    return {
+      success: true,
+      invitation: {
+        id: invitation.id,
+        clientEmail: invitation.clientEmail,
+        practitionerId: invitation.practitionerId,
+        intakeFormId: invitation.intakeFormId,
+      },
+    };
+  }
+
+  async checkInvitationIntakeForm(invitationToken: string): Promise<{ hasIntakeForm: boolean }> {
+    validateRequiredFields({ invitationToken }, ['invitationToken']);
+
+    const { invitation } = await this.validateInvitation(invitationToken);
+
+    return {
+      hasIntakeForm: !!invitation.intakeFormId,
     };
   }
 
@@ -209,6 +249,29 @@ export class AuthService {
     };
   }
 
+  async validateInvitation(
+    invitationToken: string
+  ): Promise<{ invitation: Invitation & { practitioner: Record<string, unknown> }; isAccepted: boolean }> {
+    let invitation = await this.prismaService.invitation.findUnique({
+      where: { token: invitationToken },
+      include: { practitioner: true },
+    });
+    if (!invitation) {
+      const decodedToken = decodeInvitationToken(invitationToken);
+      invitation = await this.prismaService.invitation.findUnique({
+        where: { token: decodedToken },
+        include: { practitioner: true },
+      });
+    }
+    if (!invitation) throwAuthError('Invalid invitation token', 'unauthorized');
+    if (invitation.expiresAt < new Date()) throwAuthError('This invitation has expired', 'unauthorized');
+
+    return {
+      invitation,
+      isAccepted: invitation.status === 'ACCEPTED',
+    };
+  }
+
   async handleClientSignUp(
     data: {
       email: string;
@@ -223,20 +286,8 @@ export class AuthService {
     const normalizedEmail = normalizeEmail(email);
     const normalizedFirstName = firstName.trim();
     const normalizedLastName = lastName?.trim() ?? '';
-    let invitation = await this.prismaService.invitation.findUnique({
-      where: { token: invitationToken },
-      include: { practitioner: true },
-    });
-    if (!invitation) {
-      const decodedToken = decodeInvitationToken(invitationToken);
-      invitation = await this.prismaService.invitation.findUnique({
-        where: { token: decodedToken },
-        include: { practitioner: true },
-      });
-    }
-    if (!invitation) throwAuthError('Invalid invitation token', 'unauthorized');
-    if (invitation.status === 'ACCEPTED') throwAuthError('This invitation has already been used', 'unauthorized');
-    if (invitation.expiresAt < new Date()) throwAuthError('This invitation has expired', 'unauthorized');
+    const { invitation, isAccepted } = await this.validateInvitation(invitationToken);
+    if (isAccepted) throwAuthError('This invitation has already been used', 'unauthorized');
     if (invitation.clientEmail.toLowerCase() !== normalizedEmail)
       throwAuthError('Email does not match the invitation', 'unauthorized');
     let user = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
@@ -268,8 +319,12 @@ export class AuthService {
     });
 
     await this.prismaService.invitation.update({
-      where: { id: invitation.id },
-      data: { status: 'ACCEPTED' },
+      where: {
+        id: invitation.id,
+      },
+      data: {
+        status: 'ACCEPTED',
+      },
     });
 
     const token = await generateToken(this.jwtService, {
@@ -278,7 +333,7 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName ?? null,
       role: user.role,
-      practitionerId: user.practitionerId ?? null,
+      practitionerId: user.practitionerId,
       clientStatus: user.clientStatus ?? undefined,
     });
 

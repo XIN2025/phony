@@ -33,7 +33,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
   });
 
   return (
-    <form onSubmit={handleSubmit(onNext)} className='space-y-4'>
+    <form onSubmit={handleSubmit(onNext)} className='w-full max-w-[1450px] mx-auto p-8 space-y-6'>
       <div className='space-y-2'>
         <Label htmlFor='clientFirstName' className='text-sm font-medium'>
           First Name
@@ -41,7 +41,9 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
         <Controller
           name='clientFirstName'
           control={control}
-          render={({ field }) => <Input id='clientFirstName' placeholder='Your first name' {...field} />}
+          render={({ field }) => (
+            <Input id='clientFirstName' placeholder='Your first name' {...field} className='rounded-lg shadow-sm' />
+          )}
         />
         {errors.clientFirstName && <p className='text-sm text-destructive'>{errors.clientFirstName.message}</p>}
       </div>
@@ -52,7 +54,9 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
         <Controller
           name='clientLastName'
           control={control}
-          render={({ field }) => <Input id='clientLastName' placeholder='Your last name' {...field} />}
+          render={({ field }) => (
+            <Input id='clientLastName' placeholder='Your last name' {...field} className='rounded-lg shadow-sm' />
+          )}
         />
         {errors.clientLastName && <p className='text-sm text-destructive'>{errors.clientLastName.message}</p>}
       </div>
@@ -63,7 +67,15 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
         <Controller
           name='clientEmail'
           control={control}
-          render={({ field }) => <Input id='clientEmail' type='email' placeholder='Enter Email ID' {...field} />}
+          render={({ field }) => (
+            <Input
+              id='clientEmail'
+              type='email'
+              placeholder='Enter Email ID'
+              {...field}
+              className='rounded-lg shadow-sm'
+            />
+          )}
         />
         {errors.clientEmail && <p className='text-sm text-destructive'>{errors.clientEmail.message}</p>}
       </div>
@@ -88,10 +100,19 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
         </div>
       </div>
       <div className='flex flex-col gap-4 pt-8 sm:flex-row sm:justify-between'>
-        <Button type='button' variant='outline' onClick={onCancel} className='w-full rounded-lg px-6 sm:w-auto'>
+        <Button
+          type='button'
+          variant='outline'
+          onClick={onCancel}
+          className='w-full rounded-full px-8 py-2 border border-black text-black bg-white hover:bg-gray-100 shadow-sm sm:w-auto'
+        >
           Cancel
         </Button>
-        <Button type='submit' disabled={!isValid || isLoading} className='w-full rounded-lg px-6 sm:w-auto'>
+        <Button
+          type='submit'
+          disabled={!isValid || isLoading}
+          className='w-full rounded-full px-8 py-2 bg-black text-white shadow-sm hover:bg-gray-900 sm:w-auto'
+        >
           {isLoading ? 'Sending...' : 'Continue'}
         </Button>
       </div>

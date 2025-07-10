@@ -25,7 +25,7 @@ const ClientFormsPage = () => {
       </div>
 
       <div className='flex-1 overflow-auto p-4 sm:p-6'>
-        <div className='mx-auto max-w-4xl'>
+        <div className='mx-auto '>
           <div className='grid grid-cols-1 gap-6'>
             <Card>
               <CardHeader className='pb-3 sm:pb-4'>

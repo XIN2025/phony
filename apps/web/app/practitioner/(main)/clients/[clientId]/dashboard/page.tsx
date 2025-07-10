@@ -9,6 +9,8 @@ import {
   useCreateSession,
   useUploadSessionAudio,
   useGetPlan,
+  usePublishPlan,
+  useGetPlanStatus,
 } from '@/lib/hooks/use-api';
 import { ActionItem, ActionItemCompletion, Plan, Resource, Session, User } from '@repo/db';
 import { Badge } from '@repo/ui/components/badge';
@@ -16,7 +18,7 @@ import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { Skeleton } from '@repo/ui/components/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@repo/ui/components/table';
 import { Tabs, TabsContent, TabsList } from '@repo/ui/components/tabs';
 import { TabTrigger } from '@/components/TabTrigger';
 import { ArrowLeft, MessageCircle, Plus, Target, X, Loader2 } from 'lucide-react';
@@ -78,14 +80,20 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
   const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null);
   const [pendingDuration, setPendingDuration] = useState<string>('');
+  const [isPublishingPlan, setIsPublishingPlan] = useState(false);
 
   // React Query hooks
   const { data: client, isLoading: isClientLoading } = useGetClient(clientId);
   const { data: sessions = [], isLoading: isSessionsLoading } = useGetSessionsByClient(clientId);
   const { data: processingSession } = useGetSessionForPolling(processingSessionId || '');
-  const { data: editingPlan, isLoading: isEditingPlanLoading } = useGetPlan(editingPlanId || '');
+  const { data: editingPlan, isLoading: isEditingPlanLoading } = useGetPlan(editingPlanId || '') as {
+    data: PopulatedPlan | undefined;
+    isLoading: boolean;
+  };
+  const { data: planStatus } = useGetPlanStatus(editingPlanId || '');
   const createSessionMutation = useCreateSession();
   const uploadAudioMutation = useUploadSessionAudio();
+  const publishPlanMutation = usePublishPlan();
 
   const isLoading = isClientLoading || isSessionsLoading;
 
@@ -303,6 +311,24 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     router.replace(newUrl.pathname + newUrl.search);
   };
 
+  const handlePublishPlan = () => {
+    if (!editingPlanId) return;
+
+    setIsPublishingPlan(true);
+    publishPlanMutation.mutate(editingPlanId, {
+      onSuccess: () => {
+        toast.success('Plan published to client!');
+        setIsPublishingPlan(false);
+        // Navigate to the plan view
+        router.push(`/practitioner/clients/${clientId}/plans/${editingPlanId}`);
+      },
+      onError: () => {
+        toast.error('Failed to publish plan');
+        setIsPublishingPlan(false);
+      },
+    });
+  };
+
   // --- Plans Tab Table State ---
   const [planSearch, setPlanSearch] = useState('');
 
@@ -349,163 +375,266 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           />
         </div>
         <div className='overflow-x-auto'>
-          <table className='min-w-full border border-gray-300 rounded-2xl overflow-hidden bg-white'>
-            <thead>
-              <tr className='bg-white'>
-                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 border-b'>Date</th>
-                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 border-b'>Session Title</th>
-                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 border-b'>Tasks</th>
-                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 border-b'>Avg Task Feedback</th>
-                <th className='px-6 py-3 text-center text-xs font-semibold text-gray-700 border-b'>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPlans.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className='text-center text-gray-400 py-8'>
-                    No plans found.
-                  </td>
-                </tr>
-              ) : (
-                filteredPlans.map(({ sessionId, sessionTitle, recordedAt, plan }) => {
-                  if (!plan) return null;
-                  const completed = plan.actionItems.filter((t) => t.completions && t.completions.length > 0).length;
-                  const total = plan.actionItems.length;
-                  const avgFeedback = getAvgFeedback(plan);
-                  return (
-                    <tr key={plan.id} className='border-b last:border-b-0 hover:bg-gray-50 transition-colors'>
-                      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                        {recordedAt
-                          ? new Date(recordedAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: '2-digit',
-                            })
-                          : '--'}
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                        {sessionTitle || 'Untitled Session'}
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                        {completed}/{total}
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap'>
-                        <span
-                          className={`inline-block rounded-full px-4 py-1 text-xs font-semibold bg-gray-200 text-gray-700`}
-                        >
-                          {avgFeedback}
-                        </span>
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap text-center'>
-                        <button
-                          className='inline-flex items-center justify-center rounded-full p-2 hover:bg-gray-100 mr-2'
-                          title='View Plan'
-                          onClick={() => router.push(`/practitioner/clients/${clientId}/plans/${plan.id}`)}
-                        >
-                          <svg
-                            width='18'
-                            height='18'
-                            fill='none'
-                            stroke='currentColor'
-                            strokeWidth='2'
-                            viewBox='0 0 24 24'
+          <div className='bg-white rounded-2xl shadow-md p-0'>
+            <Table className='min-w-full bg-white rounded-2xl overflow-hidden'>
+              <TableHeader>
+                <TableRow className='bg-white'>
+                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                    Date
+                  </TableHead>
+                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                    Session Title
+                  </TableHead>
+                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                    Tasks
+                  </TableHead>
+                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                    Avg Task Feedback
+                  </TableHead>
+                  <TableHead className='px-7 py-4 text-center text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPlans.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className='text-center text-gray-400 py-8'>
+                      No plans found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredPlans.map(({ sessionId, sessionTitle, recordedAt, plan }) => {
+                    if (!plan) return null;
+                    const completed = plan.actionItems.filter((t) => t.completions && t.completions.length > 0).length;
+                    const total = plan.actionItems.length;
+                    const avgFeedback = getAvgFeedback(plan);
+                    // Badge color and icon logic
+                    let badgeClass = 'bg-gray-200 text-gray-700';
+                    let badgeIcon = null;
+                    if (avgFeedback === 'Happy') {
+                      badgeClass = 'bg-green-100 text-green-800';
+                      badgeIcon = <span className='mr-1'>😊</span>;
+                    } else if (avgFeedback === 'Neutral') {
+                      badgeClass = 'bg-yellow-100 text-yellow-800';
+                      badgeIcon = <span className='mr-1'>😐</span>;
+                    } else if (avgFeedback === 'Sad') {
+                      badgeClass = 'bg-red-100 text-red-800';
+                      badgeIcon = <span className='mr-1'>🙁</span>;
+                    } else if (avgFeedback === 'Nil') {
+                      badgeClass = 'bg-gray-200 text-gray-700';
+                      badgeIcon = null;
+                    }
+                    return (
+                      <TableRow
+                        key={plan.id}
+                        className='hover:bg-gray-50 transition-colors border-b last:border-b-0 border-[#ececec]'
+                      >
+                        <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
+                          {recordedAt
+                            ? new Date(recordedAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: '2-digit',
+                              })
+                            : '--'}
+                        </TableCell>
+                        <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
+                          {sessionTitle || 'Untitled Session'}
+                        </TableCell>
+                        <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>{total}</TableCell>
+                        <TableCell className='px-7 py-5 whitespace-nowrap'>
+                          <span
+                            className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold ${badgeClass}`}
                           >
-                            <circle cx='12' cy='12' r='10' />
-                            <circle cx='12' cy='12' r='4' />
-                          </svg>
-                        </button>
-                        <button
-                          className='inline-flex items-center justify-center rounded-full p-2 hover:bg-gray-100'
-                          title='Edit Plan'
-                          onClick={() =>
-                            router.replace(`/practitioner/clients/${clientId}/dashboard?editPlan=${plan.id}`)
-                          }
-                        >
-                          <svg
-                            width='18'
-                            height='18'
-                            fill='none'
-                            stroke='currentColor'
-                            strokeWidth='2'
-                            viewBox='0 0 24 24'
+                            {badgeIcon}
+                            {avgFeedback}
+                          </span>
+                        </TableCell>
+                        <TableCell className='px-7 py-5 whitespace-nowrap text-center'>
+                          <button
+                            className='inline-flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition-colors mr-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-gray-200'
+                            title='View Plan'
+                            onClick={() => router.push(`/practitioner/clients/${clientId}/plans/${plan.id}`)}
                           >
-                            <path d='M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h6v-2H5v-2H3v4z' />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                            <svg
+                              width='18'
+                              height='18'
+                              fill='none'
+                              stroke='currentColor'
+                              strokeWidth='2'
+                              viewBox='0 0 24 24'
+                            >
+                              <circle cx='12' cy='12' r='10' />
+                              <circle cx='12' cy='12' r='4' />
+                            </svg>
+                          </button>
+                          <button
+                            className='inline-flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition-colors border border-transparent focus:outline-none focus:ring-2 focus:ring-gray-200'
+                            title='Edit Plan'
+                            onClick={() =>
+                              router.replace(`/practitioner/clients/${clientId}/dashboard?editPlan=${plan.id}`)
+                            }
+                          >
+                            <svg
+                              width='18'
+                              height='18'
+                              fill='none'
+                              stroke='currentColor'
+                              strokeWidth='2'
+                              viewBox='0 0 24 24'
+                            >
+                              <path d='M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h6v-2H5v-2H3v4z' />
+                            </svg>
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
     </TabsContent>
   );
 
-  const renderDashboardTab = () => (
-    <TabsContent value='dashboard' className='mt-0'>
-      <div className='flex flex-col gap-4 w-full mb-6 sm:mb-8'>
-        <div className='flex flex-col md:flex-row md:items-center md:justify-between w-full gap-3 md:gap-0'>
-          <h2 className='text-lg sm:text-xl font-semibold mb-0'>Tasks Overview</h2>
-        </div>
-        <div className='flex flex-col sm:flex-row gap-4 w-full'>
-          <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background'>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-sm sm:text-base font-semibold'>Avg Tasks Completion</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl sm:text-3xl font-extrabold'>{stats.completion}%</div>
-            </CardContent>
-          </Card>
-          <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background'>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-sm sm:text-base font-semibold'>Tasks Pending</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl sm:text-3xl font-extrabold'>{stats.pending}</div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-      <Card className='w-full border border-border rounded-2xl shadow-none bg-background'>
-        <CardHeader>
-          <CardTitle>All Tasks</CardTitle>
-        </CardHeader>
-        <CardContent className='p-4 sm:p-6 lg:p-8'>
-          <div className='space-y-4 sm:space-y-5'>
-            {isLoading ? (
-              <Skeleton className='h-24 w-full' />
-            ) : allTasks.length > 0 ? (
-              allTasks.map((task) => (
-                <Card
-                  key={task.id}
-                  className='border border-border rounded-xl bg-background shadow-none cursor-pointer hover:bg-gray-50 transition-colors'
-                  onClick={() => handleTaskClick(task)}
-                >
-                  <CardContent className='p-4 sm:p-5 flex gap-3 sm:gap-4 items-start'>
-                    <Checkbox className='mt-1 flex-shrink-0' checked={task.completions.length > 0} />
-                    <div className='flex-1 min-w-0'>
-                      <div className='font-semibold mb-1 text-sm sm:text-base'>{task.description}</div>
-                      <div className='text-xs text-muted-foreground mb-1'>{task.description}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <p className='text-muted-foreground text-center'>No tasks have been assigned to this client yet.</p>
-            )}
+  const renderDashboardTab = () => {
+    // Group tasks by mandatory and daily
+    const mandatoryTasks = allTasks.filter((t) => t.isMandatory);
+    const dailyTasks = allTasks.filter((t) => !t.isMandatory);
+    return (
+      <TabsContent value='dashboard' className='mt-0'>
+        <div className='flex flex-col gap-4 w-full mb-6 sm:mb-8'>
+          <div className='flex flex-col md:flex-row md:items-center md:justify-between w-full gap-3 md:gap-0'>
+            <h2 className='text-lg sm:text-xl font-semibold mb-0'>Tasks Overview</h2>
           </div>
-        </CardContent>
-      </Card>
-    </TabsContent>
-  );
+          <div className='flex flex-col sm:flex-row gap-4 w-full'>
+            <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background'>
+              <CardHeader className='pb-2'>
+                <CardTitle className='text-sm sm:text-base font-semibold'>Avg Tasks Completion</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='text-2xl sm:text-3xl font-extrabold'>{stats.completion}%</div>
+              </CardContent>
+            </Card>
+            <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background'>
+              <CardHeader className='pb-2'>
+                <CardTitle className='text-sm sm:text-base font-semibold'>Tasks Pending</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='text-2xl sm:text-3xl font-extrabold'>{stats.pending}</div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        <div className='flex flex-col sm:flex-row gap-6   w-full'>
+          {/* Mandatory Tasks Card */}
+          <Card className='flex-1 bg-white rounded-2xl p-0 border-0 '>
+            <CardHeader className='pb-2'>
+              <CardTitle className='text-lg font-semibold'>Mandatory tasks for the week</CardTitle>
+            </CardHeader>
+            <CardContent className='flex flex-col gap-0 p-0'>
+              {mandatoryTasks.length === 0 ? (
+                <div className='text-muted-foreground text-sm mb-4 px-6 py-6'>No mandatory tasks.</div>
+              ) : (
+                mandatoryTasks.map((task, idx) => (
+                  <div
+                    key={task.id}
+                    className={`flex items-start gap-3 px-6 py-4 ${idx !== mandatoryTasks.length - 1 ? 'border-b border-[#ececec]' : ''}`}
+                  >
+                    <Checkbox checked={task.completions && task.completions.length > 0} disabled className='mt-1' />
+                    <div className='flex-1'>
+                      <div
+                        className={`font-medium text-base flex items-center gap-2 ${task.completions && task.completions.length > 0 ? 'line-through text-muted-foreground' : ''}`}
+                      >
+                        {task.description}
+                        {task.whyImportant && (
+                          <span className='ml-1 text-xs text-muted-foreground' title={task.whyImportant}>
+                            <svg
+                              width='16'
+                              height='16'
+                              fill='none'
+                              stroke='currentColor'
+                              strokeWidth='2'
+                              viewBox='0 0 24 24'
+                            >
+                              <circle cx='12' cy='12' r='10' />
+                              <line x1='12' y1='16' x2='12' y2='12' />
+                              <line x1='12' y1='8' x2='12' y2='8' />
+                            </svg>
+                          </span>
+                        )}
+                      </div>
+                      <div className='text-xs text-muted-foreground mt-1 flex items-center gap-2'>
+                        <span>⏱ {task.duration || '15 Minutes'}</span>
+                        {/* Feedback icon placeholder if needed */}
+                        {task.feedback && <span className='ml-2'>😊</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+          {/* Daily Tasks Card */}
+          <Card className='flex-1 bg-white rounded-2xl p-0 border-0 shadow-none'>
+            <CardHeader className='pb-2'>
+              <CardTitle className='text-lg font-semibold'>Daily Tasks</CardTitle>
+            </CardHeader>
+            <CardContent className='flex flex-col gap-0 p-0'>
+              {dailyTasks.length === 0 ? (
+                <div className='text-muted-foreground text-sm mb-4 px-6 py-6'>No daily tasks.</div>
+              ) : (
+                dailyTasks.map((task, idx) => (
+                  <div
+                    key={task.id}
+                    className={`flex items-start gap-3 px-6 py-4 ${idx !== dailyTasks.length - 1 ? 'border-b border-[#ececec]' : ''}`}
+                  >
+                    <Checkbox checked={task.completions && task.completions.length > 0} disabled className='mt-1' />
+                    <div className='flex-1'>
+                      <div
+                        className={`font-medium text-base flex items-center gap-2 ${task.completions && task.completions.length > 0 ? 'line-through text-muted-foreground' : ''}`}
+                      >
+                        {task.description}
+                        {task.whyImportant && (
+                          <span className='ml-1 text-xs text-muted-foreground' title={task.whyImportant}>
+                            <svg
+                              width='16'
+                              height='16'
+                              fill='none'
+                              stroke='currentColor'
+                              strokeWidth='2'
+                              viewBox='0 0 24 24'
+                            >
+                              <circle cx='12' cy='12' r='10' />
+                              <line x1='12' y1='16' x2='12' y2='12' />
+                              <line x1='12' y1='8' x2='12' y2='8' />
+                            </svg>
+                          </span>
+                        )}
+                      </div>
+                      <div className='text-xs text-muted-foreground mt-1 flex items-center gap-2'>
+                        <span>⏱ {task.duration || '15 Minutes'}</span>
+                        {/* Feedback icon placeholder if needed */}
+                        {task.feedback && <span className='ml-2'>😊</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+    );
+  };
 
   const renderSessionsTab = () => (
     <TabsContent value='sessions' className='mt-0'>
-      <div className='w-full'>
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6'>
+      <div className='flex flex-col gap-6'>
+        <div className='flex justify-between items-center mb-2'>
           <h2 className='text-lg sm:text-xl font-semibold'>Past Sessions</h2>
           <Button
             onClick={handleNewSession}
@@ -514,59 +643,73 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
             + New Session
           </Button>
         </div>
-        <Card className='w-full border border-border rounded-2xl shadow-none bg-background'>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Session Title</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Summary</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={4}>
-                    <Skeleton className='h-8 w-full' />
-                  </TableCell>
+        <div className='overflow-x-auto'>
+          <div className='bg-white rounded-2xl shadow-md p-0'>
+            <Table className='min-w-full bg-white rounded-2xl overflow-hidden'>
+              <TableHeader>
+                <TableRow className='bg-white'>
+                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                    Session Title
+                  </TableHead>
+                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                    Date
+                  </TableHead>
+                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                    Duration
+                  </TableHead>
+                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                    Summary
+                  </TableHead>
                 </TableRow>
-              ) : sessions.length > 0 ? (
-                sessions.map((session) => {
-                  let duration = '—';
-                  if (
-                    typeof session.durationSeconds === 'number' &&
-                    !isNaN(session.durationSeconds) &&
-                    session.durationSeconds > 0
-                  ) {
-                    const mins = Math.floor(session.durationSeconds / 60);
-                    const secs = session.durationSeconds % 60;
-                    duration = `${mins}m ${secs.toString().padStart(2, '0')}s`;
-                  }
-                  const summary = session.summaryTitle || session.title || 'No summary available.';
-                  return (
-                    <TableRow
-                      key={session.id}
-                      className='cursor-pointer hover:bg-accent transition-colors'
-                      onClick={() => router.push(`/practitioner/sessions/${session.id}`)}
-                    >
-                      <TableCell>{session.title || 'Untitled Session'}</TableCell>
-                      <TableCell>{new Date(session.recordedAt).toLocaleDateString()}</TableCell>
-                      <TableCell>{duration}</TableCell>
-                      <TableCell>{summary}</TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={4} className='text-center text-muted-foreground'>
-                    No sessions recorded yet.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Card>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className='text-center text-muted-foreground py-8'>
+                      <Skeleton className='h-8 w-full' />
+                    </TableCell>
+                  </TableRow>
+                ) : sessions.length > 0 ? (
+                  sessions.map((session) => {
+                    let duration = '—';
+                    if (
+                      typeof session.durationSeconds === 'number' &&
+                      !isNaN(session.durationSeconds) &&
+                      session.durationSeconds > 0
+                    ) {
+                      const mins = Math.floor(session.durationSeconds / 60);
+                      const secs = session.durationSeconds % 60;
+                      duration = `${mins}m ${secs.toString().padStart(2, '0')}s`;
+                    }
+                    const summary = session.summaryTitle || session.title || 'No summary available.';
+                    return (
+                      <TableRow
+                        key={session.id}
+                        className='cursor-pointer hover:bg-gray-50 transition-colors border-b last:border-b-0 border-[#ececec]'
+                        onClick={() => router.push(`/practitioner/sessions/${session.id}`)}
+                      >
+                        <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
+                          {session.title || 'Untitled Session'}
+                        </TableCell>
+                        <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
+                          {new Date(session.recordedAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>{duration}</TableCell>
+                        <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>{summary}</TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className='text-center text-muted-foreground'>
+                      No sessions recorded yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
     </TabsContent>
   );
@@ -584,24 +727,38 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     if (editingPlanId) {
       if (isEditingPlanLoading) {
         return (
-          <div className='min-h-screen bg-background flex flex-col'>
-            <div className='flex items-center justify-between px-8 pt-8 pb-4 border-b bg-background'>
-              <div className='flex items-center gap-4 min-w-0'>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  onClick={handleClosePlanEditor}
-                  className='h-8 w-8'
-                  aria-label='Back'
-                >
-                  <ArrowLeft className='h-4 w-4' />
-                </Button>
-                <div className='flex flex-col min-w-0'>
-                  <h1 className='text-2xl font-bold truncate'>Edit Action Plan</h1>
+          <div className='min-h-screen bg-transparent flex flex-col'>
+            <div className='w-full max-w-[1350px] mx-auto px-2 sm:px-6 md:px-10'>
+              <div className='flex flex-col gap-0 border-b pt-1 sm:pt-2 pb-3 sm:pb-4'>
+                <div className='flex items-center'>
+                  <button
+                    type='button'
+                    aria-label='Back'
+                    onClick={handleClosePlanEditor}
+                    className='text-muted-foreground hover:text-foreground focus:outline-none'
+                    style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
+                  </button>
+                </div>
+                <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2'>
+                  <div>
+                    <h1 className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'>Edit Action Plan</h1>
+                  </div>
+                  {planStatus === 'DRAFT' &&
+                    editingPlan &&
+                    (editingPlan as any).actionItems &&
+                    (editingPlan as any).actionItems.length > 0 && (
+                      <Button
+                        onClick={handlePublishPlan}
+                        disabled={isPublishingPlan || publishPlanMutation.isPending}
+                        className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'
+                      >
+                        {isPublishingPlan || publishPlanMutation.isPending ? 'Publishing...' : 'Publish Plan'}
+                      </Button>
+                    )}
                 </div>
               </div>
-            </div>
-            <div className='flex-1 w-full px-4 sm:px-8 py-4 max-w-6xl mx-auto flex flex-col gap-8'>
               <div className='flex items-center justify-center py-8'>
                 <div className='text-center'>
                   <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto'></div>
@@ -614,19 +771,45 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
       }
 
       return (
-        <div className='min-h-screen bg-background flex flex-col'>
-          <div className='flex items-center justify-between px-8 pt-8 pb-4 border-b bg-background'>
-            <div className='flex items-center gap-4 min-w-0'>
-              <Button variant='ghost' size='icon' onClick={handleClosePlanEditor} className='h-8 w-8' aria-label='Back'>
-                <ArrowLeft className='h-4 w-4' />
-              </Button>
-              <div className='flex flex-col min-w-0'>
-                <h1 className='text-2xl font-bold truncate'>Edit Action Plan</h1>
+        <div className='min-h-screen bg-transparent flex flex-col'>
+          <div className='w-full max-w-[1350px] mx-auto px-2 sm:px-6 md:px-10'>
+            <div className='flex flex-col gap-0 border-b pt-1 sm:pt-2 pb-3 sm:pb-4'>
+              <div className='flex items-center'>
+                <button
+                  type='button'
+                  aria-label='Back'
+                  onClick={handleClosePlanEditor}
+                  className='text-muted-foreground hover:text-foreground focus:outline-none'
+                  style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
+                </button>
+              </div>
+              <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2'>
+                <div>
+                  <h1 className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'>Edit Action Plan</h1>
+                </div>
+                {planStatus === 'DRAFT' &&
+                  editingPlan &&
+                  (editingPlan as any).actionItems &&
+                  (editingPlan as any).actionItems.length > 0 && (
+                    <Button
+                      onClick={handlePublishPlan}
+                      disabled={isPublishingPlan || publishPlanMutation.isPending}
+                      className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'
+                    >
+                      {isPublishingPlan || publishPlanMutation.isPending ? 'Publishing...' : 'Publish Plan'}
+                    </Button>
+                  )}
               </div>
             </div>
-          </div>
-          <div className='flex-1 w-full px-4 sm:px-8 py-4 max-w-6xl mx-auto flex flex-col gap-8'>
-            <PlanEditor planId={editingPlanId} sessionId={editingPlan?.sessionId || ''} clientId={clientId} />
+            <PlanEditor
+              planId={editingPlanId}
+              sessionId={editingPlan?.sessionId || ''}
+              clientId={clientId}
+              onPublishClick={handlePublishPlan}
+              isPublishing={isPublishingPlan || publishPlanMutation.isPending}
+            />
           </div>
         </div>
       );
@@ -634,14 +817,14 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
     if (showNewSession) {
       return (
-        <div className='min-h-screen bg-background flex flex-col'>
-          <div className='px-2 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b bg-background'>
+        <div className='min-h-screen flex flex-col'>
+          <div className='px-2 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b'>
             <button
               type='button'
               aria-label='Back'
               onClick={handleBack}
               className='text-muted-foreground hover:text-foreground focus:outline-none'
-              style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 44, height: 44, display: 'flex' }}
             >
               <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
             </button>
@@ -649,7 +832,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           </div>
           <div className='flex flex-col md:flex-row gap-6 p-8 flex-1'>
             <div className='flex-1 space-y-6'>
-              <div className='border rounded-lg p-6'>
+              <div className='bg-white rounded-2xl shadow-lg p-6'>
                 <div className='font-semibold mb-2'>Session Details</div>
                 <div className='mb-2'>
                   Client:{' '}
@@ -664,7 +847,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                   onChange={(e) => setSessionTitle(e.target.value)}
                 />
               </div>
-              <div className='border rounded-lg p-6'>
+              <div className='bg-white rounded-2xl shadow-lg p-6'>
                 <div className='font-semibold mb-2'>Session Notes</div>
                 <textarea
                   className='border rounded px-2 py-1 w-full min-h-[120px]'
@@ -675,7 +858,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               </div>
             </div>
             <div className='flex-1 space-y-6'>
-              <div className='border rounded-lg p-6 flex flex-col items-center'>
+              <div className='bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center'>
                 <AudioRecorder
                   ref={audioRecorderRef}
                   onRequestEndSession={handleRequestEndSession}
@@ -683,10 +866,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                   sessionTitle={sessionTitle}
                   sessionNotes={sessionNotes}
                 />
-              </div>
-              <div className='border rounded-lg p-6'>
-                <div className='font-semibold mb-2'>Transcript</div>
-                <div className='text-muted-foreground'>Once recording starts, the transcript will appear here</div>
               </div>
             </div>
           </div>
@@ -700,8 +879,8 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
     return (
       <>
-        <div className='flex flex-col min-h-screen bg-background'>
-          <div className='flex flex-col gap-0 border-b bg-background px-2 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
+        <div className='flex flex-col min-h-screen'>
+          <div className='flex flex-col gap-0 border-b px-2 sm:px-8 pt-1 sm:pt-2 pb-3 sm:pb-4'>
             <div className='w-full flex items-center'>
               <button
                 type='button'
@@ -747,14 +926,11 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                 >
                   View Profile
                 </Button>
-                <Button className='rounded-full px-4 sm:px-6 py-2 text-sm font-medium border border-border bg-foreground text-background hover:bg-foreground/90'>
-                  Take Progress Snapshot
-                </Button>
               </div>
             </div>
           </div>
 
-          <div className='flex-1 w-full flex py-4 sm:py-8 bg-background'>
+          <div className='flex-1 w-full flex py-4 sm:py-8'>
             <div className='w-full px-4 sm:px-8 lg:px-16 flex flex-col gap-6 sm:gap-8'>
               <div className='w-full'>
                 <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full'>

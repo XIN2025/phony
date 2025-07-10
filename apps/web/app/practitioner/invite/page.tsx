@@ -12,6 +12,7 @@ import { useInviteContext } from '@/context/InviteContext';
 import { CreateIntakeFormDto, QuestionType } from '@repo/shared-types';
 import { useInviteClient, useCreateIntakeForm, useUpdateIntakeForm, useGetIntakeForm } from '@/lib/hooks/use-api';
 import { useQueryClient } from '@tanstack/react-query';
+import { Button } from '@repo/ui/components/button';
 
 export default function InviteClientPage() {
   const router = useRouter();
@@ -86,7 +87,7 @@ export default function InviteClientPage() {
   const handleFormCreatePreview = (formData: CreateIntakeFormDto) => {
     setInviteData({
       newIntakeForm: formData,
-      intakeFormId: undefined,
+      intakeFormId: inviteData.intakeFormId || undefined,
       hasChanges: false,
     });
     goToNextStep();
@@ -213,8 +214,15 @@ export default function InviteClientPage() {
       },
       {
         step: 3,
-        title: 'Create Intake Form',
-        component: <IntakeFormBuilder onSubmit={handleFormCreatePreview} onBack={handleBack} />,
+        title: inviteData.intakeFormId ? 'Edit Intake Form' : 'Create Intake Form',
+        component: (
+          <IntakeFormBuilder
+            onSubmit={handleFormCreatePreview}
+            onBack={handleBack}
+            isEditMode={!!inviteData.intakeFormId}
+            buttonText={inviteData.intakeFormId ? 'Edit Intake Form' : 'Create Intake Form'}
+          />
+        ),
       },
       {
         step: 4,
@@ -289,25 +297,23 @@ export default function InviteClientPage() {
     }
   }, [selectedForm, selectedFormId, setInviteData, goToNextStep]);
 
+  const currentStepData = steps[step - 1];
+
   return (
-    <div className='w-full min-h-screen bg-white flex flex-col items-center px-2 sm:px-6 py-8'>
-      {/* Back button at the very top left (fixed width container for alignment) */}
-      <div className='w-full max-w-2xl mx-auto'>
-        <button
-          type='button'
-          aria-label='Back'
-          onClick={handleBack}
-          className='mb-6 text-gray-700 hover:text-black focus:outline-none'
-          style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <ArrowLeft className='h-5 w-5' />
-        </button>
-        {/* Heading and step indicator */}
-        <div className='mb-8'>
-          <h1 className='text-2xl font-bold mb-1'>Invite Client</h1>
-          <p className='text-muted-foreground text-sm'>
-            Step {step} of {steps.length}
-          </p>
+    <div className='flex flex-col items-center justify-start min-h-screen w-full py-10 px-4'>
+      <div className='w-full max-w-[1050px] mx-auto'>
+        {/* Header: Back button and page title (match dashboard style) */}
+        <div className='mb-6'>
+          <button
+            type='button'
+            aria-label='Back'
+            onClick={handleBack}
+            className='text-muted-foreground hover:text-foreground focus:outline-none'
+            style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
+          </button>
+          <h1 className='text-3xl font-bold tracking-tight mt-4'>{currentStepData?.title}</h1>
         </div>
         {/* Show spinner if submitting, otherwise show form */}
         {submitting ? (
@@ -315,7 +321,7 @@ export default function InviteClientPage() {
             <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
           </div>
         ) : (
-          <div className='w-full max-w-xl mx-auto'>{steps[step - 1]?.component}</div>
+          <div className='w-full'>{currentStepData?.component}</div>
         )}
       </div>
     </div>

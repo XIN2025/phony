@@ -279,7 +279,7 @@ export default function SessionDetailPage() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
-          className='fixed inset-0 z-50 flex items-center justify-center bg-white'
+          className='fixed inset-0 z-50 flex items-center justify-center bg-background'
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -381,12 +381,18 @@ export default function SessionDetailPage() {
   }
 
   return (
-    <div className='min-h-screen bg-background flex flex-col'>
-      <div className='flex items-center justify-between px-8 pt-8 pb-4 border-b bg-background'>
-        <div className='flex items-center gap-4 min-w-0'>
-          <Button variant='ghost' size='icon' onClick={() => router.back()} className='h-8 w-8' aria-label='Back'>
-            <ArrowLeft className='h-4 w-4' />
-          </Button>
+    <div className='min-h-screen flex flex-col'>
+      <div className='px-8 pt-2 pb-4 border-b'>
+        <button
+          type='button'
+          aria-label='Back'
+          onClick={() => router.back()}
+          className='text-muted-foreground hover:text-foreground focus:outline-none mb-2'
+          style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
+        </button>
+        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
           <div className='flex flex-col min-w-0'>
             <h1 className='text-2xl font-bold truncate'>{session.title || 'Session'}</h1>
             <p className='text-sm text-muted-foreground truncate'>
@@ -395,22 +401,24 @@ export default function SessionDetailPage() {
               {session.durationSeconds ? formattedTotal : ''}
             </p>
           </div>
+          <div>
+            {session.plan ? (
+              <Button
+                className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
+                onClick={() => router.push(`/practitioner/clients/${session.client?.id}/plans/${session.plan.id}`)}
+              >
+                View Action Plan
+              </Button>
+            ) : (
+              <Button
+                className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
+                onClick={handleGenerateActionPlan}
+              >
+                Generate Action Plan
+              </Button>
+            )}
+          </div>
         </div>
-        {session.plan ? (
-          <Button
-            className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
-            onClick={() => router.push(`/practitioner/clients/${session.client?.id}/plans/${session.plan.id}`)}
-          >
-            View Action Plan
-          </Button>
-        ) : (
-          <Button
-            className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
-            onClick={handleGenerateActionPlan}
-          >
-            Generate Action Plan
-          </Button>
-        )}
       </div>
 
       <div className='flex flex-col items-center justify-center w-full px-4 mt-6 mb-2'>
@@ -465,7 +473,7 @@ export default function SessionDetailPage() {
 
       <div className='flex-1 w-full px-4 sm:px-8 py-4 max-w-6xl mx-auto flex flex-col gap-8'>
         {/* Session Summary (editable) */}
-        <div className='bg-white border border-gray-300 rounded-lg shadow-sm p-5 mb-0'>
+        <div className='bg-white rounded-2xl shadow-lg p-6 mb-0'>
           <div className='flex items-center justify-between mb-2'>
             <div className='font-extrabold text-2xl mb-2'>Session Summary</div>
             {!editingSummary && (
@@ -506,7 +514,7 @@ export default function SessionDetailPage() {
         {/* Notes + Transcript grid */}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
           {/* Session Notes (editable) */}
-          <div className='bg-white border border-gray-300 rounded-lg shadow-sm p-5 flex flex-col'>
+          <div className='bg-white rounded-2xl shadow-lg p-6 flex flex-col'>
             <div className='flex items-center justify-between mb-2'>
               <div className='font-bold text-base'>Session Notes</div>
               {!editingNotes && (
@@ -555,7 +563,7 @@ export default function SessionDetailPage() {
             )}
           </div>
           {/* Transcript */}
-          <div className='bg-white border border-gray-300 rounded-lg shadow-sm p-5 flex flex-col'>
+          <div className='bg-white rounded-2xl shadow-lg p-6 flex flex-col'>
             <div className='font-bold text-base mb-2'>Transcript</div>
             <div className='text-sm leading-relaxed flex-1 overflow-y-auto'>
               {session.filteredTranscript ? (

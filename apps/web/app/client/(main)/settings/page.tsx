@@ -12,6 +12,7 @@ import { useGetCurrentUser } from '@/lib/hooks/use-api';
 import { getInitials, getAvatarUrl, getUserDisplayName } from '@/lib/utils';
 import { signOut } from 'next-auth/react';
 import React, { useRef, useState } from 'react';
+import { UserProfileCard } from '@/components/UserProfileCard';
 
 export default function ClientSettingsPage() {
   const { data: user, isLoading } = useGetCurrentUser();
@@ -102,88 +103,13 @@ export default function ClientSettingsPage() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value='profile' className='mt-6'>
-            <Card className='border border-border rounded-2xl shadow-none'>
-              <CardContent className='p-6 sm:p-8'>
-                <div className='max-w-4xl'>
-                  <h2 className='text-lg font-semibold'>Profile Information</h2>
-                  <p className='text-muted-foreground text-sm mt-1 mb-6'>Update your profile details</p>
-                  {isLoading ? (
-                    <div className='space-y-6'>
-                      <div className='flex items-center space-x-4'>
-                        <div className='h-20 w-20 rounded-full bg-muted animate-pulse' />
-                        <div className='space-y-2'>
-                          <div className='h-6 w-40 bg-muted rounded animate-pulse' />
-                          <div className='h-4 w-52 bg-muted rounded animate-pulse' />
-                        </div>
-                      </div>
-                    </div>
-                  ) : user ? (
-                    <>
-                      <div className='flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-8'>
-                        <div className='relative group'>
-                          <Avatar className='h-20 w-20 border-2 border-primary'>
-                            <AvatarImage src={avatarPreview || getAvatarUrl(user.avatarUrl, user)} />
-                            <AvatarFallback className='text-2xl'>
-                              {getInitials({ firstName: user.firstName, lastName: user.lastName })}
-                            </AvatarFallback>
-                          </Avatar>
-                          <input
-                            type='file'
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            className='hidden'
-                            accept='image/*'
-                          />
-                          <button
-                            onClick={handleAvatarClick}
-                            className='absolute bottom-0 right-0 bg-background border rounded-full p-1.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity'
-                          >
-                            <Edit className='h-3.5 w-3.5' />
-                          </button>
-                        </div>
-                        <div className='flex items-center gap-2'>
-                          <h3 className='text-lg font-semibold'>{getUserDisplayName(user)}</h3>
-                          {user.isEmailVerified && <CheckCircle className='h-5 w-5 text-green-500' />}
-                        </div>
-                      </div>
-                      <div className='space-y-6'>
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                          <div className='space-y-2'>
-                            <Label htmlFor='fullName'>Full Name</Label>
-                            <Input id='fullName' value={fullName} onChange={(e) => setFullName(e.target.value)} />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='email'>Email ID</Label>
-                            <Input id='email' type='email' value={email} disabled />
-                          </div>
-                        </div>
-                        <div className='space-y-2'>
-                          <Label htmlFor='phone'>Phone Number</Label>
-                          <Input id='phone' value={phone} onChange={(e) => setPhone(e.target.value)} />
-                        </div>
-                      </div>
-                      <div className='mt-8 pt-6 border-t'>
-                        <Button
-                          variant='default'
-                          className='bg-foreground text-background hover:bg-foreground/90'
-                          onClick={() => signOut({ callbackUrl: '/client/auth' })}
-                        >
-                          Logout
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className='text-red-500 text-center py-10'>Failed to load user profile.</div>
-                  )}
+            {user && (
+              <div className='flex justify-center'>
+                <div className='max-w-3xl w-full'>
+                  <UserProfileCard userId={user.id} mode='client' />
                 </div>
-              </CardContent>
-            </Card>
-            <div className='mt-6 flex max-w-4xl'>
-              <Button variant='destructive' className='bg-red-500/10 text-red-500 hover:bg-red-500/20'>
-                <Trash2 className='h-4 w-4 mr-2' />
-                Delete Account
-              </Button>
-            </div>
+              </div>
+            )}
           </TabsContent>
           <TabsContent value='medical' className='mt-6'>
             <Card className='border border-border rounded-2xl shadow-none'>

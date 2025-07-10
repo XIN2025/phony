@@ -17,7 +17,7 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
   ];
 
   return (
-    <div className='grid min-h-screen w-full lg:grid-cols-[260px_1fr] bg-gradient-to-br from-[#f8edea] to-[#f9f9f6]'>
+    <div className='grid min-h-screen w-full lg:grid-cols-[260px_1fr]'>
       {/* Sidebar */}
       <div className='hidden lg:block h-full'>
         <SidebarContent navLinks={navLinks} pathname={pathname} signOutCallbackUrl='/practitioner/auth' />
@@ -34,7 +34,7 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
       {/* Main Content */}
       <div className='flex flex-1 flex-col'>
         <main className='flex-1 flex justify-center items-start bg-transparent'>
-          <div className='w-full max-w-[1100px] px-0 py-10'>{children}</div>
+          <div className='w-full max-w-[1450px] py-5'>{children}</div>
         </main>
       </div>
     </div>
@@ -44,10 +44,7 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
 export default function PractitionerMainLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <div
-        className='min-h-screen w-full font-sans'
-        style={{ background: 'linear-gradient(900deg, #ffb199 0%, #fff6e6 50%, #6dd5ed 100%)' }}
-      >
+      <div className='min-h-screen w-full font-sans'>
         <PractitionerLayoutContent>{children}</PractitionerLayoutContent>
       </div>
     </SidebarProvider>

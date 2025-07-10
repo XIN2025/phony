@@ -11,15 +11,17 @@ export class ApiClient {
       const currentSession = session || (!isServer ? await getSession() : null);
       const isFormData = config.data instanceof FormData;
 
-      const publicEndpoints = [
+      const PUBLIC_ENDPOINTS = [
         '/api/auth/otp',
         '/api/auth/otp/verify',
+        '/api/auth/otp/verify-invitation',
+        '/api/auth/invitation/check-intake-form',
         '/api/auth/practitioner/signup',
         '/api/auth/client/signup',
-        '/api/invitations/token/',
+        '/api/practitioner/invitations/token/',
       ];
 
-      const isPublicEndpoint = publicEndpoints.some((endpoint) => config.url?.includes(endpoint));
+      const isPublicEndpoint = PUBLIC_ENDPOINTS.some((endpoint) => config.url?.includes(endpoint));
 
       const isOtpRequest = config.url?.includes('/auth/otp');
       let timeout = isOtpRequest ? 30000 : 50000;

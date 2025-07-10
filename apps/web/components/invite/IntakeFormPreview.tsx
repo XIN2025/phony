@@ -99,46 +99,48 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
   };
 
   return (
-    <div className='flex flex-col h-full'>
-      <div className='flex-grow overflow-y-auto'>
-        <Card className='rounded-2xl border-2 shadow-none'>
-          <CardContent className='p-6 space-y-6'>
-            <h2 className='text-xl font-semibold text-center'>{formData.title}</h2>
-            {formData.description && <p className='text-center text-muted-foreground'>{formData.description}</p>}
-            {formData.questions.map((q, index) => (
-              <div key={q.id || index} className='space-y-3'>
-                <Label className='font-semibold text-base'>
-                  {q.title} {q.required && <span className='text-destructive'>*</span>}
-                </Label>
-                {renderAnswer(q)}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-      <div className='flex justify-end items-center pt-6 mt-4 gap-4 border-t'>
-        {shouldShowSaveOption && (
-          <div className='flex items-center space-x-2 mr-auto'>
-            <Checkbox
-              id='save-template-preview'
-              checked={saveAsTemplate}
-              onCheckedChange={handleSaveAsTemplateChange}
-            />
-            <label htmlFor='save-template-preview' className='text-sm font-medium leading-none'>
-              Save form as a template
-            </label>
+    <div className='flex flex-col items-center w-full min-h-[70vh]'>
+      <div className='w-full   flex flex-col gap-6'>
+        {/* Form Title Card */}
+        <div className='bg-white rounded-2xl shadow p-6 mb-2'>
+          <h2 className='text-xl font-semibold'>{formData.title}</h2>
+        </div>
+        {/* Question Cards */}
+        {formData.questions.map((q, index) => (
+          <div key={q.id || index} className='bg-white rounded-2xl shadow p-6 flex flex-col gap-3'>
+            <Label className='font-semibold text-base'>
+              {q.title} {q.required && <span className='text-destructive'>*</span>}
+            </Label>
+            {renderAnswer(q)}
           </div>
-        )}
-        <Button type='button' variant='outline' onClick={onBack} className='rounded-full px-6'>
-          Back
-        </Button>
-        <Button
-          onClick={() => onSubmit()}
-          disabled={isLoading}
-          className='rounded-full bg-black px-6 text-white hover:bg-gray-800'
-        >
-          {buttonText || (isLoading ? 'Creating Form...' : 'Create Form')}
-        </Button>
+        ))}
+        {/* Buttons */}
+        <div className='flex flex-col sm:flex-row justify-between items-center gap-4 mt-8'>
+          {shouldShowSaveOption && (
+            <div className='flex items-center space-x-2 sm:mr-auto'>
+              <Checkbox
+                id='save-template-preview'
+                checked={saveAsTemplate}
+                onCheckedChange={handleSaveAsTemplateChange}
+              />
+              <label htmlFor='save-template-preview' className='text-sm font-medium leading-none'>
+                Save form as a template
+              </label>
+            </div>
+          )}
+          <div className='flex gap-4 w-full sm:w-auto justify-end'>
+            <Button type='button' variant='outline' onClick={onBack} className='rounded-full px-8'>
+              Back
+            </Button>
+            <Button
+              onClick={() => onSubmit()}
+              disabled={isLoading}
+              className='rounded-full bg-black px-8 text-white hover:bg-gray-800'
+            >
+              {buttonText || (isLoading ? 'Creating Form...' : isNewForm ? 'Send Invitation' : 'Save Changes')}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

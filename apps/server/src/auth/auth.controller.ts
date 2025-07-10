@@ -29,6 +29,22 @@ export class AuthController {
     return this.authService.verifyOtp(body.email, body.otp, body.role);
   }
 
+  @Post('otp/verify-invitation')
+  @Public()
+  @ApiResponse({ type: Boolean, description: 'Whether the invitation OTP was verified successfully' })
+  async verifyInvitationOtp(
+    @Body() body: { email: string; otp: string; invitationToken: string }
+  ): Promise<{ success: boolean; invitation: Record<string, unknown> }> {
+    return this.authService.verifyInvitationOtp(body.email, body.otp, body.invitationToken);
+  }
+
+  @Post('invitation/check-intake-form')
+  @Public()
+  @ApiResponse({ type: Boolean, description: 'Whether the invitation has an intake form attached' })
+  async checkInvitationIntakeForm(@Body() body: { invitationToken: string }): Promise<{ hasIntakeForm: boolean }> {
+    return this.authService.checkInvitationIntakeForm(body.invitationToken);
+  }
+
   @Post('otp')
   @Public()
   @ApiResponse({ type: Boolean, description: 'Whether the OTP was sent successfully' })
