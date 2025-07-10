@@ -214,7 +214,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
   const { mutate: markAsRead } = useMarkMessagesAsRead();
   const { getUserStatus, isUserOnline, requestUserStatus, requestOnlineUsers } = useUserPresence();
 
-  // Memoize search handler to prevent re-renders
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   }, []);
@@ -225,7 +224,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
     setSearchTerm('');
   }, []);
 
-  // Memoize utility functions to prevent re-renders
   const getConversationDisplayName = useCallback(
     (conversation: Conversation) => {
       if (!conversation) return 'Unknown';
@@ -346,11 +344,9 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
   const socket = useSocket('newMessage', (...args: unknown[]) => {
     const message = args[0] as Message;
 
-    // Directly update the messages cache instead of invalidating
     const cacheKey = ['messages', message.conversationId, 1, 50];
     queryClient.setQueryData(cacheKey, (old: any) => {
       if (!old) {
-        // If no data exists, create initial structure with the new message
         return {
           messages: [message],
           pagination: {
@@ -362,10 +358,8 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
         };
       }
 
-      // Remove any existing message with the same ID to prevent duplicates
       const filteredMessages = old.messages.filter((msg: Message) => msg.id !== message.id);
 
-      // Add the new message at the end (messages are in ascending order)
       return {
         ...old,
         messages: [...filteredMessages, message],
@@ -376,10 +370,8 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
       };
     });
 
-    // Only invalidate conversations to update last message preview
     queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
-    // Scroll to bottom when new message arrives in the current conversation
     if (message.conversationId === selectedConversation) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -396,11 +388,9 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
     }
   });
 
-  // Listen for reaction events
   useSocket('reactionAdded', (data: any) => {
     const { messageId, reaction } = data;
 
-    // Update ALL message queries, not just the specific page
     queryClient.setQueriesData({ queryKey: ['messages'] }, (old: any) => {
       if (!old) return old;
 
@@ -409,7 +399,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
         messages: old.messages.map((msg: Message) => {
           if (msg.id === messageId) {
             const existingReactions = msg.reactions || [];
-            // Check if this reaction already exists to prevent duplicates
             const reactionExists = existingReactions.some(
               (r: any) => r.userId === reaction.userId && r.emoji === reaction.emoji,
             );
@@ -452,16 +441,12 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
     });
   });
 
-  // Check socket connection status
   const isSocketConnected = socket?.connected || false;
 
-  // Trigger presence updates when socket connects
   useEffect(() => {
     if (socket?.connected) {
-      // Small delay to ensure connection is fully established
       setTimeout(() => {
         requestOnlineUsers();
-        // Also request status for all conversation participants immediately
         conversations.forEach((conversation) => {
           const participantId = getParticipantUserId(conversation);
           if (participantId) {
@@ -472,7 +457,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
     }
   }, [socket?.connected, requestOnlineUsers, conversations, getParticipantUserId, requestUserStatus]);
 
-  // Join conversation room when conversation is selected
   useEffect(() => {
     if (socket && selectedConversation) {
       socket.emit('joinConversation', { conversationId: selectedConversation });
@@ -483,13 +467,10 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
     }
   }, [socket, selectedConversation]);
 
-  // Request presence status when conversations load
   useEffect(() => {
     if (socket?.connected && conversations.length > 0) {
-      // Request online users list when conversations are loaded
       requestOnlineUsers();
 
-      // Request status for all conversation participants
       conversations.forEach((conversation) => {
         const participantId = getParticipantUserId(conversation);
         if (participantId) {
@@ -499,7 +480,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
     }
   }, [socket?.connected, conversations, requestOnlineUsers, requestUserStatus, getParticipantUserId]);
 
-  // Force presence refresh when user returns to chat page
   const hasMounted = useRef(false);
   useEffect(() => {
     if (!hasMounted.current) {
@@ -508,7 +488,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
     }
 
     if (socket?.connected && conversations.length > 0) {
-      // Multiple requests to ensure we get fresh data when returning
       const refreshPresence = () => {
         requestOnlineUsers();
         conversations.forEach((conversation) => {
@@ -519,15 +498,12 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
         });
       };
 
-      // Immediate refresh
       refreshPresence();
 
-      // Additional refresh after a short delay
       setTimeout(refreshPresence, 2000);
     }
-  }, [socket?.connected, conversations.length]); // Trigger when socket connects or conversations change
+  }, [socket?.connected, conversations.length]);
 
-  // Scroll to bottom when messages load or conversation changes
   useEffect(() => {
     if (messages.length > 0 && !isLoadingMessages) {
       setTimeout(() => {
@@ -536,7 +512,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
     }
   }, [messages.length, selectedConversation, isLoadingMessages]);
 
-  // Enhanced search functionality - memoized to prevent re-renders
   const filteredConversations = useMemo(() => {
     return conversations.filter((conversation) => {
       if (!searchTerm) return true;
@@ -547,7 +522,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
         const displayName = getConversationDisplayName(conversation);
         const lastMessage = getLastMessagePreview(conversation);
 
-        // Search in conversation name, last message content, and participant details
         const searchableText = [
           displayName || '',
           lastMessage || '',
@@ -566,13 +540,11 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
 
         return searchableText.includes(searchLower);
       } catch (error) {
-        // Handle search filter error silently in production
-        return true; // Show conversation if search fails
+        return true;
       }
     });
   }, [conversations, searchTerm, getConversationDisplayName, getLastMessagePreview]);
 
-  // Close sidebar when conversation is selected on mobile
   const handleConversationSelect = useCallback((conversationId: string) => {
     setSelectedConversation(conversationId);
     setShowSidebar(false);
@@ -685,22 +657,19 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
     }
   }, [selectedConversation, conversations, socket?.connected, getParticipantUserId, requestUserStatus]);
 
-  // Periodic status refresh
   useEffect(() => {
     if (!socket?.connected) return;
 
     const interval = setInterval(() => {
-      // Request online users list periodically
       requestOnlineUsers();
 
-      // Request individual status for conversation participants
       conversations.forEach((conversation) => {
         const participantId = getParticipantUserId(conversation);
         if (participantId) {
           requestUserStatus(participantId);
         }
       });
-    }, 15000); // Refresh every 15 seconds (more frequent)
+    }, 15000);
 
     return () => clearInterval(interval);
   }, [socket?.connected, conversations, getParticipantUserId, requestUserStatus, requestOnlineUsers]);
@@ -711,7 +680,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
 
     const messageContent = messageText.trim();
 
-    // Clear input immediately for instant feedback
     setMessageText('');
 
     sendMessage(
@@ -724,13 +692,11 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
       {
         onSuccess: () => {
           messageInputRef.current?.focus();
-          // Scroll to bottom after sending message
           setTimeout(() => {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
           }, 100);
         },
         onError: (error) => {
-          // Restore message text on error
           setMessageText(messageContent);
           toast.error('Failed to send message: ' + error.message);
         },
@@ -772,7 +738,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
         {/* Sidebar - Always visible on desktop, collapsible on mobile */}
         {!participantId && (
           <>
-            {/* Desktop Sidebar */}
             <div className='hidden md:flex w-72 lg:w-80 xl:w-96 flex-shrink-0' style={{ height }}>
               <SidebarContent
                 participantId={participantId}
@@ -795,7 +760,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
               />
             </div>
 
-            {/* Mobile Sidebar */}
             {showSidebar && (
               <div className='fixed inset-0 z-50 md:hidden'>
                 <div className='absolute inset-0 bg-black/50' onClick={() => setShowSidebar(false)} />
@@ -825,11 +789,9 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
           </>
         )}
 
-        {/* Main Chat Area */}
         <div className='flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden max-h-full'>
           {selectedConversation ? (
             <>
-              {/* Chat Header */}
               <div className='p-3 sm:p-4 border-b border-border/60 bg-muted/5 backdrop-blur-sm flex-shrink-0'>
                 <div className='flex items-center space-x-3'>
                   {!participantId && (
@@ -876,7 +838,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
                 </div>
               </div>
 
-              {/* Messages Area */}
               <div className='flex-1 min-h-0 max-h-full overflow-hidden'>
                 <ScrollArea className='h-full w-full'>
                   <div className='p-3 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 lg:space-y-4'>
@@ -906,21 +867,20 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
                           const prevMessage = index > 0 ? messages[index - 1] : null;
                           const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
 
-                          // Message grouping logic
                           const isGroupStart =
                             !prevMessage ||
                             prevMessage.authorId !== message.authorId ||
                             new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime() >
-                              5 * 60 * 1000; // 5 minutes
+                              5 * 60 * 1000;
 
                           const isGroupEnd =
                             !nextMessage ||
                             nextMessage.authorId !== message.authorId ||
                             new Date(nextMessage.createdAt).getTime() - new Date(message.createdAt).getTime() >
-                              5 * 60 * 1000; // 5 minutes
+                              5 * 60 * 1000;
 
-                          const showAvatar = isGroupEnd; // Only show avatar on the last message of a group
-                          const isGrouped = !isGroupStart; // Grouped if not the start of a group
+                          const showAvatar = isGroupEnd;
+                          const isGrouped = !isGroupStart;
 
                           const isOwn = message.authorId === currentUserId;
 
@@ -941,7 +901,6 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
                 </ScrollArea>
               </div>
 
-              {/* Message Input */}
               <div className='p-2 sm:p-3 md:p-4 lg:p-6 border-t border-border/60 bg-muted/5 backdrop-blur-sm flex-shrink-0'>
                 <form onSubmit={handleSendMessage} className='flex items-center space-x-2 sm:space-x-3'>
                   <div className='flex-1 flex items-center space-x-2 bg-background rounded-xl border border-muted-foreground/20 h-10 sm:h-11 md:h-12 px-3'>

@@ -36,7 +36,6 @@ export class ChatController {
     private chatGateway: ChatGateway
   ) {}
 
-  // Get conversations for the authenticated user
   @Get('conversations')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get conversations for the authenticated user' })
@@ -75,7 +74,6 @@ export class ChatController {
     }
   }
 
-  // Create or get conversation
   @Post('conversations')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create or get a conversation' })
@@ -136,7 +134,6 @@ export class ChatController {
     }
   }
 
-  // Get specific conversation
   @Get('conversations/:conversationId')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get conversation by ID' })
@@ -160,7 +157,6 @@ export class ChatController {
     }
   }
 
-  // Get messages for a conversation
   @Get('conversations/:conversationId/messages')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get messages in a conversation' })

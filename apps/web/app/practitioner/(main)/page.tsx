@@ -46,42 +46,23 @@ export default function PractitionerDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log('[PractitionerDashboard] Component mounted', {
-      status,
-      hasSession: !!session,
-      userRole: session?.user?.role,
-      userId: session?.user?.id,
-    });
-
     if (status !== 'loading') {
       setIsLoading(false);
     }
   }, [status, session]);
 
   useEffect(() => {
-    console.log('[PractitionerDashboard] Session update:', {
-      status,
-      hasSession: !!session,
-      userRole: session?.user?.role,
-      userName: session?.user ? `${session.user.firstName} ${session.user.lastName}` : null,
-    });
-  }, [session, status]);
-
-  // Handle navigation for unauthenticated users
-  useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/practitioner/auth');
     }
   }, [status, router]);
 
-  // Handle navigation for users with errors
   useEffect(() => {
     if (session?.error) {
       router.push('/practitioner/auth');
     }
   }, [session?.error, router]);
 
-  // Handle navigation for wrong role users
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.role !== 'PRACTITIONER') {
       if (session?.user?.role === 'CLIENT') {
@@ -92,7 +73,6 @@ export default function PractitionerDashboard() {
     }
   }, [status, session?.user?.role, router]);
 
-  // Mock data for Unread Messages and Unread Journals
   const unreadMessages = 2;
   const unreadJournals = 5;
 
@@ -100,9 +80,7 @@ export default function PractitionerDashboard() {
   const joinedClients = invitations.filter((inv) => inv.status === 'JOINED');
   const totalClients = invitations.length;
 
-  // Helper for Plan Engagement badge
   const getPlanEngagement = (client: any) => {
-    // For now, cycle through High/Medium/Low for demo
     const idx = joinedClients.findIndex((c) => c.id === client.id);
     const options = ['High', 'Medium', 'Low'];
     return options[idx % options.length];
@@ -129,7 +107,6 @@ export default function PractitionerDashboard() {
 
   return (
     <div className='flex flex-col w-full pt-6 px-4 sm:px-6 lg:px-8'>
-      {/* Header */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 w-full'>
         <h1 className='text-3xl font-semibold mb-4 sm:mb-0'>
           Welcome Back{user?.firstName ? ` Dr. ${user.firstName}` : ''}
@@ -141,9 +118,7 @@ export default function PractitionerDashboard() {
           <Link href='/practitioner/invite'>+ Invite Client</Link>
         </Button>
       </div>
-      {/* Stat Cards */}
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 w-full'>
-        {/* Total Clients Card */}
         <Card className='flex flex-col justify-between p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50'>
           <div className='flex justify-between items-start'>
             <div className='flex flex-col'>
@@ -156,7 +131,6 @@ export default function PractitionerDashboard() {
             </div>
           </div>
         </Card>
-        {/* Unread Messages Card */}
         <Card className='flex flex-col justify-between p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50'>
           <div className='flex justify-between items-start'>
             <div className='flex flex-col'>
@@ -169,7 +143,6 @@ export default function PractitionerDashboard() {
             </div>
           </div>
         </Card>
-        {/* Unread Journals Card */}
         <Card className='flex flex-col justify-between p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50'>
           <div className='flex justify-between items-start'>
             <div className='flex flex-col'>
@@ -183,7 +156,6 @@ export default function PractitionerDashboard() {
           </div>
         </Card>
       </div>
-      {/* Last Active Clients Table */}
       <Card className='rounded-2xl shadow-xl border-white/50 border bg-white/60 backdrop-blur-sm w-full'>
         <CardContent className='p-6'>
           <h2 className='text-xl font-semibold mb-4'>Last Active Clients</h2>

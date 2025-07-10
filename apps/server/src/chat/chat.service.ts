@@ -47,7 +47,6 @@ export class ChatService {
 
   async getOrCreateConversation(practitionerId: string, clientId: string) {
     try {
-      // First check if the users exist
       const practitioner = await this.prisma.user.findUnique({ where: { id: practitionerId } });
       const client = await this.prisma.user.findUnique({ where: { id: clientId } });
 
@@ -116,7 +115,6 @@ export class ChatService {
             },
           });
         } catch (createError) {
-          // If creation fails due to unique constraint, try to find the conversation again
           if (createError.code === 'P2002') {
             conversation = await this.prisma.conversation.findFirst({
               where: {
@@ -178,7 +176,6 @@ export class ChatService {
       },
     });
 
-    // Update conversation's updatedAt (only if it exists)
     try {
       await this.prisma.conversation.update({
         where: { id: data.conversationId },
@@ -254,14 +251,12 @@ export class ChatService {
   }
 
   async getConversationsByPractitioner(practitionerId: string) {
-    // First get all conversation IDs for this practitioner
     const conversationIds = await this.prisma.conversation.findMany({
       where: { practitionerId },
       select: { id: true, clientId: true },
       orderBy: { updatedAt: 'desc' },
     });
 
-    // Check which client IDs still exist
     const validClientIds = await this.prisma.user.findMany({
       where: {
         id: { in: conversationIds.map((c) => c.clientId) },
@@ -277,7 +272,6 @@ export class ChatService {
       return [];
     }
 
-    // Now get the full conversation data only for valid conversations
     const conversations = await this.prisma.conversation.findMany({
       where: {
         id: { in: validConversationIds },
@@ -317,14 +311,12 @@ export class ChatService {
   }
 
   async getConversationsByClient(clientId: string) {
-    // First get all conversation IDs for this client
     const conversationIds = await this.prisma.conversation.findMany({
       where: { clientId },
       select: { id: true, practitionerId: true },
       orderBy: { updatedAt: 'desc' },
     });
 
-    // Check which practitioner IDs still exist
     const validPractitionerIds = await this.prisma.user.findMany({
       where: {
         id: { in: conversationIds.map((c) => c.practitionerId) },
@@ -342,7 +334,6 @@ export class ChatService {
       return [];
     }
 
-    // Now get the full conversation data only for valid conversations
     const conversations = await this.prisma.conversation.findMany({
       where: {
         id: { in: validConversationIds },
@@ -411,7 +402,7 @@ export class ChatService {
     const result = await this.prisma.message.updateMany({
       where: {
         conversationId,
-        authorId: { not: userId }, // Don't mark own messages as read
+        authorId: { not: userId },
         readAt: null,
       },
       data: {
@@ -423,7 +414,6 @@ export class ChatService {
   }
 
   async addReaction(messageId: string, userId: string, emoji: string) {
-    // Check if message exists
     const message = await this.prisma.message.findUnique({
       where: { id: messageId },
     });
@@ -432,7 +422,6 @@ export class ChatService {
       throw new NotFoundException('Message not found');
     }
 
-    // Upsert reaction (add if doesn't exist, do nothing if exists)
     const reaction = await this.prisma.messageReaction.upsert({
       where: {
         messageId_userId_emoji: {
@@ -441,7 +430,7 @@ export class ChatService {
           emoji,
         },
       },
-      update: {}, // Do nothing if exists
+      update: {},
       create: {
         messageId,
         userId,
