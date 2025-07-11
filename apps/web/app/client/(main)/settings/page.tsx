@@ -1,22 +1,21 @@
 'use client';
 
+import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
+import { useGetCurrentUser, useUpdateProfile } from '@/lib/hooks/use-api';
+import { getAvatarUrl, getInitials, getUserDisplayName } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Button } from '@repo/ui/components/button';
-import { Card, CardContent } from '@repo/ui/components/card';
 import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/tabs';
 import { Switch } from '@repo/ui/components/switch';
-import { Trash2, Edit, Loader2, CheckCircle } from 'lucide-react';
-import { useGetCurrentUser } from '@/lib/hooks/use-api';
-import { getInitials, getAvatarUrl, getUserDisplayName } from '@/lib/utils';
+import { Edit, Loader2 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import React, { useRef, useState } from 'react';
-import { UserProfileCard } from '@/components/UserProfileCard';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
+import { toast } from 'sonner';
 
 export default function ClientSettingsPage() {
   const { data: user, isLoading } = useGetCurrentUser();
+  const updateProfileMutation = useUpdateProfile();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -29,24 +28,60 @@ export default function ClientSettingsPage() {
     if (user) {
       setFullName(getUserDisplayName(user));
       setEmail(user.email || '');
-      setPhone(''); // No phoneNumber on user type, keep as local state
+      setPhone(user.phoneNumber || '');
     }
   }, [user]);
 
-  // Mocked data for Medical History and Notifications
-  const [allergies, setAllergies] = useState(['Mindset', 'Growth', 'Positivity']);
-  const [medicalHistory, setMedicalHistory] = useState(['OCD', 'Anxiety']);
-  const [symptoms, setSymptoms] = useState(['Panic Attacks', 'Restlessness', 'Difficulty Concentrating']);
-  const [medications, setMedications] = useState(['Benzodiazepines', 'Xanax', 'Klonopin']);
+  // Medical History and Notifications from user data
+  const [allergies, setAllergies] = useState<string[]>(user?.allergies || []);
+  const [medicalHistory, setMedicalHistory] = useState<string[]>(user?.medicalHistory || []);
+  const [symptoms, setSymptoms] = useState<string[]>(user?.symptoms || []);
+  const [medications, setMedications] = useState<string[]>(user?.medications || []);
   const [notificationSettings, setNotificationSettings] = useState({
-    emailReminders: true,
-    practitionerMessages: true,
-    engagementPrompts: false,
-    marketingEmails: false,
+    emailReminders: user?.notificationSettings?.emailReminders ?? true,
+    practitionerMessages: user?.notificationSettings?.practitionerMessages ?? true,
+    engagementPrompts: user?.notificationSettings?.engagementPrompts ?? false,
+    marketingEmails: user?.notificationSettings?.marketingEmails ?? false,
   });
 
   const handleNotificationChange = (key: keyof typeof notificationSettings) => {
     setNotificationSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const addMedicalItem = (type: 'allergies' | 'medicalHistory' | 'symptoms' | 'medications', value: string) => {
+    if (!value.trim()) return;
+
+    switch (type) {
+      case 'allergies':
+        setAllergies((prev) => [...prev, value.trim()]);
+        break;
+      case 'medicalHistory':
+        setMedicalHistory((prev) => [...prev, value.trim()]);
+        break;
+      case 'symptoms':
+        setSymptoms((prev) => [...prev, value.trim()]);
+        break;
+      case 'medications':
+        setMedications((prev) => [...prev, value.trim()]);
+        break;
+    }
+  };
+
+  const removeMedicalItem = (type: 'allergies' | 'medicalHistory' | 'symptoms' | 'medications', index: number) => {
+    switch (type) {
+      case 'allergies':
+        setAllergies((prev) => prev.filter((_, i) => i !== index));
+        break;
+      case 'medicalHistory':
+        setMedicalHistory((prev) => prev.filter((_, i) => i !== index));
+        break;
+      case 'symptoms':
+        setSymptoms((prev) => prev.filter((_, i) => i !== index));
+        break;
+      case 'medications':
+        setMedications((prev) => prev.filter((_, i) => i !== index));
+        break;
+    }
   };
 
   const handleAvatarClick = () => {
@@ -65,19 +100,57 @@ export default function ClientSettingsPage() {
     }
   };
 
-  const handleSaveChanges = () => {
-    // TODO: Implement save logic
+  const handleSaveChanges = async () => {
+    if (!user) return;
+
+    try {
+      const formData = new FormData();
+
+      // Parse full name into firstName and lastName
+      const nameParts = fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      formData.append('firstName', firstName);
+      formData.append('lastName', lastName);
+      formData.append('phoneNumber', phone);
+      formData.append('allergies', JSON.stringify(allergies));
+      formData.append('medicalHistory', JSON.stringify(medicalHistory));
+      formData.append('symptoms', JSON.stringify(symptoms));
+      formData.append('medications', JSON.stringify(medications));
+      formData.append('notificationSettings', JSON.stringify(notificationSettings));
+
+      if (avatarFile) {
+        formData.append('profileImage', avatarFile);
+      }
+
+      await updateProfileMutation.mutateAsync(formData);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      toast.error('Failed to update profile');
+    }
   };
 
   return (
     <div className='py-8 sm:py-12 px-4 sm:px-8 w-full'>
       <div className='flex items-center justify-between mb-6'>
-        <h1 className='text-3xl font-semibold'>Profile Settings</h1>
+        <div className='flex items-center gap-4'>
+          <SidebarToggleButton />
+          <h1 className='text-3xl font-semibold'>Profile Settings</h1>
+        </div>
         <Button
           className='rounded-full px-6 py-2 text-base font-medium bg-black text-white hover:bg-gray-900 shadow-none'
           onClick={handleSaveChanges}
+          disabled={updateProfileMutation.isPending}
         >
-          Save Changes
+          {updateProfileMutation.isPending ? (
+            <>
+              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+              Saving...
+            </>
+          ) : (
+            'Save Changes'
+          )}
         </Button>
       </div>
       <div className='mb-8 w-full'>
@@ -190,8 +263,11 @@ export default function ClientSettingsPage() {
         </div>
       )}
       {activeTab === 'medical' && (
-        <div className='w-full max-w-2xl'>
-          <div className='w-full rounded-2xl border border-black bg-white mb-4'>
+        <div className='w-full'>
+          <div
+            className='w-full rounded-xl border border-[#BDBDBD] bg-white mb-4'
+            style={{ boxShadow: '0 0 0 0 transparent' }}
+          >
             <div className='p-10'>
               <h2 className='text-xl font-semibold mb-2'>Medical History</h2>
               <p className='text-gray-500 text-base mb-6'>Update your medical history</p>
@@ -200,11 +276,43 @@ export default function ClientSettingsPage() {
                   <Label htmlFor='allergies' className='text-base font-medium'>
                     Known Allergies
                   </Label>
-                  <Input id='allergies' placeholder='Enter allergies' className='mt-2' />
+                  <div className='flex gap-2 mt-2'>
+                    <Input
+                      id='allergies'
+                      placeholder='Enter allergies'
+                      className='flex-1'
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          addMedicalItem('allergies', e.currentTarget.value);
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                    />
+                    <Button
+                      type='button'
+                      onClick={() => {
+                        const input = document.getElementById('allergies') as HTMLInputElement;
+                        addMedicalItem('allergies', input.value);
+                        input.value = '';
+                      }}
+                      className='px-4'
+                    >
+                      Add
+                    </Button>
+                  </div>
                   <div className='flex flex-wrap gap-2 mt-2'>
                     {allergies.map((a, i) => (
-                      <span key={i} className='px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-sm'>
+                      <span
+                        key={i}
+                        className='px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-sm flex items-center gap-1'
+                      >
                         {a}
+                        <button
+                          onClick={() => removeMedicalItem('allergies', i)}
+                          className='text-red-500 hover:text-red-700'
+                        >
+                          ×
+                        </button>
                       </span>
                     ))}
                   </div>
@@ -213,11 +321,43 @@ export default function ClientSettingsPage() {
                   <Label htmlFor='medicalHistory' className='text-base font-medium'>
                     Relevant Medical History
                   </Label>
-                  <Input id='medicalHistory' placeholder='Enter medical history' className='mt-2' />
+                  <div className='flex gap-2 mt-2'>
+                    <Input
+                      id='medicalHistory'
+                      placeholder='Enter medical history'
+                      className='flex-1'
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          addMedicalItem('medicalHistory', e.currentTarget.value);
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                    />
+                    <Button
+                      type='button'
+                      onClick={() => {
+                        const input = document.getElementById('medicalHistory') as HTMLInputElement;
+                        addMedicalItem('medicalHistory', input.value);
+                        input.value = '';
+                      }}
+                      className='px-4'
+                    >
+                      Add
+                    </Button>
+                  </div>
                   <div className='flex flex-wrap gap-2 mt-2'>
                     {medicalHistory.map((m, i) => (
-                      <span key={i} className='px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-sm'>
+                      <span
+                        key={i}
+                        className='px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-sm flex items-center gap-1'
+                      >
                         {m}
+                        <button
+                          onClick={() => removeMedicalItem('medicalHistory', i)}
+                          className='text-red-500 hover:text-red-700'
+                        >
+                          ×
+                        </button>
                       </span>
                     ))}
                   </div>
@@ -226,11 +366,43 @@ export default function ClientSettingsPage() {
                   <Label htmlFor='symptoms' className='text-base font-medium'>
                     Current Symptoms
                   </Label>
-                  <Input id='symptoms' placeholder='Enter current symptoms' className='mt-2' />
+                  <div className='flex gap-2 mt-2'>
+                    <Input
+                      id='symptoms'
+                      placeholder='Enter current symptoms'
+                      className='flex-1'
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          addMedicalItem('symptoms', e.currentTarget.value);
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                    />
+                    <Button
+                      type='button'
+                      onClick={() => {
+                        const input = document.getElementById('symptoms') as HTMLInputElement;
+                        addMedicalItem('symptoms', input.value);
+                        input.value = '';
+                      }}
+                      className='px-4'
+                    >
+                      Add
+                    </Button>
+                  </div>
                   <div className='flex flex-wrap gap-2 mt-2'>
                     {symptoms.map((s, i) => (
-                      <span key={i} className='px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-sm'>
+                      <span
+                        key={i}
+                        className='px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-sm flex items-center gap-1'
+                      >
                         {s}
+                        <button
+                          onClick={() => removeMedicalItem('symptoms', i)}
+                          className='text-red-500 hover:text-red-700'
+                        >
+                          ×
+                        </button>
                       </span>
                     ))}
                   </div>
@@ -239,11 +411,43 @@ export default function ClientSettingsPage() {
                   <Label htmlFor='medications' className='text-base font-medium'>
                     Current Medications
                   </Label>
-                  <Input id='medications' placeholder='Enter current medications' className='mt-2' />
+                  <div className='flex gap-2 mt-2'>
+                    <Input
+                      id='medications'
+                      placeholder='Enter current medications'
+                      className='flex-1'
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          addMedicalItem('medications', e.currentTarget.value);
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                    />
+                    <Button
+                      type='button'
+                      onClick={() => {
+                        const input = document.getElementById('medications') as HTMLInputElement;
+                        addMedicalItem('medications', input.value);
+                        input.value = '';
+                      }}
+                      className='px-4'
+                    >
+                      Add
+                    </Button>
+                  </div>
                   <div className='flex flex-wrap gap-2 mt-2'>
                     {medications.map((m, i) => (
-                      <span key={i} className='px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-sm'>
+                      <span
+                        key={i}
+                        className='px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-sm flex items-center gap-1'
+                      >
                         {m}
+                        <button
+                          onClick={() => removeMedicalItem('medications', i)}
+                          className='text-red-500 hover:text-red-700'
+                        >
+                          ×
+                        </button>
                       </span>
                     ))}
                   </div>
@@ -254,8 +458,11 @@ export default function ClientSettingsPage() {
         </div>
       )}
       {activeTab === 'notifications' && (
-        <div className='w-full max-w-2xl'>
-          <div className='w-full rounded-2xl border border-black bg-white mb-4'>
+        <div className='w-full'>
+          <div
+            className='w-full rounded-xl border border-[#BDBDBD] bg-white mb-4'
+            style={{ boxShadow: '0 0 0 0 transparent' }}
+          >
             <div className='p-10'>
               <h2 className='text-xl font-semibold mb-2'>Email Notifications</h2>
               <p className='text-gray-500 text-base mb-6'>Manage how you receive notifications</p>

@@ -14,7 +14,7 @@ import {
   useGetClientJournalEntries,
 } from '@/lib/hooks/use-api';
 import { ActionItem, ActionItemCompletion, Plan, Resource, Session, User } from '@repo/db';
-import { Badge } from '@repo/ui/components/badge';
+
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Checkbox } from '@repo/ui/components/checkbox';
@@ -215,7 +215,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   };
 
   const handleRequestEndSession = (audioBlob: Blob, duration: string) => {
-    console.log('handleRequestEndSession called', { audioBlob, duration });
     setPendingAudioBlob(audioBlob);
     setPendingDuration(duration);
     setShowEndSessionModal(true);
@@ -708,42 +707,37 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
   const renderJournalTab = () => (
     <TabsContent value='journal' className='mt-0'>
-      <div className='space-y-4'>
-        {journalEntries.length === 0 ? (
-          <div className='text-center text-muted-foreground py-8'>No journal entries found for this client.</div>
-        ) : (
-          journalEntries.map((entry) => (
-            <Card key={entry.id} className='p-4'>
-              <div className='flex justify-between items-start mb-2'>
-                <div>
-                  <h3 className='font-semibold text-lg'>{entry.title || 'Untitled Entry'}</h3>
-                  <p className='text-sm text-gray-500'>
-                    {new Date(entry.createdAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
+      {journalEntries.length === 0 ? (
+        <div className='text-center text-muted-foreground py-8'>No journal entries found for this client.</div>
+      ) : (
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 min-w-0'>
+          {journalEntries.map((entry) => (
+            <Card
+              key={entry.id}
+              className='flex flex-col p-0 overflow-hidden h-48 sm:h-56 min-w-0 w-96 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50 hover:shadow-xl transition-shadow'
+            >
+              <div className='flex-1 p-4 overflow-hidden'>
+                <div className='font-semibold text-sm leading-tight text-gray-800 mb-2'>
+                  {entry.title || 'Untitled Entry'}
                 </div>
-                <div className='flex gap-2'>
-                  {entry.mood && <Badge variant='secondary'>{entry.mood}</Badge>}
-                  {entry.isPrivate && <Badge variant='outline'>Private</Badge>}
+                <div className='text-xs text-gray-500 mb-2'>
+                  {new Date(entry.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </div>
+                <div className='text-sm text-gray-600 line-clamp-3'>
+                  {/* Remove HTML tags for preview */}
+                  {entry.content.replace(/<[^>]*>/g, '').length > 100
+                    ? entry.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...'
+                    : entry.content.replace(/<[^>]*>/g, '')}
                 </div>
               </div>
-              <div className='prose prose-sm max-w-none' dangerouslySetInnerHTML={{ __html: entry.content }} />
-              {entry.tags.length > 0 && (
-                <div className='flex flex-wrap gap-1 mt-3'>
-                  {entry.tags.map((tag, index) => (
-                    <Badge key={index} variant='outline' className='text-xs'>
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
             </Card>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </TabsContent>
   );
 

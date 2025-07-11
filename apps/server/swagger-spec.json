@@ -90,6 +90,10 @@
       "post": {
         "operationId": "AuthController_clientSignUp",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientSignUpDto" } } }
+        },
         "responses": {
           "default": {
             "description": "",
@@ -197,6 +201,20 @@
         "responses": { "200": { "description": "List of clients retrieved successfully" } },
         "security": [{ "bearer": [] }],
         "summary": "Get all clients of the practitioner",
+        "tags": ["practitioner"]
+      }
+    },
+    "/api/practitioner/clients/{clientId}": {
+      "get": {
+        "operationId": "PractitionerController_getClientDetails",
+        "parameters": [{ "name": "clientId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Client details retrieved successfully" },
+          "403": { "description": "Forbidden - client does not belong to practitioner" },
+          "404": { "description": "Client not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Get detailed client information",
         "tags": ["practitioner"]
       }
     },
@@ -665,6 +683,70 @@
         "tags": ["action-items"]
       }
     },
+    "/api/journal": {
+      "post": {
+        "operationId": "JournalController_createJournalEntry",
+        "parameters": [],
+        "responses": { "201": { "description": "Journal entry created successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Create a new journal entry",
+        "tags": ["journal"]
+      },
+      "get": {
+        "operationId": "JournalController_getJournalEntries",
+        "parameters": [],
+        "responses": { "200": { "description": "Journal entries retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get all journal entries for the current user",
+        "tags": ["journal"]
+      }
+    },
+    "/api/journal/search": {
+      "get": {
+        "operationId": "JournalController_searchJournalEntries",
+        "parameters": [{ "name": "q", "required": true, "in": "query", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Search results retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Search journal entries",
+        "tags": ["journal"]
+      }
+    },
+    "/api/journal/{id}": {
+      "get": {
+        "operationId": "JournalController_getJournalEntryById",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Journal entry retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get a specific journal entry",
+        "tags": ["journal"]
+      },
+      "put": {
+        "operationId": "JournalController_updateJournalEntry",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Journal entry updated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Update a journal entry",
+        "tags": ["journal"]
+      },
+      "delete": {
+        "operationId": "JournalController_deleteJournalEntry",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Journal entry deleted successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Delete a journal entry",
+        "tags": ["journal"]
+      }
+    },
+    "/api/journal/client/{clientId}": {
+      "get": {
+        "operationId": "JournalController_getClientJournalEntries",
+        "parameters": [{ "name": "clientId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Client journal entries retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get journal entries for a specific client (practitioner only)",
+        "tags": ["journal"]
+      }
+    },
     "/api/chat/conversations": {
       "get": {
         "operationId": "ChatController_getConversations",
@@ -774,6 +856,22 @@
           "firstName": { "type": "string" },
           "lastName": { "type": "string", "nullable": true },
           "avatarUrl": { "type": "string", "nullable": true },
+          "phoneNumber": { "type": "string", "nullable": true },
+          "allergies": { "type": "array", "items": { "type": "string" }, "nullable": true },
+          "medicalHistory": { "type": "array", "items": { "type": "string" }, "nullable": true },
+          "symptoms": { "type": "array", "items": { "type": "string" }, "nullable": true },
+          "medications": { "type": "array", "items": { "type": "string" }, "nullable": true },
+          "notificationSettings": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": false,
+            "properties": {
+              "emailReminders": { "type": "boolean" },
+              "practitionerMessages": { "type": "boolean" },
+              "engagementPrompts": { "type": "boolean" },
+              "marketingEmails": { "type": "boolean" }
+            }
+          },
           "role": { "type": "string", "enum": ["PRACTITIONER", "CLIENT"] },
           "profession": { "type": "string", "nullable": true },
           "clientStatus": {
@@ -791,6 +889,12 @@
           "firstName",
           "lastName",
           "avatarUrl",
+          "phoneNumber",
+          "allergies",
+          "medicalHistory",
+          "symptoms",
+          "medications",
+          "notificationSettings",
           "role",
           "profession",
           "clientStatus",
@@ -816,6 +920,25 @@
           "profession": { "type": "string" }
         },
         "required": ["email", "otp", "role", "firstName", "profession"]
+      },
+      "ClientSignUpDto": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "invitationToken": { "type": "string" },
+          "dob": { "type": "string" },
+          "gender": { "type": "string" },
+          "profession": { "type": "string" },
+          "phoneNumber": { "type": "string" },
+          "allergies": { "type": "array", "items": { "type": "string" } },
+          "medicalHistory": { "type": "array", "items": { "type": "string" } },
+          "symptoms": { "type": "array", "items": { "type": "string" } },
+          "medications": { "type": "array", "items": { "type": "string" } },
+          "notificationSettings": { "type": "object" }
+        },
+        "required": ["email", "firstName", "invitationToken"]
       }
     }
   }

@@ -6,6 +6,17 @@ export type User = {
   firstName: string;
   lastName: string | null;
   avatarUrl: string | null;
+  phoneNumber?: string | null;
+  allergies?: string[] | null;
+  medicalHistory?: string[] | null;
+  symptoms?: string[] | null;
+  medications?: string[] | null;
+  notificationSettings?: {
+    emailReminders?: boolean;
+    practitionerMessages?: boolean;
+    engagementPrompts?: boolean;
+    marketingEmails?: boolean;
+  } | null;
   role: (typeof UserRole)[keyof typeof UserRole];
   profession: string | null;
   clientStatus?: (typeof ClientStatus)[keyof typeof ClientStatus];

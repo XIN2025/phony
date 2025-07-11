@@ -2,9 +2,6 @@
 
 import { Button } from '@repo/ui/components/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
-import { Input } from '@repo/ui/components/input';
-import { Label } from '@repo/ui/components/label';
-import { Switch } from '@repo/ui/components/switch';
 import {
   AlignCenter,
   AlignJustify,
@@ -71,10 +68,7 @@ const JournalEditors = () => {
   const [fontSize, setFontSize] = useState<number>(DEFAULT_FONT_SIZE);
   const [activeIndex, setActiveIndex] = useState(0);
   const [title, setTitle] = useState('');
-  const [mood, setMood] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [newTag, setNewTag] = useState('');
+
   const quillEditorRef = useRef<QuillEditorHandles>(null);
   const createJournalMutation = useCreateJournalEntry();
   const [notes, setNotes] = useState<NoteState[]>(
@@ -138,17 +132,6 @@ const JournalEditors = () => {
     }
   };
 
-  const handleAddTag = () => {
-    if (newTag.trim() && !tags.includes(newTag.trim())) {
-      setTags([...tags, newTag.trim()]);
-      setNewTag('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
-  };
-
   const handleSaveJournal = async () => {
     const combinedContent = notes
       .map((note, index) => {
@@ -164,14 +147,14 @@ const JournalEditors = () => {
       toast.error('Please add some content to your journal entry');
       return;
     }
-
+    if (!title.trim()) {
+      toast.error('Please add a title for your journal entry');
+      return;
+    }
     try {
       await createJournalMutation.mutateAsync({
-        title: title || undefined,
+        title,
         content: combinedContent,
-        mood: mood || undefined,
-        tags: tags.length > 0 ? tags : undefined,
-        isPrivate,
       });
       toast.success('Journal entry saved successfully');
       router.push('/client/journals');
@@ -198,7 +181,8 @@ const JournalEditors = () => {
   }
 
   return (
-    <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0'>
+    <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0 max-w-full'>
+      {/* Page header with back button and title */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <Link
@@ -226,76 +210,32 @@ const JournalEditors = () => {
         </Button>
       </div>
 
-      <div className='mb-6 space-y-4'>
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-          <div>
-            <Label htmlFor='title'>Title (Optional)</Label>
-            <Input
-              id='title'
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder='Give your entry a title...'
-              className='mt-1'
-            />
-          </div>
-          <div>
-            <Label htmlFor='mood'>Mood (Optional)</Label>
-            <Input
-              id='mood'
-              value={mood}
-              onChange={(e) => setMood(e.target.value)}
-              placeholder='How are you feeling?'
-              className='mt-1'
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label>Tags</Label>
-          <div className='flex gap-2 mt-1'>
-            <Input
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-              placeholder='Add a tag...'
-              className='flex-1'
-            />
-            <Button onClick={handleAddTag} variant='outline' size='sm'>
-              Add
-            </Button>
-          </div>
-          {tags.length > 0 && (
-            <div className='flex flex-wrap gap-2 mt-2'>
-              {tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className='px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm flex items-center gap-1'
-                >
-                  {tag}
-                  <button onClick={() => handleRemoveTag(tag)} className='text-gray-500 hover:text-gray-700'>
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className='flex items-center space-x-2'>
-          <Switch id='private' checked={isPrivate} onCheckedChange={setIsPrivate} />
-          <Label htmlFor='private'>Make this entry private (only visible to you)</Label>
-        </div>
+      {/* Journal title input */}
+      <div className='mb-4 w-full max-w-2xl'>
+        <label htmlFor='journal-title' className='block text-base font-semibold text-gray-800 mb-1'>
+          Journal Title
+        </label>
+        <input
+          id='journal-title'
+          type='text'
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder='Enter a title for your journal entry...'
+          className='w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all bg-white placeholder-gray-400 shadow-sm'
+          maxLength={100}
+          autoComplete='off'
+        />
       </div>
 
-      <div className='flex flex-col md:flex-row gap-6'>
+      <div className='flex flex-col md:flex-row gap-6 w-full items-start'>
         {[...Array(NUM_NOTES)].map((_, i) => {
           const toolbarId = `quill-toolbar-${i}`;
           return (
             <div
               key={i}
               className={
-                `relative flex-1 bg-transparent rounded-2xl shadow-lg border border-white/50 p-4 pt-8 flex flex-col transition-all duration-150 ` +
-                (activeIndex === i ? 'ring-2 ring-blue-500' : '')
+                `relative bg-transparent rounded-2xl shadow-lg border border-white/50 p-4 pt-8 flex flex-col transition-all duration-150 min-h-[260px] ` +
+                (activeIndex === i ? 'w-auto min-w-fit ' + 'ring-2 ring-blue-500' : 'w-96')
               }
               style={{ outline: 'none', cursor: 'pointer' }}
               onClick={() => {
@@ -326,35 +266,53 @@ const JournalEditors = () => {
               <div className='font-medium text-sm text-gray-700 mb-2 select-none'>{NOTE_TITLES[i]}</div>
               {activeIndex === i ? (
                 <>
-                  <div className='w-full -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto mb-4'>
+                  <div className='w-full mb-4'>
                     <div
                       id={toolbarId}
-                      className='flex items-center gap-2 bg-gray-100 rounded-full py-2 shadow whitespace-nowrap w-max min-w-full'
+                      className='flex flex-wrap lg:flex-nowrap items-center gap-1 bg-gray-100 rounded-lg p-2 shadow-sm'
                     >
-                      <Button type='button' variant='ghost' size='icon' onClick={handleUndo}>
-                        <Undo2 size={18} />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' onClick={handleRedo}>
-                        <Redo2 size={18} />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' onClick={handleDecreaseFont}>
-                        <Minus size={18} />
-                      </Button>
-                      <input
-                        type='number'
-                        min={8}
-                        max={100}
-                        value={fontSize}
-                        onChange={handleFontSizeInput}
-                        onBlur={handleFontSizeBlur}
-                        onKeyDown={handleFontSizeKeyDown}
-                        className='w-12 text-center rounded border border-gray-300 bg-white px-1 py-1 text-sm mx-1'
-                        style={{ appearance: 'textfield' }}
-                      />
-                      <Button type='button' variant='ghost' size='icon' onClick={handleIncreaseFont}>
-                        <Plus size={18} />
-                      </Button>
-                      <div className='flex items-center mx-1 min-w-[90px]'>
+                      <div className='flex items-center gap-1 flex-shrink-0'>
+                        <Button type='button' variant='ghost' size='icon' onClick={handleUndo} className='h-8 w-8'>
+                          <Undo2 size={16} />
+                        </Button>
+                        <Button type='button' variant='ghost' size='icon' onClick={handleRedo} className='h-8 w-8'>
+                          <Redo2 size={16} />
+                        </Button>
+                      </div>
+
+                      <div className='flex items-center gap-1 flex-shrink-0'>
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='icon'
+                          onClick={handleDecreaseFont}
+                          className='h-8 w-8'
+                        >
+                          <Minus size={16} />
+                        </Button>
+                        <input
+                          type='number'
+                          min={8}
+                          max={100}
+                          value={fontSize}
+                          onChange={handleFontSizeInput}
+                          onBlur={handleFontSizeBlur}
+                          onKeyDown={handleFontSizeKeyDown}
+                          className='w-12 text-center rounded border border-gray-300 bg-white px-1 py-1 text-xs mx-1 h-8'
+                          style={{ appearance: 'textfield' }}
+                        />
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='icon'
+                          onClick={handleIncreaseFont}
+                          className='h-8 w-8'
+                        >
+                          <Plus size={16} />
+                        </Button>
+                      </div>
+
+                      <div className='flex items-center flex-shrink-0'>
                         <Select
                           onValueChange={(val) => {
                             if (quillEditorRef.current) {
@@ -363,11 +321,8 @@ const JournalEditors = () => {
                           }}
                           defaultValue='roboto'
                         >
-                          <SelectTrigger className='min-w-[90px] w-auto max-w-xs whitespace-nowrap overflow-visible'>
-                            <SelectValue
-                              placeholder='Font'
-                              className='whitespace-nowrap overflow-visible text-ellipsis'
-                            />
+                          <SelectTrigger className='h-8 min-w-[80px] max-w-[100px] text-xs'>
+                            <SelectValue placeholder='Font' />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value='roboto'>Roboto</SelectItem>
@@ -377,66 +332,82 @@ const JournalEditors = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      <select className='ql-color mx-1'></select>
-                      <Button type='button' variant='ghost' size='icon' className='ql-bold'>
-                        <Bold size={18} />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' className='ql-italic'>
-                        <Italic size={18} />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' className='ql-underline'>
-                        <Underline size={18} />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' className='ql-align' value=''>
-                        <AlignLeft size={18} />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' className='ql-align' value='center'>
-                        <AlignCenter size={18} />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' className='ql-align' value='right'>
-                        <AlignRight size={18} />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' className='ql-align' value='justify'>
-                        <AlignJustify size={18} />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' className='ql-list' value='ordered'>
-                        <ListOrdered size={18} />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' className='ql-list' value='bullet'>
-                        <List size={18} />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' className='ql-image'>
-                        <Image size={18} />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' className='ql-link'>
-                        <LucideLink size={18} />
-                      </Button>
+
+                      <div className='flex items-center gap-1 flex-shrink-0'>
+                        <select className='ql-color mx-1 h-8 w-12 rounded border border-gray-300 bg-white text-xs'></select>
+                      </div>
+
+                      <div className='flex items-center gap-1 flex-shrink-0'>
+                        <Button type='button' variant='ghost' size='icon' className='ql-bold h-8 w-8'>
+                          <Bold size={16} />
+                        </Button>
+                        <Button type='button' variant='ghost' size='icon' className='ql-italic h-8 w-8'>
+                          <Italic size={16} />
+                        </Button>
+                        <Button type='button' variant='ghost' size='icon' className='ql-underline h-8 w-8'>
+                          <Underline size={16} />
+                        </Button>
+                      </div>
+
+                      <div className='flex items-center gap-1 flex-shrink-0'>
+                        <Button type='button' variant='ghost' size='icon' className='ql-align h-8 w-8' value=''>
+                          <AlignLeft size={16} />
+                        </Button>
+                        <Button type='button' variant='ghost' size='icon' className='ql-align h-8 w-8' value='center'>
+                          <AlignCenter size={16} />
+                        </Button>
+                        <Button type='button' variant='ghost' size='icon' className='ql-align h-8 w-8' value='right'>
+                          <AlignRight size={16} />
+                        </Button>
+                        <Button type='button' variant='ghost' size='icon' className='ql-align h-8 w-8' value='justify'>
+                          <AlignJustify size={16} />
+                        </Button>
+                      </div>
+
+                      <div className='flex items-center gap-1 flex-shrink-0'>
+                        <Button type='button' variant='ghost' size='icon' className='ql-list h-8 w-8' value='ordered'>
+                          <ListOrdered size={16} />
+                        </Button>
+                        <Button type='button' variant='ghost' size='icon' className='ql-list h-8 w-8' value='bullet'>
+                          <List size={16} />
+                        </Button>
+                      </div>
+
+                      <div className='flex items-center gap-1 flex-shrink-0'>
+                        <Button type='button' variant='ghost' size='icon' className='ql-image h-8 w-8'>
+                          <Image size={16} />
+                        </Button>
+                        <Button type='button' variant='ghost' size='icon' className='ql-link h-8 w-8'>
+                          <LucideLink size={16} />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  <QuillEditor
-                    ref={quillEditorRef}
-                    value={notes[i]?.content ?? ''}
-                    onChange={(val) =>
-                      setNotes((prev) => {
-                        const updated = [...prev];
-                        const prevNote = updated[i] ?? { content: '', history: { undo: [], redo: [] } };
-                        updated[i] = {
-                          ...prevNote,
-                          content: val,
-                          history: prevNote.history,
-                        };
-                        return updated;
-                      })
-                    }
-                    isActive={true}
-                    toolbarId={toolbarId}
-                  />
+                  <div className='flex-1 min-w-0'>
+                    <QuillEditor
+                      ref={quillEditorRef}
+                      value={notes[i]?.content ?? ''}
+                      onChange={(val) =>
+                        setNotes((prev) => {
+                          const updated = [...prev];
+                          const prevNote = updated[i] ?? { content: '', history: { undo: [], redo: [] } };
+                          updated[i] = {
+                            ...prevNote,
+                            content: val,
+                            history: prevNote.history,
+                          };
+                          return updated;
+                        })
+                      }
+                      isActive={true}
+                      toolbarId={toolbarId}
+                    />
+                  </div>
                 </>
               ) : (
                 <div
-                  className='ql-editor'
+                  className='ql-editor flex-1'
                   style={{
-                    flex: 1,
                     cursor: 'pointer',
                     padding: 0,
                     background: 'transparent',

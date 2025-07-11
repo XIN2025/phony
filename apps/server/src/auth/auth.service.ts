@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User, Invitation } from '@repo/db';
+import { User, Invitation, UserRole } from '@repo/db';
 import { User as UserDto } from '@repo/shared-types';
 import { generateOtp } from '../common/utils/auth.utils';
 import {
@@ -16,13 +16,19 @@ import {
 } from '../common/utils/user.utils';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { LoginResponseDto, ProfileUpdateBody } from './dto/auth.dto';
+import { LoginResponseDto, ProfileUpdateBody, ClientSignUpDto } from './dto/auth.dto';
 
 interface ProfileUpdateData {
   firstName?: string;
   lastName?: string;
   avatarUrl?: string;
   profession?: string;
+  phoneNumber?: string;
+  allergies?: string[];
+  medicalHistory?: string[];
+  symptoms?: string[];
+  medications?: string[];
+  notificationSettings?: object | null;
 }
 
 @Injectable()
@@ -46,7 +52,13 @@ export class AuthService {
       practitionerId: user.practitionerId ?? null,
       isEmailVerified: user.isEmailVerified,
       idProofUrl: user.idProofUrl ?? null,
-    };
+      phoneNumber: user.phoneNumber ?? null,
+      allergies: user.allergies ?? null,
+      medicalHistory: user.medicalHistory ?? null,
+      symptoms: user.symptoms ?? null,
+      medications: user.medications ?? null,
+      notificationSettings: user.notificationSettings ?? null,
+    } as UserDto;
   }
 
   async sendOtp(email: string): Promise<{ success: boolean }> {
@@ -146,15 +158,12 @@ export class AuthService {
     validateRequiredFields({ email, otp, invitationToken }, ['email', 'otp', 'invitationToken']);
     const normalizedEmail = normalizeEmail(email);
 
-    // Validate the invitation first
     const { invitation } = await this.validateInvitation(invitationToken);
 
-    // Check if email matches invitation
     if (invitation.clientEmail.toLowerCase() !== normalizedEmail) {
       throwAuthError('Email does not match the invitation', 'unauthorized');
     }
 
-    // Validate OTP (but don't delete it yet, we'll delete it when account is created)
     await this.validateOtp(email, otp, true);
 
     return {
@@ -272,25 +281,37 @@ export class AuthService {
     };
   }
 
-  async handleClientSignUp(
-    data: {
-      email: string;
-      firstName: string;
-      lastName?: string;
-      invitationToken: string;
-    },
-    file?: Express.Multer.File
-  ): Promise<LoginResponseDto> {
-    validateRequiredFields(data, ['email', 'firstName', 'invitationToken']);
-    const { email, firstName, lastName, invitationToken } = data;
+  async handleClientSignUp(data: ClientSignUpDto, file?: Express.Multer.File): Promise<LoginResponseDto> {
+    const {
+      email,
+      firstName,
+      lastName,
+      invitationToken,
+      dob,
+      gender,
+      profession,
+      phoneNumber,
+      allergies,
+      medicalHistory,
+      symptoms,
+      medications,
+      notificationSettings,
+    } = data;
+
+    validateRequiredFields({ email, firstName, invitationToken }, ['email', 'firstName', 'invitationToken']);
+
     const normalizedEmail = normalizeEmail(email);
     const normalizedFirstName = firstName.trim();
     const normalizedLastName = lastName?.trim() ?? '';
+
     const { invitation, isAccepted } = await this.validateInvitation(invitationToken);
+
     if (isAccepted) throwAuthError('This invitation has already been used', 'unauthorized');
     if (invitation.clientEmail.toLowerCase() !== normalizedEmail)
       throwAuthError('Email does not match the invitation', 'unauthorized');
+
     let user = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
+
     if (user) throwAuthError('An account with this email already exists', 'conflict');
     const clientStatus = determineClientStatus(invitation.intakeFormId || undefined);
 
@@ -305,16 +326,54 @@ export class AuthService {
       avatarUrl = `/uploads/${savedFilename}`;
     }
 
+    const userData = {
+      email: normalizedEmail,
+      firstName: normalizedFirstName,
+      lastName: normalizedLastName,
+      role: UserRole.CLIENT,
+      avatarUrl,
+      clientStatus,
+      practitionerId: invitation.practitionerId,
+      dob: dob || '',
+      gender: gender || '',
+      profession: profession || '',
+      phoneNumber: phoneNumber || '',
+      allergies: allergies || [],
+      medicalHistory:
+        typeof medicalHistory === 'string'
+          ? (() => {
+              try {
+                return JSON.parse(medicalHistory);
+              } catch {
+                return [];
+              }
+            })()
+          : medicalHistory || [],
+      symptoms:
+        typeof symptoms === 'string'
+          ? (() => {
+              try {
+                return JSON.parse(symptoms);
+              } catch {
+                return [];
+              }
+            })()
+          : symptoms || [],
+      medications:
+        typeof medications === 'string'
+          ? (() => {
+              try {
+                return JSON.parse(medications);
+              } catch {
+                return [];
+              }
+            })()
+          : medications || [],
+      notificationSettings: notificationSettings || null,
+    };
+
     user = await this.prismaService.user.create({
-      data: {
-        email: normalizedEmail,
-        firstName: normalizedFirstName,
-        lastName: normalizedLastName,
-        role: 'CLIENT',
-        avatarUrl,
-        clientStatus,
-        practitionerId: invitation.practitionerId,
-      },
+      data: userData,
       include: { clients: true },
     });
 
@@ -372,8 +431,6 @@ export class AuthService {
       include: { clients: true },
     });
 
-    if (!user) throwAuthError('User not found', 'notFound');
-
     return this.toUserDto(user);
   }
 
@@ -386,6 +443,49 @@ export class AuthService {
     if (body.firstName) dataToUpdate.firstName = body.firstName;
     if (body.lastName || body.lastName === '') dataToUpdate.lastName = body.lastName;
     if (body.profession) dataToUpdate.profession = body.profession;
+    if (body.phoneNumber !== undefined) dataToUpdate.phoneNumber = body.phoneNumber;
+
+    if (body.allergies) {
+      try {
+        dataToUpdate.allergies = typeof body.allergies === 'string' ? JSON.parse(body.allergies) : body.allergies;
+      } catch {
+        dataToUpdate.allergies = [];
+      }
+    }
+    if (body.medicalHistory) {
+      try {
+        dataToUpdate.medicalHistory =
+          typeof body.medicalHistory === 'string' ? JSON.parse(body.medicalHistory) : body.medicalHistory;
+      } catch {
+        dataToUpdate.medicalHistory = [];
+      }
+    }
+    if (body.symptoms) {
+      try {
+        dataToUpdate.symptoms = typeof body.symptoms === 'string' ? JSON.parse(body.symptoms) : body.symptoms;
+      } catch {
+        dataToUpdate.symptoms = [];
+      }
+    }
+    if (body.medications) {
+      try {
+        dataToUpdate.medications =
+          typeof body.medications === 'string' ? JSON.parse(body.medications) : body.medications;
+      } catch {
+        dataToUpdate.medications = [];
+      }
+    }
+    if (body.notificationSettings) {
+      try {
+        const notificationSettings =
+          typeof body.notificationSettings === 'string'
+            ? JSON.parse(body.notificationSettings)
+            : body.notificationSettings;
+        dataToUpdate.notificationSettings = notificationSettings;
+      } catch {
+        dataToUpdate.notificationSettings = null;
+      }
+    }
 
     if (file && file.buffer) {
       const validation = validateFileUpload(file);

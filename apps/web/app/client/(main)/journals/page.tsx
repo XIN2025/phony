@@ -1,6 +1,5 @@
 'use client';
 import { Card, CardContent } from '@repo/ui/components/card';
-import { Avatar, AvatarFallback } from '@repo/ui/components/avatar';
 import { Input } from '@repo/ui/components/input';
 import { Button } from '@repo/ui/components/button';
 import { MoreVertical, Plus, Search, Edit, Trash2 } from 'lucide-react';
@@ -24,8 +23,7 @@ export default function JournalsPage() {
   const filteredEntries = journalEntries.filter(
     (entry) =>
       entry.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())),
+      entry.content.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleDeleteJournal = async (entryId: string) => {
@@ -105,48 +103,27 @@ export default function JournalsPage() {
                 </div>
                 <div className='text-xs text-gray-500 mb-2'>{formatDate(entry.createdAt)}</div>
                 <div className='text-sm text-gray-600 line-clamp-3'>{getEntryPreview(entry.content)}</div>
-                {entry.tags.length > 0 && (
-                  <div className='flex flex-wrap gap-1 mt-2'>
-                    {entry.tags.slice(0, 3).map((tag, index) => (
-                      <span key={index} className='px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full'>
-                        {tag}
-                      </span>
-                    ))}
-                    {entry.tags.length > 3 && (
-                      <span className='px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full'>
-                        +{entry.tags.length - 3}
-                      </span>
-                    )}
-                  </div>
-                )}
               </div>
-              <CardContent className='flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-transparent border-t border-gray-200/60 min-w-0'>
-                <div className='min-w-0 flex-1'>
-                  <div className='text-xs text-gray-500'>{entry.isPrivate ? 'Private' : 'Public'}</div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      className='ml-2 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 hover:bg-gray-200/50'
-                    >
-                      <MoreVertical className='h-4 w-4 sm:h-5 sm:w-5 text-gray-500' />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/client/journals/${entry.id}`}>
-                        <Edit className='mr-2 h-4 w-4' />
-                        Edit
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDeleteJournal(entry.id)} className='text-red-600'>
-                      <Trash2 className='mr-2 h-4 w-4' />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <CardContent className='flex items-center justify-end gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-transparent border-t border-gray-200/60 min-w-0'>
+                <Link href={`/client/journals/${entry.id}`}>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-sm font-medium border border-gray-300 hover:bg-gray-100 transition-colors'
+                    aria-label='Edit journal entry'
+                  >
+                    <Edit className='h-4 w-4 mr-1' /> Edit
+                  </Button>
+                </Link>
+                <Button
+                  variant='destructive'
+                  size='sm'
+                  className='flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-sm font-medium border border-gray-300 hover:bg-red-50 transition-colors'
+                  aria-label='Delete journal entry'
+                  onClick={() => handleDeleteJournal(entry.id)}
+                >
+                  <Trash2 className='h-4 w-4 mr-1' /> Delete
+                </Button>
               </CardContent>
             </Card>
           ))}

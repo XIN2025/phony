@@ -56,6 +56,70 @@ export class PractitionerSignUpDto implements VerifyOtpRequest {
   profession: string;
 }
 
+export class ClientSignUpDto {
+  @ApiProperty()
+  @IsEmail()
+  email: string;
+
+  @ApiProperty()
+  @IsString()
+  firstName: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  lastName?: string;
+
+  @ApiProperty()
+  @IsString()
+  invitationToken: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  dob?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  gender?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  profession?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  phoneNumber?: string;
+
+  @ApiProperty({ required: false, type: [String] })
+  @IsOptional()
+  allergies?: string[];
+
+  @ApiProperty({ required: false, type: [String] })
+  @IsOptional()
+  medicalHistory?: string[];
+
+  @ApiProperty({ required: false, type: [String] })
+  @IsOptional()
+  symptoms?: string[];
+
+  @ApiProperty({ required: false, type: [String] })
+  @IsOptional()
+  medications?: string[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  notificationSettings?: {
+    emailReminders?: boolean;
+    practitionerMessages?: boolean;
+    engagementPrompts?: boolean;
+    marketingEmails?: boolean;
+  };
+}
+
 export class UserDto implements User {
   @ApiProperty()
   @IsString()
@@ -84,6 +148,65 @@ export class UserDto implements User {
   @IsString()
   @IsOptional()
   avatarUrl: string | null;
+
+  @ApiProperty({
+    type: 'string',
+    nullable: true,
+  })
+  @IsString()
+  @IsOptional()
+  phoneNumber?: string | null;
+
+  @ApiProperty({
+    type: 'array',
+    items: { type: 'string' },
+    nullable: true,
+  })
+  @IsOptional()
+  allergies?: string[] | null;
+
+  @ApiProperty({
+    type: 'array',
+    items: { type: 'string' },
+    nullable: true,
+  })
+  @IsOptional()
+  medicalHistory?: string[] | null;
+
+  @ApiProperty({
+    type: 'array',
+    items: { type: 'string' },
+    nullable: true,
+  })
+  @IsOptional()
+  symptoms?: string[] | null;
+
+  @ApiProperty({
+    type: 'array',
+    items: { type: 'string' },
+    nullable: true,
+  })
+  @IsOptional()
+  medications?: string[] | null;
+
+  @ApiProperty({
+    type: 'object',
+    nullable: true,
+    additionalProperties: false,
+    properties: {
+      emailReminders: { type: 'boolean' },
+      practitionerMessages: { type: 'boolean' },
+      engagementPrompts: { type: 'boolean' },
+      marketingEmails: { type: 'boolean' },
+    },
+  })
+  @IsOptional()
+  notificationSettings?: {
+    emailReminders?: boolean;
+    practitionerMessages?: boolean;
+    engagementPrompts?: boolean;
+    marketingEmails?: boolean;
+  } | null;
 
   @ApiProperty({
     type: 'string',
@@ -144,5 +267,16 @@ export interface ProfileUpdateBody {
   firstName?: string;
   lastName?: string;
   profession?: string;
+  phoneNumber?: string;
+  allergies?: string[];
+  medicalHistory?: string[];
+  symptoms?: string[];
+  medications?: string[];
+  notificationSettings?: {
+    emailReminders?: boolean;
+    practitionerMessages?: boolean;
+    engagementPrompts?: boolean;
+    marketingEmails?: boolean;
+  };
   [key: string]: unknown;
 }

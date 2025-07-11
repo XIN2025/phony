@@ -76,4 +76,15 @@ export class PractitionerController {
     const practitionerId = req.user.id;
     return this.practitionerService.getClients(practitionerId);
   }
+
+  @Get('clients/:clientId')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get detailed client information' })
+  @ApiResponse({ status: 200, description: 'Client details retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Client not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - client does not belong to practitioner' })
+  async getClientDetails(@Request() req, @Param('clientId') clientId: string) {
+    const practitionerId = req.user.id;
+    return this.practitionerService.getClientDetails(practitionerId, clientId);
+  }
 }

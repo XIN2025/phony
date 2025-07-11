@@ -227,6 +227,77 @@ export class PractitionerService {
     }));
   }
 
+  async getClientDetails(practitionerId: string, clientId: string) {
+    const client = await this.prismaService.user.findFirst({
+      where: {
+        id: clientId,
+        practitionerId: practitionerId,
+        role: UserRole.CLIENT,
+      },
+    });
+
+    if (!client) {
+      throwAuthError('Client not found or you do not have permission to view this client', 'notFound');
+    }
+
+    // Get intake form submission count
+    const submissionCount = await this.prismaService.intakeFormSubmission.count({
+      where: { clientId: clientId },
+    });
+
+    // Get latest intake form submission if any
+    const latestSubmission = await this.prismaService.intakeFormSubmission.findFirst({
+      where: { clientId: clientId },
+      include: {
+        form: {
+          include: {
+            questions: true,
+          },
+        },
+        answers: true,
+      },
+      orderBy: { submittedAt: 'desc' },
+    });
+
+    // Parse notification settings if they exist
+    let notificationSettings = null;
+    if (client.notificationSettings) {
+      try {
+        notificationSettings =
+          typeof client.notificationSettings === 'string'
+            ? JSON.parse(client.notificationSettings)
+            : client.notificationSettings;
+      } catch (error) {
+        notificationSettings = null;
+      }
+    }
+
+    return {
+      id: client.id,
+      email: client.email,
+      firstName: client.firstName,
+      lastName: client.lastName,
+      phoneNumber: client.phoneNumber,
+      avatarUrl: client.avatarUrl,
+      clientStatus: client.clientStatus,
+      createdAt: client.createdAt,
+      updatedAt: client.updatedAt,
+      // Personal information
+      dob: client.dob || '',
+      gender: client.gender || '',
+      profession: client.profession || '',
+      // Medical information
+      allergies: client.allergies || [],
+      medicalHistory: client.medicalHistory || [],
+      symptoms: client.symptoms || [],
+      medications: client.medications || [],
+      notificationSettings,
+      // Intake form information
+      hasCompletedIntake: submissionCount > 0,
+      intakeFormSubmission: latestSubmission,
+    };
+  }
+
   async deleteInvitation(practitionerId: string, invitationId: string) {
     const invitation = await this.prismaService.invitation.findFirst({
       where: { id: invitationId, practitionerId },

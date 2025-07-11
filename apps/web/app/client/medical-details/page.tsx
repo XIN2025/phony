@@ -74,7 +74,8 @@ export default function MedicalDetailsPage() {
       medications: medications || '',
     });
 
-    const { email, firstName, lastName, invitationToken, profileImage } = signUpData;
+    const { email, firstName, lastName, invitationToken, profileImage, phoneNumber, dob, gender, occupation } =
+      signUpData;
 
     if (!email || !firstName || !invitationToken) {
       toast.error('Missing required information. Please go back and complete the form.');
@@ -89,6 +90,26 @@ export default function MedicalDetailsPage() {
     if (lastName) formData.append('lastName', lastName);
     formData.append('invitationToken', invitationToken);
     if (profileImage) formData.append('profileImage', profileImage);
+
+    // Add personal details
+    if (phoneNumber) formData.append('phoneNumber', phoneNumber);
+    if (dob) formData.append('dob', dob);
+    if (gender) formData.append('gender', gender);
+    if (occupation) formData.append('profession', occupation);
+
+    // Add medical details
+    if (medicalHistory) {
+      const medicalHistoryArray = medicalHistory.split('\n').filter((item) => item.trim());
+      formData.append('medicalHistory', JSON.stringify(medicalHistoryArray));
+    }
+    if (symptoms) {
+      const symptomsArray = symptoms.split('\n').filter((item) => item.trim());
+      formData.append('symptoms', JSON.stringify(symptomsArray));
+    }
+    if (medications) {
+      const medicationsArray = medications.split('\n').filter((item) => item.trim());
+      formData.append('medications', JSON.stringify(medicationsArray));
+    }
 
     const toastId = toast.loading('Creating your account...');
 
@@ -106,7 +127,6 @@ export default function MedicalDetailsPage() {
           });
 
           if (signInResult?.error) {
-            console.error('Failed to sign in after account creation:', signInResult.error);
             toast.error('Account created but failed to sign in. Please try logging in manually.');
             router.push('/client/auth');
             return;
@@ -127,13 +147,11 @@ export default function MedicalDetailsPage() {
               },
               onError: (checkError) => {
                 // If check fails, assume no intake form and redirect to response sent
-                console.warn('Failed to check intake form, redirecting to response sent:', checkError);
                 router.push(`/client/response-sent?token=${token}`);
               },
             },
           );
         } catch (signInError) {
-          console.error('Error during sign in:', signInError);
           toast.error('Account created but failed to sign in. Please try logging in manually.');
           router.push('/client/auth');
         }

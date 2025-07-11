@@ -3,19 +3,13 @@ import { PrismaService } from '../prisma/prisma.service';
 
 interface CreateJournalEntryDto {
   clientId: string;
-  title?: string;
+  title: string;
   content: string;
-  mood?: string;
-  tags?: string[];
-  isPrivate?: boolean;
 }
 
 interface UpdateJournalEntryDto {
   title?: string;
   content?: string;
-  mood?: string;
-  tags?: string[];
-  isPrivate?: boolean;
 }
 
 @Injectable()
@@ -28,11 +22,13 @@ export class JournalService {
         clientId: data.clientId,
         title: data.title,
         content: data.content,
-        mood: data.mood,
-        tags: data.tags || [],
-        isPrivate: data.isPrivate || false,
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
         client: {
           select: {
             id: true,
@@ -44,13 +40,17 @@ export class JournalService {
     });
   }
 
-  async getJournalEntries(clientId: string, includePrivate: boolean = true) {
+  async getJournalEntries(clientId: string) {
     return await this.prisma.journalEntry.findMany({
       where: {
         clientId,
-        ...(includePrivate ? {} : { isPrivate: false }),
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
         client: {
           select: {
             id: true,
@@ -69,7 +69,12 @@ export class JournalService {
         id: entryId,
         ...(clientId && { clientId }),
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
         client: {
           select: {
             id: true,
@@ -90,12 +95,14 @@ export class JournalService {
       data: {
         title: data.title,
         content: data.content,
-        mood: data.mood,
-        tags: data.tags,
-        isPrivate: data.isPrivate,
         updatedAt: new Date(),
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
         client: {
           select: {
             id: true,
@@ -117,7 +124,6 @@ export class JournalService {
   }
 
   async getClientJournalEntries(clientId: string, practitionerId?: string) {
-    // If practitionerId is provided, verify the client belongs to this practitioner
     if (practitionerId) {
       const client = await this.prisma.user.findFirst({
         where: {
@@ -133,9 +139,13 @@ export class JournalService {
     return await this.prisma.journalEntry.findMany({
       where: {
         clientId,
-        isPrivate: false, // Practitioners can only see public entries
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
         client: {
           select: {
             id: true,
@@ -148,18 +158,21 @@ export class JournalService {
     });
   }
 
-  async searchJournalEntries(clientId: string, searchTerm: string, includePrivate: boolean = true) {
+  async searchJournalEntries(clientId: string, searchTerm: string) {
     return await this.prisma.journalEntry.findMany({
       where: {
         clientId,
-        ...(includePrivate ? {} : { isPrivate: false }),
         OR: [
           { title: { contains: searchTerm, mode: 'insensitive' } },
           { content: { contains: searchTerm, mode: 'insensitive' } },
-          { tags: { hasSome: [searchTerm] } },
         ],
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
         client: {
           select: {
             id: true,

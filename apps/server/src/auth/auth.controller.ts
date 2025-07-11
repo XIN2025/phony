@@ -11,7 +11,14 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
-import { LoginResponseDto, OtpAuthDto, VerifyOtpDto, PractitionerSignUpDto, ProfileUpdateBody } from './dto/auth.dto';
+import {
+  LoginResponseDto,
+  OtpAuthDto,
+  VerifyOtpDto,
+  PractitionerSignUpDto,
+  ClientSignUpDto,
+  ProfileUpdateBody,
+} from './dto/auth.dto';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -78,7 +85,7 @@ export class AuthController {
   @UseInterceptors(FileInterceptor('profileImage', { storage: memoryStorage() }))
   @ApiResponse({ type: LoginResponseDto })
   async clientSignUp(
-    @Body() body: { email: string; firstName: string; lastName?: string; invitationToken: string },
+    @Body() body: ClientSignUpDto,
     @UploadedFile() file?: Express.Multer.File
   ): Promise<LoginResponseDto> {
     return this.authService.handleClientSignUp(body, file);

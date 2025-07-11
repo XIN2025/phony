@@ -833,7 +833,7 @@ export function useUpdatePlan() {
 export function useGetClient(clientId: string) {
   return useQuery({
     queryKey: ['client', clientId],
-    queryFn: () => ApiClient.get<any>(`/api/users/${clientId}`),
+    queryFn: () => ApiClient.get<any>(`/api/practitioner/clients/${clientId}`),
     enabled: !!clientId,
     staleTime: 5 * 60 * 1000,
   });
@@ -865,9 +865,6 @@ export interface JournalEntry {
   id: string;
   title?: string;
   content: string;
-  mood?: string;
-  tags: string[];
-  isPrivate: boolean;
   createdAt: Date;
   updatedAt: Date;
   client: {
@@ -877,10 +874,10 @@ export interface JournalEntry {
   };
 }
 
-export function useGetJournalEntries(includePrivate: boolean = true) {
+export function useGetJournalEntries() {
   return useQuery({
-    queryKey: ['journal-entries', includePrivate],
-    queryFn: () => ApiClient.get<JournalEntry[]>(`/api/journal?includePrivate=${includePrivate}`),
+    queryKey: ['journal-entries'],
+    queryFn: () => ApiClient.get<JournalEntry[]>('/api/journal'),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -898,8 +895,7 @@ export function useCreateJournalEntry() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { title?: string; content: string; mood?: string; tags?: string[]; isPrivate?: boolean }) =>
-      ApiClient.post<JournalEntry>('/api/journal', data),
+    mutationFn: (data: { title: string; content: string }) => ApiClient.post<JournalEntry>('/api/journal', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
     },

@@ -6,19 +6,13 @@ import { CurrentUser } from '../auth/decorators/user.decorator';
 import { RequestUser } from '../auth/dto/request-user.dto';
 
 interface CreateJournalEntryDto {
-  title?: string;
+  title: string;
   content: string;
-  mood?: string;
-  tags?: string[];
-  isPrivate?: boolean;
 }
 
 interface UpdateJournalEntryDto {
   title?: string;
   content?: string;
-  mood?: string;
-  tags?: string[];
-  isPrivate?: boolean;
 }
 
 @Controller('journal')
@@ -41,21 +35,15 @@ export class JournalController {
   @Get()
   @ApiOperation({ summary: 'Get all journal entries for the current user' })
   @ApiResponse({ status: 200, description: 'Journal entries retrieved successfully.' })
-  async getJournalEntries(@CurrentUser() user: RequestUser, @Query('includePrivate') includePrivate?: string) {
-    const includePrivateBool = includePrivate === 'true';
-    return await this.journalService.getJournalEntries(user.id, includePrivateBool);
+  async getJournalEntries(@CurrentUser() user: RequestUser) {
+    return await this.journalService.getJournalEntries(user.id);
   }
 
   @Get('search')
   @ApiOperation({ summary: 'Search journal entries' })
   @ApiResponse({ status: 200, description: 'Search results retrieved successfully.' })
-  async searchJournalEntries(
-    @CurrentUser() user: RequestUser,
-    @Query('q') searchTerm: string,
-    @Query('includePrivate') includePrivate?: string
-  ) {
-    const includePrivateBool = includePrivate === 'true';
-    return await this.journalService.searchJournalEntries(user.id, searchTerm, includePrivateBool);
+  async searchJournalEntries(@CurrentUser() user: RequestUser, @Query('q') searchTerm: string) {
+    return await this.journalService.searchJournalEntries(user.id, searchTerm);
   }
 
   @Get(':id')

@@ -15,9 +15,17 @@ model User {
   email           String   @unique
   firstName       String
   lastName        String?
+  dob             String?
+  gender          String?
   idProofUrl      String?
   profession      String?
   avatarUrl       String?  @map("avatar_url")
+  phoneNumber     String?
+  allergies       String[]
+  medicalHistory  String[]
+  symptoms        String[]
+  medications     String[]
+  notificationSettings Json?
   role            UserRole
   isEmailVerified Boolean  @default(false) @map("is_email_verified")
   isActive        Boolean  @default(true) @map("is_active")
@@ -336,9 +344,6 @@ model JournalEntry {
   client        User     @relation("ClientJournalEntries", fields: [clientId], references: [id], onDelete: Cascade)
   title         String?
   content       String
-  mood          String?
-  tags          String[]
-  isPrivate     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
