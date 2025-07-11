@@ -57,7 +57,7 @@ export const SidebarContent = ({
         className='flex items-center gap-2 sm:gap-3 w-full text-left focus:outline-none rounded-lg p-1.5 cursor-pointer min-w-0'
         onClick={() => {
           setSidebarOpen(false);
-          router.push('/practitioner/settings');
+          router.push(settingsPath);
         }}
         aria-label='View Profile'
         type='button'

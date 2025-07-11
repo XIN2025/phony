@@ -175,30 +175,29 @@ export function IntakeFormBuilder({
   };
 
   const handleFormSubmit = (formData: any) => {
-    // Basic validation
     if (!formData.title || formData.title.trim() === '') {
       alert('Please enter a form title');
       return;
     }
 
-    if (!formData.questions || formData.questions.length === 0) {
+    const questions = Array.isArray(formData.questions) ? formData.questions : [];
+
+    if (questions.length === 0) {
       alert('Please add at least one question');
       return;
     }
 
-    // Check that all questions have titles
-    for (let i = 0; i < formData.questions.length; i++) {
-      const question = formData.questions[i];
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i];
       if (!question.title || question.title.trim() === '') {
         alert(`Please enter a title for question ${i + 1}`);
         return;
       }
     }
 
-    // Ensure options have the value field populated
     const processedFormData = {
       ...formData,
-      questions: formData.questions.map((question: any) => ({
+      questions: questions.map((question: any) => ({
         ...question,
         options:
           question.options?.map((option: any) => ({
@@ -311,17 +310,17 @@ export function IntakeFormBuilder({
             {form.watch(`questions.${index}.type`) === QuestionType.DROPDOWN && (
               <QuestionOptions questionIndex={index} control={form.control} register={form.register} form={form} />
             )}
-            <div className='flex items-center space-x-2 pt-4'>
-              <Checkbox
-                id={`required-${index}`}
-                checked={form.watch(`questions.${index}.required`)}
-                onCheckedChange={(checked) => form.setValue(`questions.${index}.required`, Boolean(checked))}
-              />
-              <Label htmlFor={`required-${index}`} className='text-sm font-medium'>
-                Required question
-              </Label>
-            </div>
-            <div className='flex justify-end items-center gap-2 pt-4 mt-4'>
+            <div className='flex items-center justify-between pt-4'>
+              <div className='flex items-center space-x-2'>
+                <Checkbox
+                  id={`required-${index}`}
+                  checked={form.watch(`questions.${index}.required`)}
+                  onCheckedChange={(checked) => form.setValue(`questions.${index}.required`, Boolean(checked))}
+                />
+                <Label htmlFor={`required-${index}`} className='text-sm font-medium'>
+                  Required question
+                </Label>
+              </div>
               <Button type='button' variant='ghost' size='icon' onClick={() => remove(index)}>
                 <Trash2 className='h-5 w-5' />
               </Button>

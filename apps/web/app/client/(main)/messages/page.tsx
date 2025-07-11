@@ -4,32 +4,22 @@ import { Menu } from 'lucide-react';
 import { Button } from '@repo/ui/components/button';
 import { useSidebar } from '@/context/SidebarContext';
 import { ChatContainer } from '@/components/chat';
-import { PageHeader } from '@/components/PageHeader';
+import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 
 const ClientMessagesPage = () => {
   const { setSidebarOpen } = useSidebar();
   return (
-    <div className='flex flex-col h-screen w-full overflow-hidden min-w-0'>
-      <PageHeader
-        title='Messages'
-        subtitle='Communicate with your practitioner'
-        showBackButton={false}
-        className='bg-muted/5'
-        leftElement={
-          <Button
-            variant='ghost'
-            size='icon'
-            className='lg:hidden h-8 w-8 sm:h-10 sm:w-10'
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className='h-4 w-4 sm:h-5 sm:w-5' />
-            <span className='sr-only'>Toggle sidebar</span>
-          </Button>
-        }
-      />
+    <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0 h-screen'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
+        <div className='flex items-center gap-2 min-w-0'>
+          <SidebarToggleButton />
+          <h1 className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'>Messages</h1>
+        </div>
+        <div className='text-sm sm:text-base text-gray-600'>Communicate with your practitioner</div>
+      </div>
 
-      <div className='flex-1 min-h-0 overflow-hidden p-1 min-w-0'>
-        <ChatContainer height='calc(100vh - 180px)' className='w-full h-full' />
+      <div className='flex-1 min-h-0 overflow-hidden bg-transparent rounded-2xl'>
+        <ChatContainer height='calc(100vh - 240px)' className='w-full h-full rounded-2xl' />
       </div>
     </div>
   );

@@ -27,6 +27,7 @@ import Link from 'next/link';
 import { Badge } from '@repo/ui/components/badge';
 import { useGetClientPlans, useCompleteActionItem, useGetCurrentUser } from '@/lib/hooks/use-api';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 
 interface ActionItem {
   id: string;
@@ -236,110 +237,144 @@ const ClientPage = () => {
   };
 
   return (
-    <div className='p-3 sm:p-4 lg:p-6 flex flex-col flex-1 h-full w-full gap-3 sm:gap-4 min-w-0'>
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2'>
-        <div className='flex items-center gap-2'>
-          <Button variant='ghost' size='icon' className='lg:hidden' onClick={() => setSidebarOpen(true)}>
-            <Menu className='h-5 w-5 sm:h-6 sm:w-6' />
-            <span className='sr-only'>Toggle sidebar</span>
-          </Button>
-          <h1 className='text-xl sm:text-2xl lg:text-3xl font-bold truncate'>
+    <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
+        <div className='flex items-center gap-2 min-w-0'>
+          <SidebarToggleButton />
+          <h1 className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'>
             {userLoading ? 'Loading...' : `Good Morning ${currentUser?.firstName || 'User'}`}
           </h1>
         </div>
       </div>
-      <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-2 w-full max-w-xl'>
-        <Card>
-          <CardContent className='flex flex-col items-start justify-center p-3 sm:p-4'>
-            <span className='text-xl sm:text-2xl lg:text-3xl font-bold'>{avgCompletion}%</span>
-            <span className='text-xs sm:text-sm text-muted-foreground'>Avg Daily Tasks Completion</span>
-          </CardContent>
+
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10 w-full'>
+        <Card className='flex flex-col justify-between p-4 sm:p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50'>
+          <div className='flex justify-between items-start'>
+            <div className='flex flex-col min-w-0 flex-1'>
+              <span className='text-xs sm:text-sm font-medium text-gray-600'>Avg Daily Tasks Completion</span>
+              <span className='text-2xl sm:text-3xl lg:text-4xl font-bold'>{avgCompletion}%</span>
+              <span className='text-xs text-green-600 mt-1'>+5% from last week</span>
+            </div>
+            <div className='p-2 sm:p-3 bg-gray-200/50 rounded-full flex-shrink-0 ml-2'>
+              <Target className='h-4 w-4 sm:h-6 sm:w-6 text-gray-700' />
+            </div>
+          </div>
         </Card>
-        <Card>
-          <CardContent className='flex flex-col items-start justify-center p-3 sm:p-4'>
-            <span className='text-xl sm:text-2xl lg:text-3xl font-bold'>{tasksPending}</span>
-            <span className='text-xs sm:text-sm text-muted-foreground'>Tasks Pending</span>
-          </CardContent>
+        <Card className='flex flex-col justify-between p-4 sm:p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50'>
+          <div className='flex justify-between items-start'>
+            <div className='flex flex-col min-w-0 flex-1'>
+              <span className='text-xs sm:text-sm font-medium text-gray-600'>Tasks Pending</span>
+              <span className='text-2xl sm:text-3xl lg:text-4xl font-bold'>{tasksPending}</span>
+              <span className='text-xs text-transparent mt-1'>&nbsp;</span>
+            </div>
+            <div className='p-2 sm:p-3 bg-gray-200/50 rounded-full flex-shrink-0 ml-2'>
+              <Clock className='h-4 w-4 sm:h-6 sm:w-6 text-gray-700' />
+            </div>
+          </div>
         </Card>
       </div>
-      <div className='rounded-xl border border-gray-400 dark:border-gray-700 p-3 sm:p-4 lg:p-6 flex flex-col gap-4 sm:gap-6 min-w-0'>
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2'>
-          <h2 className='text-lg sm:text-xl font-semibold mb-2 sm:mb-0'>Tasks</h2>
-          <div className='flex flex-wrap gap-2 sm:justify-end'>
-            <Button variant='outline' size='sm' className='text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2'>
-              Select Date
-            </Button>
-            <Button variant='outline' size='sm' className='text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2'>
-              All Tasks
-            </Button>
-            <Button variant='outline' size='sm' className='text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2'>
-              Pending
-            </Button>
-            <Button variant='outline' size='sm' className='text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2'>
-              Completed
-            </Button>
-          </div>
-        </div>
-        <div>
-          <h2 className='text-lg sm:text-xl font-semibold mb-2'>Mandatory tasks for the week</h2>
-          <div className='flex flex-col gap-3'>
-            {mandatoryTasks.map((task) => (
-              <Card
-                key={task.id}
-                className='border border-border cursor-pointer hover:shadow-lg transition'
-                onClick={() => handleTaskCardClick(task)}
+
+      <Card className='rounded-2xl shadow-xl border-white/50 border bg-white/60 backdrop-blur-sm w-full min-w-0'>
+        <CardContent className='p-4 sm:p-6'>
+          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3'>
+            <h2 className='text-lg sm:text-xl font-semibold'>Tasks</h2>
+            <div className='flex flex-wrap gap-2 justify-start sm:justify-end'>
+              <Button
+                variant='outline'
+                size='sm'
+                className='text-xs sm:text-sm px-3 py-2 rounded-full bg-transparent border-gray-300 hover:bg-gray-50'
               >
-                <CardContent className='flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 gap-2'>
-                  <div className='flex items-start gap-2 w-full flex-col sm:flex-row sm:items-center'>
-                    <Checkbox checked={task.completed} disabled className='mb-2 sm:mb-0' />
-                    <div className='flex-1 min-w-0'>
-                      <span className='font-semibold text-sm sm:text-base truncate block'>{task.title}</span>
-                      <span className='block text-xs text-muted-foreground'>Duration: {task.duration}</span>
-                      {task.feedback && (
-                        <span className='block text-xs text-muted-foreground flex items-center gap-1 mt-1'>
-                          Feedback <Info className='h-3 w-3' />
+                Select Date
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                className='text-xs sm:text-sm px-3 py-2 rounded-full bg-transparent border-gray-300 hover:bg-gray-50'
+              >
+                All Tasks
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                className='text-xs sm:text-sm px-3 py-2 rounded-full bg-transparent border-gray-300 hover:bg-gray-50'
+              >
+                Pending
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                className='text-xs sm:text-sm px-3 py-2 rounded-full bg-transparent border-gray-300 hover:bg-gray-50'
+              >
+                Completed
+              </Button>
+            </div>
+          </div>
+
+          <div className='mb-6 sm:mb-8'>
+            <h3 className='text-base sm:text-lg font-semibold mb-3 sm:mb-4'>Mandatory tasks for the week</h3>
+            <div className='flex flex-col gap-3 sm:gap-4'>
+              {mandatoryTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className='border border-gray-200/60 rounded-xl p-3 sm:p-4 cursor-pointer hover:bg-gray-50/30 transition-colors bg-transparent'
+                  onClick={() => handleTaskCardClick(task)}
+                >
+                  <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3'>
+                    <div className='flex items-start gap-2 sm:gap-3 w-full min-w-0'>
+                      <Checkbox checked={task.completed} disabled className='mt-0.5 flex-shrink-0' />
+                      <div className='flex-1 min-w-0'>
+                        <span className='font-semibold text-sm sm:text-base truncate block text-gray-800'>
+                          {task.title}
                         </span>
+                        <span className='block text-xs sm:text-sm text-gray-600'>Duration: {task.duration}</span>
+                        {task.feedback && (
+                          <span className='block text-xs text-gray-600 flex items-center gap-1 mt-1'>
+                            Feedback <Info className='h-3 w-3' />
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className='flex flex-wrap items-center gap-2 mt-2 sm:mt-0'>
+                      {task.mandatory && (
+                        <Badge variant='outline' className='text-xs bg-red-100 text-red-700 border-red-200'>
+                          Mandatory
+                        </Badge>
                       )}
                     </div>
                   </div>
-                  <div className='flex flex-wrap items-center gap-2 mt-2 sm:mt-0'>
-                    {task.mandatory && (
-                      <Badge variant='outline' className='text-xs'>
-                        Mandatory
-                      </Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-        <div>
-          <h2 className='text-lg sm:text-xl font-semibold mb-2'>Daily Tasks</h2>
-          <div className='flex flex-col gap-3'>
-            {dailyTasks.map((task) => (
-              <Card
-                key={task.id}
-                className='border border-border cursor-pointer hover:shadow-lg transition'
-                onClick={() => handleTaskCardClick(task)}
-              >
-                <CardContent className='flex flex-col sm:flex-row items-center justify-between p-3 sm:p-4 gap-2'>
-                  <div className='flex items-center gap-2 w-full min-w-0'>
-                    <Checkbox checked={task.completed} disabled />
-                    <div className='flex flex-col min-w-0 flex-1'>
-                      <span className='font-semibold text-sm sm:text-base truncate'>{task.title}</span>
-                      <span className='text-xs text-muted-foreground'>Duration: {task.duration}</span>
+
+          <div>
+            <h3 className='text-base sm:text-lg font-semibold mb-3 sm:mb-4'>Daily Tasks</h3>
+            <div className='flex flex-col gap-3 sm:gap-4'>
+              {dailyTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className='border border-gray-200/60 rounded-xl p-3 sm:p-4 cursor-pointer hover:bg-gray-50/30 transition-colors bg-transparent'
+                  onClick={() => handleTaskCardClick(task)}
+                >
+                  <div className='flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3'>
+                    <div className='flex items-center gap-2 sm:gap-3 w-full min-w-0'>
+                      <Checkbox checked={task.completed} disabled className='flex-shrink-0' />
+                      <div className='flex flex-col min-w-0 flex-1'>
+                        <span className='font-semibold text-sm sm:text-base truncate text-gray-800'>{task.title}</span>
+                        <span className='text-xs sm:text-sm text-gray-600'>Duration: {task.duration}</span>
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
+
       {/* Feedback Modal */}
       <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-        <DialogContent className='test-center-modal max-w-sm sm:max-w-md p-6 sm:p-8 flex flex-col items-center rounded-2xl mx-4'>
+        <DialogContent className='max-w-sm sm:max-w-md p-6 sm:p-8 flex flex-col items-center rounded-2xl mx-4 bg-white/95 backdrop-blur-sm'>
           <DialogTitle asChild>
             <VisuallyHidden>Was this task helpful?</VisuallyHidden>
           </DialogTitle>

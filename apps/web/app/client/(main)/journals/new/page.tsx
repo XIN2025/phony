@@ -25,6 +25,7 @@ import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import { useEffect, useRef, useState } from 'react';
 import QuillEditor, { QuillEditorHandles } from '../QuillEditor';
+import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 
 const Font = (Quill as any).import('formats/font');
 if (Font) {
@@ -141,9 +142,10 @@ const JournalEditors = () => {
   }
 
   return (
-    <div className='flex flex-col flex-1 h-full w-full p-6 gap-6'>
-      <div className='flex items-center justify-between w-full py-4 px-2 md:px-0'>
-        <div className='flex items-center gap-3 min-w-0'>
+    <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
+        <div className='flex items-center gap-2 min-w-0'>
+          <SidebarToggleButton />
           <Link
             href='/client/journals'
             className='rounded-full p-2 hover:bg-gray-100 text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors'
@@ -151,16 +153,18 @@ const JournalEditors = () => {
           >
             <ArrowLeft size={22} />
           </Link>
-          <h1 className='text-lg md:text-xl font-semibold text-gray-900 truncate'>{getTodayDateString()}</h1>
+          <h1 className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'>
+            {getTodayDateString()}
+          </h1>
         </div>
         <button
           type='button'
-          className='bg-black text-white rounded-full px-4 py-2 text-sm font-medium shadow-sm hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400'
+          className='bg-black text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium shadow-sm hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 w-full sm:w-auto'
         >
           Publish Entry
         </button>
       </div>
-      <div className='border-b border-gray-200 mb-2' />
+
       <div className='flex flex-col md:flex-row gap-6'>
         {[...Array(NUM_NOTES)].map((_, i) => {
           const toolbarId = `quill-toolbar-${i}`;
@@ -168,8 +172,8 @@ const JournalEditors = () => {
             <div
               key={i}
               className={
-                `relative flex-1 bg-gray-200 rounded-xl shadow-md p-4 pt-8 flex flex-col transition-all duration-150 ` +
-                (activeIndex === i ? 'ring-2 ring-blue-500' : 'border border-gray-200')
+                `relative flex-1 bg-transparent rounded-2xl shadow-lg border border-white/50 p-4 pt-8 flex flex-col transition-all duration-150 ` +
+                (activeIndex === i ? 'ring-2 ring-blue-500' : '')
               }
               style={{ outline: 'none', cursor: 'pointer' }}
               onClick={() => {

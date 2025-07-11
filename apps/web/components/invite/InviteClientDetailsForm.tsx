@@ -42,7 +42,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
           name='clientFirstName'
           control={control}
           render={({ field }) => (
-            <Input id='clientFirstName' placeholder='Your first name' {...field} className='rounded-lg shadow-sm' />
+            <Input id='clientFirstName' placeholder="Client's first name" {...field} className='rounded-lg shadow-sm' />
           )}
         />
         {errors.clientFirstName && <p className='text-sm text-destructive'>{errors.clientFirstName.message}</p>}
@@ -55,7 +55,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
           name='clientLastName'
           control={control}
           render={({ field }) => (
-            <Input id='clientLastName' placeholder='Your last name' {...field} className='rounded-lg shadow-sm' />
+            <Input id='clientLastName' placeholder="Client's last name" {...field} className='rounded-lg shadow-sm' />
           )}
         />
         {errors.clientLastName && <p className='text-sm text-destructive'>{errors.clientLastName.message}</p>}

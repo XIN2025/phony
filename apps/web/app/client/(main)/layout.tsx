@@ -44,8 +44,8 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className='relative min-h-screen w-full'>
-      {/* Simple background for main client area */}
-      <div className='absolute inset-0 z-0 bg-background' />
+      {/* Gradient background - matching practitioner style */}
+      <div className='absolute inset-0 z-0 bg-gradient-to-r from-red-100 via-yellow-50 to-blue-50' />
       <div className='relative z-20 grid min-h-screen w-full lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr]'>
         <div className='hidden bg-transparent lg:block'>
           <PractitionerSidebarContent
@@ -56,7 +56,7 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
           />
         </div>
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side='left' className='w-[280px] sm:w-[320px] p-0'>
+          <SheetContent side='left' className='w-[280px] sm:w-[320px] p-0 bg-transparent'>
             <SheetHeader className='sr-only'>
               <SheetTitle>Navigation Menu</SheetTitle>
             </SheetHeader>
@@ -69,8 +69,9 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
           </SheetContent>
         </Sheet>
         <div className='flex flex-1 flex-col min-w-0'>
-          {/* Removed logo at the top for mobile/tablet */}
-          <main className='flex-1 min-w-0'>{children}</main>
+          <main className='flex-1 flex justify-center items-start bg-transparent min-w-0'>
+            <div className='w-full min-w-0'>{children}</div>
+          </main>
         </div>
       </div>
     </div>
@@ -80,7 +81,9 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
 export default function ClientMainLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <ClientLayoutContent>{children}</ClientLayoutContent>
+      <div className='min-h-screen w-full font-sans'>
+        <ClientLayoutContent>{children}</ClientLayoutContent>
+      </div>
     </SidebarProvider>
   );
 }
