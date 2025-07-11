@@ -145,7 +145,6 @@ const JournalEditors = () => {
     <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0'>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
-          <SidebarToggleButton />
           <Link
             href='/client/journals'
             className='rounded-full p-2 hover:bg-gray-100 text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors'
@@ -204,90 +203,92 @@ const JournalEditors = () => {
               <div className='font-medium text-sm text-gray-700 mb-2 select-none'>{NOTE_TITLES[i]}</div>
               {activeIndex === i ? (
                 <>
-                  <div
-                    id={toolbarId}
-                    className='flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2 shadow mb-4'
-                  >
-                    <Button type='button' variant='ghost' size='icon' onClick={handleUndo}>
-                      <Undo2 size={18} />
-                    </Button>
-                    <Button type='button' variant='ghost' size='icon' onClick={handleRedo}>
-                      <Redo2 size={18} />
-                    </Button>
-                    <Button type='button' variant='ghost' size='icon' onClick={handleDecreaseFont}>
-                      <Minus size={18} />
-                    </Button>
-                    <input
-                      type='number'
-                      min={8}
-                      max={100}
-                      value={fontSize}
-                      onChange={handleFontSizeInput}
-                      onBlur={handleFontSizeBlur}
-                      onKeyDown={handleFontSizeKeyDown}
-                      className='w-12 text-center rounded border border-gray-300 bg-white px-1 py-1 text-sm mx-1'
-                      style={{ appearance: 'textfield' }}
-                    />
-                    <Button type='button' variant='ghost' size='icon' onClick={handleIncreaseFont}>
-                      <Plus size={18} />
-                    </Button>
-                    <div className='flex items-center mx-1 min-w-[90px]'>
-                      <Select
-                        onValueChange={(val) => {
-                          if (quillEditorRef.current) {
-                            quillEditorRef.current.setFontFamily(val.toLowerCase());
-                          }
-                        }}
-                        defaultValue='roboto'
-                      >
-                        <SelectTrigger className='min-w-[90px] w-auto max-w-xs whitespace-nowrap overflow-visible'>
-                          <SelectValue
-                            placeholder='Font'
-                            className='whitespace-nowrap overflow-visible text-ellipsis'
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='roboto'>Roboto</SelectItem>
-                          <SelectItem value='serif'>Serif</SelectItem>
-                          <SelectItem value='sans-serif'>Sans Serif</SelectItem>
-                          <SelectItem value='monospace'>Monospace</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  <div className='w-full -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto mb-4'>
+                    <div
+                      id={toolbarId}
+                      className='flex items-center gap-2 bg-gray-100 rounded-full py-2 shadow whitespace-nowrap w-max min-w-full'
+                    >
+                      <Button type='button' variant='ghost' size='icon' onClick={handleUndo}>
+                        <Undo2 size={18} />
+                      </Button>
+                      <Button type='button' variant='ghost' size='icon' onClick={handleRedo}>
+                        <Redo2 size={18} />
+                      </Button>
+                      <Button type='button' variant='ghost' size='icon' onClick={handleDecreaseFont}>
+                        <Minus size={18} />
+                      </Button>
+                      <input
+                        type='number'
+                        min={8}
+                        max={100}
+                        value={fontSize}
+                        onChange={handleFontSizeInput}
+                        onBlur={handleFontSizeBlur}
+                        onKeyDown={handleFontSizeKeyDown}
+                        className='w-12 text-center rounded border border-gray-300 bg-white px-1 py-1 text-sm mx-1'
+                        style={{ appearance: 'textfield' }}
+                      />
+                      <Button type='button' variant='ghost' size='icon' onClick={handleIncreaseFont}>
+                        <Plus size={18} />
+                      </Button>
+                      <div className='flex items-center mx-1 min-w-[90px]'>
+                        <Select
+                          onValueChange={(val) => {
+                            if (quillEditorRef.current) {
+                              quillEditorRef.current.setFontFamily(val.toLowerCase());
+                            }
+                          }}
+                          defaultValue='roboto'
+                        >
+                          <SelectTrigger className='min-w-[90px] w-auto max-w-xs whitespace-nowrap overflow-visible'>
+                            <SelectValue
+                              placeholder='Font'
+                              className='whitespace-nowrap overflow-visible text-ellipsis'
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value='roboto'>Roboto</SelectItem>
+                            <SelectItem value='serif'>Serif</SelectItem>
+                            <SelectItem value='sans-serif'>Sans Serif</SelectItem>
+                            <SelectItem value='monospace'>Monospace</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <select className='ql-color mx-1'></select>
+                      <Button type='button' variant='ghost' size='icon' className='ql-bold'>
+                        <Bold size={18} />
+                      </Button>
+                      <Button type='button' variant='ghost' size='icon' className='ql-italic'>
+                        <Italic size={18} />
+                      </Button>
+                      <Button type='button' variant='ghost' size='icon' className='ql-underline'>
+                        <Underline size={18} />
+                      </Button>
+                      <Button type='button' variant='ghost' size='icon' className='ql-align' value=''>
+                        <AlignLeft size={18} />
+                      </Button>
+                      <Button type='button' variant='ghost' size='icon' className='ql-align' value='center'>
+                        <AlignCenter size={18} />
+                      </Button>
+                      <Button type='button' variant='ghost' size='icon' className='ql-align' value='right'>
+                        <AlignRight size={18} />
+                      </Button>
+                      <Button type='button' variant='ghost' size='icon' className='ql-align' value='justify'>
+                        <AlignJustify size={18} />
+                      </Button>
+                      <Button type='button' variant='ghost' size='icon' className='ql-list' value='ordered'>
+                        <ListOrdered size={18} />
+                      </Button>
+                      <Button type='button' variant='ghost' size='icon' className='ql-list' value='bullet'>
+                        <List size={18} />
+                      </Button>
+                      <Button type='button' variant='ghost' size='icon' className='ql-image'>
+                        <Image size={18} />
+                      </Button>
+                      <Button type='button' variant='ghost' size='icon' className='ql-link'>
+                        <LucideLink size={18} />
+                      </Button>
                     </div>
-                    <select className='ql-color mx-1'></select>
-                    <Button type='button' variant='ghost' size='icon' className='ql-bold'>
-                      <Bold size={18} />
-                    </Button>
-                    <Button type='button' variant='ghost' size='icon' className='ql-italic'>
-                      <Italic size={18} />
-                    </Button>
-                    <Button type='button' variant='ghost' size='icon' className='ql-underline'>
-                      <Underline size={18} />
-                    </Button>
-                    <Button type='button' variant='ghost' size='icon' className='ql-align' value=''>
-                      <AlignLeft size={18} />
-                    </Button>
-                    <Button type='button' variant='ghost' size='icon' className='ql-align' value='center'>
-                      <AlignCenter size={18} />
-                    </Button>
-                    <Button type='button' variant='ghost' size='icon' className='ql-align' value='right'>
-                      <AlignRight size={18} />
-                    </Button>
-                    <Button type='button' variant='ghost' size='icon' className='ql-align' value='justify'>
-                      <AlignJustify size={18} />
-                    </Button>
-                    <Button type='button' variant='ghost' size='icon' className='ql-list' value='ordered'>
-                      <ListOrdered size={18} />
-                    </Button>
-                    <Button type='button' variant='ghost' size='icon' className='ql-list' value='bullet'>
-                      <List size={18} />
-                    </Button>
-                    <Button type='button' variant='ghost' size='icon' className='ql-image'>
-                      <Image size={18} />
-                    </Button>
-                    <Button type='button' variant='ghost' size='icon' className='ql-link'>
-                      <LucideLink size={18} />
-                    </Button>
                   </div>
                   <QuillEditor
                     ref={quillEditorRef}

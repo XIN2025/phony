@@ -83,19 +83,19 @@ export default function ClientSettingsPage() {
       <div className='mb-8 w-full'>
         <div className='inline-flex bg-[#F6F6F6] border border-[#D9D9D9] rounded-full p-1'>
           <button
-            className={`px-8 py-2 rounded-full text-base font-semibold transition-all ${activeTab === 'profile' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
+            className={`px-4 py-1 rounded-full text-sm font-medium transition-all ${activeTab === 'profile' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
             onClick={() => setActiveTab('profile')}
           >
             Profile
           </button>
           <button
-            className={`px-8 py-2 rounded-full text-base font-semibold transition-all ${activeTab === 'medical' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
+            className={`px-4 py-1 rounded-full text-sm font-medium transition-all ${activeTab === 'medical' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
             onClick={() => setActiveTab('medical')}
           >
             Medical History
           </button>
           <button
-            className={`px-8 py-2 rounded-full text-base font-semibold transition-all ${activeTab === 'notifications' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
+            className={`px-4 py-1 rounded-full text-sm font-medium transition-all ${activeTab === 'notifications' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
             onClick={() => setActiveTab('notifications')}
           >
             Notifications

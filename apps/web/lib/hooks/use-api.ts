@@ -693,6 +693,22 @@ export function useGeneratePlan() {
   });
 }
 
+export function useGenerateMoreTasks() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (planId: string) => ApiClient.post<any>(`/api/plans/${planId}/generate-more-tasks`),
+    onSuccess: (_, planId) => {
+      // Force refetch the plan data immediately
+      queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+      queryClient.invalidateQueries({ queryKey: ['planData'] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['plans'] });
+      queryClient.invalidateQueries({ queryKey: ['client-plans'] });
+    },
+  });
+}
+
 export function useGetPlanWithSuggestions(planId: string) {
   return useQuery({
     queryKey: ['planData', planId],
@@ -719,8 +735,11 @@ export function useApproveSuggestion() {
 
   return useMutation({
     mutationFn: (suggestionId: string) => ApiClient.post(`/api/plans/suggestions/${suggestionId}/approve`),
-    onSuccess: (_, planId) => {
-      queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+    onSuccess: () => {
+      // Invalidate all plan data queries since we don't have the planId in the response
+      queryClient.invalidateQueries({ queryKey: ['planData'] });
+      queryClient.invalidateQueries({ queryKey: ['plans'] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
     },
   });
 }
@@ -730,8 +749,11 @@ export function useRejectSuggestion() {
 
   return useMutation({
     mutationFn: (suggestionId: string) => ApiClient.post(`/api/plans/suggestions/${suggestionId}/reject`),
-    onSuccess: (_, planId) => {
-      queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+    onSuccess: () => {
+      // Invalidate all plan data queries since we don't have the planId in the response
+      queryClient.invalidateQueries({ queryKey: ['planData'] });
+      queryClient.invalidateQueries({ queryKey: ['plans'] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
     },
   });
 }
@@ -742,8 +764,11 @@ export function useUpdateSuggestion() {
   return useMutation({
     mutationFn: ({ suggestionId, updatedData }: { suggestionId: string; updatedData: any }) =>
       ApiClient.patch(`/api/plans/suggestions/${suggestionId}`, updatedData),
-    onSuccess: (_, planId) => {
-      queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+    onSuccess: () => {
+      // Invalidate all plan data queries since we don't have the planId in the response
+      queryClient.invalidateQueries({ queryKey: ['planData'] });
+      queryClient.invalidateQueries({ queryKey: ['plans'] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
     },
   });
 }

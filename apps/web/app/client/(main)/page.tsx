@@ -237,7 +237,7 @@ const ClientPage = () => {
   };
 
   return (
-    <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0'>
+    <div className='flex flex-col w-full max-w-full overflow-x-hidden pt-4 sm:pt-6 px-4 sm:px-6 md:px-8 min-w-0'>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <SidebarToggleButton />
@@ -247,7 +247,7 @@ const ClientPage = () => {
         </div>
       </div>
 
-      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10 w-full'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10 w-full'>
         <Card className='flex flex-col justify-between p-4 sm:p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50'>
           <div className='flex justify-between items-start'>
             <div className='flex flex-col min-w-0 flex-1'>
@@ -374,12 +374,12 @@ const ClientPage = () => {
 
       {/* Feedback Modal */}
       <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-        <DialogContent className='max-w-sm sm:max-w-md p-6 sm:p-8 flex flex-col items-center rounded-2xl mx-4 bg-white/95 backdrop-blur-sm'>
+        <DialogContent className='w-[95vw] max-w-[95vw] sm:max-w-md p-3 sm:p-8 flex flex-col items-center rounded-2xl mx-auto !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 bg-white/95 backdrop-blur-sm overflow-y-auto max-h-[90vh]'>
           <DialogTitle asChild>
             <VisuallyHidden>Was this task helpful?</VisuallyHidden>
           </DialogTitle>
-          <div className='text-lg sm:text-xl font-semibold mb-4 sm:mb-6 text-center'>Was this task helpful?</div>
-          <div className='flex items-center justify-center gap-6 sm:gap-8 mb-4 sm:mb-6'>
+          <div className='text-lg sm:text-xl font-semibold mb-4 sm:mb-6 text-center w-full'>Was this task helpful?</div>
+          <div className='flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-4 sm:mb-6 w-full'>
             <button
               aria-label='Happy'
               className={`rounded-full p-2 border-2 ${selectedFeedback === 'happy' ? 'border-black' : 'border-transparent'} transition`}
@@ -403,7 +403,7 @@ const ClientPage = () => {
             </button>
           </div>
           <button
-            className='w-full bg-black text-white rounded-full py-2 sm:py-3 text-sm sm:text-base font-medium disabled:opacity-50 transition'
+            className='w-full bg-black text-white rounded-full py-2 sm:py-3 text-sm sm:text-base font-medium disabled:opacity-50 transition mt-2 sm:mt-0'
             onClick={handleFeedbackSubmit}
             disabled={!selectedFeedback}
           >

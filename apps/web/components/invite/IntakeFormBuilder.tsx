@@ -219,9 +219,12 @@ export function IntakeFormBuilder({
   };
 
   return (
-    <form onSubmit={form.handleSubmit(handleFormSubmit)} className='w-full max-w-[1250px] mx-auto flex flex-col gap-8'>
+    <form
+      onSubmit={form.handleSubmit(handleFormSubmit)}
+      className='w-full max-w-full overflow-x-hidden px-4 sm:px-6 md:px-8 flex flex-col gap-8'
+    >
       {/* Form Title & Description Card */}
-      <div className='bg-white rounded-2xl shadow p-8 flex flex-col gap-6'>
+      <div className='bg-white rounded-2xl shadow p-4 sm:p-8 flex flex-col gap-6'>
         <div className='flex flex-col gap-2'>
           <Label htmlFor='title' className='text-base font-semibold'>
             Form Title
@@ -229,7 +232,7 @@ export function IntakeFormBuilder({
           <Input
             id='title'
             {...form.register('title')}
-            className='rounded-lg shadow-sm'
+            className='rounded-lg shadow-sm w-full'
             placeholder='Add Form Title Here'
           />
         </div>
@@ -241,7 +244,7 @@ export function IntakeFormBuilder({
             id='form-description'
             placeholder='Enter a description for this form (optional)'
             {...form.register('description')}
-            className='rounded-lg shadow-sm'
+            className='rounded-lg shadow-sm w-full'
             rows={3}
           />
           {form.formState.errors.description && (
@@ -252,13 +255,13 @@ export function IntakeFormBuilder({
       {/* Question Cards */}
       <div className='flex flex-col gap-6'>
         {fields.map((field, index) => (
-          <div key={field.id} className='bg-white rounded-2xl shadow p-8 flex flex-col gap-4'>
+          <div key={field.id} className='bg-white rounded-2xl shadow p-4 sm:p-8 flex flex-col gap-4'>
             <div className='flex flex-col md:flex-row gap-4'>
               <div className='flex-1'>
                 <Label>Question</Label>
                 <Input
                   {...form.register(`questions.${index}.title`)}
-                  className='rounded-lg shadow-sm'
+                  className='rounded-lg shadow-sm w-full'
                   placeholder='Type your question here'
                 />
               </div>
@@ -286,7 +289,7 @@ export function IntakeFormBuilder({
                         }
                       }}
                     >
-                      <SelectTrigger className='rounded-lg shadow-sm'>
+                      <SelectTrigger className='rounded-lg shadow-sm w-full'>
                         <SelectValue placeholder='-- select --' />
                       </SelectTrigger>
                       <SelectContent>
@@ -333,12 +336,12 @@ export function IntakeFormBuilder({
         type='button'
         onClick={addQuestion}
         variant='ghost'
-        className='rounded-full border border-dashed border-gray-300   px-6 text-gray-700 hover:bg-gray-50 w-fit self-start'
+        className='rounded-full border border-dashed border-gray-300 px-6 text-gray-700 hover:bg-gray-50 w-full sm:w-fit self-start'
       >
         + Add Question
       </Button>
       {/* Action Buttons */}
-      <div className='flex flex-col gap-4 -mt-4  sm:flex-row sm:justify-between'>
+      <div className='flex flex-col gap-4 -mt-4 sm:flex-row sm:justify-between'>
         {onBack && (
           <Button
             type='button'

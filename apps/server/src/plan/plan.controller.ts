@@ -154,6 +154,13 @@ export class PlanController {
     return await this.planService.generatePlanFromSession(body.sessionId);
   }
 
+  @Post(':planId/generate-more-tasks')
+  @ApiOperation({ summary: 'Generate additional complementary tasks for a plan' })
+  @ApiResponse({ status: 200, description: 'Additional tasks generated successfully.' })
+  async generateMoreComplementaryTasks(@Param('planId') planId: string) {
+    return await this.planService.generateMoreComplementaryTasks(planId);
+  }
+
   @Patch(':planId/action-items/:actionItemId')
   @ApiOperation({ summary: 'Update an action item in a plan' })
   @ApiResponse({ status: 200, description: 'Action item updated successfully.' })

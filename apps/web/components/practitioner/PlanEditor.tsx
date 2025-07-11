@@ -17,6 +17,7 @@ import {
   useDeleteActionItem,
   useUpdateActionItem,
   usePublishPlan,
+  useGenerateMoreTasks,
 } from '@/lib/hooks/use-api';
 
 interface ActionItem {
@@ -199,6 +200,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
   const deleteActionItemMutation = useDeleteActionItem();
   const publishPlanMutation = usePublishPlan();
   const saveTaskMutation = useUpdateActionItem();
+  const generateMoreTasksMutation = useGenerateMoreTasks();
 
   const handleApproveSuggestion = (suggestionId: string) => {
     approveSuggestionMutation.mutate(suggestionId, {
@@ -351,6 +353,21 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
     setShowTaskDialog(true);
   };
 
+  const handleGenerateMoreTasks = () => {
+    console.log('Generating more tasks for plan:', planId);
+    generateMoreTasksMutation.mutate(planId, {
+      onSuccess: (data) => {
+        console.log('Generate more tasks success:', data);
+        toast.success('Additional tasks generated successfully');
+        onPlanUpdated?.();
+      },
+      onError: (error: any) => {
+        console.error('Generate more tasks error:', error);
+        toast.error(error.message || 'Failed to generate additional tasks');
+      },
+    });
+  };
+
   function toggleDay(item: ActionItem | SuggestedActionItem, day: string, isSessionTask: boolean) {
     const key = 'daysOfWeek';
     const days = item[key] || [];
@@ -382,6 +399,10 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
 
   const actionItems = planData?.actionItems || [];
   const suggestedItems = planData?.suggestedActionItems || [];
+
+  console.log('Plan data:', planData);
+  console.log('Action items count:', actionItems.length);
+  console.log('Suggested items count:', suggestedItems.length);
 
   return (
     <div className='space-y-8 w-full max-w-[1350px] mx-auto px-2 sm:px-6 md:px-10'>
@@ -463,8 +484,14 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
           <div className='font-bold text-lg sm:text-xl flex items-center gap-2 text-gray-900 text-left underline underline-offset-4'>
             <span>✧</span> Complementary Tasks
           </div>
-          <Button size='sm' variant='ghost' className='text-primary font-semibold'>
-            + Generate More
+          <Button
+            size='sm'
+            variant='ghost'
+            className='text-primary font-semibold'
+            onClick={handleGenerateMoreTasks}
+            disabled={generateMoreTasksMutation.isPending}
+          >
+            {generateMoreTasksMutation.isPending ? 'Generating...' : '+ Generate More'}
           </Button>
         </div>
         <div className='space-y-0 divide-y divide-gray-200'>
