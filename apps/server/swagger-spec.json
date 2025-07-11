@@ -557,6 +557,16 @@
         "tags": ["plans"]
       }
     },
+    "/api/plans/{planId}/generate-more-tasks": {
+      "post": {
+        "operationId": "PlanController_generateMoreComplementaryTasks",
+        "parameters": [{ "name": "planId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Additional tasks generated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Generate additional complementary tasks for a plan",
+        "tags": ["plans"]
+      }
+    },
     "/api/plans/{planId}/action-items/{actionItemId}": {
       "patch": {
         "operationId": "PlanController_updateActionItem",

@@ -44,6 +44,7 @@ model User {
   clientConversations     Conversation[] @relation("ClientConversations")
   sentMessages            Message[]      @relation("SentMessages")
   messageReactions        MessageReaction[] @relation("MessageReactions")
+  journalEntries          JournalEntry[] @relation("ClientJournalEntries")
 
   @@map("users")
 }
@@ -327,4 +328,19 @@ model MessageReaction {
   
   @@unique([messageId, userId, emoji])
   @@map("message_reactions")
+}
+
+model JournalEntry {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  clientId      String   @db.ObjectId
+  client        User     @relation("ClientJournalEntries", fields: [clientId], references: [id], onDelete: Cascade)
+  title         String?
+  content       String
+  mood          String?
+  tags          String[]
+  isPrivate     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("journal_entries")
 }

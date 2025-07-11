@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { PlanStatus, ActionItemSource } from '@repo/db';
+import { PlanStatus, ActionItemSource, SuggestedActionItemStatus } from '@repo/db';
 import { AiService } from '../ai/ai.service';
 
 interface CreatePlanDto {
@@ -532,6 +532,75 @@ export class PlanService {
     }
     await this.prisma.actionItem.delete({ where: { id: actionItemId } });
     return { success: true };
+  }
+
+  async generateMoreComplementaryTasks(planId: string) {
+    const plan = await this.prisma.plan.findUnique({
+      where: { id: planId },
+      include: {
+        session: true,
+        actionItems: true,
+        suggestedActionItems: true,
+      },
+    });
+
+    if (!plan) throw new Error('Plan not found');
+    if (!plan.session) throw new Error('Session not found for this plan');
+
+    const session = plan.session;
+    if (!session.transcript || !session.transcript.trim()) {
+      throw new Error('Session transcript is empty. Cannot generate additional tasks.');
+    }
+
+    try {
+      // Get existing tasks for context
+      const existingSessionTasks = plan.actionItems.map((item) => item.description);
+      const existingComplementaryTasks = plan.suggestedActionItems.map((item) => item.description);
+
+      console.log(`Generating more tasks for plan ${planId}`);
+      console.log(`Existing session tasks: ${existingSessionTasks.length}`);
+      console.log(`Existing complementary tasks: ${existingComplementaryTasks.length}`);
+
+      // Combine session data
+      const sessionData = [session.transcript, session.aiSummary, session.notes].filter(Boolean).join('\n\n');
+
+      const aiResults = await this.aiService.generateAdditionalComplementaryTasks(
+        sessionData,
+        existingSessionTasks,
+        existingComplementaryTasks
+      );
+
+      console.log(`AI generated ${aiResults.complementaryTasks?.length || 0} new complementary tasks`);
+
+      if (aiResults.complementaryTasks?.length > 0) {
+        const complementaryItems = aiResults.complementaryTasks.map((s) => ({
+          planId: planId,
+          description: s.description,
+          category: s.category,
+          target: s.target,
+          frequency: s.frequency,
+          weeklyRepetitions: s.weeklyRepetitions || 1,
+          isMandatory: s.isMandatory || false,
+          whyImportant: s.whyImportant,
+          recommendedActions: s.recommendedActions,
+          toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
+          status: SuggestedActionItemStatus.PENDING, // Explicitly set status
+        }));
+
+        const createdItems = await this.prisma.suggestedActionItem.createMany({ data: complementaryItems });
+        console.log(`Created ${createdItems.count} new suggested action items`);
+      }
+    } catch (err) {
+      console.error('Error generating more tasks:', err);
+      throw new Error(`Failed to generate additional complementary tasks: ${err.message}`);
+    }
+
+    const updatedPlan = await this.getPlanWithSuggestions(planId);
+    if (!updatedPlan) {
+      throw new Error('Failed to retrieve updated plan');
+    }
+    console.log(`Updated plan has ${updatedPlan.suggestedActionItems?.length || 0} suggested items`);
+    return JSON.parse(JSON.stringify(updatedPlan));
   }
 }
 

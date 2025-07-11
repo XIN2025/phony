@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { filterTranscriptPrompt } from './prompts/filter-transcript';
 import { meetingSummaryPrompt } from './prompts/meeting-summary';
 import { actionItemPrompt } from './prompts/action-item.suggestion';
+import { generateMoreTasksPrompt } from './prompts/generate-more-tasks';
 
 const summarySchema = z.object({
   title: z.string().describe('A concise, relevant title for the session, max 5 words'),
@@ -263,6 +264,76 @@ export class AiService {
     };
   }
 
+  async generateAdditionalComplementaryTasks(
+    sessionData: string,
+    existingSessionTasks: string[],
+    existingComplementaryTasks: string[]
+  ): Promise<ActionItemSuggestions> {
+    if (!sessionData || sessionData.trim().length === 0) {
+      console.log('No session data provided for additional task generation');
+      return { sessionTasks: [], complementaryTasks: [] };
+    }
+
+    const existingTasksContext = [
+      ...existingSessionTasks.map((task) => `Session Task: ${task}`),
+      ...existingComplementaryTasks.map((task) => `Complementary Task: ${task}`),
+    ].join('\n');
+
+    console.log(
+      `Generating additional tasks with ${existingSessionTasks.length} session tasks and ${existingComplementaryTasks.length} complementary tasks`
+    );
+
+    const prompt = this.getGenerateMoreTasksPrompt();
+    const fullPrompt = `${prompt}\n\nAnalyze the following session data and existing tasks to generate additional complementary tasks:\n\n---\n\nSession Data:\n${sessionData}\n\n---\n\nExisting Tasks:\n${existingTasksContext || 'No existing tasks'}\n\n---`;
+
+    const result = await this.model.generateContent(fullPrompt);
+
+    if (!result || !result.response) {
+      throw new Error('No response from Gemini API');
+    }
+
+    const suggestionText = result.response.text();
+    console.log('AI response text:', suggestionText.substring(0, 500) + '...');
+
+    if (!suggestionText) {
+      console.log('No suggestion text received from AI');
+      return { sessionTasks: [], complementaryTasks: [] };
+    }
+
+    let parsedSuggestions: ActionItemSuggestions;
+    try {
+      const jsonMatch = suggestionText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON found in response');
+      }
+
+      const jsonData = JSON.parse(jsonMatch[0]);
+      console.log('Parsed JSON data:', JSON.stringify(jsonData, null, 2));
+
+      // Handle the case where only complementaryTasks is returned (as expected by the prompt)
+      if (jsonData.complementaryTasks && !jsonData.sessionTasks) {
+        parsedSuggestions = {
+          sessionTasks: [], // Always empty for "generate more" requests
+          complementaryTasks: jsonData.complementaryTasks,
+        };
+        console.log(
+          `Successfully parsed ${parsedSuggestions.complementaryTasks?.length || 0} complementary tasks (sessionTasks was empty as expected)`
+        );
+      } else {
+        // Try to parse with the full schema (for backward compatibility)
+        parsedSuggestions = actionItemSuggestionsSchema.parse(jsonData);
+        console.log(
+          `Successfully parsed ${parsedSuggestions.complementaryTasks?.length || 0} complementary tasks using full schema`
+        );
+      }
+    } catch (error) {
+      console.error('Error parsing AI response:', error);
+      parsedSuggestions = { sessionTasks: [], complementaryTasks: [] };
+    }
+
+    return this.processActionItemSuggestions(parsedSuggestions);
+  }
+
   private getFilteredTranscriptPrompt(): string {
     return filterTranscriptPrompt;
   }
@@ -273,5 +344,9 @@ export class AiService {
 
   private getActionItemSuggestionPrompt(): string {
     return actionItemPrompt;
+  }
+
+  private getGenerateMoreTasksPrompt(): string {
+    return generateMoreTasksPrompt;
   }
 }

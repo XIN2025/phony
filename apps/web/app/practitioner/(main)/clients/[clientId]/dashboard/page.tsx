@@ -11,6 +11,7 @@ import {
   useGetPlan,
   usePublishPlan,
   useGetPlanStatus,
+  useGetClientJournalEntries,
 } from '@/lib/hooks/use-api';
 import { ActionItem, ActionItemCompletion, Plan, Resource, Session, User } from '@repo/db';
 import { Badge } from '@repo/ui/components/badge';
@@ -91,6 +92,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     isLoading: boolean;
   };
   const { data: planStatus } = useGetPlanStatus(editingPlanId || '');
+  const { data: journalEntries = [] } = useGetClientJournalEntries(clientId);
   const createSessionMutation = useCreateSession();
   const uploadAudioMutation = useUploadSessionAudio();
   const publishPlanMutation = usePublishPlan();
@@ -706,7 +708,42 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
   const renderJournalTab = () => (
     <TabsContent value='journal' className='mt-0'>
-      <div className='text-center text-muted-foreground'>Journal entries will be shown here.</div>
+      <div className='space-y-4'>
+        {journalEntries.length === 0 ? (
+          <div className='text-center text-muted-foreground py-8'>No journal entries found for this client.</div>
+        ) : (
+          journalEntries.map((entry) => (
+            <Card key={entry.id} className='p-4'>
+              <div className='flex justify-between items-start mb-2'>
+                <div>
+                  <h3 className='font-semibold text-lg'>{entry.title || 'Untitled Entry'}</h3>
+                  <p className='text-sm text-gray-500'>
+                    {new Date(entry.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                </div>
+                <div className='flex gap-2'>
+                  {entry.mood && <Badge variant='secondary'>{entry.mood}</Badge>}
+                  {entry.isPrivate && <Badge variant='outline'>Private</Badge>}
+                </div>
+              </div>
+              <div className='prose prose-sm max-w-none' dangerouslySetInnerHTML={{ __html: entry.content }} />
+              {entry.tags.length > 0 && (
+                <div className='flex flex-wrap gap-1 mt-3'>
+                  {entry.tags.map((tag, index) => (
+                    <Badge key={index} variant='outline' className='text-xs'>
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </Card>
+          ))
+        )}
+      </div>
     </TabsContent>
   );
 
