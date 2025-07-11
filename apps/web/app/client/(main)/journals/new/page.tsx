@@ -2,6 +2,9 @@
 
 import { Button } from '@repo/ui/components/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
+import { Input } from '@repo/ui/components/input';
+import { Label } from '@repo/ui/components/label';
+import { Switch } from '@repo/ui/components/switch';
 import {
   AlignCenter,
   AlignJustify,
@@ -19,6 +22,7 @@ import {
   Redo2,
   Underline,
   Undo2,
+  Save,
 } from 'lucide-react';
 import Link from 'next/link';
 import Quill from 'quill';
@@ -26,6 +30,9 @@ import 'quill/dist/quill.snow.css';
 import { useEffect, useRef, useState } from 'react';
 import QuillEditor, { QuillEditorHandles } from '../QuillEditor';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
+import { useCreateJournalEntry } from '@/lib/hooks/use-api';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 const Font = (Quill as any).import('formats/font');
 if (Font) {
@@ -60,9 +67,16 @@ const getTodayDateString = () => {
 };
 
 const JournalEditors = () => {
+  const router = useRouter();
   const [fontSize, setFontSize] = useState<number>(DEFAULT_FONT_SIZE);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [title, setTitle] = useState('');
+  const [mood, setMood] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [newTag, setNewTag] = useState('');
   const quillEditorRef = useRef<QuillEditorHandles>(null);
+  const createJournalMutation = useCreateJournalEntry();
   const [notes, setNotes] = useState<NoteState[]>(
     Array(NUM_NOTES)
       .fill(null)
@@ -124,6 +138,48 @@ const JournalEditors = () => {
     }
   };
 
+  const handleAddTag = () => {
+    if (newTag.trim() && !tags.includes(newTag.trim())) {
+      setTags([...tags, newTag.trim()]);
+      setNewTag('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter((tag) => tag !== tagToRemove));
+  };
+
+  const handleSaveJournal = async () => {
+    const combinedContent = notes
+      .map((note, index) => {
+        if (note.content.trim()) {
+          return `<h3>${NOTE_TITLES[index]}</h3>${note.content}`;
+        }
+        return '';
+      })
+      .filter((content) => content.trim())
+      .join('<hr>');
+
+    if (!combinedContent.trim()) {
+      toast.error('Please add some content to your journal entry');
+      return;
+    }
+
+    try {
+      await createJournalMutation.mutateAsync({
+        title: title || undefined,
+        content: combinedContent,
+        mood: mood || undefined,
+        tags: tags.length > 0 ? tags : undefined,
+        isPrivate,
+      });
+      toast.success('Journal entry saved successfully');
+      router.push('/client/journals');
+    } catch (error) {
+      toast.error('Failed to save journal entry');
+    }
+  };
+
   const NOTE_TITLES = ['How are you feeling?', 'Task Feedback', "What's on your mind?"];
 
   if (typeof window !== 'undefined') {
@@ -156,12 +212,79 @@ const JournalEditors = () => {
             {getTodayDateString()}
           </h1>
         </div>
-        <button
-          type='button'
+        <Button
+          onClick={handleSaveJournal}
+          disabled={createJournalMutation.isPending}
           className='bg-black text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium shadow-sm hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 w-full sm:w-auto'
         >
-          Publish Entry
-        </button>
+          {createJournalMutation.isPending ? (
+            <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
+          ) : (
+            <Save className='mr-2 h-4 w-4' />
+          )}
+          Save Entry
+        </Button>
+      </div>
+
+      <div className='mb-6 space-y-4'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div>
+            <Label htmlFor='title'>Title (Optional)</Label>
+            <Input
+              id='title'
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder='Give your entry a title...'
+              className='mt-1'
+            />
+          </div>
+          <div>
+            <Label htmlFor='mood'>Mood (Optional)</Label>
+            <Input
+              id='mood'
+              value={mood}
+              onChange={(e) => setMood(e.target.value)}
+              placeholder='How are you feeling?'
+              className='mt-1'
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label>Tags</Label>
+          <div className='flex gap-2 mt-1'>
+            <Input
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+              placeholder='Add a tag...'
+              className='flex-1'
+            />
+            <Button onClick={handleAddTag} variant='outline' size='sm'>
+              Add
+            </Button>
+          </div>
+          {tags.length > 0 && (
+            <div className='flex flex-wrap gap-2 mt-2'>
+              {tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className='px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm flex items-center gap-1'
+                >
+                  {tag}
+                  <button onClick={() => handleRemoveTag(tag)} className='text-gray-500 hover:text-gray-700'>
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className='flex items-center space-x-2'>
+          <Switch id='private' checked={isPrivate} onCheckedChange={setIsPrivate} />
+          <Label htmlFor='private'>Make this entry private (only visible to you)</Label>
+        </div>
       </div>
 
       <div className='flex flex-col md:flex-row gap-6'>

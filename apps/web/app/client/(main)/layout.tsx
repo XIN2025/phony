@@ -1,11 +1,10 @@
 'use client';
-import { Home, MessageSquare, Menu, Book } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import { SidebarContent as PractitionerSidebarContent } from '@/components/practitioner/Sidebar';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/sheet';
+import { SidebarContent } from '@/components/practitioner/Sidebar';
 import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
-import { Button } from '@repo/ui/components/button';
 import { useClientAuth } from '@/lib/hooks/use-client-auth';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/sheet';
+import { Book, Home, MessageSquare } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
   const { sidebarOpen, setSidebarOpen } = useSidebar();
@@ -45,10 +44,11 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className='relative min-h-screen w-full'>
       {/* Gradient background - matching practitioner style */}
-      <div className='absolute inset-0 z-0 bg-gradient-to-r from-red-100 via-yellow-50 to-blue-50' />
+      <div className='absolute inset-0 z-0 bg-gradient-to-r from-red-50 via-orange-30 to-blue-50' />
+
       <div className='relative z-20 grid min-h-screen w-full lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr]'>
         <div className='hidden bg-transparent lg:block'>
-          <PractitionerSidebarContent
+          <SidebarContent
             navLinks={navLinks}
             pathname={pathname}
             signOutCallbackUrl='/client/auth'
@@ -60,7 +60,7 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
             <SheetHeader className='sr-only'>
               <SheetTitle>Navigation Menu</SheetTitle>
             </SheetHeader>
-            <PractitionerSidebarContent
+            <SidebarContent
               navLinks={navLinks}
               pathname={pathname}
               signOutCallbackUrl='/client/auth'

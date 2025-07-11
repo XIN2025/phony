@@ -859,3 +859,92 @@ export function useCompleteActionItem() {
     },
   });
 }
+
+// Journal API hooks
+export interface JournalEntry {
+  id: string;
+  title?: string;
+  content: string;
+  mood?: string;
+  tags: string[];
+  isPrivate: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  client: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+export function useGetJournalEntries(includePrivate: boolean = true) {
+  return useQuery({
+    queryKey: ['journal-entries', includePrivate],
+    queryFn: () => ApiClient.get<JournalEntry[]>(`/api/journal?includePrivate=${includePrivate}`),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useGetJournalEntry(entryId: string) {
+  return useQuery({
+    queryKey: ['journal-entry', entryId],
+    queryFn: () => ApiClient.get<JournalEntry>(`/api/journal/${entryId}`),
+    enabled: !!entryId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCreateJournalEntry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { title?: string; content: string; mood?: string; tags?: string[]; isPrivate?: boolean }) =>
+      ApiClient.post<JournalEntry>('/api/journal', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
+    },
+  });
+}
+
+export function useUpdateJournalEntry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ entryId, data }: { entryId: string; data: any }) =>
+      ApiClient.put<JournalEntry>(`/api/journal/${entryId}`, data),
+    onSuccess: (_, { entryId }) => {
+      queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['journal-entry', entryId] });
+    },
+  });
+}
+
+export function useDeleteJournalEntry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (entryId: string) => ApiClient.delete(`/api/journal/${entryId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
+    },
+  });
+}
+
+export function useSearchJournalEntries(searchTerm: string) {
+  return useQuery({
+    queryKey: ['journal-search', searchTerm],
+    queryFn: () => ApiClient.get<JournalEntry[]>(`/api/journal/search?q=${encodeURIComponent(searchTerm)}`),
+    enabled: !!searchTerm,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+// Practitioner journal hooks
+export function useGetClientJournalEntries(clientId: string) {
+  return useQuery({
+    queryKey: ['client-journal-entries', clientId],
+    queryFn: () => ApiClient.get<JournalEntry[]>(`/api/journal/client/${clientId}`),
+    enabled: !!clientId,
+    staleTime: 5 * 60 * 1000,
+  });
+}

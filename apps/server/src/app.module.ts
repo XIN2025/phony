@@ -15,6 +15,7 @@ import { UsersModule } from './users/users.module';
 import { SessionModule } from './session/session.module';
 import { PlanModule } from './plan/plan.module';
 import { ActionItemModule } from './action-item/action-item.module';
+import { JournalModule } from './journal/journal.module';
 import { ChatModule } from './chat/chat.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -63,6 +64,7 @@ import { TranscriptionModule } from './transcription/transcription.module';
     SessionModule,
     PlanModule,
     ActionItemModule,
+    JournalModule,
     ChatModule,
     ScheduleModule.forRoot(),
     ServeStaticModule.forRoot({
