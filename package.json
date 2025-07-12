@@ -1,6 +1,7 @@
 {
   "name": "continuum",
   "private": true,
+  "type": "module",
   "scripts": {
     "prepare": "husky",
     "build": "turbo run build",

@@ -856,6 +856,16 @@
         "summary": "Remove reaction from message",
         "tags": ["Chat"]
       }
+    },
+    "/api/chat/upload-attachment": {
+      "post": {
+        "operationId": "ChatController_uploadAttachment",
+        "parameters": [],
+        "responses": { "201": { "description": "File uploaded successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Upload a file attachment for chat messages",
+        "tags": ["Chat"]
+      }
     }
   },
   "info": { "title": "NestJS API", "description": "API for NestJS", "version": "1.0", "contact": {} },

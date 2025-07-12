@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, UseGuards, UseInterceptors, UploadedFile, Req } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { SessionStatus } from '@repo/db';
@@ -50,10 +50,16 @@ export class SessionController {
   })
   @ApiResponse({ status: 201, description: 'Audio uploaded successfully.' })
   async uploadAudio(
+    @Req() req: { user?: { id: string }; headers: Record<string, string> },
     @Param('id') sessionId: string,
     @UploadedFile() file: Express.Multer.File,
     @Body() body: { durationSeconds?: string }
   ) {
+    const userId = req.user?.id || req.headers['x-user-id'];
+    if (!userId) {
+      throw new Error('User authentication required');
+    }
+
     if (!file || !file.buffer) {
       throw new Error('No audio file provided or file buffer is empty');
     }

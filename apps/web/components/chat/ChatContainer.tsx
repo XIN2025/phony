@@ -4,7 +4,7 @@ import { Button } from '@repo/ui/components/button';
 import { Input } from '@repo/ui/components/input';
 import { ScrollArea } from '@repo/ui/components/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
-import { Send, Search, MessageCircle, Loader2, ArrowLeft, Menu, X } from 'lucide-react';
+import { Send, Search, MessageCircle, Loader2, ArrowLeft, Menu, X, Paperclip, Link, X as XIcon } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { EmojiPicker } from './EmojiPicker';
 import { useSession } from 'next-auth/react';
@@ -12,16 +12,19 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { getInitials, getAvatarUrl } from '@/lib/utils';
+import { useDropzone } from 'react-dropzone';
+import type { FileWithPath } from 'react-dropzone';
 import {
   useGetConversations,
   useGetMessages,
   useSendMessage,
   useCreateOrGetConversation,
   useMarkMessagesAsRead,
+  useUploadChatAttachment,
 } from '@/lib/hooks/use-api';
 import { useSocket } from '@/lib/hooks/use-socket';
 import { useUserPresence } from '@/lib/hooks/use-user-presence';
-import { Conversation, Message } from '@repo/shared-types';
+import { Conversation, Message, MessageAttachment } from '@repo/shared-types';
 
 interface ChatContainerProps {
   participantId?: string;
@@ -194,6 +197,18 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
   const [searchTerm, setSearchTerm] = useState('');
   const [hasTriedCreatingConversation, setHasTriedCreatingConversation] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [attachments, setAttachments] = useState<
+    Array<{
+      type: 'FILE' | 'LINK' | 'IMAGE';
+      url: string;
+      title?: string;
+      fileName?: string;
+      fileSize?: number;
+    }>
+  >([]);
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkInput, setLinkInput] = useState('');
+  const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -212,7 +227,67 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
   const { mutate: sendMessage, isPending: isSendingMessage } = useSendMessage();
   const { mutate: createOrGetConversation, isPending: isCreatingConversation } = useCreateOrGetConversation();
   const { mutate: markAsRead } = useMarkMessagesAsRead();
+  const { mutate: uploadChatAttachment, isPending: isUploading } = useUploadChatAttachment();
   const { getUserStatus, isUserOnline, requestUserStatus, requestOnlineUsers } = useUserPresence();
+
+  // File dropzone
+  const onDrop = async (acceptedFiles: FileWithPath[]) => {
+    for (const file of acceptedFiles) {
+      setUploadingFiles((prev) => new Set(prev).add(file.name));
+
+      uploadChatAttachment(file, {
+        onSuccess: (result: {
+          url: string;
+          type: 'FILE' | 'IMAGE';
+          title: string;
+          fileName: string;
+          fileSize: number;
+        }) => {
+          setAttachments((prev) => [
+            ...prev,
+            {
+              type: result.type,
+              url: result.url,
+              title: result.title,
+              fileName: result.fileName,
+              fileSize: result.fileSize,
+            },
+          ]);
+        },
+        onError: (error) => {
+          toast.error(`Failed to upload ${file.name}`);
+        },
+        onSettled: () => {
+          setUploadingFiles((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(file.name);
+            return newSet;
+          });
+        },
+      });
+    }
+  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+
+  // Attachment handlers
+  const handleAddLink = () => {
+    if (linkInput.trim()) {
+      setAttachments((prev) => [
+        ...prev,
+        {
+          type: 'LINK',
+          url: linkInput.trim(),
+          title: linkInput.trim(),
+        },
+      ]);
+      setLinkInput('');
+      setShowLinkInput(false);
+    }
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -676,11 +751,12 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim() || !selectedConversation || isSendingMessage) return;
+    if ((!messageText.trim() && attachments.length === 0) || !selectedConversation || isSendingMessage) return;
 
-    const messageContent = messageText.trim();
+    const messageContent = messageText.trim() || (attachments.length > 0 ? '📎 Attachment' : '');
 
     setMessageText('');
+    setAttachments([]);
 
     sendMessage(
       {
@@ -688,6 +764,7 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
         content: messageContent,
         authorId: currentUserId,
         currentUser: session?.user,
+        attachments: attachments.length > 0 ? attachments : undefined,
       },
       {
         onSuccess: () => {
@@ -698,6 +775,7 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
         },
         onError: (error) => {
           setMessageText(messageContent);
+          setAttachments(attachments);
           toast.error('Failed to send message: ' + error.message);
         },
       },
@@ -909,6 +987,74 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
               </div>
 
               <div className='p-2 sm:p-3 md:p-4 lg:p-6 border-t border-border/60 bg-muted/5 backdrop-blur-sm flex-shrink-0'>
+                {/* Attachment preview */}
+                {attachments.length > 0 && (
+                  <div className='mb-3 p-3 bg-muted/30 rounded-lg border border-border/30'>
+                    <div className='flex flex-wrap gap-2'>
+                      {attachments.map((attachment, index) => (
+                        <div
+                          key={index}
+                          className='flex items-center gap-2 px-3 py-2 bg-background rounded-lg border border-border/50'
+                        >
+                          {attachment.type === 'LINK' ? (
+                            <Link className='w-4 h-4 text-blue-500' />
+                          ) : attachment.type === 'IMAGE' ? (
+                            <span role='img' aria-label='Image' className='text-green-500'>
+                              🖼️
+                            </span>
+                          ) : (
+                            <span role='img' aria-label='File' className='text-purple-500'>
+                              📄
+                            </span>
+                          )}
+                          <span className='text-sm truncate max-w-[150px]'>
+                            {attachment.title || attachment.fileName || 'Attachment'}
+                          </span>
+                          <button
+                            type='button'
+                            onClick={() => handleRemoveAttachment(index)}
+                            className='text-muted-foreground hover:text-foreground'
+                          >
+                            <XIcon className='w-4 h-4' />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Link input */}
+                {showLinkInput && (
+                  <div className='mb-3 flex gap-2'>
+                    <Input
+                      value={linkInput}
+                      onChange={(e) => setLinkInput(e.target.value)}
+                      placeholder='Paste a link (https://...)'
+                      className='flex-1'
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddLink();
+                        }
+                      }}
+                    />
+                    <Button type='button' onClick={handleAddLink} size='sm'>
+                      Add
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={() => {
+                        setShowLinkInput(false);
+                        setLinkInput('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+
                 <form onSubmit={handleSendMessage} className='flex items-center space-x-2 sm:space-x-3'>
                   <div className='flex-1 flex items-center space-x-2 bg-background rounded-xl border border-muted-foreground/20 h-10 sm:h-11 md:h-12 px-3'>
                     <Input
@@ -920,11 +1066,34 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
                       className='flex-1 border-0 bg-transparent focus-visible:ring-0 p-0 text-sm md:text-base h-full'
                       autoComplete='off'
                     />
-                    <EmojiPicker onEmojiSelect={handleEmojiSelect} className='flex-shrink-0' />
+
+                    {/* Attachment buttons */}
+                    <div className='flex items-center gap-1'>
+                      <div
+                        {...getRootProps()}
+                        className='p-1.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors'
+                        title='Attach file'
+                      >
+                        <input {...getInputProps()} />
+                        <Paperclip className='w-4 h-4 text-muted-foreground hover:text-foreground' />
+                      </div>
+
+                      <button
+                        type='button'
+                        onClick={() => setShowLinkInput(true)}
+                        className='p-1.5 rounded-lg hover:bg-muted/50 transition-colors'
+                        title='Add link'
+                      >
+                        <Link className='w-4 h-4 text-muted-foreground hover:text-foreground' />
+                      </button>
+
+                      <EmojiPicker onEmojiSelect={handleEmojiSelect} className='flex-shrink-0' />
+                    </div>
                   </div>
+
                   <Button
                     type='submit'
-                    disabled={!messageText.trim() || isSendingMessage}
+                    disabled={(!messageText.trim() && attachments.length === 0) || isSendingMessage}
                     size='icon'
                     className='h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 rounded-full shrink-0'
                   >

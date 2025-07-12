@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@repo/ui/components/button';
-import { MoreHorizontal, Copy, Reply, Edit, Trash2, Smile } from 'lucide-react';
+import { Smile } from 'lucide-react';
 import { QuickReactions } from './MessageReactions';
 import { EmojiPicker } from './EmojiPicker';
 import { cn } from '@/lib/utils';
@@ -30,10 +30,8 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
 }) => {
   const [showQuickReactions, setShowQuickReactions] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showMoreActions, setShowMoreActions] = useState(false);
   const quickReactionsRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
-  const moreActionsRef = useRef<HTMLDivElement>(null);
   const autoCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -43,9 +41,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
       }
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
         setShowEmojiPicker(false);
-      }
-      if (moreActionsRef.current && !moreActionsRef.current.contains(event.target as Node)) {
-        setShowMoreActions(false);
       }
     };
 
@@ -81,12 +76,11 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
       className={cn('flex items-center gap-1 sm:gap-2 opacity-0 group-hover:opacity-100 transition-opacity', className)}
     >
       {/* Mobile backdrop for overlays */}
-      {(showQuickReactions || showMoreActions || showEmojiPicker) && (
+      {(showQuickReactions || showEmojiPicker) && (
         <div
           className='fixed inset-0 bg-black/20 z-40 md:hidden'
           onClick={() => {
             setShowQuickReactions(false);
-            setShowMoreActions(false);
             setShowEmojiPicker(false);
           }}
         />
@@ -121,103 +115,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
               onClose={() => setShowQuickReactions(false)}
               showCloseButton={true}
             />
-          </div>
-        )}
-      </div>
-
-      {/* More Actions Button */}
-      <div className='relative'>
-        <Button
-          variant='ghost'
-          size='sm'
-          onClick={() => setShowMoreActions(!showMoreActions)}
-          className='h-5 w-5 sm:h-6 sm:w-6 p-0 hover:bg-muted/80 rounded-full'
-          title='More actions'
-        >
-          <MoreHorizontal className='h-3 w-3 sm:h-4 sm:w-4' />
-        </Button>
-
-        {showMoreActions && (
-          <div
-            ref={moreActionsRef}
-            className={cn(
-              'absolute z-50 bg-background border rounded-lg shadow-lg py-1 min-w-[120px] sm:min-w-[140px] max-w-[200px]',
-              'bottom-full',
-              isOwn ? 'right-0 mb-1 transform -translate-x-2' : 'left-0 mb-1 transform translate-x-2',
-            )}
-            style={{
-              maxWidth: '90vw',
-            }}
-          >
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className='w-full justify-start px-3 py-1 h-7 sm:h-8 text-xs sm:text-sm'
-            >
-              <Smile className='h-3 w-3 sm:h-4 sm:w-4 mr-2' />
-              Add reaction
-            </Button>
-
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={onCopyMessage}
-              className='w-full justify-start px-3 py-1 h-7 sm:h-8 text-xs sm:text-sm'
-            >
-              <Copy className='h-3 w-3 sm:h-4 sm:w-4 mr-2' />
-              Copy text
-            </Button>
-
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={onReplyMessage}
-              className='w-full justify-start px-3 py-1 h-7 sm:h-8 text-xs sm:text-sm'
-            >
-              <Reply className='h-3 w-3 sm:h-4 sm:w-4 mr-2' />
-              Reply
-            </Button>
-
-            {isOwn && (
-              <>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={onEditMessage}
-                  className='w-full justify-start px-3 py-1 h-7 sm:h-8 text-xs sm:text-sm'
-                >
-                  <Edit className='h-3 w-3 sm:h-4 sm:w-4 mr-2' />
-                  Edit
-                </Button>
-
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={onDeleteMessage}
-                  className='w-full justify-start px-3 py-1 h-7 sm:h-8 text-xs sm:text-sm text-destructive hover:text-destructive'
-                >
-                  <Trash2 className='h-3 w-3 sm:h-4 sm:w-4 mr-2' />
-                  Delete
-                </Button>
-              </>
-            )}
-          </div>
-        )}
-
-        {showEmojiPicker && (
-          <div
-            ref={emojiPickerRef}
-            className={cn(
-              'absolute z-50',
-              'bottom-full',
-              isOwn ? 'right-0 mb-1 transform -translate-x-4' : 'left-0 mb-1 transform translate-x-4',
-            )}
-            style={{
-              maxWidth: '90vw',
-            }}
-          >
-            <EmojiPicker onEmojiSelect={handleReactionAdd} keepOpenOnSelect={true} autoClose={false} />
           </div>
         )}
       </div>

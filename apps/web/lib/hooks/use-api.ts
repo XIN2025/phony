@@ -362,6 +362,16 @@ export function useSendMessage() {
             content: data.content,
             createdAt: new Date(),
             readAt: null,
+            attachments: data.attachments?.map((attachment, index) => ({
+              id: `temp-attachment-${Date.now()}-${index}`,
+              messageId: `temp-${Date.now()}`,
+              type: attachment.type,
+              url: attachment.url,
+              title: attachment.title,
+              fileName: attachment.fileName,
+              fileSize: attachment.fileSize,
+              createdAt: new Date(),
+            })),
             author: data.currentUser
               ? {
                   id: data.currentUser.id,
@@ -391,6 +401,16 @@ export function useSendMessage() {
           content: data.content,
           createdAt: new Date(),
           readAt: null,
+          attachments: data.attachments?.map((attachment, index) => ({
+            id: `temp-attachment-${Date.now()}-${index}`,
+            messageId: `temp-${Date.now()}`,
+            type: attachment.type,
+            url: attachment.url,
+            title: attachment.title,
+            fileName: attachment.fileName,
+            fileSize: attachment.fileSize,
+            createdAt: new Date(),
+          })),
           author: data.currentUser
             ? {
                 id: data.currentUser.id,
@@ -1014,6 +1034,26 @@ export function useUploadResource() {
           },
         },
       );
+    },
+  });
+}
+
+export function useUploadChatAttachment() {
+  return useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return ApiClient.post<{
+        url: string;
+        type: 'FILE' | 'IMAGE';
+        title: string;
+        fileName: string;
+        fileSize: number;
+      }>('/api/chat/upload-attachment', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
     },
   });
 }

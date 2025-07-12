@@ -267,7 +267,7 @@ export class PractitionerService {
           typeof client.notificationSettings === 'string'
             ? JSON.parse(client.notificationSettings)
             : client.notificationSettings;
-      } catch (error) {
+      } catch (_error) {
         notificationSettings = null;
       }
     }

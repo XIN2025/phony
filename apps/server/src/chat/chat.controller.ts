@@ -10,12 +10,17 @@ import {
   NotFoundException,
   UseGuards,
   Delete,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
 import { ChatGateway } from './chat.gateway';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Logger } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { saveFileToUploads, generateUniqueFilename, validateFileUpload } from '../common/utils/user.utils';
+import { extname } from 'path';
 
 interface AuthenticatedRequest {
   user?: {
@@ -202,7 +207,21 @@ export class ChatController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Send a message' })
   @ApiResponse({ status: 201, description: 'Message sent.' })
-  async sendMessage(@Request() req: AuthenticatedRequest, @Body() body: { conversationId: string; content: string }) {
+  async sendMessage(
+    @Request() req: AuthenticatedRequest,
+    @Body()
+    body: {
+      conversationId: string;
+      content: string;
+      attachments?: Array<{
+        type: 'FILE' | 'LINK' | 'IMAGE';
+        url: string;
+        title?: string;
+        fileName?: string;
+        fileSize?: number;
+      }>;
+    }
+  ) {
     if (!body.conversationId || !body.content) {
       throw new BadRequestException('conversationId and content are required');
     }
@@ -213,13 +232,14 @@ export class ChatController {
       throw new BadRequestException('User authentication required');
     }
 
-    const { conversationId, content } = body;
+    const { conversationId, content, attachments } = body;
 
     try {
       const savedMessage = await this.chatService.sendMessage({
         conversationId,
         authorId: userId,
         content,
+        attachments,
       });
 
       this.chatGateway.server.to(conversationId).emit('newMessage', savedMessage);
@@ -336,5 +356,41 @@ export class ChatController {
     } catch (error) {
       throw new BadRequestException('Failed to remove reaction: ' + error.message);
     }
+  }
+
+  @Post('upload-attachment')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload a file attachment for chat messages' })
+  @ApiResponse({ status: 201, description: 'File uploaded successfully.' })
+  async uploadAttachment(@Request() req: AuthenticatedRequest, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file provided');
+    }
+
+    const userId = req.user?.id || req.headers['x-user-id'];
+    if (!userId) {
+      throw new BadRequestException('User authentication required');
+    }
+
+    const { isValid, error } = validateFileUpload(file);
+    if (!isValid) {
+      throw new BadRequestException(error || 'Invalid file upload');
+    }
+
+    const ext = extname(file.originalname).toLowerCase();
+    let type: 'FILE' | 'IMAGE' = 'FILE';
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) type = 'IMAGE';
+
+    const filename = generateUniqueFilename(file.originalname);
+    const url = await saveFileToUploads(file, filename, 'uploads');
+
+    return {
+      url,
+      type,
+      title: file.originalname,
+      fileName: file.originalname,
+      fileSize: file.size,
+    };
   }
 }

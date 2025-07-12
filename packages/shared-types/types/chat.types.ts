@@ -39,6 +39,17 @@ export interface MessageReaction {
   };
 }
 
+export interface MessageAttachment {
+  id: string;
+  messageId: string;
+  type: 'FILE' | 'LINK' | 'IMAGE';
+  url: string;
+  title?: string;
+  fileName?: string;
+  fileSize?: number;
+  createdAt: Date;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -47,6 +58,7 @@ export interface Message {
   readAt?: Date;
   createdAt: Date;
   reactions?: MessageReaction[];
+  attachments?: MessageAttachment[];
   author?: {
     id: string;
     firstName: string;
@@ -59,6 +71,13 @@ export interface Message {
 export interface CreateMessageRequest {
   conversationId: string;
   content: string;
+  attachments?: Array<{
+    type: 'FILE' | 'LINK' | 'IMAGE';
+    url: string;
+    title?: string;
+    fileName?: string;
+    fileSize?: number;
+  }>;
 }
 
 export interface GetConversationsResponse {

@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
-import { Check, CheckCheck, Clock } from 'lucide-react';
+import { Check, CheckCheck, Clock, Link, Download, ExternalLink } from 'lucide-react';
 import { cn, getInitials, getAvatarUrl } from '@/lib/utils';
 import { Message } from '@repo/shared-types';
 import { MessageReactions } from './MessageReactions';
@@ -73,6 +73,30 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     navigator.clipboard.writeText(message.content);
   };
 
+  const handleAttachmentClick = (attachment: any) => {
+    if (attachment.type === 'LINK') {
+      window.open(attachment.url, '_blank', 'noopener,noreferrer');
+    } else {
+      // For files and images, download or open in new tab
+      const fullUrl = attachment.url.startsWith('http')
+        ? attachment.url
+        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${attachment.url}`;
+
+      if (attachment.type === 'IMAGE') {
+        window.open(fullUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        // Download file
+        const link = document.createElement('a');
+        link.href = fullUrl;
+        link.download = attachment.fileName || attachment.title || 'download';
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -112,6 +136,51 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               )}
             >
               <p className='whitespace-pre-wrap break-words'>{message.content}</p>
+
+              {/* Attachments */}
+              {message.attachments && message.attachments.length > 0 && (
+                <div className='mt-3 space-y-2'>
+                  {message.attachments.map((attachment, index) => (
+                    <div
+                      key={attachment.id || index}
+                      className='flex items-center gap-3 p-3 bg-background/50 rounded-lg border border-border/30 hover:bg-background/70 transition-colors cursor-pointer'
+                      onClick={() => handleAttachmentClick(attachment)}
+                    >
+                      {attachment.type === 'LINK' ? (
+                        <Link className='w-5 h-5 text-blue-500 flex-shrink-0' />
+                      ) : attachment.type === 'IMAGE' ? (
+                        <span role='img' aria-label='Image' className='text-green-500 text-lg'>
+                          🖼️
+                        </span>
+                      ) : (
+                        <span role='img' aria-label='File' className='text-purple-500 text-lg'>
+                          📄
+                        </span>
+                      )}
+
+                      <div className='flex-1 min-w-0'>
+                        <div className='font-medium text-sm truncate'>
+                          {attachment.title || attachment.fileName || 'Attachment'}
+                        </div>
+                        {attachment.type === 'LINK' && (
+                          <div className='text-xs text-muted-foreground truncate'>{attachment.url}</div>
+                        )}
+                        {attachment.fileSize && (
+                          <div className='text-xs text-muted-foreground'>
+                            {(attachment.fileSize / 1024 / 1024).toFixed(1)} MB
+                          </div>
+                        )}
+                      </div>
+
+                      {attachment.type === 'LINK' ? (
+                        <ExternalLink className='w-4 h-4 text-muted-foreground' />
+                      ) : (
+                        <Download className='w-4 h-4 text-muted-foreground' />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Clean message tail */}
               <div

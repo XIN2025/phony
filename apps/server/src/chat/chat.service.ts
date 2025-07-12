@@ -6,6 +6,13 @@ interface SendMessageData {
   conversationId: string;
   authorId: string;
   content: string;
+  attachments?: Array<{
+    type: 'FILE' | 'LINK' | 'IMAGE';
+    url: string;
+    title?: string;
+    fileName?: string;
+    fileSize?: number;
+  }>;
 }
 
 export interface ChatMessage {
@@ -15,6 +22,15 @@ export interface ChatMessage {
   content: string;
   createdAt: Date;
   readAt?: Date;
+  attachments?: Array<{
+    id: string;
+    type: 'FILE' | 'LINK' | 'IMAGE';
+    url: string;
+    title?: string;
+    fileName?: string;
+    fileSize?: number;
+    createdAt: Date;
+  }>;
   author: {
     id: string;
     firstName: string;
@@ -162,6 +178,17 @@ export class ChatService {
         conversationId: data.conversationId,
         authorId: data.authorId,
         content: data.content,
+        attachments: data.attachments
+          ? {
+              create: data.attachments.map((attachment) => ({
+                type: attachment.type,
+                url: attachment.url,
+                title: attachment.title,
+                fileName: attachment.fileName,
+                fileSize: attachment.fileSize,
+              })),
+            }
+          : undefined,
       },
       include: {
         author: {
@@ -173,6 +200,7 @@ export class ChatService {
             avatarUrl: true,
           },
         },
+        attachments: true,
       },
     });
 
@@ -192,6 +220,15 @@ export class ChatService {
       content: message.content,
       createdAt: message.createdAt,
       readAt: message.readAt ?? undefined,
+      attachments: message.attachments?.map((attachment) => ({
+        id: attachment.id,
+        type: attachment.type as 'FILE' | 'LINK' | 'IMAGE',
+        url: attachment.url,
+        title: attachment.title ?? undefined,
+        fileName: attachment.fileName ?? undefined,
+        fileSize: attachment.fileSize ?? undefined,
+        createdAt: attachment.createdAt,
+      })),
       author: {
         id: message.author.id,
         firstName: message.author.firstName,
@@ -228,6 +265,9 @@ export class ChatService {
           },
           orderBy: { createdAt: 'asc' },
         },
+        attachments: {
+          orderBy: { createdAt: 'asc' },
+        },
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -240,6 +280,15 @@ export class ChatService {
       createdAt: message.createdAt,
       readAt: message.readAt ?? undefined,
       reactions: message.reactions,
+      attachments: message.attachments?.map((attachment) => ({
+        id: attachment.id,
+        type: attachment.type as 'FILE' | 'LINK' | 'IMAGE',
+        url: attachment.url,
+        title: attachment.title ?? undefined,
+        fileName: attachment.fileName ?? undefined,
+        fileSize: attachment.fileSize ?? undefined,
+        createdAt: attachment.createdAt,
+      })),
       author: {
         id: message.author.id,
         firstName: message.author.firstName,

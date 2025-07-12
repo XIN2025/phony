@@ -320,6 +320,7 @@ model Message {
   createdAt      DateTime     @default(now())
   readAt         DateTime?
   reactions      MessageReaction[]
+  attachments    MessageAttachment[]
   
   @@index([conversationId, createdAt])
   @@index([authorId])
@@ -337,6 +338,26 @@ model MessageReaction {
   
   @@unique([messageId, userId, emoji])
   @@map("message_reactions")
+}
+
+model MessageAttachment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  messageId String   @db.ObjectId
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  type      MessageAttachmentType
+  url       String
+  title     String?
+  fileName  String?
+  fileSize  Int?
+  createdAt DateTime @default(now())
+  
+  @@map("message_attachments")
+}
+
+enum MessageAttachmentType {
+  FILE
+  LINK
+  IMAGE
 }
 
 model JournalEntry {

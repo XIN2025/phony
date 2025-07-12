@@ -76,7 +76,7 @@ export const SidebarContent = ({
     );
   };
   return (
-    <div className='flex h-full flex-col font-sans bg-white sm:bg-transparent shadow-lg sm:shadow-none border-r sm:border-none min-w-0'>
+    <div className='flex h-full flex-col font-sans bg-white lg:bg-transparent shadow-lg sm:shadow-none border-r sm:border-none min-w-0'>
       <div className='flex h-[56px] sm:h-[64px] items-center px-4 sm:px-6 lg:px-8 mb-3 sm:mb-4'>
         <Link
           href='/'

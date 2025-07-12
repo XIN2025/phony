@@ -10,6 +10,7 @@ import {
   UseGuards,
   UploadedFile,
   UseInterceptors,
+  Request,
 } from '@nestjs/common';
 import { ActionItemService } from './action-item.service';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -98,7 +99,15 @@ export class ActionItemController {
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Upload a file as a resource for an action item' })
   @ApiResponse({ status: 201, description: 'File uploaded successfully.' })
-  async uploadResource(@UploadedFile() file: Express.Multer.File) {
+  async uploadResource(
+    @Request() req: { user?: { id: string }; headers: Record<string, string> },
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    const userId = req.user?.id || req.headers['x-user-id'];
+    if (!userId) {
+      throw new Error('User authentication required');
+    }
+
     const { isValid, error } = validateFileUpload(file);
     if (!isValid) {
       throw new Error(error || 'Invalid file upload');
