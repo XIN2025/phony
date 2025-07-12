@@ -118,7 +118,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const handleTabChange = (newTab: string) => {
     setActiveTab(newTab);
 
-    // Update URL with shallow routing
     const newUrl = new URL(window.location.href);
     if (newTab === 'dashboard') {
       newUrl.searchParams.delete('tab');
@@ -241,13 +240,11 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
       }));
   }, [sessions]);
 
-  // Filter plans by search
   const filteredPlans = useMemo(() => {
     if (!planSearch.trim()) return plans;
     return plans.filter((p) => (p.sessionTitle || '').toLowerCase().includes(planSearch.trim().toLowerCase()));
   }, [plans, planSearch]);
 
-  // Helper: filter journal entries by date range
   const filteredJournals = useMemo(() => {
     const { startDate, endDate } = dateRange;
     return (journalEntries || []).filter((j) => {
@@ -256,7 +253,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     });
   }, [journalEntries, dateRange]);
 
-  // Summary stats for filtered range
   const completion = useMemo(() => {
     if (filteredTasks.length === 0) return 0;
     const completed = filteredTasks.filter((t) => t.completions && t.completions.length > 0).length;
@@ -270,7 +266,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     }
     toast.info('Saving session...');
     try {
-      // 1. Create the session metadata
       const newSession = await createSessionMutation.mutateAsync({
         clientId: clientId,
         title: sessionTitle,
@@ -299,7 +294,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const handleNewSession = () => {
     handleTabChange('sessions');
     setShowNewSession(true);
-    // Reset form state
+
     setSessionTitle('');
     setSessionNotes('');
     setShowErrorModal(false);
@@ -335,17 +330,16 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     setProcessingError(null);
     setSessionTranscript(null);
     try {
-      // 1. Create the session
       const newSession = await createSessionMutation.mutateAsync({
         clientId: clientId,
         title: sessionTitle,
         notes: sessionNotes,
       });
       setNewSessionId(newSession.id);
-      // 2. Upload the audio
+
       const formData = new FormData();
       formData.append('audio', audioBlob, `session_${newSession.id}.webm`);
-      // Parse duration (e.g., '56:27') to seconds
+
       let durationSeconds = undefined;
       const match = duration.match(/(\d+):(\d+)/);
       if (match && match[1] && match[2]) {
@@ -374,7 +368,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     }
   };
 
-  // Intercept navigation
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (audioRecorderRef.current && ['paused', 'recording'].includes(audioRecorderRef.current.getStatus())) {
@@ -389,7 +382,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   }, []);
 
   const handleBack = () => {
-    // Close date picker if open
     if (showDatePicker) {
       setShowDatePicker(false);
       return;
@@ -408,7 +400,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     if (audioRecorderRef.current) {
       audioRecorderRef.current.stop();
     }
-    // Navigation will proceed after save completes in handleEndSession
   };
 
   const handleDiscardUnsaved = () => {
@@ -421,7 +412,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
   const handleClosePlanEditor = () => {
     setEditingPlanId(null);
-    // Remove the editPlan parameter from URL
+
     const newUrl = new URL(window.location.href);
     newUrl.searchParams.delete('editPlan');
     router.replace(newUrl.pathname + newUrl.search);
@@ -435,7 +426,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
       onSuccess: () => {
         toast.success('Plan published to client!');
         setIsPublishingPlan(false);
-        // Navigate to the plan view
+
         router.push(`/practitioner/clients/${clientId}/plans/${editingPlanId}`);
       },
       onError: () => {
@@ -445,27 +436,22 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     });
   };
 
-  // Real feedback calculation based on actual ratings
   function getAvgFeedback(plan: PopulatedPlan) {
-    // Get all completions for this plan's action items
     const allCompletions = plan.actionItems.flatMap((item) => item.completions || []);
 
     if (allCompletions.length === 0) return 'Nil';
 
-    // Only use completions with a valid rating
     const completionsWithRating = allCompletions.filter((c) => typeof c.rating === 'number');
     if (completionsWithRating.length === 0) return 'Nil';
 
     const totalRating = completionsWithRating.reduce((sum, c) => sum + (c.rating ?? 0), 0);
     const avgRating = totalRating / completionsWithRating.length;
 
-    // Convert rating to feedback type
     if (avgRating >= 4) return 'Happy';
     if (avgRating >= 2.5) return 'Neutral';
     return 'Sad';
   }
 
-  // --- Feedback and Journal Badge Helpers ---
   const feedbackBadge = (feedback: string) => {
     let badgeClass = 'bg-gray-200 text-gray-700';
     let emoji = '';
@@ -505,7 +491,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     );
   };
 
-  // --- Plans Tab Table ---
   const renderPlansTab = () => (
     <TabsContent value='plans' className='mt-0'>
       <div className='flex flex-col gap-6'>
@@ -555,7 +540,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                     const completed = plan.actionItems.filter((t) => t.completions && t.completions.length > 0).length;
                     const total = plan.actionItems.length;
                     const avgFeedback = getAvgFeedback(plan);
-                    // Badge color and icon logic
+
                     let badgeClass = 'bg-gray-200 text-gray-700';
                     let badgeIcon = null;
                     if (avgFeedback === 'Happy') {
@@ -717,7 +702,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           </Card>
         </div>
       </div>
-      {/* Daily Stats Table */}
+      {}
       <div className='mt-8'>
         <div className='bg-white rounded-2xl shadow-md p-0 border border-[#ececec]'>
           <Table className='min-w-full bg-white rounded-2xl overflow-hidden'>
@@ -739,11 +724,9 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
             </TableHeader>
             <TableBody>
               {getDateRangeArray(dateRange.startDate, dateRange.endDate)
-                .reverse() // Reverse to show most recent dates first
+                .reverse()
                 .map((date) => {
-                  // Find all tasks for this day
                   const dayTasks = filteredTasks.filter((t) => {
-                    // Use t.sessionDate if present, else fallback to t.createdAt or t.updatedAt
                     const taskDate = t.sessionDate
                       ? new Date(t.sessionDate)
                       : t.createdAt
@@ -903,7 +886,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const renderContent = () => {
     console.log('[Dashboard] render', { showNewSession, activeTab, isLoading, editingPlanId, editingPlan });
 
-    // Show PlanEditor if editing a plan
     if (editingPlanId) {
       if (isEditingPlanLoading) {
         return (
@@ -1179,7 +1161,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               </DialogHeader>
               <div className='text-4xl font-mono font-bold my-4'>
                 {(() => {
-                  // Convert sessionDuration (e.g. '56:27') to '56m 27s'
                   const match = sessionDuration.match(/(\d+):(\d+)/);
                   if (match && match[1] && match[2]) {
                     return `${parseInt(match[1], 10)}m ${match[2]}s`;
@@ -1220,7 +1201,6 @@ export default function ClientDashboardPage({ params }: { params: Promise<{ clie
   );
 }
 
-// Utility to get last 7 days as Date[]
 function getLast7Days() {
   const days = [];
   const today = new Date();
@@ -1232,31 +1212,25 @@ function getLast7Days() {
   return days.reverse();
 }
 
-// Utility to format date for URL (YYYY-MM-DD)
 function formatDateForUrl(date: Date) {
   return date.toISOString().split('T')[0];
 }
 
-// Utility to get average feedback for a day based on actual ratings
 function getAvgFeedbackForDay(tasks: PopulatedActionItem[]) {
   if (!tasks || tasks.length === 0) return 'Nil';
 
-  // Get all completions for tasks on this day
   const allCompletions = tasks.flatMap((task) => task.completions || []);
 
   if (allCompletions.length === 0) return 'Nil';
 
-  // Calculate average rating
   const totalRating = allCompletions.reduce((sum, completion) => sum + (completion.rating || 0), 0);
   const avgRating = totalRating / allCompletions.length;
 
-  // Convert rating to feedback type
   if (avgRating >= 4) return 'Happy';
   if (avgRating >= 2.5) return 'Neutral';
   return 'Sad';
 }
 
-// Utility to get array of dates in range (inclusive)
 function getDateRangeArray(start: Date, end: Date) {
   const arr = [];
   let dt = new Date(start);

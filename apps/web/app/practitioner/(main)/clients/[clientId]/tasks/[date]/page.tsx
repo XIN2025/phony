@@ -125,7 +125,6 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
 
   return (
     <div className='w-full min-h-screen flex flex-col items-stretch pt-2 px-0'>
-      {/* Back Button */}
       <div className='w-full mb-2 px-2'>
         <button
           type='button'
@@ -139,7 +138,6 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
       </div>
 
       <div className='w-full flex flex-col gap-8 px-2 pr-4'>
-        {/* Header row: title and date selector */}
         <div className='flex flex-col md:flex-row md:items-center md:justify-between w-full gap-3 md:gap-0 mb-2'>
           <h1 className='text-2xl font-bold'>Tasks</h1>
           <div className='flex items-center gap-2'>
@@ -174,11 +172,11 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
                       if (selection && selection.startDate) {
                         setDateRange({
                           startDate: selection.startDate,
-                          endDate: selection.startDate, // force single date
+                          endDate: selection.startDate,
                           key: 'selection',
                         });
                         setSelectedDate(selection.startDate);
-                        // Update the URL to match the selected date
+
                         const yyyy = selection.startDate.getFullYear();
                         const mm = String(selection.startDate.getMonth() + 1).padStart(2, '0');
                         const dd = String(selection.startDate.getDate()).padStart(2, '0');
@@ -199,7 +197,6 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
           </div>
         </div>
 
-        {/* Stats Cards */}
         <div className='flex flex-row gap-6 mb-6'>
           <div className='flex-1'>
             <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col items-start'>
@@ -215,7 +212,6 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
           </div>
         </div>
 
-        {/* Loading State */}
         {isTasksLoading && (
           <div className='text-center py-8'>
             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto'></div>
@@ -223,10 +219,8 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
           </div>
         )}
 
-        {/* Tasks Content */}
         {!isTasksLoading && (
           <div className='flex flex-row gap-8 w-full'>
-            {/* Mandatory Tasks Card */}
             <div className='flex-1'>
               <div className='bg-white rounded-2xl shadow-md p-8'>
                 <div className='text-xl font-bold mb-4'>Mandatory tasks for the week</div>
@@ -285,7 +279,6 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
               </div>
             </div>
 
-            {/* Daily Tasks Card */}
             <div className='flex-1'>
               <div className='bg-white rounded-2xl shadow-md p-8'>
                 <div className='text-xl font-bold mb-4'>Daily Tasks</div>
@@ -345,7 +338,6 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
         )}
       </div>
 
-      {/* Task Detail Modal */}
       {selectedTask && (
         <TaskEditorDialog
           open={isTaskModalOpen}
