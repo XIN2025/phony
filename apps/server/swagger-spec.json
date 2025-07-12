@@ -609,13 +609,38 @@
         "tags": ["plans"]
       }
     },
+    "/api/plans/client/{id}/action-items": {
+      "get": {
+        "operationId": "PlanController_getClientActionItemsInRange",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "start", "required": true, "in": "query", "schema": { "type": "string" } },
+          { "name": "end", "required": true, "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Action items retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get all action items for a client in a date range",
+        "tags": ["plans"]
+      }
+    },
     "/api/action-items/{id}/complete": {
       "post": {
         "operationId": "ActionItemController_completeActionItem",
         "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
-        "responses": { "201": { "description": "Action item marked as completed successfully." } },
+        "responses": { "201": { "description": "Action item completed successfully." } },
         "security": [{ "bearer": [] }],
-        "summary": "Mark an action item as completed",
+        "summary": "Mark action item as completed",
+        "tags": ["action-items"]
+      },
+      "delete": {
+        "operationId": "ActionItemController_undoActionItemCompletion",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "clientId", "required": true, "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Action item completion undone successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Undo action item completion",
         "tags": ["action-items"]
       }
     },

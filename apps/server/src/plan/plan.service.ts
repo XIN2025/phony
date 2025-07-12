@@ -408,15 +408,8 @@ export class PlanService {
         },
       });
       planId = newPlan.id;
-
-      await this.prisma.session.update({
-        where: { id: sessionId },
-        data: {
-          plan: {
-            connect: { id: planId },
-          },
-        },
-      });
+    } else {
+      // Plan already exists, use existing planId
     }
     try {
       const combinedText = [session.transcript, session.aiSummary, session.notes].filter(Boolean).join('\n\n');
@@ -462,6 +455,10 @@ export class PlanService {
       throw new Error(`Failed to generate action items: ${err.message}`);
     }
     const plan = await this.getPlanWithSuggestions(planId);
+    if (!plan) {
+      throw new Error(`Failed to retrieve plan ${planId} after generation`);
+    }
+
     return JSON.parse(JSON.stringify(plan));
   }
 
@@ -557,10 +554,6 @@ export class PlanService {
       const existingSessionTasks = plan.actionItems.map((item) => item.description);
       const existingComplementaryTasks = plan.suggestedActionItems.map((item) => item.description);
 
-      console.log(`Generating more tasks for plan ${planId}`);
-      console.log(`Existing session tasks: ${existingSessionTasks.length}`);
-      console.log(`Existing complementary tasks: ${existingComplementaryTasks.length}`);
-
       // Combine session data
       const sessionData = [session.transcript, session.aiSummary, session.notes].filter(Boolean).join('\n\n');
 
@@ -569,8 +562,6 @@ export class PlanService {
         existingSessionTasks,
         existingComplementaryTasks
       );
-
-      console.log(`AI generated ${aiResults.complementaryTasks?.length || 0} new complementary tasks`);
 
       if (aiResults.complementaryTasks?.length > 0) {
         const complementaryItems = aiResults.complementaryTasks.map((s) => ({
@@ -587,8 +578,7 @@ export class PlanService {
           status: SuggestedActionItemStatus.PENDING, // Explicitly set status
         }));
 
-        const createdItems = await this.prisma.suggestedActionItem.createMany({ data: complementaryItems });
-        console.log(`Created ${createdItems.count} new suggested action items`);
+        await this.prisma.suggestedActionItem.createMany({ data: complementaryItems });
       }
     } catch (err) {
       console.error('Error generating more tasks:', err);
@@ -599,8 +589,62 @@ export class PlanService {
     if (!updatedPlan) {
       throw new Error('Failed to retrieve updated plan');
     }
-    console.log(`Updated plan has ${updatedPlan.suggestedActionItems?.length || 0} suggested items`);
+
     return JSON.parse(JSON.stringify(updatedPlan));
+  }
+
+  async getClientActionItemsInRange(clientId: string, start: string, end: string) {
+    const endDate = new Date(end);
+    // Set endDate to end of day
+    endDate.setHours(23, 59, 59, 999);
+
+    // Fetch all published plans for the client
+    const plans = await this.prisma.plan.findMany({
+      where: {
+        clientId,
+        status: PlanStatus.PUBLISHED,
+      },
+      include: {
+        session: {
+          select: {
+            id: true,
+            recordedAt: true,
+            title: true,
+          },
+        },
+        actionItems: {
+          select: {
+            id: true,
+            description: true,
+            category: true,
+            target: true,
+            frequency: true,
+            weeklyRepetitions: true,
+            isMandatory: true,
+            whyImportant: true,
+            recommendedActions: true,
+            toolsToHelp: true,
+            source: true,
+            daysOfWeek: true,
+            resources: true,
+            completions: true,
+          },
+        },
+      },
+      orderBy: { publishedAt: 'desc' },
+    });
+
+    const allActionItems = plans.flatMap((plan) => {
+      return plan.actionItems.map((item) => ({
+        ...item,
+        planId: plan.id,
+        planPublishedAt: plan.publishedAt,
+        sessionDate: plan.session?.recordedAt,
+        session: plan.session,
+      }));
+    });
+
+    return allActionItems;
   }
 }
 

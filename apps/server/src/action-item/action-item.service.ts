@@ -123,9 +123,28 @@ export class ActionItemService {
   }
 
   async deleteCompletion(completionId: string) {
-    return await this.prisma.actionItemCompletion.delete({
+    await this.prisma.actionItemCompletion.delete({
       where: { id: completionId },
     });
+  }
+
+  async undoActionItemCompletion(actionItemId: string, clientId: string) {
+    const completion = await this.prisma.actionItemCompletion.findFirst({
+      where: {
+        actionItemId,
+        clientId,
+      },
+    });
+
+    if (!completion) {
+      throw new Error('No completion found for this action item and client');
+    }
+
+    await this.prisma.actionItemCompletion.delete({
+      where: { id: completion.id },
+    });
+
+    return { success: true, message: 'Task completion undone successfully' };
   }
 
   async getActionItemById(actionItemId: string) {

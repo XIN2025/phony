@@ -686,8 +686,10 @@ export function useGeneratePlan() {
 
   return useMutation({
     mutationFn: ({ sessionId }: { sessionId: string }) => ApiClient.post<any>('/api/plans/generate', { sessionId }),
-    onSuccess: () => {
+    onSuccess: (_, { sessionId }) => {
+      // Invalidate all session-related queries to ensure the plan link is updated
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
       queryClient.invalidateQueries({ queryKey: ['plans'] });
     },
   });
@@ -699,7 +701,6 @@ export function useGenerateMoreTasks() {
   return useMutation({
     mutationFn: (planId: string) => ApiClient.post<any>(`/api/plans/${planId}/generate-more-tasks`),
     onSuccess: (_, planId) => {
-      // Force refetch the plan data immediately
       queryClient.invalidateQueries({ queryKey: ['planData', planId] });
       queryClient.invalidateQueries({ queryKey: ['planData'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -855,7 +856,25 @@ export function useCompleteActionItem() {
     mutationFn: ({ taskId, completionData }: { taskId: string; completionData: any }) =>
       ApiClient.post(`/api/action-items/${taskId}/complete`, completionData),
     onSuccess: (_, { taskId }) => {
+      // Invalidate all relevant queries to update UI
       queryClient.invalidateQueries({ queryKey: ['client-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['client-action-items'] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    },
+  });
+}
+
+export function useUndoTaskCompletion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ taskId, clientId }: { taskId: string; clientId: string }) =>
+      ApiClient.delete(`/api/action-items/${taskId}/complete?clientId=${encodeURIComponent(clientId)}`),
+    onSuccess: (_, { taskId }) => {
+      // Invalidate all relevant queries to update UI
+      queryClient.invalidateQueries({ queryKey: ['client-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['client-action-items'] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
     },
   });
 }
@@ -941,6 +960,19 @@ export function useGetClientJournalEntries(clientId: string) {
     queryKey: ['client-journal-entries', clientId],
     queryFn: () => ApiClient.get<JournalEntry[]>(`/api/journal/client/${clientId}`),
     enabled: !!clientId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useGetClientActionItemsInRange(clientId: string, startDate: string, endDate: string) {
+  return useQuery({
+    queryKey: ['client-action-items', clientId, startDate, endDate],
+    queryFn: async () => {
+      const url = `/api/plans/client/${clientId}/action-items?start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}`;
+      const result = await ApiClient.get<any[]>(url);
+      return result;
+    },
+    enabled: !!clientId && !!startDate && !!endDate,
     staleTime: 5 * 60 * 1000,
   });
 }

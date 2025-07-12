@@ -106,13 +106,13 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className='test-center-modal max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl w-full border border-gray-300 rounded-2xl bg-white shadow-sm p-0 overflow-hidden'>
+      <DialogContent className='w-[95vw] max-w-2xl md:max-w-3xl lg:max-w-4xl border border-gray-300 rounded-2xl shadow-lg p-0 overflow-hidden !fixed !top-1/2 !left-1/2 !transform !-translate-x-1/2 !-translate-y-1/2 !z-[9999]'>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             if (!readOnly) handleSave();
           }}
-          className='bg-white p-8 rounded-2xl w-full'
+          className='p-8 rounded-2xl w-full'
         >
           <DialogHeader>
             <DialogTitle className='text-2xl font-bold mb-1'>Tasks</DialogTitle>

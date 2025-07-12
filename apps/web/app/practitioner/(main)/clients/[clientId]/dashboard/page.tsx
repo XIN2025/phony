@@ -12,9 +12,11 @@ import {
   usePublishPlan,
   useGetPlanStatus,
   useGetClientJournalEntries,
+  useGetClientActionItemsInRange,
 } from '@/lib/hooks/use-api';
 import { ActionItem, ActionItemCompletion, Plan, Resource, Session, User } from '@repo/db';
-
+import 'react-date-range/dist/styles.css';
+import 'react-date-range/dist/theme/default.css';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Checkbox } from '@repo/ui/components/checkbox';
@@ -25,7 +27,7 @@ import { TabTrigger } from '@/components/TabTrigger';
 import { ArrowLeft, MessageCircle, Plus, Target, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, useLayoutEffect } from 'react';
 import { toast } from 'sonner';
 import { PlanEditor } from '@/components/practitioner/PlanEditor';
 
@@ -39,6 +41,10 @@ import {
 } from '@repo/ui/components/dialog';
 
 import type { Session as DBSession } from '@repo/db';
+import { isSameDay } from '@/lib/utils';
+import { DateRange } from 'react-date-range';
+import { createPortal } from 'react-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 type PopulatedActionItem = ActionItem & { resources: Resource[]; completions: ActionItemCompletion[] };
 type PopulatedPlan = Plan & { actionItems: PopulatedActionItem[] };
@@ -51,9 +57,14 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [showNewSession, setShowNewSession] = useState(false);
   const [showActionPlan, setShowActionPlan] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [selectedPlan, setSelectedPlan] = useState<PopulatedPlan | null>(null);
   const [showJournalDetail, setShowJournalDetail] = useState(false);
-  const [selectedJournal, setSelectedJournal] = useState<any>(null);
+  const [selectedJournal, setSelectedJournal] = useState<{
+    id: string;
+    title?: string;
+    content: string;
+    createdAt: Date;
+  } | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sessionTitle, setSessionTitle] = useState('');
   const [sessionNotes, setSessionNotes] = useState('');
@@ -73,7 +84,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<null | (() => void)>(null);
 
-  // Handle editPlan parameter
   const editPlanId = searchParams.get('editPlan');
   const [editingPlanId, setEditingPlanId] = useState<string | null>(editPlanId);
 
@@ -82,8 +92,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null);
   const [pendingDuration, setPendingDuration] = useState<string>('');
   const [isPublishingPlan, setIsPublishingPlan] = useState(false);
-
-  // React Query hooks
   const { data: client, isLoading: isClientLoading } = useGetClient(clientId);
   const { data: sessions = [], isLoading: isSessionsLoading } = useGetSessionsByClient(clientId);
   const { data: processingSession } = useGetSessionForPolling(processingSessionId || '');
@@ -96,10 +104,10 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const createSessionMutation = useCreateSession();
   const uploadAudioMutation = useUploadSessionAudio();
   const publishPlanMutation = usePublishPlan();
+  const queryClient = useQueryClient();
 
   const isLoading = isClientLoading || isSessionsLoading;
 
-  // Sync tab state with URL
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab');
     if (tabFromUrl && ['dashboard', 'sessions', 'plans', 'journal'].includes(tabFromUrl)) {
@@ -107,7 +115,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     }
   }, [searchParams]);
 
-  // Update URL when tab changes
   const handleTabChange = (newTab: string) => {
     setActiveTab(newTab);
 
@@ -121,11 +128,16 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     router.replace(newUrl.pathname + newUrl.search);
   };
 
-  // Update editingPlanId when searchParams changes
   useEffect(() => {
     const newEditPlanId = searchParams.get('editPlan');
     setEditingPlanId(newEditPlanId);
   }, [searchParams]);
+
+  useEffect(() => {
+    if (editingPlanId) {
+      setShowDatePicker(false);
+    }
+  }, [editingPlanId]);
 
   useEffect(() => {
     if (processingSession && processingSession.status === 'REVIEW_READY') {
@@ -134,25 +146,122 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     }
   }, [processingSession, processingSessionId, router]);
 
-  const { stats, allTasks } = useMemo(() => {
-    if (!sessions || sessions.length === 0) {
-      return { stats: { completion: 0, pending: 0 }, allTasks: [] };
+  const today = new Date();
+  const lastWeek = new Date();
+  lastWeek.setDate(today.getDate() - 6);
+  const [dateRange, setDateRange] = useState<{
+    startDate: Date;
+    endDate: Date;
+    key: string;
+  }>({
+    startDate: lastWeek,
+    endDate: today,
+    key: 'selection',
+  });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [datePickerMounted, setDatePickerMounted] = useState(false);
+  const datePickerRef = useRef<HTMLDivElement>(null);
+  const dateButtonRef = useRef<HTMLButtonElement>(null);
+  const [pickerPosition, setPickerPosition] = useState<{ top: number; left: number; width: number }>({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
+
+  useEffect(() => {
+    setDatePickerMounted(true);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (showDatePicker && dateButtonRef.current) {
+      const rect = dateButtonRef.current.getBoundingClientRect();
+      const pickerHeight = 380;
+      const pickerWidth = 350;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      let top = rect.bottom + window.scrollY;
+      if (spaceBelow < pickerHeight && spaceAbove > pickerHeight) {
+        top = rect.top + window.scrollY - pickerHeight;
+      }
+      let left = rect.left + window.scrollX;
+      if (left + pickerWidth > window.innerWidth) {
+        left = window.innerWidth - pickerWidth - 8;
+      }
+      setPickerPosition({ top, left, width: rect.width });
     }
+  }, [showDatePicker]);
 
-    const tasks = sessions.flatMap((s) => s.plan?.actionItems || []);
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter((t) => t.completions && t.completions.length > 0).length;
-    const pendingTasks = totalTasks - completedTasks;
-    const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-    return {
-      stats: {
-        completion: completionPercentage,
-        pending: pendingTasks,
-      },
-      allTasks: tasks,
+  useEffect(() => {
+    if (!showDatePicker) return;
+    const handleClick = (event: MouseEvent) => {
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(event.target as Node) &&
+        dateButtonRef.current &&
+        !dateButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowDatePicker(false);
+      }
     };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowDatePicker(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleEscape);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [showDatePicker]);
+
+  const {
+    data: rangedActionItems = [],
+    isLoading: isActionItemsLoading,
+    error: actionItemsError,
+  } = useGetClientActionItemsInRange(
+    clientId,
+    dateRange.startDate.toISOString().split('T')[0] || '',
+    dateRange.endDate.toISOString().split('T')[0] || '',
+  );
+
+  const filteredTasks = rangedActionItems;
+
+  const [planSearch, setPlanSearch] = useState('');
+
+  const plans = useMemo(() => {
+    return sessions
+      .filter((s) => s.plan)
+      .map((s) => ({
+        sessionId: s.id,
+        sessionTitle: s.title,
+        recordedAt: s.recordedAt,
+        plan: s.plan as PopulatedPlan,
+      }));
   }, [sessions]);
+
+  // Filter plans by search
+  const filteredPlans = useMemo(() => {
+    if (!planSearch.trim()) return plans;
+    return plans.filter((p) => (p.sessionTitle || '').toLowerCase().includes(planSearch.trim().toLowerCase()));
+  }, [plans, planSearch]);
+
+  // Helper: filter journal entries by date range
+  const filteredJournals = useMemo(() => {
+    const { startDate, endDate } = dateRange;
+    return (journalEntries || []).filter((j) => {
+      const d = new Date(j.createdAt);
+      return d >= startDate && d <= endDate;
+    });
+  }, [journalEntries, dateRange]);
+
+  // Summary stats for filtered range
+  const completion = useMemo(() => {
+    if (filteredTasks.length === 0) return 0;
+    const completed = filteredTasks.filter((t) => t.completions && t.completions.length > 0).length;
+    return Math.round((completed / filteredTasks.length) * 100);
+  }, [filteredTasks]);
 
   const handleSaveAndTranscribe = async () => {
     if (!sessionTitle) {
@@ -171,7 +280,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
       toast.success('Session saved and sent for transcription!');
       setSessionTitle('');
       setSessionNotes('');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to save session', error);
       setErrorMessage('Failed to create session. Please check your internet connection and try again.');
       setShowErrorModal(true);
@@ -198,12 +307,12 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     setProcessingStep('uploading');
   };
 
-  const handlePlanClick = (plan: any) => {
+  const handlePlanClick = (plan: PopulatedPlan) => {
     setSelectedPlan(plan);
     setShowActionPlan(true);
   };
 
-  const handleJournalClick = (journal: any) => {
+  const handleJournalClick = (journal: { id: string; title?: string; content: string; createdAt: Date }) => {
     setSelectedJournal(journal);
     setShowJournalDetail(true);
   };
@@ -249,10 +358,10 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
       await uploadAudioMutation.mutateAsync({ sessionId: newSession.id, formData });
       setProcessingSessionId(newSession.id);
       setShowProcessingModal(true);
-    } catch (err: any) {
+    } catch (err) {
       setProcessingStep('error');
-      setProcessingError(err.message || 'Failed to upload audio or create session');
-      toast.error(err.message || 'Failed to upload audio or create session');
+      setProcessingError(err instanceof Error ? err.message : 'Failed to upload audio or create session');
+      toast.error(err instanceof Error ? err.message : 'Failed to upload audio or create session');
     }
   };
 
@@ -280,6 +389,12 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   }, []);
 
   const handleBack = () => {
+    // Close date picker if open
+    if (showDatePicker) {
+      setShowDatePicker(false);
+      return;
+    }
+
     if (audioRecorderRef.current && ['paused', 'recording'].includes(audioRecorderRef.current.getStatus())) {
       setShowUnsavedModal(true);
       setPendingNavigation(() => () => router.back());
@@ -330,34 +445,24 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     });
   };
 
-  // --- Plans Tab Table State ---
-  const [planSearch, setPlanSearch] = useState('');
-
-  // Helper to get plans from sessions
-  const plans = useMemo(() => {
-    return sessions
-      .filter((s) => s.plan)
-      .map((s) => ({
-        sessionId: s.id,
-        sessionTitle: s.title,
-        recordedAt: s.recordedAt,
-        plan: s.plan as PopulatedPlan,
-      }));
-  }, [sessions]);
-
-  // Filter plans by search
-  const filteredPlans = useMemo(() => {
-    if (!planSearch.trim()) return plans;
-    return plans.filter((p) => (p.sessionTitle || '').toLowerCase().includes(planSearch.trim().toLowerCase()));
-  }, [plans, planSearch]);
-
-  // Dummy feedback calculation (replace with real logic if available)
+  // Real feedback calculation based on actual ratings
   function getAvgFeedback(plan: PopulatedPlan) {
-    // TODO: Replace with real feedback logic
-    // For now, cycle through options for demo
-    const idx = plans.findIndex((p) => p.plan && p.plan.id === plan.id);
-    const options = ['Nil', 'Happy', 'Neutral', 'Sad'];
-    return options[idx % options.length];
+    // Get all completions for this plan's action items
+    const allCompletions = plan.actionItems.flatMap((item) => item.completions || []);
+
+    if (allCompletions.length === 0) return 'Nil';
+
+    // Only use completions with a valid rating
+    const completionsWithRating = allCompletions.filter((c) => typeof c.rating === 'number');
+    if (completionsWithRating.length === 0) return 'Nil';
+
+    const totalRating = completionsWithRating.reduce((sum, c) => sum + (c.rating ?? 0), 0);
+    const avgRating = totalRating / completionsWithRating.length;
+
+    // Convert rating to feedback type
+    if (avgRating >= 4) return 'Happy';
+    if (avgRating >= 2.5) return 'Neutral';
+    return 'Sad';
   }
 
   // --- Feedback and Journal Badge Helpers ---
@@ -545,15 +650,61 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     <TabsContent value='dashboard' className='mt-0'>
       <div className='flex flex-col gap-4 w-full mb-6 sm:mb-8'>
         <div className='flex flex-col md:flex-row md:items-center md:justify-between w-full gap-3 md:gap-0'>
-          <h2 className='text-lg sm:text-xl font-semibold mb-0'>Tasks Overview</h2>
+          <h2 className='text-lg sm:text-xl font-semibold mb-0'>Summary</h2>
+          <div className='flex items-center gap-2'>
+            <button
+              ref={dateButtonRef}
+              className='rounded-full border border-gray-300 px-4 py-2 text-sm bg-white shadow hover:bg-gray-50 transition'
+              onClick={() => setShowDatePicker((v) => !v)}
+              type='button'
+            >
+              {dateRange.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} –{' '}
+              {dateRange.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </button>
+            {datePickerMounted &&
+              showDatePicker &&
+              createPortal(
+                <div
+                  ref={datePickerRef}
+                  className='absolute z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 max-w-full max-h-[90vh] w-[350px] sm:w-auto overflow-auto flex flex-col items-center animate-fadeIn'
+                  style={{
+                    top: pickerPosition.top,
+                    left: pickerPosition.left,
+                    position: 'absolute',
+                    minWidth: pickerPosition.width,
+                  }}
+                  role='dialog'
+                  aria-modal='true'
+                >
+                  <DateRange
+                    editableDateInputs={true}
+                    onChange={(ranges) => {
+                      const selection = ranges.selection;
+                      if (selection) {
+                        setDateRange({
+                          startDate: selection.startDate || dateRange.startDate,
+                          endDate: selection.endDate || selection.startDate || dateRange.endDate,
+                          key: 'selection',
+                        });
+                      }
+                    }}
+                    moveRangeOnFirstSelection={false}
+                    ranges={[dateRange]}
+                    maxDate={new Date()}
+                    rangeColors={['#2563eb']}
+                  />
+                </div>,
+                document.body,
+              )}
+          </div>
         </div>
         <div className='flex flex-col sm:flex-row gap-4 w-full'>
           <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background'>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-sm sm:text-base font-semibold'>Avg Tasks Completion</CardTitle>
+              <CardTitle className='text-sm sm:text-base font-semibold'>Avg Daily Tasks Completion</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl sm:text-3xl font-extrabold'>{stats.completion}%</div>
+              <div className='text-2xl sm:text-3xl font-extrabold'>{completion}%</div>
             </CardContent>
           </Card>
           <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background'>
@@ -561,7 +712,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               <CardTitle className='text-sm sm:text-base font-semibold'>Journal Entries</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl sm:text-3xl font-extrabold'>3</div>
+              <div className='text-2xl sm:text-3xl font-extrabold'>{filteredJournals.length}</div>
             </CardContent>
           </Card>
         </div>
@@ -579,9 +730,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                   Tasks
                 </TableHead>
                 <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
-                  All Mandatory Tasks
-                </TableHead>
-                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                   Avg Task Feedback
                 </TableHead>
                 <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
@@ -590,27 +738,39 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {/* Mock data for now */}
-              {[
-                { date: '2025-06-16', tasks: '0/7', mandatory: 'Not Done', feedback: 'Nil', journal: 'No' },
-                { date: '2025-06-15', tasks: '4/6', mandatory: 'Done', feedback: 'Happy', journal: 'No' },
-                { date: '2025-06-14', tasks: '5/5', mandatory: 'Done', feedback: 'Neutral', journal: 'Yes' },
-                { date: '2025-06-13', tasks: '3/5', mandatory: 'Not Done', feedback: 'Sad', journal: 'Yes' },
-              ].map((row) => (
-                <TableRow
-                  key={row.date}
-                  className='cursor-pointer hover:bg-gray-50 transition-colors border-b last:border-b-0 border-[#ececec]'
-                  onClick={() => router.push(`/practitioner/clients/${clientId}/tasks/${row.date}`)}
-                >
-                  <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
-                    {new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </TableCell>
-                  <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>{row.tasks}</TableCell>
-                  <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>{row.mandatory}</TableCell>
-                  <TableCell className='px-7 py-5 whitespace-nowrap'>{feedbackBadge(row.feedback)}</TableCell>
-                  <TableCell className='px-7 py-5 whitespace-nowrap'>{journalBadge(row.journal)}</TableCell>
-                </TableRow>
-              ))}
+              {getDateRangeArray(dateRange.startDate, dateRange.endDate)
+                .reverse() // Reverse to show most recent dates first
+                .map((date) => {
+                  // Find all tasks for this day
+                  const dayTasks = filteredTasks.filter((t) => {
+                    // Use t.sessionDate if present, else fallback to t.createdAt or t.updatedAt
+                    const taskDate = t.sessionDate
+                      ? new Date(t.sessionDate)
+                      : t.createdAt
+                        ? new Date(t.createdAt)
+                        : null;
+                    return taskDate && isSameDay(taskDate, date);
+                  });
+                  const completed = dayTasks.filter((t) => t.completions && t.completions.length > 0).length;
+                  const feedback = getAvgFeedbackForDay(dayTasks);
+                  const journal = filteredJournals.some((j) => isSameDay(new Date(j.createdAt), date)) ? 'Yes' : 'No';
+                  return (
+                    <TableRow
+                      key={date.toISOString()}
+                      className='cursor-pointer hover:bg-gray-50 transition-colors border-b last:border-b-0 border-[#ececec]'
+                      onClick={() => router.push(`/practitioner/clients/${clientId}/tasks/${formatDateForUrl(date)}`)}
+                    >
+                      <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
+                        {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </TableCell>
+                      <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
+                        {`${completed}/${dayTasks.length}`}
+                      </TableCell>
+                      <TableCell className='px-7 py-5 whitespace-nowrap'>{feedbackBadge(feedback)}</TableCell>
+                      <TableCell className='px-7 py-5 whitespace-nowrap'>{journalBadge(journal)}</TableCell>
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
         </div>
@@ -707,11 +867,11 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
   const renderJournalTab = () => (
     <TabsContent value='journal' className='mt-0'>
-      {journalEntries.length === 0 ? (
+      {filteredJournals.length === 0 ? (
         <div className='text-center text-muted-foreground py-8'>No journal entries found for this client.</div>
       ) : (
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 min-w-0'>
-          {journalEntries.map((entry) => (
+          {filteredJournals.map((entry) => (
             <Card
               key={entry.id}
               className='flex flex-col p-0 overflow-hidden h-48 sm:h-56 min-w-0 w-96 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50 hover:shadow-xl transition-shadow'
@@ -728,7 +888,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                   })}
                 </div>
                 <div className='text-sm text-gray-600 line-clamp-3'>
-                  {/* Remove HTML tags for preview */}
                   {entry.content.replace(/<[^>]*>/g, '').length > 100
                     ? entry.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...'
                     : entry.content.replace(/<[^>]*>/g, '')}
@@ -748,44 +907,10 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     if (editingPlanId) {
       if (isEditingPlanLoading) {
         return (
-          <div className='min-h-screen bg-transparent flex flex-col'>
-            <div className='w-full max-w-[1350px] mx-auto px-2 sm:px-6 md:px-10'>
-              <div className='flex flex-col gap-0 border-b pt-1 sm:pt-2 pb-3 sm:pb-4'>
-                <div className='flex items-center'>
-                  <button
-                    type='button'
-                    aria-label='Back'
-                    onClick={handleClosePlanEditor}
-                    className='text-muted-foreground hover:text-foreground focus:outline-none'
-                    style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
-                  </button>
-                </div>
-                <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2'>
-                  <div>
-                    <h1 className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'>Edit Action Plan</h1>
-                  </div>
-                  {planStatus === 'DRAFT' &&
-                    editingPlan &&
-                    (editingPlan as any).actionItems &&
-                    (editingPlan as any).actionItems.length > 0 && (
-                      <Button
-                        onClick={handlePublishPlan}
-                        disabled={isPublishingPlan || publishPlanMutation.isPending}
-                        className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'
-                      >
-                        {isPublishingPlan || publishPlanMutation.isPending ? 'Publishing...' : 'Publish Plan'}
-                      </Button>
-                    )}
-                </div>
-              </div>
-              <div className='flex items-center justify-center py-8'>
-                <div className='text-center'>
-                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto'></div>
-                  <p className='mt-2 text-sm text-muted-foreground'>Loading plan editor...</p>
-                </div>
-              </div>
+          <div className='min-h-screen flex items-center justify-center'>
+            <div className='text-center'>
+              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto'></div>
+              <p className='mt-2 text-sm text-muted-foreground'>Loading plan editor...</p>
             </div>
           </div>
         );
@@ -974,17 +1099,24 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
         {selectedTask && (
           <TaskDetailModal
             open={isTaskModalOpen}
-            onOpenChange={setIsTaskModalOpen}
+            onClose={() => setIsTaskModalOpen(false)}
             task={{
-              title: selectedTask.description,
+              id: selectedTask.id,
+              description: selectedTask.description,
               target: selectedTask.target ?? 'N/A',
               frequency: selectedTask.frequency ?? 'N/A',
-              feedback: 'N/A',
-              achieved: selectedTask.completions.length > 0 ? 'Completed' : 'Pending',
-              toolsToHelp: selectedTask.resources.map((r) => ({
-                title: r.title || r.url,
-                type: r.type === 'LINK' ? 'hyperlink' : 'PDF Doc',
+              weeklyRepetitions: selectedTask.weeklyRepetitions ?? undefined,
+              isMandatory: selectedTask.isMandatory,
+              isCompleted: selectedTask.completions.length > 0,
+              whyImportant: selectedTask.whyImportant ?? undefined,
+              recommendedActions: selectedTask.recommendedActions ?? undefined,
+              toolsToHelp: selectedTask.resources
+                .map((r) => `${r.title || r.url} (${r.type === 'LINK' ? 'hyperlink' : 'PDF Doc'})`)
+                .join(', '),
+              resources: selectedTask.resources.map((r) => ({
+                type: r.type as 'LINK' | 'PDF',
                 url: r.url,
+                title: r.title ?? undefined,
               })),
             }}
           />
@@ -1086,4 +1218,51 @@ export default function ClientDashboardPage({ params }: { params: Promise<{ clie
       <ClientDashboardContent clientId={clientId} />
     </AudioRecorderProvider>
   );
+}
+
+// Utility to get last 7 days as Date[]
+function getLast7Days() {
+  const days = [];
+  const today = new Date();
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    days.push(d);
+  }
+  return days.reverse();
+}
+
+// Utility to format date for URL (YYYY-MM-DD)
+function formatDateForUrl(date: Date) {
+  return date.toISOString().split('T')[0];
+}
+
+// Utility to get average feedback for a day based on actual ratings
+function getAvgFeedbackForDay(tasks: PopulatedActionItem[]) {
+  if (!tasks || tasks.length === 0) return 'Nil';
+
+  // Get all completions for tasks on this day
+  const allCompletions = tasks.flatMap((task) => task.completions || []);
+
+  if (allCompletions.length === 0) return 'Nil';
+
+  // Calculate average rating
+  const totalRating = allCompletions.reduce((sum, completion) => sum + (completion.rating || 0), 0);
+  const avgRating = totalRating / allCompletions.length;
+
+  // Convert rating to feedback type
+  if (avgRating >= 4) return 'Happy';
+  if (avgRating >= 2.5) return 'Neutral';
+  return 'Sad';
+}
+
+// Utility to get array of dates in range (inclusive)
+function getDateRangeArray(start: Date, end: Date) {
+  const arr = [];
+  let dt = new Date(start);
+  while (dt <= end) {
+    arr.push(new Date(dt));
+    dt.setDate(dt.getDate() + 1);
+  }
+  return arr;
 }

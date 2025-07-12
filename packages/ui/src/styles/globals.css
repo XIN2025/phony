@@ -147,3 +147,43 @@ div.test-center-modal {
   margin: 0 !important;
   box-sizing: border-box;
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.react-date-picker__calendar {
+  min-width: 320px !important;
+  min-height: 340px !important;
+  border-radius: 1rem !important;
+  box-shadow:
+    0 8px 32px 0 rgba(60, 60, 60, 0.12),
+    0 1.5px 6px 0 rgba(60, 60, 60, 0.08) !important;
+  border: 1px solid #e5e7eb !important;
+  padding: 1rem !important;
+  z-index: 9999 !important;
+}
+.react-calendar {
+  min-width: 300px !important;
+  min-height: 320px !important;
+  border-radius: 1rem !important;
+  box-shadow: none !important;
+}
+.react-date-picker__wrapper {
+  border-radius: 9999px !important;
+  border: 1px solid #d1d5db !important;
+  padding: 0.25rem 1rem !important;
+  background: #fff !important;
+  box-shadow: 0 1px 4px 0 rgba(60, 60, 60, 0.08) !important;
+}

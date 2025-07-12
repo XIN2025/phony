@@ -97,3 +97,37 @@ export function getInitials(
 
   return 'U';
 }
+
+// Returns true if two dates are the same day (ignoring time)
+export function isSameDay(date1: Date | string | null | undefined, date2: Date | string | null | undefined): boolean {
+  // Handle null/undefined dates
+  if (!date1 || !date2) return false;
+
+  const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
+  const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
+
+  // Check if dates are valid
+  if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return false;
+
+  return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
+}
+
+// Returns a string representing engagement level based on completion ratio
+export function getEngagementForDay(tasks: any[]): string {
+  if (!tasks || tasks.length === 0) return 'Nil';
+  const completed = tasks.filter((t) => t.completions && t.completions.length > 0).length;
+  const ratio = completed / tasks.length;
+  if (ratio === 1) return 'High';
+  if (ratio >= 0.5) return 'Medium';
+  if (ratio > 0) return 'Low';
+  return 'Nil';
+}
+
+// Maps individual task rating to emoji
+export function getRatingEmoji(rating: number | null | undefined): string {
+  if (rating === null || rating === undefined) return '😊'; // Default for completed tasks without rating
+
+  if (rating >= 4) return '😊'; // Happy
+  if (rating >= 2.5) return '😐'; // Neutral
+  return '🙁'; // Sad
+}

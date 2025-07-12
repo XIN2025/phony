@@ -354,15 +354,12 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
   };
 
   const handleGenerateMoreTasks = () => {
-    console.log('Generating more tasks for plan:', planId);
     generateMoreTasksMutation.mutate(planId, {
       onSuccess: (data) => {
-        console.log('Generate more tasks success:', data);
         toast.success('Additional tasks generated successfully');
         onPlanUpdated?.();
       },
       onError: (error: any) => {
-        console.error('Generate more tasks error:', error);
         toast.error(error.message || 'Failed to generate additional tasks');
       },
     });
@@ -386,6 +383,10 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
     }
   }
 
+  const [optimisticPlanData, setOptimisticPlanData] = useState<PlanData | null>(null);
+
+  const currentPlanData = optimisticPlanData || planData;
+
   if (isPlanDataLoading) {
     return (
       <div className='flex items-center justify-center py-8'>
@@ -397,12 +398,8 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
     );
   }
 
-  const actionItems = planData?.actionItems || [];
-  const suggestedItems = planData?.suggestedActionItems || [];
-
-  console.log('Plan data:', planData);
-  console.log('Action items count:', actionItems.length);
-  console.log('Suggested items count:', suggestedItems.length);
+  const actionItems = currentPlanData?.actionItems || [];
+  const suggestedItems = currentPlanData?.suggestedActionItems || [];
 
   return (
     <div className='space-y-8 w-full max-w-[1350px] mx-auto px-2 sm:px-6 md:px-10'>
@@ -464,11 +461,34 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                   <Checkbox
                     checked={!!item.isMandatory}
                     onCheckedChange={(checked) => {
-                      saveTaskMutation.mutate({
-                        planId,
-                        itemId: item.id,
-                        data: { ...item, isMandatory: checked === true },
+                      // Optimistically update local state
+                      setOptimisticPlanData((prev) => {
+                        if (!prev) return prev;
+                        return {
+                          ...prev,
+                          actionItems: prev.actionItems.map((ai) =>
+                            ai.id === item.id ? { ...ai, isMandatory: checked === true } : ai,
+                          ),
+                        };
                       });
+                      saveTaskMutation.mutate(
+                        {
+                          planId,
+                          itemId: item.id,
+                          data: { ...item, isMandatory: checked === true },
+                        },
+                        {
+                          onError: () => {
+                            // Revert on error
+                            setOptimisticPlanData(null);
+                            toast.error('Failed to update mandatory status');
+                          },
+                          onSuccess: () => {
+                            setOptimisticPlanData(null);
+                            refetchPlanData();
+                          },
+                        },
+                      );
                     }}
                     className='scale-90'
                   />
@@ -537,11 +557,8 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                 <div className='flex items-center gap-1 min-w-[120px] justify-end pr-2'>
                   <Checkbox
                     checked={!!item.isMandatory}
-                    onCheckedChange={(checked) => {
-                      editSuggestionMutation.mutate({
-                        suggestionId: item.id,
-                        updatedData: { ...item, isMandatory: checked === true },
-                      });
+                    onCheckedChange={() => {
+                      toast.info('Add this task to the action plan before marking it mandatory.');
                     }}
                     className='scale-90'
                   />

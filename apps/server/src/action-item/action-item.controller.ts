@@ -34,8 +34,8 @@ export class ActionItemController {
   constructor(private actionItemService: ActionItemService) {}
 
   @Post(':id/complete')
-  @ApiOperation({ summary: 'Mark an action item as completed' })
-  @ApiResponse({ status: 201, description: 'Action item marked as completed successfully.' })
+  @ApiOperation({ summary: 'Mark action item as completed' })
+  @ApiResponse({ status: 201, description: 'Action item completed successfully.' })
   async completeActionItem(
     @Param('id') actionItemId: string,
     @Body()
@@ -50,6 +50,13 @@ export class ActionItemController {
       actionItemId,
       ...completionData,
     });
+  }
+
+  @Delete(':id/complete')
+  @ApiOperation({ summary: 'Undo action item completion' })
+  @ApiResponse({ status: 200, description: 'Action item completion undone successfully.' })
+  async undoActionItemCompletion(@Param('id') actionItemId: string, @Query('clientId') clientId: string) {
+    return await this.actionItemService.undoActionItemCompletion(actionItemId, clientId);
   }
 
   @Get(':id/completions')

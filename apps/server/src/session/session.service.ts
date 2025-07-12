@@ -114,7 +114,6 @@ export class SessionService {
 
       fs.writeFileSync(filePath, audioBuffer);
 
-      this.logger.log(`Audio file saved successfully: ${filePath}`);
       return `/uploads/${filename}`;
     } catch (error) {
       this.logger.error(`Failed to save audio file for session ${sessionId}:`, error);
@@ -287,12 +286,22 @@ export class SessionService {
             select: {
               id: true,
               status: true,
+              publishedAt: true,
+              sessionId: true,
               actionItems: {
                 select: {
                   id: true,
                   description: true,
                   target: true,
                   frequency: true,
+                  category: true,
+                  weeklyRepetitions: true,
+                  isMandatory: true,
+                  whyImportant: true,
+                  recommendedActions: true,
+                  toolsToHelp: true,
+                  source: true,
+                  daysOfWeek: true,
                   completions: { select: { id: true } },
                   resources: { select: { title: true, url: true, type: true } },
                 },

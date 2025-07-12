@@ -1,146 +1,181 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui/components/dialog';
+import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
-import { Edit2 } from 'lucide-react';
+import { Calendar, Target, Info, ExternalLink, FileText, CheckCircle, Clock, Star } from 'lucide-react';
 
 interface TaskDetailModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   task: {
-    title: string;
-    target: string;
-    frequency: string;
-    feedback: string;
-    achieved: string;
-    potentialActions?: string[];
-    whyThisHelps?: string;
-    toolsToHelp?: Array<{
-      title: string;
-      type: 'hyperlink' | 'PDF Doc';
-      url?: string;
+    id: string;
+    description: string;
+    target?: string;
+    frequency?: string;
+    weeklyRepetitions?: number;
+    isMandatory?: boolean;
+    whyImportant?: string;
+    recommendedActions?: string;
+    toolsToHelp?: string;
+    category?: string;
+    isCompleted: boolean;
+    resources?: Array<{
+      type: 'LINK' | 'PDF';
+      url: string;
+      title?: string;
     }>;
-  };
-  readOnly?: boolean;
+  } | null;
 }
 
-export function TaskDetailModal({ open, onOpenChange, task, readOnly = false }: TaskDetailModalProps) {
-  const handleEdit = () => {
-    console.log('Edit task:', task.title);
-  };
+export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ open, onClose, task }) => {
+  if (!task) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className='w-[95vw] sm:w-[85vw] md:w-[75vw] lg:w-[65vw] xl:w-[55vw] max-w-4xl max-h-[85vh] overflow-y-auto !left-[50%] !top-[50%] !translate-x-[-50%] !translate-y-[-50%]'
-        showCloseButton={true}
-      >
-        <DialogHeader className='relative pb-4'>
-          <DialogTitle className='text-lg sm:text-xl font-semibold pr-10'>Tasks</DialogTitle>
-          {!readOnly && (
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={handleEdit}
-              className='absolute top-0 right-0 p-2 hover:bg-muted rounded-md'
-            >
-              <Edit2 className='h-4 w-4' />
-            </Button>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className='!fixed !top-1/2 !left-1/2 !transform !-translate-x-1/2 !-translate-y-1/2 w-[90vw] max-w-2xl md:max-w-3xl lg:max-w-4xl p-0 overflow-hidden rounded-2xl bg-white/95 backdrop-blur-sm border border-white/50 shadow-xl !z-[9999]'>
+        <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 sm:p-8 border-b border-gray-200/50'>
+          <DialogHeader className='space-y-3'>
+            <div className='flex items-start justify-between'>
+              <div className='flex-1 min-w-0'>
+                <DialogTitle className='text-xl sm:text-2xl font-bold text-gray-900 mb-2 leading-tight'>
+                  {task.description}
+                </DialogTitle>
+                <div className='flex flex-wrap items-center gap-2 mb-3'>
+                  {task.isMandatory && (
+                    <Badge variant='destructive' className='text-xs bg-red-100 text-red-700 border-red-200'>
+                      <Star className='w-3 h-3 mr-1' />
+                      Mandatory
+                    </Badge>
+                  )}
+                  {task.category && (
+                    <Badge variant='outline' className='text-xs bg-blue-100 text-blue-700 border-blue-200'>
+                      {task.category}
+                    </Badge>
+                  )}
+                  {task.isCompleted && (
+                    <Badge variant='default' className='text-xs bg-green-100 text-green-700 border-green-200'>
+                      <CheckCircle className='w-3 h-3 mr-1' />
+                      Completed
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <Button variant='ghost' size='sm' onClick={onClose} className='text-gray-500 hover:text-gray-700 p-2'>
+                ✕
+              </Button>
+            </div>
+          </DialogHeader>
+        </div>
+
+        <div className='p-6 sm:p-8 space-y-6 max-h-[70vh] overflow-y-auto'>
+          {/* Task Details */}
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+            <Card className='bg-white/60 backdrop-blur-sm border border-gray-200/50'>
+              <CardContent className='p-4'>
+                <div className='flex items-center gap-2 mb-2'>
+                  <Clock className='w-4 h-4 text-gray-600' />
+                  <span className='text-sm font-medium text-gray-700'>Frequency</span>
+                </div>
+                <p className='text-sm text-gray-900'>{task.frequency || 'Not specified'}</p>
+              </CardContent>
+            </Card>
+
+            {task.target && (
+              <Card className='bg-white/60 backdrop-blur-sm border border-gray-200/50'>
+                <CardContent className='p-4'>
+                  <div className='flex items-center gap-2 mb-2'>
+                    <Target className='w-4 h-4 text-gray-600' />
+                    <span className='text-sm font-medium text-gray-700'>Target</span>
+                  </div>
+                  <p className='text-sm text-gray-900'>{task.target}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Why Important */}
+          {task.whyImportant && (
+            <Card className='bg-white/60 backdrop-blur-sm border border-gray-200/50'>
+              <CardContent className='p-4'>
+                <div className='flex items-center gap-2 mb-3'>
+                  <Info className='w-4 h-4 text-blue-600' />
+                  <span className='text-sm font-semibold text-gray-900'>Why This Task is Important</span>
+                </div>
+                <p className='text-sm text-gray-700 leading-relaxed'>{task.whyImportant}</p>
+              </CardContent>
+            </Card>
           )}
-        </DialogHeader>
 
-        <div className='space-y-4 sm:space-y-6'>
-          <div>
-            <h3 className='text-base sm:text-lg font-semibold mb-3 sm:mb-4'>Daily Targeted Goals</h3>
-
-            <Card className='border border-border rounded-lg'>
-              <CardContent className='p-4 sm:p-6'>
-                <div className='space-y-3 sm:space-y-4'>
-                  <h4 className='text-base sm:text-lg font-semibold'>{task.title}</h4>
-
-                  <div className='flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-6 text-sm'>
-                    <div>
-                      <span className='text-muted-foreground'>Target:</span>{' '}
-                      <span className='font-medium'>{task.target}</span>
-                    </div>
-                    <div>
-                      <span className='text-muted-foreground'>Frequency:</span>{' '}
-                      <span className='font-medium'>{task.frequency}</span>
-                    </div>
-                  </div>
-
-                  <div className='text-sm'>
-                    <span className='text-muted-foreground'>Feedback:</span> <span>{task.feedback}</span>
-                  </div>
-
-                  <div className='text-sm'>
-                    <span className='text-muted-foreground'>Achieved:</span>{' '}
-                    <span className='font-medium'>{task.achieved}</span>
-                  </div>
+          {/* Recommended Actions */}
+          {task.recommendedActions && (
+            <Card className='bg-white/60 backdrop-blur-sm border border-gray-200/50'>
+              <CardContent className='p-4'>
+                <div className='flex items-center gap-2 mb-3'>
+                  <Target className='w-4 h-4 text-green-600' />
+                  <span className='text-sm font-semibold text-gray-900'>Recommended Actions</span>
+                </div>
+                <div className='text-sm text-gray-700 leading-relaxed whitespace-pre-line'>
+                  {task.recommendedActions}
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Tools to Help */}
+          {task.toolsToHelp && (
+            <Card className='bg-white/60 backdrop-blur-sm border border-gray-200/50'>
+              <CardContent className='p-4'>
+                <div className='flex items-center gap-2 mb-3'>
+                  <Info className='w-4 h-4 text-purple-600' />
+                  <span className='text-sm font-semibold text-gray-900'>Tools to Help</span>
+                </div>
+                <p className='text-sm text-gray-700 leading-relaxed'>{task.toolsToHelp}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Resources */}
+          {task.resources && task.resources.length > 0 && (
+            <Card className='bg-white/60 backdrop-blur-sm border border-gray-200/50'>
+              <CardContent className='p-4'>
+                <div className='flex items-center gap-2 mb-3'>
+                  <FileText className='w-4 h-4 text-orange-600' />
+                  <span className='text-sm font-semibold text-gray-900'>Resources</span>
+                </div>
+                <div className='space-y-2'>
+                  {task.resources.map((resource, index) => (
+                    <div key={index} className='flex items-center gap-2 p-2 bg-gray-50 rounded-lg'>
+                      {resource.type === 'LINK' ? (
+                        <ExternalLink className='w-4 h-4 text-blue-600' />
+                      ) : (
+                        <FileText className='w-4 h-4 text-gray-600' />
+                      )}
+                      <a
+                        href={resource.url}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-sm text-blue-600 hover:text-blue-800 underline truncate flex-1'
+                      >
+                        {resource.title || resource.url}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className='p-6 sm:p-8 border-t border-gray-200/50 bg-gray-50/50'>
+          <div className='flex justify-end'>
+            <Button onClick={onClose} className='bg-gray-900 text-white hover:bg-gray-800 rounded-full px-6 py-2'>
+              Close
+            </Button>
           </div>
-
-          {task.potentialActions && task.potentialActions.length > 0 && (
-            <div>
-              <h4 className='font-semibold mb-2 sm:mb-3 text-sm sm:text-base'>Potential Actions</h4>
-              <Card className='border border-border rounded-lg'>
-                <CardContent className='p-3 sm:p-4'>
-                  <ul className='space-y-2'>
-                    {task.potentialActions.map((action, index) => (
-                      <li key={index} className='text-xs sm:text-sm flex items-start'>
-                        <span className='mr-2 text-muted-foreground flex-shrink-0'>•</span>
-                        <span className='leading-relaxed'>{action}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {task.whyThisHelps && (
-            <div>
-              <h4 className='font-semibold mb-2 sm:mb-3 text-sm sm:text-base'>Why this will help you</h4>
-              <Card className='border border-border rounded-lg'>
-                <CardContent className='p-3 sm:p-4'>
-                  <p className='text-xs sm:text-sm text-foreground leading-relaxed'>{task.whyThisHelps}</p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {task.toolsToHelp && task.toolsToHelp.length > 0 && (
-            <div>
-              <h4 className='font-semibold mb-2 sm:mb-3 text-sm sm:text-base'>Tools to help</h4>
-              <Card className='border border-border rounded-lg'>
-                <CardContent className='p-3 sm:p-4'>
-                  <div className='space-y-2'>
-                    {task.toolsToHelp.map((tool, index) => (
-                      <div key={index} className='text-xs sm:text-sm'>
-                        {tool.url ? (
-                          <a
-                            href={tool.url}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                            className='text-primary hover:text-primary/80 underline break-words'
-                          >
-                            {tool.title}
-                          </a>
-                        ) : (
-                          <span className='break-words'>{tool.title}</span>
-                        )}{' '}
-                        <span className='text-muted-foreground'>({tool.type})</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>
   );
-}
+};

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Patch, UseGuards, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Patch, UseGuards, Delete, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { PlanService } from './plan.service';
 import { ActionItemSource } from '@repo/db';
@@ -76,7 +76,6 @@ export class PlanController {
     return await this.planService.updatePlan(planId, updateData);
   }
 
-  // Suggested Action Items endpoints
   @Get(':id/with-suggestions')
   @ApiOperation({ summary: 'Get plan with AI suggestions' })
   @ApiResponse({ status: 200, description: 'Plan with suggestions retrieved successfully.' })
@@ -194,5 +193,16 @@ export class PlanController {
   @ApiResponse({ status: 200, description: 'Action item deleted successfully.' })
   async deleteActionItem(@Param('planId') planId: string, @Param('actionItemId') actionItemId: string) {
     return await this.planService.deleteActionItem(planId, actionItemId);
+  }
+
+  @Get('client/:id/action-items')
+  @ApiOperation({ summary: 'Get all action items for a client in a date range' })
+  @ApiResponse({ status: 200, description: 'Action items retrieved successfully.' })
+  async getClientActionItemsInRange(
+    @Param('id') clientId: string,
+    @Query('start') start: string,
+    @Query('end') end: string
+  ) {
+    return await this.planService.getClientActionItemsInRange(clientId, start, end);
   }
 }
