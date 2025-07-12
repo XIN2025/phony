@@ -195,7 +195,7 @@ export default function ClientsPage() {
                               <span className='text-sm sm:text-base text-black truncate block'>{client.email}</span>
                             </TableCell>
                             <TableCell className='hidden md:table-cell py-3 sm:py-4 px-2 sm:px-4'>
-                              <span className='text-sm sm:text-base text-black'>N/A</span>
+                              <span className='text-sm sm:text-base text-black'>{client.phoneNumber || '-'}</span>
                             </TableCell>
                             <TableCell className='py-3 sm:py-4 px-2 sm:px-4'>
                               {(() => {

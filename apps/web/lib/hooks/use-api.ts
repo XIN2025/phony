@@ -87,6 +87,7 @@ export interface Client {
   avatarUrl?: string;
   createdAt: Date;
   hasCompletedIntake: boolean;
+  phoneNumber?: string;
 }
 
 export function useInviteClient() {
@@ -974,5 +975,45 @@ export function useGetClientActionItemsInRange(clientId: string, startDate: stri
     },
     enabled: !!clientId && !!startDate && !!endDate,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+// Returns the number of conversations with unread messages for the current practitioner
+export function useUnreadMessagesCount() {
+  const { data: currentUser } = useGetCurrentUser();
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: () => ApiClient.get<GetConversationsResponse>('/api/chat/conversations'),
+    staleTime: 2 * 1000,
+    retry: 1,
+    retryDelay: 500,
+    refetchInterval: 5000, // Poll every 5 seconds
+    refetchIntervalInBackground: true,
+  });
+  const currentUserId = currentUser?.id;
+  if (!data || !data.conversations || !currentUserId) return { count: 0, isLoading, isError };
+  const count = data.conversations.filter((conversation: any) => {
+    const lastMessage = conversation.messages && conversation.messages[0];
+    if (!lastMessage) return false;
+    return lastMessage.authorId !== currentUserId && !lastMessage.readAt;
+  }).length;
+  return { count, isLoading, isError };
+}
+
+export function useUploadResource() {
+  return useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return ApiClient.post<{ url: string; type: 'PDF' | 'IMAGE' | 'DOCX'; title: string }>(
+        '/api/action-items/upload-resource',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      );
+    },
   });
 }

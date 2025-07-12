@@ -12,7 +12,6 @@ interface CreatePlanDto {
     description: string;
     category?: string;
     target?: string;
-    frequency?: string;
     weeklyRepetitions?: number;
     isMandatory?: boolean;
     whyImportant?: string;
@@ -114,7 +113,6 @@ export class PlanController {
       description?: string;
       category?: string;
       target?: string;
-      frequency?: string;
     }
   ) {
     return await this.planService.updateSuggestedActionItem(suggestionId, updateData);
@@ -130,7 +128,6 @@ export class PlanController {
       description: string;
       category?: string;
       target?: string;
-      frequency?: string;
       weeklyRepetitions?: number;
       isMandatory?: boolean;
       whyImportant?: string;
@@ -171,7 +168,6 @@ export class PlanController {
       description?: string;
       category?: string;
       target?: string;
-      frequency?: string;
       weeklyRepetitions?: number;
       isMandatory?: boolean;
       whyImportant?: string;

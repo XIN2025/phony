@@ -25,7 +25,6 @@ interface ActionItem {
   description: string;
   category?: string;
   target?: string;
-  frequency?: string;
   weeklyRepetitions?: number;
   isMandatory?: boolean;
   whyImportant?: string;
@@ -45,7 +44,6 @@ interface SuggestedActionItem {
   description: string;
   category?: string;
   target?: string;
-  frequency?: string;
   weeklyRepetitions?: number;
   isMandatory?: boolean;
   whyImportant?: string;
@@ -450,7 +448,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                     {DAYS.map((d) => (
                       <span
                         key={d}
-                        className={`w-7 h-7 flex items-center justify-center rounded-full border text-xs font-semibold ml-1 ${item.daysOfWeek?.includes(d) ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300'}`}
+                        className={`w-7 h-7 flex items-center justify-center rounded-full border-2 text-xs font-semibold ml-1 ${item.daysOfWeek?.includes(d) ? 'border-black text-black bg-white' : 'border-gray-300 text-gray-500 bg-white'}`}
                       >
                         {d}
                       </span>
@@ -547,7 +545,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                     {DAYS.map((d) => (
                       <span
                         key={d}
-                        className={`w-7 h-7 flex items-center justify-center rounded-full border text-xs font-semibold ml-1 ${item.daysOfWeek?.includes(d) ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300'}`}
+                        className={`w-7 h-7 flex items-center justify-center rounded-full border-2 text-xs font-semibold ml-1 ${item.daysOfWeek?.includes(d) ? 'border-black text-black bg-white' : 'border-gray-300 text-gray-500 bg-white'}`}
                       >
                         {d}
                       </span>

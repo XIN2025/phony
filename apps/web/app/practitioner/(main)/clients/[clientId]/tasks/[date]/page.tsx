@@ -115,7 +115,6 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
     description: task.description,
     duration: task.duration || '',
     isMandatory: task.isMandatory || false,
-    frequency: task.frequency || 'Daily',
     daysOfWeek: task.daysOfWeek || [],
     whyImportant: task.whyImportant || '',
     recommendedActions: task.recommendedActions || '',

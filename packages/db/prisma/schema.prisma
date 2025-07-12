@@ -225,7 +225,6 @@ model SuggestedActionItem {
   description       String
   category          String?
   target            String?
-  frequency         String?
   weeklyRepetitions Int?                      @default(1)
   isMandatory       Boolean                   @default(false)
   whyImportant      String?
@@ -233,6 +232,7 @@ model SuggestedActionItem {
   toolsToHelp       String?
   status            SuggestedActionItemStatus @default(PENDING)
   createdAt         DateTime                  @default(now())
+  daysOfWeek        String[]
   @@map("suggested_action_items")
 }
 
@@ -249,7 +249,6 @@ model ActionItem {
   description       String
   category          String?
   target            String?
-  frequency         String?
   weeklyRepetitions Int?        @default(1)
   isMandatory       Boolean     @default(false)
   whyImportant      String?
@@ -280,6 +279,8 @@ model Resource {
 enum ResourceType {
   LINK
   PDF
+  IMAGE
+  DOCX
 }
 
 model ActionItemCompletion {

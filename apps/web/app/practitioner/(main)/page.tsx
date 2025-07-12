@@ -6,6 +6,7 @@ import {
   useGetInvitations,
   useResendInvitation,
   useGetClients,
+  useUnreadMessagesCount,
 } from '@/lib/hooks/use-api';
 import { getAvatarUrl, getInitials } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
@@ -43,6 +44,7 @@ export default function PractitionerDashboard() {
   const { mutate: deleteInvitation, isPending: isDeleting } = useDeleteInvitation();
   const { mutate: resendInvitation, isPending: isResending } = useResendInvitation();
   const { mutate: cleanupExpiredInvitations, isPending: isCleaningUp } = useCleanupExpiredInvitations();
+  const { count: unreadMessages, isLoading: isUnreadLoading } = useUnreadMessagesCount();
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -74,7 +76,6 @@ export default function PractitionerDashboard() {
     }
   }, [status, session?.user?.role, router]);
 
-  const unreadMessages = 2;
   const unreadJournals = 5;
 
   const pendingInvitations = invitations.filter((inv) => inv.status === 'PENDING');
@@ -123,7 +124,7 @@ export default function PractitionerDashboard() {
         </Button>
       </div>
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10 w-full'>
-        <Card className='flex flex-col justify-between p-4 sm:p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50'>
+        <Card className='flex flex-col justify-between p-4 sm:p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50 hover:bg-gray-100 transition-colors'>
           <div className='flex justify-between items-start'>
             <div className='flex flex-col min-w-0 flex-1'>
               <span className='text-xs sm:text-sm font-medium text-gray-600'>Total Clients</span>
@@ -135,11 +136,17 @@ export default function PractitionerDashboard() {
             </div>
           </div>
         </Card>
-        <Card className='flex flex-col justify-between p-4 sm:p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50'>
+        <Card className='flex flex-col justify-between p-4 sm:p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50 hover:bg-gray-100 transition-colors'>
           <div className='flex justify-between items-start'>
             <div className='flex flex-col min-w-0 flex-1'>
               <span className='text-xs sm:text-sm font-medium text-gray-600'>Unread Messages</span>
-              <span className='text-2xl sm:text-3xl lg:text-4xl font-bold'>{unreadMessages}</span>
+              <span className='text-2xl sm:text-3xl lg:text-4xl font-bold'>
+                {isUnreadLoading ? (
+                  <Loader2 className='inline h-6 w-6 animate-spin text-muted-foreground' />
+                ) : (
+                  unreadMessages
+                )}
+              </span>
               <span className='text-xs text-transparent mt-1'>&nbsp;</span>
             </div>
             <div className='p-2 sm:p-3 bg-gray-200/50 rounded-full flex-shrink-0 ml-2'>
@@ -147,7 +154,7 @@ export default function PractitionerDashboard() {
             </div>
           </div>
         </Card>
-        <Card className='flex flex-col justify-between p-4 sm:p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50 sm:col-span-2 lg:col-span-1'>
+        <Card className='flex flex-col justify-between p-4 sm:p-6 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50 sm:col-span-2 lg:col-span-1 hover:bg-gray-100 transition-colors'>
           <div className='flex justify-between items-start'>
             <div className='flex flex-col min-w-0 flex-1'>
               <span className='text-xs sm:text-sm font-medium text-gray-600'>Unread Journals</span>

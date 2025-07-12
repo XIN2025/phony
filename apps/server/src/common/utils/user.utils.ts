@@ -235,7 +235,7 @@ export async function saveFileToUploads(
 
   try {
     await mkdir(uploadPath, { recursive: true });
-  } catch {
+  } catch (error) {
     throw new Error('Failed to create uploads directory');
   }
 
@@ -243,8 +243,11 @@ export async function saveFileToUploads(
 
   try {
     await writeFile(filePath, file.buffer);
-    return filename;
-  } catch {
+
+    const returnedUrl = `/uploads/${filename}`;
+
+    return returnedUrl;
+  } catch (error) {
     throw new Error('Failed to save file');
   }
 }

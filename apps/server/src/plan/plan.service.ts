@@ -11,7 +11,6 @@ interface CreatePlanDto {
     description: string;
     category?: string;
     target?: string;
-    frequency?: string;
     weeklyRepetitions?: number;
     isMandatory?: boolean;
     whyImportant?: string;
@@ -46,7 +45,6 @@ export class PlanService {
             description: item.description,
             category: item.category,
             target: item.target,
-            frequency: item.frequency,
             weeklyRepetitions: item.weeklyRepetitions || 1,
             isMandatory: item.isMandatory || false,
             whyImportant: item.whyImportant,
@@ -69,7 +67,6 @@ export class PlanService {
       },
     });
 
-    // Update the session to include the plan reference
     await this.prisma.session.update({
       where: { id: data.sessionId },
       data: {
@@ -122,8 +119,8 @@ export class PlanService {
     });
   }
 
-  async getPlansByClient(clientId: string) {
-    return await this.prisma.plan.findMany({
+  async getMostRecentPublishedPlanByClient(clientId: string) {
+    return await this.prisma.plan.findFirst({
       where: {
         clientId,
         status: PlanStatus.PUBLISHED,
@@ -146,16 +143,17 @@ export class PlanService {
         actionItems: {
           include: {
             resources: true,
-            completions: {
-              where: {
-                clientId: clientId,
-              },
-            },
+            completions: true,
           },
         },
       },
       orderBy: { publishedAt: 'desc' },
     });
+  }
+
+  async getPlansByClient(clientId: string) {
+    const plan = await this.getMostRecentPublishedPlanByClient(clientId);
+    return plan ? [plan] : [];
   }
 
   async getPlanById(planId: string) {
@@ -209,7 +207,6 @@ export class PlanService {
                 description: item.description,
                 category: item.category,
                 target: item.target,
-                frequency: item.frequency,
                 weeklyRepetitions: item.weeklyRepetitions || 1,
                 isMandatory: item.isMandatory || false,
                 whyImportant: item.whyImportant,
@@ -256,7 +253,6 @@ export class PlanService {
         description: suggestedItem.description,
         category: suggestedItem.category,
         target: suggestedItem.target,
-        frequency: suggestedItem.frequency,
         weeklyRepetitions: suggestedItem.weeklyRepetitions || 1,
         isMandatory: suggestedItem.isMandatory || false,
         whyImportant: suggestedItem.whyImportant,
@@ -290,7 +286,6 @@ export class PlanService {
       description?: string;
       category?: string;
       target?: string;
-      frequency?: string;
     }
   ) {
     return await this.prisma.suggestedActionItem.update({
@@ -351,7 +346,6 @@ export class PlanService {
       description: string;
       category?: string;
       target?: string;
-      frequency?: string;
       weeklyRepetitions?: number;
       isMandatory?: boolean;
       whyImportant?: string;
@@ -371,7 +365,6 @@ export class PlanService {
         description: actionItemData.description,
         category: actionItemData.category,
         target: actionItemData.target,
-        frequency: actionItemData.frequency,
         weeklyRepetitions: actionItemData.weeklyRepetitions || 1,
         isMandatory: actionItemData.isMandatory || false,
         whyImportant: actionItemData.whyImportant,
@@ -425,7 +418,6 @@ export class PlanService {
           description: s.description,
           category: s.category,
           target: s.target,
-          frequency: s.frequency,
           weeklyRepetitions: s.weeklyRepetitions || 1,
           isMandatory: s.isMandatory || false,
           whyImportant: s.whyImportant,
@@ -442,7 +434,6 @@ export class PlanService {
           description: s.description,
           category: s.category,
           target: s.target,
-          frequency: s.frequency,
           weeklyRepetitions: s.weeklyRepetitions || 1,
           isMandatory: s.isMandatory || false,
           whyImportant: s.whyImportant,
@@ -469,7 +460,6 @@ export class PlanService {
       description?: string;
       category?: string;
       target?: string;
-      frequency?: string;
       weeklyRepetitions?: number;
       isMandatory?: boolean;
       whyImportant?: string;
@@ -489,29 +479,23 @@ export class PlanService {
     if (!actionItem) {
       throw new Error('Resource not found. Please check the URL.');
     }
-    const safeResources = updateData.resources
-      ? updateData.resources.map((r) => ({
-          ...r,
-          type: r.type as 'LINK' | 'PDF',
-        }))
-      : undefined;
+
     const updated = await this.prisma.actionItem.update({
       where: { id: actionItemId },
       data: {
         description: updateData.description,
         category: updateData.category,
         target: updateData.target,
-        frequency: updateData.frequency,
         weeklyRepetitions: updateData.weeklyRepetitions,
         isMandatory: updateData.isMandatory,
         whyImportant: updateData.whyImportant,
         recommendedActions: updateData.recommendedActions,
         toolsToHelp: updateData.toolsToHelp,
         daysOfWeek: updateData.daysOfWeek || [],
-        resources: safeResources
+        resources: updateData.resources
           ? {
               deleteMany: {},
-              create: safeResources,
+              create: updateData.resources,
             }
           : undefined,
       },
@@ -569,7 +553,6 @@ export class PlanService {
           description: s.description,
           category: s.category,
           target: s.target,
-          frequency: s.frequency,
           weeklyRepetitions: s.weeklyRepetitions || 1,
           isMandatory: s.isMandatory || false,
           whyImportant: s.whyImportant,
@@ -618,7 +601,6 @@ export class PlanService {
             description: true,
             category: true,
             target: true,
-            frequency: true,
             weeklyRepetitions: true,
             isMandatory: true,
             whyImportant: true,

@@ -6,6 +6,8 @@ import { Checkbox } from '@repo/ui/components/checkbox';
 import { Button } from '@repo/ui/components/button';
 import { useDropzone } from 'react-dropzone';
 import type { FileWithPath } from 'react-dropzone';
+import { useUploadResource } from '@/lib/hooks/use-api';
+import { toast } from 'sonner';
 
 const DAYS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
 
@@ -34,7 +36,6 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
     isMandatory: initialValues?.isMandatory || false,
     description: initialValues?.description || '',
     category: initialValues?.category || '',
-    frequency: initialValues?.frequency || '',
     weeklyRepetitions: initialValues?.weeklyRepetitions || 1,
     daysOfWeek: initialValues?.daysOfWeek || [],
     whyImportant: initialValues?.whyImportant || '',
@@ -47,6 +48,9 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
   const [newLinks, setNewLinks] = useState<Resource[]>([]);
   const [linkInput, setLinkInput] = useState<string>('');
   const [showLinkInput, setShowLinkInput] = useState<boolean>(false);
+  const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+
+  const uploadResourceMutation = useUploadResource();
 
   // Update form when initialValues change
   React.useEffect(() => {
@@ -55,13 +59,37 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
         isMandatory: initialValues.isMandatory || false,
         description: initialValues.description || '',
         category: initialValues.category || '',
-        frequency: initialValues.frequency || '',
         weeklyRepetitions: initialValues.weeklyRepetitions || 1,
         daysOfWeek: initialValues.daysOfWeek || [],
         whyImportant: initialValues.whyImportant || '',
         recommendedActions: initialValues.recommendedActions || '',
         toolsToHelp: initialValues.toolsToHelp || '',
       });
+      // Reset resource states when initialValues change
+      setResources(initialValues.resources || []);
+      setNewFiles([]);
+      setNewLinks([]);
+      setLinkInput('');
+      setShowLinkInput(false);
+      setUploadingFiles(new Set());
+    } else {
+      // Reset everything when no initialValues (new task)
+      setForm({
+        isMandatory: false,
+        description: '',
+        category: '',
+        weeklyRepetitions: 1,
+        daysOfWeek: [],
+        whyImportant: '',
+        recommendedActions: '',
+        toolsToHelp: '',
+      });
+      setResources([]);
+      setNewFiles([]);
+      setNewLinks([]);
+      setLinkInput('');
+      setShowLinkInput(false);
+      setUploadingFiles(new Set());
     }
   }, [initialValues]);
 
@@ -78,8 +106,35 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
     });
   };
 
-  const onDrop = (acceptedFiles: FileWithPath[]) => {
+  const onDrop = async (acceptedFiles: FileWithPath[]) => {
     setNewFiles((prev: FileWithPath[]) => [...prev, ...acceptedFiles]);
+
+    // Upload files to backend
+    for (const file of acceptedFiles) {
+      setUploadingFiles((prev) => new Set(prev).add(file.name));
+      try {
+        const result = await uploadResourceMutation.mutateAsync(file);
+        setResources((prev) => [
+          ...prev,
+          {
+            type: result.type,
+            url: result.url,
+            title: result.title,
+          },
+        ]);
+        // Remove from newFiles since it's now in resources
+        setNewFiles((prev) => prev.filter((f) => f.name !== file.name));
+      } catch (error) {
+        console.error('Failed to upload file:', error);
+        toast.error(`Failed to upload ${file.name}`);
+      } finally {
+        setUploadingFiles((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(file.name);
+          return newSet;
+        });
+      }
+    }
   };
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
@@ -101,7 +156,9 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
   };
 
   const handleSave = () => {
-    onSave({ ...form, resources, newFiles, newLinks });
+    // Combine existing resources with new links
+    const allResources = [...resources, ...newLinks];
+    onSave({ ...form, resources: allResources });
   };
 
   return (
@@ -133,21 +190,14 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
               className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
               disabled={readOnly}
             />
-            <Input
-              placeholder='Frequency (e.g., daily, weekly)'
-              value={form.frequency}
-              onChange={(e) => handleChange('frequency', e.target.value)}
-              className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
-              disabled={readOnly}
-            />
             <div>
-              <div className='font-medium mb-2'>Weekly Repetition</div>
+              <div className='font-medium mb-2'>Select Days</div>
               <div className='flex gap-2'>
                 {DAYS.map((d) => (
                   <button
                     type='button'
                     key={d}
-                    className={`w-8 h-8 rounded-full border text-base font-semibold flex items-center justify-center transition-colors ${form.daysOfWeek.includes(d) ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}
+                    className={`w-8 h-8 rounded-full border-2 text-base font-semibold flex items-center justify-center transition-colors ml-1 ${form.daysOfWeek.includes(d) ? 'border-black text-black bg-white' : 'border-gray-300 text-gray-500 bg-white'}`}
                     onClick={() => !readOnly && toggleDay(d)}
                     disabled={readOnly}
                     style={readOnly ? { cursor: 'not-allowed', opacity: 0.9 } : {}}
@@ -235,47 +285,109 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
               )}
               {/* Show all attachments as chips/icons below the input */}
               <div className='flex flex-wrap gap-2 mt-2'>
+                {/* New files being uploaded */}
                 {newFiles.map((file, idx) => (
-                  <div key={idx} className='flex items-center gap-1 px-2 py-1 bg-gray-200 rounded-full text-xs'>
-                    <span role='img' aria-label='File'>
+                  <div
+                    key={`new-file-${idx}`}
+                    className='flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm'
+                  >
+                    <span role='img' aria-label='File' className='text-yellow-600'>
                       📄
-                    </span>{' '}
-                    {file.name}
-                    <button type='button' onClick={() => handleRemoveFile(idx)} className='ml-1 text-red-500'>
-                      ×
-                    </button>
-                  </div>
-                ))}
-                {resources.map((res, idx) => (
-                  <div key={idx} className='flex items-center gap-1 px-2 py-1 bg-gray-200 rounded-full text-xs'>
-                    {res.type === 'LINK' ? (
-                      <span role='img' aria-label='Link'>
-                        🔗
-                      </span>
-                    ) : (
-                      <span role='img' aria-label='File'>
-                        📄
-                      </span>
+                    </span>
+                    <span className='text-yellow-800 font-medium truncate max-w-[200px]' title={file.name}>
+                      {file.name}
+                    </span>
+                    {uploadingFiles.has(file.name) && <span className='text-yellow-600 text-xs'>Uploading...</span>}
+                    {!readOnly && !uploadingFiles.has(file.name) && (
+                      <button
+                        type='button'
+                        onClick={() => handleRemoveFile(idx)}
+                        className='text-red-500 hover:text-red-700 ml-1'
+                        title='Remove file'
+                      >
+                        ×
+                      </button>
                     )}
-                    {res.title || res.url}
-                    <button
-                      type='button'
-                      onClick={() => handleRemoveExistingResource(idx)}
-                      className='ml-1 text-red-500'
-                    >
-                      ×
-                    </button>
                   </div>
                 ))}
+
+                {/* Existing resources */}
+                {resources.map((res, idx) => (
+                  <div
+                    key={`existing-resource-${idx}`}
+                    className='flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 transition-colors'
+                  >
+                    {res.type === 'LINK' ? (
+                      <>
+                        <span role='img' aria-label='Link' className='text-green-600'>
+                          🔗
+                        </span>
+                        <a
+                          href={res.url}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='text-green-800 font-medium truncate max-w-[200px] hover:underline'
+                          title={res.title || res.url}
+                        >
+                          {res.title || res.url}
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        <span role='img' aria-label='File' className='text-purple-600'>
+                          📄
+                        </span>
+                        <a
+                          href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${res.url}`}
+                          download
+                          className='text-purple-800 font-medium truncate max-w-[200px] hover:underline'
+                          title={res.title || res.url}
+                        >
+                          {res.title || res.url}
+                        </a>
+                      </>
+                    )}
+                    {!readOnly && (
+                      <button
+                        type='button'
+                        onClick={() => handleRemoveExistingResource(idx)}
+                        className='text-red-500 hover:text-red-700 ml-1'
+                        title='Remove resource'
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                {/* New links */}
                 {newLinks.map((link, idx) => (
-                  <div key={idx} className='flex items-center gap-1 px-2 py-1 bg-gray-200 rounded-full text-xs'>
-                    <span role='img' aria-label='Link'>
+                  <div
+                    key={`new-link-${idx}`}
+                    className='flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm hover:bg-green-100 transition-colors'
+                  >
+                    <span role='img' aria-label='Link' className='text-green-600'>
                       🔗
-                    </span>{' '}
-                    {link.url}
-                    <button type='button' onClick={() => handleRemoveLink(idx)} className='ml-1 text-red-500'>
-                      ×
-                    </button>
+                    </span>
+                    <a
+                      href={link.url}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='text-green-800 font-medium truncate max-w-[200px] hover:underline'
+                      title={link.url}
+                    >
+                      {link.url}
+                    </a>
+                    {!readOnly && (
+                      <button
+                        type='button'
+                        onClick={() => handleRemoveLink(idx)}
+                        className='text-red-500 hover:text-red-700 ml-1'
+                        title='Remove link'
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

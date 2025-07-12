@@ -258,9 +258,7 @@ export class AuthService {
     };
   }
 
-  async validateInvitation(
-    invitationToken: string
-  ): Promise<{ invitation: Invitation & { practitioner: Record<string, unknown> }; isAccepted: boolean }> {
+  async validateInvitation(invitationToken: string): Promise<{ invitation: Invitation; isAccepted: boolean }> {
     let invitation = await this.prismaService.invitation.findUnique({
       where: { token: invitationToken },
       include: { practitioner: true },

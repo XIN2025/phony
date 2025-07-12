@@ -734,9 +734,14 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
       className={cn('flex bg-background border border-gray-700 rounded-lg shadow-sm overflow-hidden w-full', className)}
       style={{ height, maxHeight: height }}
     >
-      <div className={cn('flex w-full h-full overflow-hidden max-h-full', participantId ? 'flex-col' : 'flex-row')}>
-        {/* Sidebar - Always visible on desktop, collapsible on mobile */}
-        {!participantId && (
+      <div
+        className={cn(
+          'flex w-full h-full overflow-hidden max-h-full',
+          participantId || session?.user?.role === 'CLIENT' ? 'flex-col' : 'flex-row',
+        )}
+      >
+        {/* Sidebar - Only visible for practitioners */}
+        {session?.user?.role !== 'CLIENT' && !participantId && (
           <>
             <div className='hidden md:flex w-72 lg:w-80 xl:w-96 flex-shrink-0' style={{ height }}>
               <SidebarContent
@@ -789,12 +794,14 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
           </>
         )}
 
+        {/* Main chat area (always shown for clients, practitioners see as before) */}
         <div className='flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden max-h-full'>
           {selectedConversation ? (
             <>
               <div className='p-3 sm:p-4 border-b border-border/60 bg-muted/5 backdrop-blur-sm flex-shrink-0'>
                 <div className='flex items-center space-x-3'>
-                  {!participantId && (
+                  {/* Only show sidebar toggle for practitioners */}
+                  {session?.user?.role !== 'CLIENT' && !participantId && (
                     <Button variant='ghost' size='icon' className='md:hidden' onClick={() => setShowSidebar(true)}>
                       <Menu className='h-4 w-4' />
                     </Button>
@@ -933,7 +940,8 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
           ) : (
             <div className='flex-1 flex items-center justify-center'>
               <div className='text-center space-y-4 max-w-md mx-auto px-4'>
-                {!participantId && (
+                {/* Only show sidebar toggle for practitioners */}
+                {session?.user?.role !== 'CLIENT' && !participantId && (
                   <Button variant='outline' className='md:hidden mb-4' onClick={() => setShowSidebar(true)}>
                     <Menu className='h-4 w-4 mr-2' />
                     View Conversations

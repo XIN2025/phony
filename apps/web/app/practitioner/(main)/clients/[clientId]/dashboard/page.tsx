@@ -884,8 +884,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   );
 
   const renderContent = () => {
-    console.log('[Dashboard] render', { showNewSession, activeTab, isLoading, editingPlanId, editingPlan });
-
     if (editingPlanId) {
       if (isEditingPlanLoading) {
         return (
@@ -1086,7 +1084,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               id: selectedTask.id,
               description: selectedTask.description,
               target: selectedTask.target ?? 'N/A',
-              frequency: selectedTask.frequency ?? 'N/A',
               weeklyRepetitions: selectedTask.weeklyRepetitions ?? undefined,
               isMandatory: selectedTask.isMandatory,
               isCompleted: selectedTask.completions.length > 0,
@@ -1187,8 +1184,6 @@ export default function ClientDashboardPage({ params }: { params: Promise<{ clie
       setClientId(resolvedParams.clientId);
     });
   }, [params]);
-
-  console.log('[DashboardPage] render', { clientId });
 
   if (!clientId) {
     return <div className='flex items-center justify-center min-h-screen'>Loading...</div>;

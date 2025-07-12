@@ -29,7 +29,6 @@ export class ActionItemService {
             description: true,
             category: true,
             target: true,
-            frequency: true,
           },
         },
       },
@@ -56,7 +55,6 @@ export class ActionItemService {
             description: true,
             category: true,
             target: true,
-            frequency: true,
           },
         },
       },
@@ -81,7 +79,6 @@ export class ActionItemService {
             description: true,
             category: true,
             target: true,
-            frequency: true,
             planId: true,
             plan: {
               select: {
@@ -115,7 +112,6 @@ export class ActionItemService {
             description: true,
             category: true,
             target: true,
-            frequency: true,
           },
         },
       },

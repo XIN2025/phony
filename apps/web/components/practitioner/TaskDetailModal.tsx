@@ -12,7 +12,6 @@ interface TaskDetailModalProps {
     id: string;
     description: string;
     target?: string;
-    frequency?: string;
     weeklyRepetitions?: number;
     isMandatory?: boolean;
     whyImportant?: string;
@@ -25,11 +24,14 @@ interface TaskDetailModalProps {
       url: string;
       title?: string;
     }>;
+    daysOfWeek?: string[];
   } | null;
 }
 
 export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ open, onClose, task }) => {
   if (!task) return null;
+
+  const DAYS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -41,6 +43,16 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ open, onClose,
                 <DialogTitle className='text-xl sm:text-2xl font-bold text-gray-900 mb-2 leading-tight'>
                   {task.description}
                 </DialogTitle>
+                <div className='flex items-center gap-1 mb-2'>
+                  {DAYS.map((d) => (
+                    <span
+                      key={d}
+                      className={`w-7 h-7 flex items-center justify-center rounded-full border-2 text-xs font-semibold ml-1 ${task.daysOfWeek?.includes?.(d) ? 'border-black text-black bg-white' : 'border-gray-300 text-gray-500 bg-white'}`}
+                    >
+                      {d}
+                    </span>
+                  ))}
+                </div>
                 <div className='flex flex-wrap items-center gap-2 mb-3'>
                   {task.isMandatory && (
                     <Badge variant='destructive' className='text-xs bg-red-100 text-red-700 border-red-200'>
@@ -71,16 +83,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ open, onClose,
         <div className='p-6 sm:p-8 space-y-6 max-h-[70vh] overflow-y-auto'>
           {/* Task Details */}
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-            <Card className='bg-white/60 backdrop-blur-sm border border-gray-200/50'>
-              <CardContent className='p-4'>
-                <div className='flex items-center gap-2 mb-2'>
-                  <Clock className='w-4 h-4 text-gray-600' />
-                  <span className='text-sm font-medium text-gray-700'>Frequency</span>
-                </div>
-                <p className='text-sm text-gray-900'>{task.frequency || 'Not specified'}</p>
-              </CardContent>
-            </Card>
-
             {task.target && (
               <Card className='bg-white/60 backdrop-blur-sm border border-gray-200/50'>
                 <CardContent className='p-4'>

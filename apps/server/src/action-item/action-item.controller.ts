@@ -103,13 +103,16 @@ export class ActionItemController {
     if (!isValid) {
       throw new Error(error || 'Invalid file upload');
     }
+
     const ext = extname(file.originalname).toLowerCase();
     let type: 'PDF' | 'IMAGE' | 'DOCX' = 'PDF';
     if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) type = 'IMAGE';
     else if (['.doc', '.docx'].includes(ext)) type = 'DOCX';
     else if (ext === '.pdf') type = 'PDF';
+
     const filename = generateUniqueFilename(file.originalname);
     const url = await saveFileToUploads(file, filename, 'uploads');
+
     return { url, type, title: file.originalname };
   }
 }

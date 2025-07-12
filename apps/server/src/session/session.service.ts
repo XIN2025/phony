@@ -207,7 +207,6 @@ export class SessionService {
       description: string;
       category?: string;
       target?: string;
-      frequency?: string;
       weeklyRepetitions?: number;
       isMandatory?: boolean;
       whyImportant?: string;
@@ -235,7 +234,6 @@ export class SessionService {
         description: suggestion.description,
         category: suggestion.category,
         target: suggestion.target,
-        frequency: suggestion.frequency,
         weeklyRepetitions: suggestion.weeklyRepetitions || 1,
         isMandatory: suggestion.isMandatory || false,
         whyImportant: suggestion.whyImportant,
@@ -293,7 +291,6 @@ export class SessionService {
                   id: true,
                   description: true,
                   target: true,
-                  frequency: true,
                   category: true,
                   weeklyRepetitions: true,
                   isMandatory: true,
