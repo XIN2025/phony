@@ -1,5 +1,6 @@
 'use client';
 import { JournalDetailModal } from '@/components/practitioner/JournalDetailModal';
+import { ComprehensiveSummaryModal } from '@/components/practitioner/ComprehensiveSummaryModal';
 import { PlanEditor } from '@/components/practitioner/PlanEditor';
 import { TaskDetailModal } from '@/components/practitioner/TaskDetailModal';
 import { AudioRecorder, AudioRecorderHandle } from '@/components/recorder/AudioRecorder';
@@ -16,6 +17,7 @@ import {
   useGetSessionsByClient,
   usePublishPlan,
   useUploadSessionAudio,
+  useGenerateComprehensiveSummary,
 } from '@/lib/hooks/use-api';
 import { ActionItem, ActionItemCompletion, Plan, Resource, Session } from '@repo/db';
 import { Button } from '@repo/ui/components/button';
@@ -44,6 +46,7 @@ import { isSameDay } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { DateRange } from 'react-date-range';
 import { createPortal } from 'react-dom';
+import { Loader2 } from 'lucide-react';
 
 type PopulatedActionItem = ActionItem & { resources: Resource[]; completions: ActionItemCompletion[] };
 type PopulatedPlan = Plan & { actionItems: PopulatedActionItem[] };
@@ -91,6 +94,8 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null);
   const [pendingDuration, setPendingDuration] = useState<string>('');
   const [isPublishingPlan, setIsPublishingPlan] = useState(false);
+  const [showComprehensiveSummary, setShowComprehensiveSummary] = useState(false);
+  const [comprehensiveSummary, setComprehensiveSummary] = useState<any>(null);
   const { data: client, isLoading: isClientLoading } = useGetClient(clientId);
   const { data: sessions = [], isLoading: isSessionsLoading } = useGetSessionsByClient(clientId);
   const { data: processingSession } = useGetSessionForPolling(processingSessionId || '');
@@ -103,6 +108,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const createSessionMutation = useCreateSession();
   const uploadAudioMutation = useUploadSessionAudio();
   const publishPlanMutation = usePublishPlan();
+  const generateComprehensiveSummaryMutation = useGenerateComprehensiveSummary();
   const queryClient = useQueryClient();
 
   const isLoading = isClientLoading || isSessionsLoading;
@@ -306,7 +312,19 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   };
 
   const handleJournalClick = (journal: { id: string; title?: string; content: string; createdAt: Date }) => {
-    router.push(`/practitioner/clients/${clientId}/dashboard/journals/${journal.id}`);
+    setSelectedJournal(journal);
+    setShowJournalDetail(true);
+  };
+
+  const handleGenerateComprehensiveSummary = async () => {
+    try {
+      setShowComprehensiveSummary(true);
+      const summary = await generateComprehensiveSummaryMutation.mutateAsync(clientId);
+      setComprehensiveSummary(summary);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to generate comprehensive summary');
+      setShowComprehensiveSummary(false);
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -1063,6 +1081,21 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                   </Button>
                 </Link>
                 <Button
+                  onClick={handleGenerateComprehensiveSummary}
+                  disabled={sessions.length === 0 || generateComprehensiveSummaryMutation.isPending}
+                  variant='outline'
+                  className='rounded-full px-4 sm:px-6 py-2 text-sm font-medium border border-border'
+                >
+                  {generateComprehensiveSummaryMutation.isPending ? (
+                    <>
+                      <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                      Taking Snapshot...
+                    </>
+                  ) : (
+                    'Take a Snapshot'
+                  )}
+                </Button>
+                <Button
                   variant='outline'
                   className='rounded-full px-4 sm:px-6 py-2 text-sm font-medium border border-border'
                   onClick={handleViewProfile}
@@ -1197,6 +1230,13 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
             </DialogContent>
           </Dialog>
         )}
+        <ComprehensiveSummaryModal
+          isOpen={showComprehensiveSummary}
+          onClose={() => setShowComprehensiveSummary(false)}
+          summary={comprehensiveSummary}
+          isLoading={generateComprehensiveSummaryMutation.isPending}
+          clientName={`${client?.firstName} ${client?.lastName}`}
+        />
       </>
     );
   };
