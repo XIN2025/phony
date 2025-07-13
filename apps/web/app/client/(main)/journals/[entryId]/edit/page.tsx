@@ -25,9 +25,9 @@ import Link from 'next/link';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import { useEffect, useRef, useState } from 'react';
-import QuillEditor, { QuillEditorHandles } from '../QuillEditor';
+import QuillEditor, { QuillEditorHandles } from '../../QuillEditor';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
-import { useCreateJournalEntry } from '@/lib/hooks/use-api';
+import { useGetJournalEntry, useUpdateJournalEntry } from '@/lib/hooks/use-api';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -44,7 +44,6 @@ if (Size) {
 }
 
 const DEFAULT_FONT_SIZE = 14;
-
 const NUM_NOTES = 3;
 
 interface NoteState {
@@ -64,7 +63,7 @@ const getTodayDateString = () => {
   });
 };
 
-const JournalEditors = () => {
+const JournalEditor = ({ entryId }: { entryId: string }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [fontSize, setFontSize] = useState<number>(DEFAULT_FONT_SIZE);
@@ -72,7 +71,9 @@ const JournalEditors = () => {
   const [title, setTitle] = useState('');
 
   const quillEditorRef = useRef<QuillEditorHandles>(null);
-  const createJournalMutation = useCreateJournalEntry();
+  const updateJournalMutation = useUpdateJournalEntry();
+  const { data: entry, isLoading } = useGetJournalEntry(entryId);
+
   const [notes, setNotes] = useState<NoteState[]>(
     Array(NUM_NOTES)
       .fill(null)
@@ -82,13 +83,40 @@ const JournalEditors = () => {
       })),
   );
 
+  const NOTE_TITLES = ['How are you feeling?', 'Task Feedback', "What's on your mind?"];
+
+  // Parse the existing journal content into the three sections
+  useEffect(() => {
+    if (entry) {
+      setTitle(entry.title || '');
+
+      // Parse the content to extract the three sections
+      const sections = entry.content.split('<hr>');
+      const parsedNotes: NoteState[] = Array(NUM_NOTES)
+        .fill(null)
+        .map(() => ({
+          content: '',
+          history: { undo: [], redo: [] },
+        }));
+
+      sections.forEach((section, index) => {
+        if (index < NUM_NOTES) {
+          // Remove the h3 title and get the content
+          const cleanContent = section.replace(/<h3>.*?<\/h3>/, '').trim();
+          parsedNotes[index] = {
+            content: cleanContent,
+            history: { undo: [], redo: [] },
+          };
+        }
+      });
+
+      setNotes(parsedNotes);
+    }
+  }, [entry]);
+
   const handleSwitchNote = (newIndex: number) => {
     setActiveIndex(newIndex);
   };
-
-  useEffect(() => {
-    return () => {};
-  }, []);
 
   const applyFontSize = (size: number) => {};
   const handleFontSizeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,20 +177,44 @@ const JournalEditors = () => {
       toast.error('Please add some content to your journal entry');
       return;
     }
+    // Title is optional, so we don't validate it
     try {
-      await createJournalMutation.mutateAsync({
-        title,
-        content: combinedContent,
+      await updateJournalMutation.mutateAsync({
+        entryId,
+        data: {
+          title: title.trim() || undefined,
+          content: combinedContent,
+        },
       });
-      await queryClient.refetchQueries({ queryKey: ['journal-entries'] });
-      toast.success('Journal entry saved successfully');
+      // Invalidate the journal entries cache to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
+      toast.success('Journal entry updated successfully');
       router.push('/client/journals');
     } catch (error) {
-      toast.error('Failed to save journal entry');
+      toast.error('Failed to update journal entry');
     }
   };
 
-  const NOTE_TITLES = ['How are you feeling?', 'Task Feedback', "What's on your mind?"];
+  if (isLoading) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900'></div>
+      </div>
+    );
+  }
+
+  if (!entry) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='text-center'>
+          <p className='text-gray-600 mb-4'>Journal entry not found</p>
+          <Link href='/client/journals'>
+            <Button>Back to Journals</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (typeof window !== 'undefined') {
     const styleId = 'quill-custom-fonts';
@@ -181,6 +233,7 @@ const JournalEditors = () => {
 
   return (
     <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0 max-w-full'>
+      {/* Page header with back button and title */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <Link
@@ -190,24 +243,23 @@ const JournalEditors = () => {
           >
             <ArrowLeft size={22} />
           </Link>
-          <h1 className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'>
-            {getTodayDateString()}
-          </h1>
+          <h1 className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'>Edit Journal Entry</h1>
         </div>
         <Button
           onClick={handleSaveJournal}
-          disabled={createJournalMutation.isPending}
+          disabled={updateJournalMutation.isPending}
           className='bg-black text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium shadow-sm hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 w-full sm:w-auto'
         >
-          {createJournalMutation.isPending ? (
+          {updateJournalMutation.isPending ? (
             <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
           ) : (
             <Save className='mr-2 h-4 w-4' />
           )}
-          Save Entry
+          Update Entry
         </Button>
       </div>
 
+      {/* Journal title input */}
       <div className='mb-4 w-full max-w-2xl'>
         <label htmlFor='journal-title' className='block text-base font-semibold text-gray-800 mb-1'>
           Journal Title <span className='text-gray-500 font-normal'>(Optional)</span>
@@ -244,7 +296,7 @@ const JournalEditors = () => {
                       const updated = Array.isArray(prev) ? [...prev] : [];
                       const safeIndex = Math.max(0, Math.min(activeIndex, updated.length - 1));
                       const prevArr = prev || [];
-                      const prevNote = prevArr[safeIndex] ?? { content: '', history: { undo: [], redo: [] } };
+                      const prevNote = updated[safeIndex] ?? { content: '', history: { undo: [], redo: [] } };
                       updated[safeIndex] = { content: html, history: prevNote.history };
                       return updated;
                     });
@@ -268,6 +320,7 @@ const JournalEditors = () => {
                       id={toolbarId}
                       className='flex flex-wrap items-center gap-1 bg-gray-100 rounded-lg p-2 shadow-sm'
                     >
+                      {/* Essential tools - always visible */}
                       <div className='flex items-center gap-1 flex-shrink-0'>
                         <Button type='button' variant='ghost' size='icon' onClick={handleUndo} className='h-8 w-8'>
                           <Undo2 size={16} />
@@ -277,6 +330,7 @@ const JournalEditors = () => {
                         </Button>
                       </div>
 
+                      {/* Font size controls - always visible */}
                       <div className='flex items-center gap-1 flex-shrink-0'>
                         <Button
                           type='button'
@@ -309,6 +363,7 @@ const JournalEditors = () => {
                         </Button>
                       </div>
 
+                      {/* Font family - always visible */}
                       <div className='flex items-center flex-shrink-0'>
                         <Select
                           onValueChange={(val) => {
@@ -430,6 +485,22 @@ const JournalEditors = () => {
   );
 };
 
-export default function NewJournalEntryPage() {
-  return <JournalEditors />;
+export default function EditJournalEntryPage({ params }: { params: Promise<{ entryId: string }> }) {
+  const [entryId, setEntryId] = useState<string>('');
+
+  useEffect(() => {
+    params.then((resolvedParams) => {
+      setEntryId(resolvedParams.entryId);
+    });
+  }, [params]);
+
+  if (!entryId) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900'></div>
+      </div>
+    );
+  }
+
+  return <JournalEditor entryId={entryId} />;
 }

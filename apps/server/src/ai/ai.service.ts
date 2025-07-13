@@ -6,10 +6,18 @@ import { filterTranscriptPrompt } from './prompts/filter-transcript';
 import { meetingSummaryPrompt } from './prompts/meeting-summary';
 import { actionItemPrompt } from './prompts/action-item.suggestion';
 import { generateMoreTasksPrompt } from './prompts/generate-more-tasks';
+import { comprehensiveSummaryPrompt } from './prompts/comprehensive-summary';
 
 const summarySchema = z.object({
   title: z.string().describe('A concise, relevant title for the session, max 5 words'),
   summary: z.string().describe('A detailed, structured markdown summary of the session'),
+});
+
+const comprehensiveSummarySchema = z.object({
+  title: z.string().describe('Title for the comprehensive summary'),
+  summary: z.string().describe('A detailed, structured markdown comprehensive summary'),
+  keyInsights: z.array(z.string()).describe('Array of key insights about the client journey'),
+  recommendations: z.array(z.string()).describe('Array of recommendations for future sessions'),
 });
 
 const actionItemSuggestionsSchema = z.object({
@@ -72,6 +80,7 @@ const actionItemSuggestionsSchema = z.object({
 });
 
 export type SessionSummary = z.infer<typeof summarySchema>;
+export type ComprehensiveSummary = z.infer<typeof comprehensiveSummarySchema>;
 export type ActionItemSuggestions = z.infer<typeof actionItemSuggestionsSchema>;
 
 @Injectable()
@@ -348,5 +357,81 @@ export class AiService {
 
   private getGenerateMoreTasksPrompt(): string {
     return generateMoreTasksPrompt;
+  }
+
+  private getComprehensiveSummaryPrompt(): string {
+    return comprehensiveSummaryPrompt;
+  }
+
+  async generateComprehensiveSummary(
+    sessionSummaries: Array<{
+      title: string;
+      summary: string;
+      recordedAt: Date;
+      sessionId: string;
+    }>
+  ): Promise<ComprehensiveSummary> {
+    if (!sessionSummaries || sessionSummaries.length === 0) {
+      return {
+        title: 'Comprehensive Client Summary',
+        summary: 'No session summaries available to analyze.',
+        keyInsights: ['No sessions available for analysis'],
+        recommendations: ['Begin regular sessions to establish therapeutic relationship'],
+      };
+    }
+
+    // Sort sessions chronologically (oldest first)
+    const sortedSessions = sessionSummaries.sort(
+      (a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime()
+    );
+
+    // Prepare session data for AI analysis
+    const sessionData = sortedSessions
+      .map(
+        (session, index) =>
+          `Session ${index + 1} (${new Date(session.recordedAt).toLocaleDateString()}):\nTitle: ${session.title}\nSummary: ${session.summary}\n`
+      )
+      .join('\n---\n\n');
+
+    const prompt = this.getComprehensiveSummaryPrompt();
+    const fullPrompt = `${prompt}\n\nAnalyze the following session summaries to create a comprehensive client summary:\n\n---\n\n${sessionData}`;
+
+    const result = await this.model.generateContent(fullPrompt);
+
+    if (!result || !result.response) {
+      throw new Error('No response from Gemini API');
+    }
+
+    const summaryText = result.response.text();
+
+    if (!summaryText) {
+      return {
+        title: 'Comprehensive Client Summary',
+        summary: 'AI comprehensive summary generation failed - no response received.',
+        keyInsights: ['AI analysis failed'],
+        recommendations: ['Review sessions manually'],
+      };
+    }
+
+    let parsedSummary: ComprehensiveSummary;
+    try {
+      const jsonMatch = summaryText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON found in response');
+      }
+      const jsonString = jsonMatch[0];
+      const jsonData = JSON.parse(jsonString);
+      parsedSummary = comprehensiveSummarySchema.parse(jsonData);
+    } catch (error) {
+      this.logger.error('Error parsing comprehensive summary:', error);
+      parsedSummary = {
+        title: 'Comprehensive Client Summary',
+        summary: summaryText,
+        keyInsights: ['Analysis completed but parsing failed'],
+        recommendations: ['Review generated summary manually'],
+      };
+    }
+
+    return parsedSummary;
   }
 }

@@ -3,21 +3,28 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { ArrowLeft } from 'lucide-react';
-import { useGetJournalEntry } from '@/lib/hooks/use-api';
+import { useGetClientJournalEntries } from '@/lib/hooks/use-api';
 import React from 'react';
 import { PageHeader } from '@/components/PageHeader';
 
-export default function JournalEntryViewPage({ params }: { params: Promise<{ entryId: string }> }) {
+export default function PractitionerJournalEntryViewPage({
+  params,
+}: {
+  params: Promise<{ clientId: string; entryId: string }>;
+}) {
   const router = useRouter();
-  const { entryId } = React.use(params);
-  const { data: entry, isLoading } = useGetJournalEntry(entryId);
+  const { clientId, entryId } = React.use(params);
+  const { data: entries, isLoading, error } = useGetClientJournalEntries(clientId);
+  const entry = entries?.find((e) => e.id === entryId);
 
   const parseJournalContent = (content: string) => {
     if (!content) return [];
     return content.split('<hr>').map((part, index) => {
+      // Extract title from h3 tag
       const titleMatch = part.match(/<h3>(.*?)<\/h3>/);
       const title = titleMatch && titleMatch[1] ? titleMatch[1] : `Section ${index + 1}`;
 
+      // Remove h3 tag to get content
       const cleanContent = part.replace(/<h3>.*?<\/h3>/, '').trim();
 
       return { title, content: cleanContent };
@@ -39,13 +46,13 @@ export default function JournalEntryViewPage({ params }: { params: Promise<{ ent
     });
   };
   return (
-    <div className='flex flex-col w-full min-h-screen '>
+    <div className='flex flex-col w-full min-h-screen'>
       <PageHeader
         title={entry.title || 'Untitled Journal'}
         subtitle={formatDate(entry.updatedAt || entry.createdAt)}
         onBack={() => router.back()}
         showBackButton
-        className='mb-4 border-b-0  px-4 sm:px-8 pt-6'
+        className='mb-4 border-b-0 px-4 sm:px-8 pt-6'
       />
       <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 px-4 sm:px-8'>
         {sections.length > 0 ? (

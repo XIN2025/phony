@@ -53,6 +53,7 @@ model User {
   sentMessages            Message[]      @relation("SentMessages")
   messageReactions        MessageReaction[] @relation("MessageReactions")
   journalEntries          JournalEntry[] @relation("ClientJournalEntries")
+  comprehensiveSummaries ComprehensiveSummary[] @relation("ClientComprehensiveSummaries")
 
   @@map("users")
 }
@@ -184,6 +185,21 @@ model Session {
   durationSeconds    Int?
   summaryTitle       String?
   @@map("sessions")
+}
+
+model ComprehensiveSummary {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  clientId            String   @db.ObjectId
+  client              User     @relation("ClientComprehensiveSummaries", fields: [clientId], references: [id], onDelete: Cascade)
+  title               String
+  summary             String
+  keyInsights         String[]
+  recommendations     String[]
+  lastSessionUpdate   DateTime
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  @@unique([clientId, lastSessionUpdate])
+  @@map("comprehensive_summaries")
 }
 
 enum SessionStatus {

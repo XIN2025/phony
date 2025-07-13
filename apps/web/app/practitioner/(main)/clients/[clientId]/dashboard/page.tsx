@@ -1,50 +1,49 @@
 'use client';
+import { JournalDetailModal } from '@/components/practitioner/JournalDetailModal';
+import { PlanEditor } from '@/components/practitioner/PlanEditor';
 import { TaskDetailModal } from '@/components/practitioner/TaskDetailModal';
 import { AudioRecorder, AudioRecorderHandle } from '@/components/recorder/AudioRecorder';
-import { AudioRecorderProvider, useAudioRecorder } from '@/context/AudioRecorderContext';
+import { TabTrigger } from '@/components/TabTrigger';
+import { AudioRecorderProvider } from '@/context/AudioRecorderContext';
 import {
-  useGetClient,
-  useGetSessionsByClient,
-  useGetSessionForPolling,
   useCreateSession,
-  useUploadSessionAudio,
-  useGetPlan,
-  usePublishPlan,
-  useGetPlanStatus,
-  useGetClientJournalEntries,
+  useGetClient,
   useGetClientActionItemsInRange,
+  useGetClientJournalEntries,
+  useGetPlan,
+  useGetPlanStatus,
+  useGetSessionForPolling,
+  useGetSessionsByClient,
+  usePublishPlan,
+  useUploadSessionAudio,
 } from '@/lib/hooks/use-api';
-import { ActionItem, ActionItemCompletion, Plan, Resource, Session, User } from '@repo/db';
-import 'react-date-range/dist/styles.css';
-import 'react-date-range/dist/theme/default.css';
+import { ActionItem, ActionItemCompletion, Plan, Resource, Session } from '@repo/db';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
-import { Checkbox } from '@repo/ui/components/checkbox';
 import { Skeleton } from '@repo/ui/components/skeleton';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@repo/ui/components/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
 import { Tabs, TabsContent, TabsList } from '@repo/ui/components/tabs';
-import { TabTrigger } from '@/components/TabTrigger';
-import { ArrowLeft, MessageCircle, Plus, Target, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState, useRef, useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import 'react-date-range/dist/styles.css';
+import 'react-date-range/dist/theme/default.css';
 import { toast } from 'sonner';
-import { PlanEditor } from '@/components/practitioner/PlanEditor';
 
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogOverlay,
   DialogTitle,
-  DialogDescription,
 } from '@repo/ui/components/dialog';
 
-import type { Session as DBSession } from '@repo/db';
 import { isSameDay } from '@/lib/utils';
+import { useQueryClient } from '@tanstack/react-query';
 import { DateRange } from 'react-date-range';
 import { createPortal } from 'react-dom';
-import { useQueryClient } from '@tanstack/react-query';
 
 type PopulatedActionItem = ActionItem & { resources: Resource[]; completions: ActionItemCompletion[] };
 type PopulatedPlan = Plan & { actionItems: PopulatedActionItem[] };
@@ -276,7 +275,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
       setSessionTitle('');
       setSessionNotes('');
     } catch (error) {
-      console.error('Failed to save session', error);
       setErrorMessage('Failed to create session. Please check your internet connection and try again.');
       setShowErrorModal(true);
     }
@@ -308,8 +306,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   };
 
   const handleJournalClick = (journal: { id: string; title?: string; content: string; createdAt: Date }) => {
-    setSelectedJournal(journal);
-    setShowJournalDetail(true);
+    router.push(`/practitioner/clients/${clientId}/dashboard/journals/${journal.id}`);
   };
 
   const formatTime = (seconds: number) => {
@@ -427,6 +424,11 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
         toast.success('Plan published to client!');
         setIsPublishingPlan(false);
 
+        queryClient.invalidateQueries({ queryKey: ['plans'] });
+        queryClient.invalidateQueries({ queryKey: ['sessions'] });
+        queryClient.invalidateQueries({ queryKey: ['plan', editingPlanId] });
+        queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+        queryClient.invalidateQueries();
         router.push(`/practitioner/clients/${clientId}/plans/${editingPlanId}`);
       },
       onError: () => {
@@ -522,15 +524,12 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                   <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                     Avg Task Feedback
                   </TableHead>
-                  <TableHead className='px-7 py-4 text-center text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
-                    Actions
-                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPlans.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className='text-center text-gray-400 py-8'>
+                    <TableCell colSpan={4} className='text-center text-gray-400 py-8'>
                       No plans found.
                     </TableCell>
                   </TableRow>
@@ -559,7 +558,8 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                     return (
                       <TableRow
                         key={plan.id}
-                        className='hover:bg-gray-50 transition-colors border-b last:border-b-0 border-[#ececec]'
+                        className='hover:bg-gray-50 transition-colors border-b last:border-b-0 border-[#ececec] cursor-pointer'
+                        onClick={() => router.push(`/practitioner/clients/${clientId}/plans/${plan.id}`)}
                       >
                         <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
                           {recordedAt
@@ -581,43 +581,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                             {badgeIcon}
                             {avgFeedback}
                           </span>
-                        </TableCell>
-                        <TableCell className='px-7 py-5 whitespace-nowrap text-center'>
-                          <button
-                            className='inline-flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition-colors mr-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-gray-200'
-                            title='View Plan'
-                            onClick={() => router.push(`/practitioner/clients/${clientId}/plans/${plan.id}`)}
-                          >
-                            <svg
-                              width='18'
-                              height='18'
-                              fill='none'
-                              stroke='currentColor'
-                              strokeWidth='2'
-                              viewBox='0 0 24 24'
-                            >
-                              <circle cx='12' cy='12' r='10' />
-                              <circle cx='12' cy='12' r='4' />
-                            </svg>
-                          </button>
-                          <button
-                            className='inline-flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition-colors border border-transparent focus:outline-none focus:ring-2 focus:ring-gray-200'
-                            title='Edit Plan'
-                            onClick={() =>
-                              router.replace(`/practitioner/clients/${clientId}/dashboard?editPlan=${plan.id}`)
-                            }
-                          >
-                            <svg
-                              width='18'
-                              height='18'
-                              fill='none'
-                              stroke='currentColor'
-                              strokeWidth='2'
-                              viewBox='0 0 24 24'
-                            >
-                              <path d='M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h6v-2H5v-2H3v4z' />
-                            </svg>
-                          </button>
                         </TableCell>
                       </TableRow>
                     );
@@ -727,12 +690,46 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                 .reverse()
                 .map((date) => {
                   const dayTasks = filteredTasks.filter((t) => {
-                    const taskDate = t.sessionDate
-                      ? new Date(t.sessionDate)
-                      : t.createdAt
-                        ? new Date(t.createdAt)
-                        : null;
-                    return taskDate && isSameDay(taskDate, date);
+                    if (t.isMandatory) {
+                      const isCompleted = t.completions && t.completions.length > 0;
+                      if (isCompleted) {
+                        const dayOfWeek = date.getDay();
+                        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+                        const selectedDayShort = dayMap[dayOfWeek];
+
+                        if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+                          return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+                        }
+
+                        return true;
+                      } else {
+                        const today = new Date();
+                        const selectedDate = date;
+
+                        if (selectedDate >= today) {
+                          return true;
+                        }
+
+                        const dayOfWeek = selectedDate.getDay();
+                        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+                        const selectedDayShort = dayMap[dayOfWeek];
+
+                        if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+                          return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+                        }
+                        return true;
+                      }
+                    } else {
+                      const dayOfWeek = date.getDay();
+                      const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+                      const selectedDayShort = dayMap[dayOfWeek];
+
+                      if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+                        return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+                      }
+
+                      return true;
+                    }
                   });
                   const completed = dayTasks.filter((t) => t.completions && t.completions.length > 0).length;
                   const feedback = getAvgFeedbackForDay(dayTasks);
@@ -853,11 +850,12 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
       {filteredJournals.length === 0 ? (
         <div className='text-center text-muted-foreground py-8'>No journal entries found for this client.</div>
       ) : (
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 min-w-0'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2  min-w-0'>
           {filteredJournals.map((entry) => (
             <Card
               key={entry.id}
-              className='flex flex-col p-0 overflow-hidden h-48 sm:h-56 min-w-0 w-96 bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50 hover:shadow-xl transition-shadow'
+              className='flex flex-col p-0 overflow-hidden h-48 sm:h-56 min-w-0 w-full bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50 hover:shadow-xl transition-shadow cursor-pointer'
+              onClick={() => handleJournalClick(entry)}
             >
               <div className='flex-1 p-4 overflow-hidden'>
                 <div className='font-semibold text-sm leading-tight text-gray-800 mb-2'>
@@ -871,9 +869,28 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                   })}
                 </div>
                 <div className='text-sm text-gray-600 line-clamp-3'>
-                  {entry.content.replace(/<[^>]*>/g, '').length > 100
-                    ? entry.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...'
-                    : entry.content.replace(/<[^>]*>/g, '')}
+                  {(() => {
+                    const sections = entry.content.split('<hr>');
+                    const contentSnippets: string[] = [];
+
+                    sections.forEach((section) => {
+                      const cleanContent = section.replace(/<h3>.*?<\/h3>/, '').trim();
+                      if (cleanContent) {
+                        const textContent = cleanContent.replace(/<[^>]*>/g, '');
+                        if (textContent.length > 0) {
+                          const snippet = textContent.length > 50 ? textContent.substring(0, 50) + '...' : textContent;
+                          contentSnippets.push(snippet);
+                        }
+                      }
+                    });
+
+                    if (contentSnippets.length > 0) {
+                      return contentSnippets.slice(0, 2).join(' • ');
+                    }
+
+                    const textContent = entry.content.replace(/<[^>]*>/g, '');
+                    return textContent.length > 100 ? textContent.substring(0, 100) + '...' : textContent;
+                  })()}
                 </div>
               </div>
             </Card>
@@ -1098,6 +1115,17 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                 title: r.title ?? undefined,
               })),
             }}
+          />
+        )}
+
+        {selectedJournal && (
+          <JournalDetailModal
+            open={showJournalDetail}
+            onClose={() => {
+              setShowJournalDetail(false);
+              setSelectedJournal(null);
+            }}
+            journal={selectedJournal}
           />
         )}
         {showUnsavedModal && (

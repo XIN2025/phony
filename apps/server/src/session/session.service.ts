@@ -359,4 +359,95 @@ export class SessionService {
       },
     });
   }
+
+  async generateComprehensiveSummaryForClient(clientId: string) {
+    try {
+      // Fetch all sessions for the client with summaries
+      const sessions = await this.prisma.session.findMany({
+        where: { clientId },
+        select: {
+          id: true,
+          title: true,
+          aiSummary: true,
+          recordedAt: true,
+        },
+        orderBy: { recordedAt: 'asc' }, // Chronological order
+      });
+
+      // Filter sessions that have AI summaries
+      const sessionsWithSummaries = sessions.filter(
+        (session) => session.aiSummary && session.aiSummary.trim().length > 0
+      );
+
+      if (sessionsWithSummaries.length === 0) {
+        return {
+          title: 'Comprehensive Client Summary',
+          summary: 'No session summaries available for analysis.',
+          keyInsights: ['No completed sessions with summaries available'],
+          recommendations: ['Complete and process sessions to generate comprehensive summary'],
+        };
+      }
+
+      // Check if we have a cached summary
+      const cachedSummary = await this.prisma.comprehensiveSummary.findFirst({
+        where: { clientId },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      // Get the latest session recorded time (since we don't have updatedAt)
+      const latestSessionRecorded = Math.max(...sessionsWithSummaries.map((session) => session.recordedAt.getTime()));
+
+      // If we have a cached summary and no sessions have been recorded since last generation
+      if (cachedSummary && cachedSummary.lastSessionUpdate.getTime() >= latestSessionRecorded) {
+        return {
+          title: cachedSummary.title,
+          summary: cachedSummary.summary,
+          keyInsights: cachedSummary.keyInsights,
+          recommendations: cachedSummary.recommendations,
+        };
+      }
+
+      // Prepare session data for AI analysis
+      const sessionSummaries = sessionsWithSummaries.map((session) => ({
+        title: session.title || 'Untitled Session',
+        summary: session.aiSummary!, // We already filtered for non-null summaries
+        recordedAt: session.recordedAt,
+        sessionId: session.id,
+      }));
+
+      // Generate comprehensive summary using AI
+      const comprehensiveSummary = await this.aiService.generateComprehensiveSummary(sessionSummaries);
+
+      // Cache the new summary
+      await this.prisma.comprehensiveSummary.upsert({
+        where: {
+          clientId_lastSessionUpdate: {
+            clientId,
+            lastSessionUpdate: new Date(latestSessionRecorded),
+          },
+        },
+        update: {
+          title: comprehensiveSummary.title,
+          summary: comprehensiveSummary.summary,
+          keyInsights: comprehensiveSummary.keyInsights,
+          recommendations: comprehensiveSummary.recommendations,
+          lastSessionUpdate: new Date(latestSessionRecorded),
+          updatedAt: new Date(),
+        },
+        create: {
+          clientId,
+          title: comprehensiveSummary.title,
+          summary: comprehensiveSummary.summary,
+          keyInsights: comprehensiveSummary.keyInsights,
+          recommendations: comprehensiveSummary.recommendations,
+          lastSessionUpdate: new Date(latestSessionRecorded),
+        },
+      });
+
+      return comprehensiveSummary;
+    } catch (error) {
+      this.logger.error(`Error generating comprehensive summary for client ${clientId}:`, error.stack);
+      throw new Error(`Failed to generate comprehensive summary: ${error.message}`);
+    }
+  }
 }

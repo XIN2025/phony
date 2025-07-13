@@ -81,6 +81,13 @@ export class SessionController {
     return await this.sessionService.updateSession(sessionId, updateData);
   }
 
+  @Post('client/:clientId/comprehensive-summary')
+  @ApiOperation({ summary: 'Generate comprehensive summary for client' })
+  @ApiResponse({ status: 200, description: 'Comprehensive summary generated successfully.' })
+  async generateComprehensiveSummary(@Param('clientId') clientId: string) {
+    return await this.sessionService.generateComprehensiveSummaryForClient(clientId);
+  }
+
   @Put(':id/status')
   @ApiOperation({ summary: 'Update session status' })
   @ApiResponse({ status: 200, description: 'Session status updated successfully.' })

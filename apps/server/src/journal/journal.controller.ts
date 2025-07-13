@@ -6,7 +6,7 @@ import { CurrentUser } from '../auth/decorators/user.decorator';
 import { RequestUser } from '../auth/dto/request-user.dto';
 
 interface CreateJournalEntryDto {
-  title: string;
+  title?: string;
   content: string;
 }
 
@@ -71,7 +71,6 @@ export class JournalController {
     return await this.journalService.deleteJournalEntry(entryId, user.id);
   }
 
-  // Practitioner endpoints
   @Get('client/:clientId')
   @ApiOperation({ summary: 'Get journal entries for a specific client (practitioner only)' })
   @ApiResponse({ status: 200, description: 'Client journal entries retrieved successfully.' })

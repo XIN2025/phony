@@ -45,9 +45,45 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
   const { data: journalEntries = [] } = useGetClientJournalEntries(clientId || '');
 
   const dayTasks = allTasks.filter((t: any) => {
-    const taskDate = t.sessionDate || t.createdAt;
-    const isSame = isSameDay(taskDate, selectedDate);
-    return isSame;
+    if (t.isMandatory) {
+      const isCompleted = t.completions && t.completions.length > 0;
+      if (isCompleted) {
+        const dayOfWeek = selectedDate.getDay();
+        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+        const selectedDayShort = dayMap[dayOfWeek];
+
+        if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+          return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+        }
+        return true;
+      } else {
+        const today = new Date();
+        const selectedDateObj = selectedDate;
+
+        if (selectedDateObj >= today) {
+          return true;
+        }
+
+        const dayOfWeek = selectedDateObj.getDay();
+        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+        const selectedDayShort = dayMap[dayOfWeek];
+
+        if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+          return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+        }
+        return true;
+      }
+    } else {
+      const dayOfWeek = selectedDate.getDay();
+      const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+      const selectedDayShort = dayMap[dayOfWeek];
+
+      if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+        return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+      }
+
+      return true;
+    }
   });
 
   const mandatoryTasks = dayTasks.filter((t: any) => t.isMandatory);

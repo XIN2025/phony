@@ -80,10 +80,6 @@ export default function SessionDetailPage() {
   const publishPlanMutation = usePublishPlan();
   const generatePlanMutation = useGeneratePlan();
 
-  // --- NO AUTOMATIC REDIRECT - Let users view session summary and notes ---
-  // Users can manually click "View Action Plan" button if they want to see the plan
-
-  // Audio player logic
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -167,7 +163,6 @@ export default function SessionDetailPage() {
     if (!session) return;
     setIsGenerating(true);
     setSaveError(null);
-    // Save edits first if any
     if ((editingSummary && summaryDraft !== session.aiSummary) || (editingNotes && notesDraft !== session.notes)) {
       try {
         await updateSessionMutation.mutateAsync({
@@ -193,9 +188,7 @@ export default function SessionDetailPage() {
         setIsGenerating(false);
         return;
       }
-      // Refetch session data so UI updates before redirect
       await refetch();
-      // Redirect to the dashboard with plan editor open after generation
       router.push(`/practitioner/clients/${session.client?.id || ''}/dashboard?editPlan=${plan.id}`);
     } catch (err: any) {
       setSaveError(err.message || 'Failed to generate action plan');
@@ -218,7 +211,6 @@ export default function SessionDetailPage() {
         toast.success('Plan published to client!');
         setShowPublishModal(false);
         setComplianceChecked(false);
-        // Redirect to the plan detail page after successful publish
         router.push(`/practitioner/clients/${session?.client?.id}/plans/${generatedPlan.id}`);
       },
       onError: () => {
@@ -279,7 +271,7 @@ export default function SessionDetailPage() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
-          className='fixed inset-0 z-50 flex items-center justify-center bg-background'
+          className='fixed inset-0 z-50 flex items-center justify-center bg-transparent'
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}

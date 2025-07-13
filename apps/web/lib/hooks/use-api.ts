@@ -687,6 +687,17 @@ export function useUpdateSession() {
   });
 }
 
+export function useGenerateComprehensiveSummary() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (clientId: string) => ApiClient.post<any>(`/api/sessions/client/${clientId}/comprehensive-summary`),
+    onSuccess: (_, clientId) => {
+      queryClient.invalidateQueries({ queryKey: ['sessions', 'client', clientId] });
+    },
+  });
+}
+
 export function usePublishPlan() {
   const queryClient = useQueryClient();
 
@@ -708,7 +719,6 @@ export function useGeneratePlan() {
   return useMutation({
     mutationFn: ({ sessionId }: { sessionId: string }) => ApiClient.post<any>('/api/plans/generate', { sessionId }),
     onSuccess: (_, { sessionId }) => {
-      // Invalidate all session-related queries to ensure the plan link is updated
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
       queryClient.invalidateQueries({ queryKey: ['plans'] });
@@ -758,7 +768,6 @@ export function useApproveSuggestion() {
   return useMutation({
     mutationFn: (suggestionId: string) => ApiClient.post(`/api/plans/suggestions/${suggestionId}/approve`),
     onSuccess: () => {
-      // Invalidate all plan data queries since we don't have the planId in the response
       queryClient.invalidateQueries({ queryKey: ['planData'] });
       queryClient.invalidateQueries({ queryKey: ['plans'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -772,7 +781,6 @@ export function useRejectSuggestion() {
   return useMutation({
     mutationFn: (suggestionId: string) => ApiClient.post(`/api/plans/suggestions/${suggestionId}/reject`),
     onSuccess: () => {
-      // Invalidate all plan data queries since we don't have the planId in the response
       queryClient.invalidateQueries({ queryKey: ['planData'] });
       queryClient.invalidateQueries({ queryKey: ['plans'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -787,7 +795,6 @@ export function useUpdateSuggestion() {
     mutationFn: ({ suggestionId, updatedData }: { suggestionId: string; updatedData: any }) =>
       ApiClient.patch(`/api/plans/suggestions/${suggestionId}`, updatedData),
     onSuccess: () => {
-      // Invalidate all plan data queries since we don't have the planId in the response
       queryClient.invalidateQueries({ queryKey: ['planData'] });
       queryClient.invalidateQueries({ queryKey: ['plans'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -877,7 +884,6 @@ export function useCompleteActionItem() {
     mutationFn: ({ taskId, completionData }: { taskId: string; completionData: any }) =>
       ApiClient.post(`/api/action-items/${taskId}/complete`, completionData),
     onSuccess: (_, { taskId }) => {
-      // Invalidate all relevant queries to update UI
       queryClient.invalidateQueries({ queryKey: ['client-plans'] });
       queryClient.invalidateQueries({ queryKey: ['client-action-items'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -892,7 +898,6 @@ export function useUndoTaskCompletion() {
     mutationFn: ({ taskId, clientId }: { taskId: string; clientId: string }) =>
       ApiClient.delete(`/api/action-items/${taskId}/complete?clientId=${encodeURIComponent(clientId)}`),
     onSuccess: (_, { taskId }) => {
-      // Invalidate all relevant queries to update UI
       queryClient.invalidateQueries({ queryKey: ['client-plans'] });
       queryClient.invalidateQueries({ queryKey: ['client-action-items'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -900,7 +905,6 @@ export function useUndoTaskCompletion() {
   });
 }
 
-// Journal API hooks
 export interface JournalEntry {
   id: string;
   title?: string;
@@ -935,7 +939,7 @@ export function useCreateJournalEntry() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { title: string; content: string }) => ApiClient.post<JournalEntry>('/api/journal', data),
+    mutationFn: (data: { title?: string; content: string }) => ApiClient.post<JournalEntry>('/api/journal', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
     },
@@ -975,7 +979,6 @@ export function useSearchJournalEntries(searchTerm: string) {
   });
 }
 
-// Practitioner journal hooks
 export function useGetClientJournalEntries(clientId: string) {
   return useQuery({
     queryKey: ['client-journal-entries', clientId],
@@ -998,7 +1001,6 @@ export function useGetClientActionItemsInRange(clientId: string, startDate: stri
   });
 }
 
-// Returns the number of conversations with unread messages for the current practitioner
 export function useUnreadMessagesCount() {
   const { data: currentUser } = useGetCurrentUser();
   const { data, isLoading, isError } = useQuery({
@@ -1007,7 +1009,7 @@ export function useUnreadMessagesCount() {
     staleTime: 2 * 1000,
     retry: 1,
     retryDelay: 500,
-    refetchInterval: 5000, // Poll every 5 seconds
+    refetchInterval: 5000,
     refetchIntervalInBackground: true,
   });
   const currentUserId = currentUser?.id;

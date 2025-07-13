@@ -220,6 +220,7 @@ export class PractitionerService {
       email: client.email,
       firstName: client.firstName,
       lastName: client.lastName,
+      phoneNumber: client.phoneNumber,
       clientStatus: client.clientStatus,
       avatarUrl: client.avatarUrl,
       createdAt: client.createdAt,
@@ -240,12 +241,10 @@ export class PractitionerService {
       throwAuthError('Client not found or you do not have permission to view this client', 'notFound');
     }
 
-    // Get intake form submission count
     const submissionCount = await this.prismaService.intakeFormSubmission.count({
       where: { clientId: clientId },
     });
 
-    // Get latest intake form submission if any
     const latestSubmission = await this.prismaService.intakeFormSubmission.findFirst({
       where: { clientId: clientId },
       include: {
@@ -259,7 +258,6 @@ export class PractitionerService {
       orderBy: { submittedAt: 'desc' },
     });
 
-    // Parse notification settings if they exist
     let notificationSettings = null;
     if (client.notificationSettings) {
       try {
@@ -282,17 +280,14 @@ export class PractitionerService {
       clientStatus: client.clientStatus,
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
-      // Personal information
       dob: client.dob || '',
       gender: client.gender || '',
       profession: client.profession || '',
-      // Medical information
       allergies: client.allergies || [],
       medicalHistory: client.medicalHistory || [],
       symptoms: client.symptoms || [],
       medications: client.medications || [],
       notificationSettings,
-      // Intake form information
       hasCompletedIntake: submissionCount > 0,
       intakeFormSubmission: latestSubmission,
     };
@@ -314,7 +309,6 @@ export class PractitionerService {
   async cleanupExpiredInvitations(practitionerId: string) {
     const currentTime = new Date();
 
-    // Update expired invitations to EXPIRED status
     await this.prismaService.invitation.updateMany({
       where: {
         practitionerId,
@@ -326,7 +320,6 @@ export class PractitionerService {
       },
     });
 
-    // Optionally delete very old expired invitations (older than 30 days)
     const thirtyDaysAgo = new Date(currentTime.getTime() - 30 * 24 * 60 * 60 * 1000);
     await this.prismaService.invitation.deleteMany({
       where: {
@@ -359,20 +352,15 @@ export class PractitionerService {
           lastName: invitation.clientLastName,
         });
 
-        // Check if invitation is expired
         const isExpired = invitation.expiresAt < currentTime;
 
-        // If expired and still PENDING, update status to EXPIRED in database
         if (isExpired && invitation.status === InvitationStatus.PENDING) {
-          // Fire and forget - update the status in the background
           this.prismaService.invitation
             .update({
               where: { id: invitation.id },
               data: { status: InvitationStatus.EXPIRED },
             })
-            .catch(() => {
-              // Ignore errors for this background update
-            });
+            .catch(() => {});
         }
 
         let status: 'PENDING' | 'JOINED' | 'EXPIRED';
@@ -397,7 +385,7 @@ export class PractitionerService {
           avatar: avatar,
         };
       })
-      .filter((invitation) => invitation !== null); // Remove expired invitations
+      .filter((invitation) => invitation !== null);
   }
 
   async getIntakeFormSubmissions(practitionerId: string, formId: string) {

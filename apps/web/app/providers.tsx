@@ -7,14 +7,8 @@ import { SessionProvider } from 'next-auth/react';
 import { SignUpProvider } from '@/context/signup-context';
 
 const Providers = ({ children }: { children: React.ReactNode }) => {
-  console.log('[Providers] Initializing with SessionProvider');
-
   return (
-    <SessionProvider
-      refetchInterval={0} // Disable automatic refetch
-      refetchOnWindowFocus={false}
-      refetchWhenOffline={false}
-    >
+    <SessionProvider refetchInterval={0} refetchOnWindowFocus={false} refetchWhenOffline={false}>
       <SignUpProvider>
         <ThemeProvider attribute='class' defaultTheme='light'>
           <ReactQueryClientProvider>

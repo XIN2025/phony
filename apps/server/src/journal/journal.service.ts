@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 interface CreateJournalEntryDto {
   clientId: string;
-  title: string;
+  title?: string;
   content: string;
 }
 

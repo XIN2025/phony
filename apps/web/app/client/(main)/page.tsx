@@ -102,18 +102,15 @@ const ClientPage = () => {
     refetch: refetchPlans,
   } = useGetClientPlans(session?.user?.id || '');
 
-  // Only use the most recent plan's action items
   const mostRecentPlan = Array.isArray(plans) && plans.length > 0 ? plans[0] : null;
   const actionItems = mostRecentPlan ? mostRecentPlan.actionItems : [];
 
-  // Helper to get today's day short name
   const getTodayShort = () => {
     const days = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
     return days[new Date().getDay()] ?? 'Su';
   };
   const todayShort = getTodayShort();
 
-  // Helper to map short day names to full names
   const DAY_NAME_MAP: Record<string, string> = {
     Su: 'Sunday',
     M: 'Monday',
@@ -124,7 +121,6 @@ const ClientPage = () => {
     S: 'Saturday',
   };
 
-  // Date picker state
   const today = new Date();
   const [dateRange, setDateRange] = useState({
     startDate: today,
@@ -187,25 +183,49 @@ const ClientPage = () => {
     };
   }, [showDatePicker]);
 
-  // Task filter state
   const [taskFilter, setTaskFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
-  // Helper to check if a task is for the selected date
   function isTaskForDate(task: ActionItem, date: Date) {
-    // If the task has a createdAt or sessionDate, use that; otherwise, fallback to today
-    const taskDate = (task as any).sessionDate
-      ? new Date((task as any).sessionDate)
-      : (task as any).createdAt
-        ? new Date((task as any).createdAt)
-        : today;
-    return (
-      taskDate.getFullYear() === date.getFullYear() &&
-      taskDate.getMonth() === date.getMonth() &&
-      taskDate.getDate() === date.getDate()
-    );
+    if (task.isMandatory) {
+      if (task.isCompleted) {
+        const dayOfWeek = date.getDay();
+        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+        const selectedDayShort = dayMap[dayOfWeek];
+
+        if (task.daysOfWeek && task.daysOfWeek.length > 0) {
+          return task.daysOfWeek.some((day) => day === selectedDayShort);
+        }
+        return true;
+      } else {
+        const today = new Date();
+        const selectedDate = date;
+
+        if (selectedDate >= today) {
+          return true;
+        }
+
+        const dayOfWeek = selectedDate.getDay();
+        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+        const selectedDayShort = dayMap[dayOfWeek];
+
+        if (task.daysOfWeek && task.daysOfWeek.length > 0) {
+          return task.daysOfWeek.some((day) => day === selectedDayShort);
+        }
+        return true;
+      }
+    } else {
+      const dayOfWeek = date.getDay();
+      const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+      const selectedDayShort = dayMap[dayOfWeek];
+
+      if (task.daysOfWeek && task.daysOfWeek.length > 0) {
+        return task.daysOfWeek.some((day) => day === selectedDayShort);
+      }
+
+      return true;
+    }
   }
 
-  // Only show tasks for the selected date
   const selectedDate = dateRange.startDate;
   const filteredByDate = actionItems.filter((task: ActionItem) => isTaskForDate(task, selectedDate));
 
