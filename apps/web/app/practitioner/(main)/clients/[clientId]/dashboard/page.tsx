@@ -96,6 +96,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const [isPublishingPlan, setIsPublishingPlan] = useState(false);
   const [showComprehensiveSummary, setShowComprehensiveSummary] = useState(false);
   const [comprehensiveSummary, setComprehensiveSummary] = useState<any>(null);
+  const [isSummaryCached, setIsSummaryCached] = useState(false);
   const { data: client, isLoading: isClientLoading } = useGetClient(clientId);
   const { data: sessions = [], isLoading: isSessionsLoading } = useGetSessionsByClient(clientId);
   const { data: processingSession } = useGetSessionForPolling(processingSessionId || '');
@@ -319,8 +320,10 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const handleGenerateComprehensiveSummary = async () => {
     try {
       setShowComprehensiveSummary(true);
+      setIsSummaryCached(false);
       const summary = await generateComprehensiveSummaryMutation.mutateAsync(clientId);
       setComprehensiveSummary(summary);
+      setIsSummaryCached(summary.isCached || false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to generate comprehensive summary');
       setShowComprehensiveSummary(false);
@@ -539,7 +542,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                   <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                     Tasks
                   </TableHead>
-                  <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                  <TableHead className='px-0 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
                     Avg Task Feedback
                   </TableHead>
                 </TableRow>
@@ -592,7 +595,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                           {sessionTitle || 'Untitled Session'}
                         </TableCell>
                         <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>{total}</TableCell>
-                        <TableCell className='px-7 py-5 whitespace-nowrap'>
+                        <TableCell className='px-4 py-5 whitespace-nowrap'>
                           <span
                             className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold ${badgeClass}`}
                           >
@@ -868,51 +871,56 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
       {filteredJournals.length === 0 ? (
         <div className='text-center text-muted-foreground py-8'>No journal entries found for this client.</div>
       ) : (
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2  min-w-0'>
-          {filteredJournals.map((entry) => (
-            <Card
-              key={entry.id}
-              className='flex flex-col p-0 overflow-hidden h-48 sm:h-56 min-w-0 w-full bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50 hover:shadow-xl transition-shadow cursor-pointer'
-              onClick={() => handleJournalClick(entry)}
-            >
-              <div className='flex-1 p-4 overflow-hidden'>
-                <div className='font-semibold text-sm leading-tight text-gray-800 mb-2'>
-                  {entry.title || 'Untitled Entry'}
-                </div>
-                <div className='text-xs text-gray-500 mb-2'>
-                  {new Date(entry.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </div>
-                <div className='text-sm text-gray-600 line-clamp-3'>
-                  {(() => {
-                    const sections = entry.content.split('<hr>');
-                    const contentSnippets: string[] = [];
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 min-w-0'>
+          {filteredJournals.map((entry) => {
+            const previewText = (() => {
+              const sections = entry.content.split('<hr>').filter((section) => section.trim());
+              const contentSnippets: string[] = [];
 
-                    sections.forEach((section) => {
-                      const cleanContent = section.replace(/<h3>.*?<\/h3>/, '').trim();
-                      if (cleanContent) {
-                        const textContent = cleanContent.replace(/<[^>]*>/g, '');
-                        if (textContent.length > 0) {
-                          const snippet = textContent.length > 50 ? textContent.substring(0, 50) + '...' : textContent;
-                          contentSnippets.push(snippet);
-                        }
-                      }
-                    });
+              sections.forEach((section) => {
+                const cleanContent = section.replace(/<h3>.*?<\/h3>/, '').trim();
+                if (cleanContent) {
+                  const textContent = cleanContent.replace(/<[^>]*>/g, '');
+                  if (textContent.length > 0) {
+                    const snippet = textContent.length > 50 ? textContent.substring(0, 50) + '...' : textContent;
+                    contentSnippets.push(snippet);
+                  }
+                }
+              });
 
-                    if (contentSnippets.length > 0) {
-                      return contentSnippets.slice(0, 2).join(' • ');
-                    }
+              if (contentSnippets.length > 0) {
+                return contentSnippets.slice(0, 2).join(' • ');
+              }
 
-                    const textContent = entry.content.replace(/<[^>]*>/g, '');
-                    return textContent.length > 100 ? textContent.substring(0, 100) + '...' : textContent;
-                  })()}
+              const textContent = entry.content.replace(/<[^>]*>/g, '');
+              return textContent.length > 100 ? textContent.substring(0, 100) + '...' : textContent;
+            })();
+
+            return (
+              <Card
+                key={entry.id}
+                className='flex flex-col p-0 overflow-hidden h-48 sm:h-56 lg:h-64 xl:h-72 min-w-0 w-full bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50 hover:shadow-xl transition-shadow cursor-pointer'
+                onClick={() => handleJournalClick(entry)}
+              >
+                <div className='flex-1 p-3 sm:p-4 lg:p-5 overflow-hidden'>
+                  <div className='font-semibold text-sm sm:text-base leading-tight text-gray-800 mb-2'>
+                    {entry.title || 'Untitled Entry'}
+                  </div>
+                  <div className='text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3'>
+                    {new Date(entry.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </div>
+
+                  <div className='text-sm sm:text-base text-gray-600 line-clamp-3 sm:line-clamp-4 lg:line-clamp-5 xl:line-clamp-6'>
+                    {previewText}
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
     </TabsContent>
@@ -1061,7 +1069,10 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                 </div>
               ) : client ? (
                 <div>
-                  <h1 className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'>
+                  <h1
+                    className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
                     {client.firstName} {client.lastName}
                   </h1>
                   <p className='text-xs sm:text-sm text-muted-foreground'>

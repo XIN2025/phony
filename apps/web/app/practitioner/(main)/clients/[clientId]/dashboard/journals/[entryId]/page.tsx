@@ -59,7 +59,12 @@ export default function PractitionerJournalEntryViewPage({
           sections.map((section, index) => (
             <Card key={index} className='bg-white border border-gray-200 shadow-none rounded-xl'>
               <CardContent className='p-4 min-h-[120px] flex flex-col items-start'>
-                <h3 className='text-sm font-semibold text-gray-900 mb-2'>{section.title}</h3>
+                <h3
+                  className='text-sm font-semibold text-gray-900 mb-2'
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  {section.title}
+                </h3>
                 <div
                   className='prose prose-sm max-w-none text-gray-800 leading-relaxed w-full'
                   dangerouslySetInnerHTML={{ __html: section.content }}

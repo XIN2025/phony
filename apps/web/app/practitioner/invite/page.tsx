@@ -313,7 +313,9 @@ export default function InviteClientPage() {
           >
             <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
           </button>
-          <h1 className='text-3xl font-bold tracking-tight mt-4'>{currentStepData?.title}</h1>
+          <h1 className='text-3xl font-bold tracking-tight mt-4' style={{ fontFamily: "'Playfair Display', serif" }}>
+            {currentStepData?.title}
+          </h1>
         </div>
         {/* Show spinner if submitting, otherwise show form */}
         {submitting ? (

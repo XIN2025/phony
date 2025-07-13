@@ -13,7 +13,12 @@ const ClientMessagesPage = () => {
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <SidebarToggleButton />
-          <h1 className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'>Messages</h1>
+          <h1
+            className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            Messages
+          </h1>
         </div>
         <div className='text-sm sm:text-base text-gray-600'>Communicate with your practitioner</div>
       </div>

@@ -35,7 +35,12 @@ export default function FormsPage() {
         <div className='flex flex-col sm:flex-row sm:items-center bg-transparent sm:justify-between gap-3 sm:gap-4'>
           <div className='flex items-center gap-2 min-w-0'>
             <SidebarToggleButton />
-            <h1 className='text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight truncate'>My Forms</h1>
+            <h1
+              className='text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight truncate'
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              My Forms
+            </h1>
           </div>
           <div className='flex items-center gap-2'>
             <Button

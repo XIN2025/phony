@@ -16,7 +16,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       </div>
 
       {/* Right side with gradient background */}
-      <div className='flex min-h-screen flex-1 items-center justify-center bg-gradient-to-r from-red-100 via-yellow-50 to-blue-50 p-4'>
+      <div className='via-yellow-25 flex min-h-screen flex-1 items-center justify-center bg-gradient-to-r from-red-50 to-blue-50 p-4'>
         <div className='w-full max-w-lg space-y-8 rounded-xl bg-white/80 p-8 shadow-lg'>{children}</div>
       </div>
     </div>
@@ -27,11 +27,15 @@ export function AuthHeader({ title }: { title: string }) {
   return (
     <>
       <div className='mb-8 text-center'>
-        <h1 className='mb-2 text-2xl font-bold'>Welcome to Continuum</h1>
+        <h1 className='mb-2 text-2xl font-bold' style={{ fontFamily: "'Playfair Display', serif" }}>
+          Welcome to Continuum
+        </h1>
         <p className='text-muted-foreground'>Bridging care and connection, one session at a time.</p>
       </div>
       <div className='text-center'>
-        <h2 className='mb-6 text-lg font-semibold'>{title}</h2>
+        <h2 className='mb-6 text-lg font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+          {title}
+        </h2>
       </div>
     </>
   );

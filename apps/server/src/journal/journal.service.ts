@@ -184,4 +184,72 @@ export class JournalService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async markJournalEntryAsRead(entryId: string, practitionerId: string) {
+    try {
+      const entry = await this.prisma.journalEntry.findUnique({
+        where: { id: entryId },
+        select: { id: true, readBy: true },
+      });
+
+      if (!entry) {
+        throw new Error('Journal entry not found');
+      }
+
+      if (!entry.readBy || !entry.readBy.includes(practitionerId)) {
+        const updatedReadBy = entry.readBy ? [...entry.readBy, practitionerId] : [practitionerId];
+
+        return await this.prisma.journalEntry.update({
+          where: { id: entryId },
+          data: {
+            readBy: updatedReadBy,
+          },
+        });
+      }
+
+      return entry;
+    } catch (error) {
+      console.error('Error marking journal entry as read:', error);
+      throw error;
+    }
+  }
+
+  async getUnreadJournalCount(practitionerId: string) {
+    try {
+      console.log('getUnreadJournalCount called with practitionerId:', practitionerId);
+
+      const clients = await this.prisma.user.findMany({
+        where: { practitionerId },
+        select: { id: true },
+      });
+
+      console.log('Found clients:', clients);
+
+      if (clients.length === 0) return 0;
+
+      const clientIds = clients.map((client) => client.id);
+      console.log('Client IDs:', clientIds);
+
+      const allEntries = await this.prisma.journalEntry.findMany({
+        where: {
+          clientId: { in: clientIds },
+        },
+        select: { id: true, readBy: true },
+      });
+
+      const unreadEntries = allEntries.filter((entry) => !entry.readBy || !entry.readBy.includes(practitionerId));
+
+      console.log('Found total entries:', allEntries.length);
+      console.log('Found unread entries:', unreadEntries.length);
+      console.log('Returning count:', unreadEntries.length);
+
+      return unreadEntries.length;
+    } catch (error) {
+      console.error('Error getting unread journal count:', error);
+      console.error('Error stack:', error.stack);
+      console.error('Error message:', error.message);
+      console.error('Error name:', error.name);
+      return 0;
+    }
+  }
 }

@@ -226,7 +226,11 @@ export function IntakeFormBuilder({
       {/* Form Title & Description Card */}
       <div className='bg-white rounded-2xl shadow p-4 sm:p-8 flex flex-col gap-6'>
         <div className='flex flex-col gap-2'>
-          <Label htmlFor='title' className='text-base font-semibold'>
+          <Label
+            htmlFor='title'
+            className='text-base font-semibold'
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
             Form Title
           </Label>
           <Input
@@ -237,7 +241,11 @@ export function IntakeFormBuilder({
           />
         </div>
         <div className='flex flex-col gap-2'>
-          <Label htmlFor='form-description' className='text-base font-semibold'>
+          <Label
+            htmlFor='form-description'
+            className='text-base font-semibold'
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
             Form Description
           </Label>
           <Textarea

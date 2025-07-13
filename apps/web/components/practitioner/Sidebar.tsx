@@ -1,5 +1,6 @@
 ﻿'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Button } from '@repo/ui/components/button';
 import { LogOut } from 'lucide-react';
@@ -11,15 +12,7 @@ import { useRouter } from 'next/navigation';
 import { useGetCurrentUser } from '@/lib/hooks/use-api';
 
 const ContinuumIcon = () => (
-  <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg' className='h-6 w-6'>
-    <rect x='3' y='3' width='18' height='18' rx='2' ry='2' stroke='currentColor' strokeWidth='2' />
-    <path
-      d='M12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16'
-      stroke='currentColor'
-      strokeWidth='2'
-      strokeLinecap='round'
-    />
-  </svg>
+  <Image src='/logo.svg' alt='Continuum Logo' width={24} height={24} className='h-90 w-90 mt-19' />
 );
 
 export const SidebarContent = ({
@@ -80,10 +73,9 @@ export const SidebarContent = ({
       <div className='flex h-[56px] sm:h-[64px] items-center px-4 sm:px-6 lg:px-8 mb-3 sm:mb-4'>
         <Link
           href='/'
-          className='flex items-center gap-2 text-xl sm:text-2xl font-logo font-semibold text-black min-w-0'
+          className='flex items-center justify-center text-xl sm:text-2xl font-logo font-semibold text-black min-w-0'
         >
           <ContinuumIcon />
-          <span className='truncate'>Continuum</span>
         </Link>
       </div>
       <div className='flex-1 py-2 min-w-0'>
@@ -114,7 +106,7 @@ export const SidebarContent = ({
           variant='ghost'
           size='sm'
           className='w-full justify-start gap-2 text-[#a6a6a6] hover:text-black text-sm sm:text-base'
-          onClick={() => signOut({ callbackUrl: signOutCallbackUrl })}
+          onClick={() => signOut({ callbackUrl: '/' })}
         >
           <LogOut className='h-4 w-4 flex-shrink-0' />
           <span className='truncate'>Sign Out</span>

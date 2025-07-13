@@ -32,11 +32,8 @@ function SessionErrorHandlerComponent({ children }: SessionErrorHandlerProps) {
               Your session has expired or encountered an error. Please log in again to continue.
             </p>
             <div className='space-y-2'>
-              <Button onClick={() => router.push('/practitioner/auth')} className='w-full'>
-                Practitioner Login
-              </Button>
-              <Button variant='outline' onClick={() => router.push('/client/auth')} className='w-full'>
-                Client Login
+              <Button onClick={() => router.push('/')} className='w-full'>
+                Back to Home
               </Button>
             </div>
           </div>

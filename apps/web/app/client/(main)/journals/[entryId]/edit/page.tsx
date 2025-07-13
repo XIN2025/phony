@@ -363,8 +363,8 @@ const JournalEditor = ({ entryId }: { entryId: string }) => {
                         </Button>
                       </div>
 
-                      {/* Font family - always visible */}
-                      <div className='flex items-center flex-shrink-0'>
+                      {/* Font family - hidden on small screens */}
+                      <div className='hidden sm:flex items-center flex-shrink-0'>
                         <Select
                           onValueChange={(val) => {
                             if (quillEditorRef.current) {
@@ -395,14 +395,16 @@ const JournalEditor = ({ entryId }: { entryId: string }) => {
                         </Button>
                       </div>
 
-                      {/* Text formatting - hidden on small screens */}
-                      <div className='hidden sm:flex items-center gap-1 flex-shrink-0'>
+                      {/* Text formatting - bold and italic always visible, underline hidden on small screens */}
+                      <div className='flex items-center gap-1 flex-shrink-0'>
                         <Button type='button' variant='ghost' size='icon' className='ql-bold h-8 w-8'>
                           <Bold size={16} />
                         </Button>
                         <Button type='button' variant='ghost' size='icon' className='ql-italic h-8 w-8'>
                           <Italic size={16} />
                         </Button>
+                      </div>
+                      <div className='hidden sm:flex items-center gap-1 flex-shrink-0'>
                         <Button type='button' variant='ghost' size='icon' className='ql-underline h-8 w-8'>
                           <Underline size={16} />
                         </Button>

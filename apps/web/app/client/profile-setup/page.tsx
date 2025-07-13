@@ -32,12 +32,16 @@ export default function ClientProfileSetupPage() {
   return (
     <div className='flex flex-col w-full max-w-full overflow-x-hidden px-4 sm:px-6 md:px-8 min-w-0'>
       <div className='text-center mb-8'>
-        <h1 className='text-2xl font-bold mb-2'>Welcome to Continuum</h1>
+        <h1 className='text-2xl font-bold mb-2' style={{ fontFamily: "'Playfair Display', serif" }}>
+          Welcome to Continuum
+        </h1>
         <p className='text-muted-foreground'>Bridging care and connection, one session at a time.</p>
       </div>
       <div className='text-center'>
         <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10 mb-4' />
-        <h2 className='text-lg font-semibold mb-6'>Profile Setup</h2>
+        <h2 className='text-lg font-semibold mb-6' style={{ fontFamily: "'Playfair Display', serif" }}>
+          Profile Setup
+        </h2>
       </div>
       <div className='bg-card rounded-lg shadow-lg p-4 sm:p-8'>
         <ProfileSetupForm

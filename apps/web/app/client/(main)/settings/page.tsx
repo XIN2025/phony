@@ -9,13 +9,19 @@ import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';
 import { Switch } from '@repo/ui/components/switch';
 import { Edit, Loader2 } from 'lucide-react';
-import { signOut } from 'next-auth/react';
+import { signOut, getSession } from 'next-auth/react';
 import React, { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+
+const validatePhoneNumber = (value: string): string => {
+  return value.replace(/[^0-9+\-()\s]/g, '');
+};
 
 export default function ClientSettingsPage() {
   const { data: user, isLoading } = useGetCurrentUser();
   const updateProfileMutation = useUpdateProfile();
+  const queryClient = useQueryClient();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -100,35 +106,42 @@ export default function ClientSettingsPage() {
     }
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const validatedValue = validatePhoneNumber(e.target.value);
+    setPhone(validatedValue);
+  };
+
   const handleSaveChanges = async () => {
     if (!user) return;
 
-    try {
-      const formData = new FormData();
+    const formData = new FormData();
 
-      // Parse full name into firstName and lastName
-      const nameParts = fullName.trim().split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
 
-      formData.append('firstName', firstName);
-      formData.append('lastName', lastName);
-      formData.append('phoneNumber', phone);
-      formData.append('allergies', JSON.stringify(allergies));
-      formData.append('medicalHistory', JSON.stringify(medicalHistory));
-      formData.append('symptoms', JSON.stringify(symptoms));
-      formData.append('medications', JSON.stringify(medications));
-      formData.append('notificationSettings', JSON.stringify(notificationSettings));
+    formData.append('firstName', firstName);
+    formData.append('lastName', lastName);
+    formData.append('phoneNumber', phone);
+    formData.append('allergies', JSON.stringify(allergies));
+    formData.append('medicalHistory', JSON.stringify(medicalHistory));
+    formData.append('symptoms', JSON.stringify(symptoms));
+    formData.append('medications', JSON.stringify(medications));
+    formData.append('notificationSettings', JSON.stringify(notificationSettings));
 
-      if (avatarFile) {
-        formData.append('profileImage', avatarFile);
-      }
-
-      await updateProfileMutation.mutateAsync(formData);
-      toast.success('Profile updated successfully');
-    } catch (error) {
-      toast.error('Failed to update profile');
+    if (avatarFile) {
+      formData.append('profileImage', avatarFile);
     }
+
+    updateProfileMutation.mutate(formData, {
+      onSuccess: () => {
+        toast.success('Profile updated successfully');
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      },
+      onError: () => {
+        toast.error('Failed to update profile');
+      },
+    });
   };
 
   return (
@@ -237,14 +250,14 @@ export default function ClientSettingsPage() {
                   <Label htmlFor='phone' className='text-base font-medium'>
                     Phone Number
                   </Label>
-                  <Input id='phone' value={phone} onChange={(e) => setPhone(e.target.value)} className='mt-2' />
+                  <Input id='phone' value={phone} onChange={handlePhoneChange} className='mt-2' />
                 </div>
               </div>
               <div className='flex justify-end mt-8'>
                 <Button
                   variant='default'
                   className='bg-black text-white rounded-full px-8 py-3 text-base font-medium hover:bg-gray-900 w-auto'
-                  onClick={() => signOut({ callbackUrl: '/client/auth' })}
+                  onClick={() => signOut({ callbackUrl: '/' })}
                 >
                   Logout
                 </Button>

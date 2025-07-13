@@ -14,7 +14,8 @@ export class ActionItemService {
   constructor(private prisma: PrismaService) {}
 
   async completeActionItem(data: CreateCompletionDto) {
-    return await this.prisma.actionItemCompletion.create({
+    console.log('Completing action item:', data);
+    const result = await this.prisma.actionItemCompletion.create({
       data: {
         actionItemId: data.actionItemId,
         clientId: data.clientId,
@@ -33,6 +34,8 @@ export class ActionItemService {
         },
       },
     });
+    console.log('Action item completion result:', result);
+    return result;
   }
 
   async getActionItemCompletions(actionItemId: string, clientId?: string) {
@@ -125,6 +128,7 @@ export class ActionItemService {
   }
 
   async undoActionItemCompletion(actionItemId: string, clientId: string) {
+    console.log('Undoing action item completion:', { actionItemId, clientId });
     const completion = await this.prisma.actionItemCompletion.findFirst({
       where: {
         actionItemId,
@@ -133,13 +137,16 @@ export class ActionItemService {
     });
 
     if (!completion) {
+      console.log('No completion found for action item:', actionItemId);
       throw new Error('No completion found for this action item and client');
     }
 
+    console.log('Found completion to delete:', completion.id);
     await this.prisma.actionItemCompletion.delete({
       where: { id: completion.id },
     });
 
+    console.log('Action item completion undone successfully');
     return { success: true, message: 'Task completion undone successfully' };
   }
 

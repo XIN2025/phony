@@ -53,14 +53,21 @@ interface ActionItem {
   toolsToHelp?: string;
   category?: string;
   isCompleted: boolean;
+  completions?: Array<{
+    id: string;
+    completedAt: string;
+    rating?: number;
+    journalEntry?: string;
+    achievedValue?: string;
+  }>;
   resources?: Array<{
     type: 'LINK' | 'PDF';
     url: string;
     title?: string;
   }>;
-  daysOfWeek?: string[]; // Added for task editor
-  sessionDate?: string; // Added for date filtering
-  createdAt?: string; // Added for date filtering
+  daysOfWeek?: string[];
+  sessionDate?: string;
+  createdAt?: string;
 }
 
 interface CompletionData {
@@ -72,16 +79,6 @@ interface CompletionData {
 interface Plan {
   id: string;
   actionItems: ActionItem[];
-}
-
-// Add a type for demo tasks
-interface DemoTask {
-  id: string;
-  title: string;
-  duration: string;
-  feedback?: boolean;
-  mandatory?: boolean;
-  completed: boolean;
 }
 
 const ClientPage = () => {
@@ -103,7 +100,18 @@ const ClientPage = () => {
   } = useGetClientPlans(session?.user?.id || '');
 
   const mostRecentPlan = Array.isArray(plans) && plans.length > 0 ? plans[0] : null;
-  const actionItems = mostRecentPlan ? mostRecentPlan.actionItems : [];
+  const actionItems = mostRecentPlan
+    ? mostRecentPlan.actionItems.map((item: any) => {
+        const isCompleted = item.completions && item.completions.length > 0;
+        console.log(
+          `Task ${item.id} (${item.description}): completions=${item.completions?.length || 0}, isCompleted=${isCompleted}`,
+        );
+        return {
+          ...item,
+          isCompleted,
+        };
+      })
+    : [];
 
   const getTodayShort = () => {
     const days = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
@@ -229,7 +237,6 @@ const ClientPage = () => {
   const selectedDate = dateRange.startDate;
   const filteredByDate = actionItems.filter((task: ActionItem) => isTaskForDate(task, selectedDate));
 
-  // Apply filter
   const filteredTasks = filteredByDate.filter((task: ActionItem) => {
     if (taskFilter === 'all') return true;
     if (taskFilter === 'pending') return !task.isCompleted;
@@ -242,7 +249,6 @@ const ClientPage = () => {
 
   const handleTaskToggle = async (task: ActionItem) => {
     if (task.isCompleted) {
-      // Task is already completed
       return;
     }
 
@@ -251,9 +257,9 @@ const ClientPage = () => {
         taskId: task.id,
         completionData: {
           clientId: session?.user?.id || '',
-          rating: 5, // Default rating
-          journalEntry: '', // Could add a modal for this
-          achievedValue: '', // Could add a modal for this
+          rating: 5,
+          journalEntry: '',
+          achievedValue: '',
         },
       });
       toast.success('Task marked as completed!');
@@ -281,9 +287,7 @@ const ClientPage = () => {
           setSelectedTask(null);
           setCompletionData({ rating: 0, journalEntry: '', achievedValue: '' });
         },
-        onError: (error: any) => {
-          // Error handling
-        },
+        onError: (error: any) => {},
       },
     );
   };
@@ -332,14 +336,18 @@ const ClientPage = () => {
   };
 
   const handleTaskToggleWithFeedback = async (task: ActionItem) => {
+    console.log('handleTaskToggleWithFeedback called for task:', task.id, 'isCompleted:', task.isCompleted);
+
     if (task.isCompleted) {
-      // If task is already completed, allow undoing it
+      console.log('Task is completed, attempting to undo...');
       try {
         await undoTaskCompletionMutation.mutateAsync({
           taskId: task.id,
           clientId: session?.user?.id || '',
         });
         toast.success('Task marked as incomplete!');
+        // Force refetch to ensure UI updates
+        refetchPlans();
       } catch (error) {
         console.error('Failed to undo task completion:', error);
         toast.error('Failed to undo task completion. Please try again.');
@@ -347,7 +355,7 @@ const ClientPage = () => {
       return;
     }
 
-    // Show feedback modal first
+    console.log('Task is not completed, opening feedback modal...');
     setTaskForFeedback(task);
     setFeedbackOpen(true);
     setSelectedFeedback(null);
@@ -360,20 +368,25 @@ const ClientPage = () => {
   const handleFeedbackSubmit = async () => {
     if (!taskForFeedback || !selectedFeedback) return;
 
+    console.log('handleFeedbackSubmit called for task:', taskForFeedback.id, 'feedback:', selectedFeedback);
+
     try {
       await completeTaskMutation.mutateAsync({
         taskId: taskForFeedback.id,
         completionData: {
           clientId: session?.user?.id || '',
           rating: selectedFeedback === 'happy' ? 5 : selectedFeedback === 'neutral' ? 3 : 1,
-          journalEntry: '', // Could add a text input for this
-          achievedValue: '', // Could add a text input for this
+          journalEntry: '',
+          achievedValue: '',
         },
       });
+      console.log('Task completion successful');
       toast.success('Task marked as completed!');
       setFeedbackOpen(false);
       setSelectedFeedback(null);
       setTaskForFeedback(null);
+      // Force refetch to ensure UI updates
+      refetchPlans();
     } catch (error) {
       console.error('Failed to complete task:', error);
       toast.error('Failed to complete task. Please try again.');

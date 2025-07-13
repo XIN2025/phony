@@ -36,7 +36,12 @@ function IntakeFormPageLayout({
         </div>
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
           <div>
-            <h1 className='text-xl sm:text-2xl md:text-3xl font-bold leading-tight'>{title}</h1>
+            <h1
+              className='text-xl sm:text-2xl md:text-3xl font-bold leading-tight'
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              {title}
+            </h1>
           </div>
         </div>
       </div>

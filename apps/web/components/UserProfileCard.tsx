@@ -119,7 +119,7 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({ userId, mode }
         <Button
           variant='default'
           className='w-full bg-black text-white rounded-full py-3 text-base font-medium hover:bg-gray-900'
-          onClick={() => signOut({ callbackUrl: mode === 'client' ? '/client/auth' : '/practitioner/auth' })}
+          onClick={() => signOut({ callbackUrl: '/' })}
         >
           Logout
         </Button>

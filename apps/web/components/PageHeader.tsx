@@ -69,7 +69,10 @@ export function PageHeader({
           {isLoading ? (
             <Skeleton className={cn('h-6 sm:h-8 w-32 sm:w-48', titleClassName)} />
           ) : (
-            <h1 className={cn('text-lg sm:text-xl lg:text-2xl font-bold tracking-tight truncate', titleClassName)}>
+            <h1
+              className={cn('text-lg sm:text-xl lg:text-2xl font-bold tracking-tight truncate', titleClassName)}
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
               {title}
             </h1>
           )}

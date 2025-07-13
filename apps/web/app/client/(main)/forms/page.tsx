@@ -15,7 +15,12 @@ const ClientFormsPage = () => {
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <SidebarToggleButton />
-          <h1 className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'>Forms</h1>
+          <h1
+            className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            Forms
+          </h1>
         </div>
         <div className='text-sm sm:text-base text-gray-600'>Complete and manage your forms</div>
       </div>
@@ -23,7 +28,10 @@ const ClientFormsPage = () => {
       <div className='w-full min-w-0'>
         <Card className='bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50 min-w-0'>
           <CardHeader className='pb-3 sm:pb-4'>
-            <CardTitle className='flex items-center gap-2 text-base sm:text-lg lg:text-xl text-gray-800'>
+            <CardTitle
+              className='flex items-center gap-2 text-base sm:text-lg lg:text-xl text-gray-800'
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
               <FileText className='h-4 w-4 sm:h-5 sm:w-5' />
               Forms Center
             </CardTitle>
@@ -37,7 +45,12 @@ const ClientFormsPage = () => {
                 <div className='flex items-center gap-2 sm:gap-3 min-w-0 flex-1'>
                   <FileText className='h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0' />
                   <div className='min-w-0 flex-1'>
-                    <h3 className='font-semibold text-sm sm:text-base truncate text-gray-800'>Intake Form</h3>
+                    <h3
+                      className='font-semibold text-sm sm:text-base truncate text-gray-800'
+                      style={{ fontFamily: "'Playfair Display', serif" }}
+                    >
+                      Intake Form
+                    </h3>
                     <p className='text-xs sm:text-sm text-gray-600 truncate'>Initial assessment form</p>
                   </div>
                 </div>

@@ -362,7 +362,6 @@ export class SessionService {
 
   async generateComprehensiveSummaryForClient(clientId: string) {
     try {
-      // Fetch all sessions for the client with summaries
       const sessions = await this.prisma.session.findMany({
         where: { clientId },
         select: {
@@ -371,10 +370,9 @@ export class SessionService {
           aiSummary: true,
           recordedAt: true,
         },
-        orderBy: { recordedAt: 'asc' }, // Chronological order
+        orderBy: { recordedAt: 'asc' },
       });
 
-      // Filter sessions that have AI summaries
       const sessionsWithSummaries = sessions.filter(
         (session) => session.aiSummary && session.aiSummary.trim().length > 0
       );
@@ -388,37 +386,34 @@ export class SessionService {
         };
       }
 
-      // Check if we have a cached summary
       const cachedSummary = await this.prisma.comprehensiveSummary.findFirst({
         where: { clientId },
         orderBy: { createdAt: 'desc' },
       });
 
-      // Get the latest session recorded time (since we don't have updatedAt)
-      const latestSessionRecorded = Math.max(...sessionsWithSummaries.map((session) => session.recordedAt.getTime()));
+      const currentSessionCount = sessionsWithSummaries.length;
 
-      // If we have a cached summary and no sessions have been recorded since last generation
-      if (cachedSummary && cachedSummary.lastSessionUpdate.getTime() >= latestSessionRecorded) {
+      if (cachedSummary && cachedSummary.sessionCount === currentSessionCount) {
         return {
           title: cachedSummary.title,
           summary: cachedSummary.summary,
           keyInsights: cachedSummary.keyInsights,
           recommendations: cachedSummary.recommendations,
+          isCached: true,
         };
       }
 
-      // Prepare session data for AI analysis
       const sessionSummaries = sessionsWithSummaries.map((session) => ({
         title: session.title || 'Untitled Session',
-        summary: session.aiSummary!, // We already filtered for non-null summaries
+        summary: session.aiSummary!,
         recordedAt: session.recordedAt,
         sessionId: session.id,
       }));
 
-      // Generate comprehensive summary using AI
       const comprehensiveSummary = await this.aiService.generateComprehensiveSummary(sessionSummaries);
 
-      // Cache the new summary
+      const latestSessionRecorded = Math.max(...sessionsWithSummaries.map((session) => session.recordedAt.getTime()));
+
       await this.prisma.comprehensiveSummary.upsert({
         where: {
           clientId_lastSessionUpdate: {
@@ -432,6 +427,7 @@ export class SessionService {
           keyInsights: comprehensiveSummary.keyInsights,
           recommendations: comprehensiveSummary.recommendations,
           lastSessionUpdate: new Date(latestSessionRecorded),
+          sessionCount: currentSessionCount,
           updatedAt: new Date(),
         },
         create: {
@@ -441,10 +437,14 @@ export class SessionService {
           keyInsights: comprehensiveSummary.keyInsights,
           recommendations: comprehensiveSummary.recommendations,
           lastSessionUpdate: new Date(latestSessionRecorded),
+          sessionCount: currentSessionCount,
         },
       });
 
-      return comprehensiveSummary;
+      return {
+        ...comprehensiveSummary,
+        isCached: false,
+      };
     } catch (error) {
       this.logger.error(`Error generating comprehensive summary for client ${clientId}:`, error.stack);
       throw new Error(`Failed to generate comprehensive summary: ${error.message}`);

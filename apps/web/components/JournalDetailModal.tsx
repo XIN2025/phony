@@ -92,7 +92,9 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ open, on
           <Button onClick={onClose} variant='ghost' className='p-2 rounded-full'>
             <ArrowLeft className='w-5 h-5' />
           </Button>
-          <span className='text-lg sm:text-xl font-semibold'>{journal.title || 'Untitled Journal'}</span>
+          <span className='text-lg sm:text-xl font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+            {journal.title || 'Untitled Journal'}
+          </span>
         </div>
         <div className='text-xs text-gray-500 mb-6 px-2'>{formatDate(journal.updatedAt || journal.createdAt)}</div>
         <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 px-2'>
@@ -100,6 +102,12 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ open, on
             sections.map((section, index) => (
               <Card key={index} className='bg-white border border-gray-200 shadow-none rounded-xl'>
                 <CardContent className='p-4 min-h-[120px] flex items-start'>
+                  <h3
+                    className='text-sm font-semibold text-gray-900 mb-2'
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
+                    {section.title}
+                  </h3>
                   <div
                     className='prose prose-sm max-w-none text-gray-800 leading-relaxed w-full'
                     dangerouslySetInnerHTML={{ __html: section.content }}

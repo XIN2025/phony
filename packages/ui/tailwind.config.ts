@@ -6,6 +6,8 @@ const config: Omit<Config, 'content'> = {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)'],
+        didot: ['var(--font-didot)', 'serif'],
+        serif: ['var(--font-didot)', 'serif'],
       },
     },
   },

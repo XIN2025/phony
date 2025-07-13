@@ -80,4 +80,36 @@ export class JournalController {
     }
     return await this.journalService.getClientJournalEntries(clientId, user.id);
   }
+
+  @Post(':id/read')
+  @ApiOperation({ summary: 'Mark a journal entry as read by the current practitioner' })
+  @ApiResponse({ status: 200, description: 'Journal entry marked as read successfully.' })
+  async markJournalEntryAsRead(@Param('id') entryId: string, @CurrentUser() user: RequestUser) {
+    if (user.role !== 'PRACTITIONER') {
+      throw new Error('Unauthorized: Only practitioners can mark journal entries as read');
+    }
+    return await this.journalService.markJournalEntryAsRead(entryId, user.id);
+  }
+
+  @Get('unread/count')
+  @ApiOperation({ summary: 'Get unread journal count for the current practitioner' })
+  @ApiResponse({ status: 200, description: 'Unread journal count retrieved successfully.' })
+  async getUnreadJournalCount(@CurrentUser() user: RequestUser) {
+    console.log('getUnreadJournalCount controller called with user:', user);
+    console.log('User role:', user.role);
+    console.log('User ID:', user.id);
+
+    if (user.role !== 'PRACTITIONER') {
+      console.log('User is not a practitioner, throwing error');
+      throw new Error('Unauthorized: Only practitioners can access unread journal count');
+    }
+
+    console.log('Calling journalService.getUnreadJournalCount with user.id:', user.id);
+    const count = await this.journalService.getUnreadJournalCount(user.id);
+    console.log('Got count from service:', count);
+
+    const result = { count };
+    console.log('Returning result:', result);
+    return result;
+  }
 }

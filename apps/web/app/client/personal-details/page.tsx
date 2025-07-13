@@ -12,6 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSignUpContext } from '@/context/signup-context';
 import { AuthLayout, AuthHeader } from '@repo/ui/components/auth-layout';
 
+const validatePhoneNumber = (value: string): string => {
+  return value.replace(/[^0-9+\-()\s]/g, '');
+};
+
 export default function PersonalDetailsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -53,6 +57,11 @@ export default function PersonalDetailsPage() {
       setProfileImage(file);
       setProfileImagePreview(URL.createObjectURL(file));
     }
+  };
+
+  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const validatedValue = validatePhoneNumber(e.target.value);
+    setPhoneNumber(validatedValue);
   };
 
   const handleNext = (e: React.FormEvent) => {
@@ -138,7 +147,7 @@ export default function PersonalDetailsPage() {
             id='phone-number'
             placeholder='Your phone number'
             value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            onChange={handlePhoneNumberChange}
             required
           />
         </div>

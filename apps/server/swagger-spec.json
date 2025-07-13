@@ -782,6 +782,26 @@
         "tags": ["journal"]
       }
     },
+    "/api/journal/{id}/read": {
+      "post": {
+        "operationId": "JournalController_markJournalEntryAsRead",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Journal entry marked as read successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Mark a journal entry as read by the current practitioner",
+        "tags": ["journal"]
+      }
+    },
+    "/api/journal/unread/count": {
+      "get": {
+        "operationId": "JournalController_getUnreadJournalCount",
+        "parameters": [],
+        "responses": { "200": { "description": "Unread journal count retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get unread journal count for the current practitioner",
+        "tags": ["journal"]
+      }
+    },
     "/api/chat/conversations": {
       "get": {
         "operationId": "ChatController_getConversations",

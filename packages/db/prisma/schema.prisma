@@ -196,6 +196,7 @@ model ComprehensiveSummary {
   keyInsights         String[]
   recommendations     String[]
   lastSessionUpdate   DateTime
+  sessionCount        Int      @default(0)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   @@unique([clientId, lastSessionUpdate])
@@ -384,6 +385,7 @@ model JournalEntry {
   content       String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  readBy        String[] @default([]) @map("read_by")
   
   @@map("journal_entries")
 }

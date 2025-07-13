@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useGetCurrentUser } from '@/lib/hooks/use-api';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
+import { useUnreadJournalCount } from '@/lib/hooks/use-unread-journals';
 
 const LoadingSpinner = () => (
   <div className='flex h-screen items-center justify-center'>
@@ -45,6 +46,7 @@ export default function PractitionerDashboard() {
   const { mutate: resendInvitation, isPending: isResending } = useResendInvitation();
   const { mutate: cleanupExpiredInvitations, isPending: isCleaningUp } = useCleanupExpiredInvitations();
   const { count: unreadMessages, isLoading: isUnreadLoading } = useUnreadMessagesCount();
+  const { data: unreadJournals = 0, isLoading: isUnreadJournalsLoading } = useUnreadJournalCount();
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -75,8 +77,6 @@ export default function PractitionerDashboard() {
       }
     }
   }, [status, session?.user?.role, router]);
-
-  const unreadJournals = 5;
 
   const pendingInvitations = invitations.filter((inv) => inv.status === 'PENDING');
   const joinedClients = invitations.filter((inv) => inv.status === 'JOINED');
@@ -112,7 +112,10 @@ export default function PractitionerDashboard() {
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <SidebarToggleButton />
-          <h1 className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'>
+          <h1
+            className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
             Welcome Back{user?.firstName ? ` Dr. ${user.firstName}` : ''}
           </h1>
         </div>
@@ -158,7 +161,13 @@ export default function PractitionerDashboard() {
           <div className='flex justify-between items-start'>
             <div className='flex flex-col min-w-0 flex-1'>
               <span className='text-xs sm:text-sm font-medium text-gray-600'>Unread Journals</span>
-              <span className='text-2xl sm:text-3xl lg:text-4xl font-bold'>{unreadJournals}</span>
+              <span className='text-2xl sm:text-3xl lg:text-4xl font-bold'>
+                {isUnreadJournalsLoading ? (
+                  <Loader2 className='inline h-6 w-6 animate-spin text-muted-foreground' />
+                ) : (
+                  unreadJournals
+                )}
+              </span>
               <span className='text-xs text-transparent mt-1'>&nbsp;</span>
             </div>
             <div className='p-2 sm:p-3 bg-gray-200/50 rounded-full flex-shrink-0 ml-2'>
@@ -169,7 +178,9 @@ export default function PractitionerDashboard() {
       </div>
       <Card className='rounded-2xl shadow-xl border-white/50 border bg-white/60 backdrop-blur-sm w-full min-w-0'>
         <CardContent className='p-4 sm:p-6'>
-          <h2 className='text-lg sm:text-xl font-semibold mb-4'>Last Active Clients</h2>
+          <h2 className='text-lg sm:text-xl font-semibold mb-4' style={{ fontFamily: "'Playfair Display', serif" }}>
+            Last Active Clients
+          </h2>
           <div className='overflow-x-auto -mx-4 sm:-mx-6'>
             <div className='min-w-full inline-block align-middle'>
               <div className='overflow-hidden'>

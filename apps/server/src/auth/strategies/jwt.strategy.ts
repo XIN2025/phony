@@ -1,37 +1,9 @@
-import { Strategy } from 'passport-jwt';
+import { Strategy, ExtractJwt } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { config } from '../../common/config';
 import { throwAuthError } from '../../common/utils/user.utils';
 import { UserRole, ClientStatus } from '@repo/db';
-
-const extractJwtFromRequest = (req: { headers: Record<string, string> }) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.substring(7);
-  }
-
-  if (req.headers.cookie) {
-    const cookies = req.headers.cookie.split(';').reduce((acc: Record<string, string>, cookie: string) => {
-      const [key, value] = cookie.trim().split('=');
-      if (key) acc[key] = value;
-      return acc;
-    }, {});
-
-    // Try different possible cookie names
-    const token =
-      cookies['next-auth.session-token'] ||
-      cookies['__Secure-next-auth.session-token'] ||
-      cookies['session-token'] ||
-      cookies['token'];
-
-    if (token) {
-      return token;
-    }
-  }
-
-  return null;
-};
 
 interface JwtPayload {
   sub: string;
@@ -48,7 +20,7 @@ interface JwtPayload {
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor() {
     super({
-      jwtFromRequest: extractJwtFromRequest,
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: config.jwt.secret,
     });

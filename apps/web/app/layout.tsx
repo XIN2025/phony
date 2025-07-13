@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import '@repo/ui/globals.css';
-import { inter } from '@/lib/fonts';
+import { inter, didot } from '@/lib/fonts';
 import Providers from '@/app/providers';
 import { SessionErrorHandler } from '@/components/SessionErrorHandler';
 
@@ -23,7 +23,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en' suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased bg-gradient-to-r from-red-30 via-yellow-1 to-blue-50`}>
+      <head>
+        <link
+          href='https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap'
+          rel='stylesheet'
+        />
+      </head>
+      <body
+        className={`${inter.variable} ${didot.variable} font-sans antialiased bg-gradient-to-r from-red-30 via-yellow-1 to-blue-50`}
+      >
         <Providers>
           <SessionErrorHandler>{children}</SessionErrorHandler>
         </Providers>

@@ -4,7 +4,7 @@ import { JournalEntry, useDeleteJournalEntry, useGetJournalEntries } from '@/lib
 import { Button } from '@repo/ui/components/button';
 import { Card } from '@repo/ui/components/card';
 import { Input } from '@repo/ui/components/input';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -82,7 +82,12 @@ export default function JournalsPage() {
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 md:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <SidebarToggleButton />
-          <h1 className='text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-0 truncate'>Journal Entries</h1>
+          <h1
+            className='text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-0 truncate'
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            Journal Entries
+          </h1>
         </div>
         <Link href='/client/journals/new' className='w-full sm:w-auto'>
           <Button className='rounded-full px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-medium bg-black text-white hover:bg-gray-800 shadow-sm w-full'>
@@ -123,7 +128,7 @@ export default function JournalsPage() {
           {filteredEntries.map((entry: JournalEntry) => (
             <Card
               key={entry.id}
-              className='flex flex-col justify-between p-0 overflow-hidden h-44 sm:h-48 md:h-56 min-w-0 bg-white shadow rounded-xl sm:rounded-2xl border border-gray-200 hover:shadow-lg transition-shadow'
+              className='flex flex-col justify-between p-0 overflow-hidden h-44 sm:h-48 md:h-56 min-w-0 bg-white shadow rounded-xl sm:rounded-2xl border border-gray-200 hover:shadow-lg transition-shadow relative'
             >
               <div
                 className='flex-1 p-4 overflow-hidden cursor-pointer flex flex-col justify-between'
@@ -132,8 +137,19 @@ export default function JournalsPage() {
                 <div className='text-xs text-gray-500 mb-2'>{formatDate(entry.updatedAt || entry.createdAt)}</div>
                 <div className='text-sm text-gray-700 line-clamp-4 flex-1'>{getEntryPreview(entry.content)}</div>
               </div>
-              <div className='px-4 py-2 border-t border-gray-100 bg-gray-50 text-xs text-gray-700 font-medium truncate'>
-                {entry.title || 'Untitled Journal'}
+              <div className='px-4 py-2 border-t border-gray-100 bg-gray-50 text-xs text-gray-700 font-medium truncate flex items-center justify-between'>
+                <span className='truncate flex-1'>{entry.title || 'Untitled Journal'}</span>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='h-6 w-6 rounded-full hover:bg-red-50 hover:text-red-600 ml-2 flex-shrink-0'
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteJournal(entry.id);
+                  }}
+                >
+                  <Trash2 className='h-3 w-3' />
+                </Button>
               </div>
             </Card>
           ))}

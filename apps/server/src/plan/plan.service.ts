@@ -120,7 +120,8 @@ export class PlanService {
   }
 
   async getMostRecentPublishedPlanByClient(clientId: string) {
-    return await this.prisma.plan.findFirst({
+    console.log('Getting most recent published plan for client:', clientId);
+    const result = await this.prisma.plan.findFirst({
       where: {
         clientId,
         status: PlanStatus.PUBLISHED,
@@ -149,6 +150,21 @@ export class PlanService {
       },
       orderBy: { publishedAt: 'desc' },
     });
+    console.log(
+      'Plan result:',
+      result
+        ? {
+            id: result.id,
+            actionItemsCount: result.actionItems.length,
+            actionItems: result.actionItems.map((item) => ({
+              id: item.id,
+              description: item.description,
+              completionsCount: item.completions.length,
+            })),
+          }
+        : 'No plan found'
+    );
+    return result;
   }
 
   async getPlansByClient(clientId: string) {

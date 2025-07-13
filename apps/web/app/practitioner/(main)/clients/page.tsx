@@ -63,7 +63,9 @@ export default function ClientsPage() {
         <header className='flex flex-col gap-4 border-b bg-transparent p-6 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex items-center gap-2'>
             <SidebarToggleButton />
-            <h1 className='text-2xl font-bold tracking-tight'>Clients</h1>
+            <h1 className='text-2xl font-bold tracking-tight' style={{ fontFamily: "'Playfair Display', serif" }}>
+              Clients
+            </h1>
           </div>
           <div className='flex items-center gap-2'>
             <Link href='/practitioner/invite'>
@@ -86,7 +88,12 @@ export default function ClientsPage() {
         <header className='flex flex-col gap-4 border-b bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6'>
           <div className='flex items-center gap-2'>
             <SidebarToggleButton />
-            <h1 className='text-xl font-bold tracking-tight sm:text-2xl'>Clients</h1>
+            <h1
+              className='text-xl font-bold tracking-tight sm:text-2xl'
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              Clients
+            </h1>
           </div>
           <div className='flex items-center gap-2'>
             <Link href='/practitioner/invite'>
@@ -108,7 +115,12 @@ export default function ClientsPage() {
       <header className='flex flex-row items-center justify-between gap-3 sm:gap-4 border-b bg-transparent p-4 sm:p-6 min-w-0'>
         <div className='flex items-center gap-2 min-w-0'>
           <SidebarToggleButton />
-          <h1 className='text-xl sm:text-2xl font-bold tracking-tight truncate'>Clients</h1>
+          <h1
+            className='text-xl sm:text-2xl font-bold tracking-tight truncate'
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            Clients
+          </h1>
         </div>
         <div className='flex items-center gap-2'>
           <Link href='/practitioner/invite'>
@@ -137,7 +149,12 @@ export default function ClientsPage() {
 
           <Card className='w-full bg-white rounded-2xl sm:rounded-3xl shadow-2xl border-0 p-0 overflow-hidden min-w-0'>
             <div className='px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-2'>
-              <h2 className='text-base sm:text-lg font-bold mb-4 sm:mb-6'>Last Active Clients</h2>
+              <h2
+                className='text-base sm:text-lg font-bold mb-4 sm:mb-6'
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                Last Active Clients
+              </h2>
               <div className='overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8'>
                 <div className='min-w-full inline-block align-middle'>
                   <div className='overflow-hidden'>

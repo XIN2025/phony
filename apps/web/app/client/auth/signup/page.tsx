@@ -54,9 +54,9 @@ export default function ClientSignUpPage() {
       await clearAllAuthData();
       await signOut({
         redirect: false,
-        callbackUrl: `/client/auth/signup?token=${encodeURIComponent(token || '')}`,
+        callbackUrl: '/',
       });
-      window.location.href = `/client/auth/signup?token=${encodeURIComponent(token || '')}`;
+      window.location.href = '/';
     } catch {
       setIsLoggingOut(false);
       toast.error('Failed to log out. Please try again.');

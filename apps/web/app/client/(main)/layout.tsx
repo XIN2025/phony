@@ -51,7 +51,7 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
           <SidebarContent
             navLinks={navLinks}
             pathname={pathname}
-            signOutCallbackUrl='/client/auth'
+            signOutCallbackUrl='/'
             settingsPath='/client/settings'
           />
         </div>
@@ -63,7 +63,7 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
             <SidebarContent
               navLinks={navLinks}
               pathname={pathname}
-              signOutCallbackUrl='/client/auth'
+              signOutCallbackUrl='/'
               settingsPath='/client/settings'
             />
           </SheetContent>
