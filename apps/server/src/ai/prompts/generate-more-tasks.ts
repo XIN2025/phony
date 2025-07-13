@@ -64,6 +64,33 @@ Return a JSON object with the following structure:
 - If existing tasks are cognitive, suggest behavioral or physical interventions
 - If existing tasks are daily habits, suggest weekly reflection or planning activities
 
+### **Enhanced Task Examples by Category:**
+
+#### **Personal Development & Growth:**
+- "Get out of your comfort zone by starting a small conversation with someone you don't know, such as a barista or shopkeeper"
+- "Sign up for a one-time workshop in a subject you know nothing about, like pottery, coding, or a new language"
+- "Intentionally take a different route on your daily commute or visit a cafe in a neighborhood you've never been to before"
+
+#### **Creative & Expressive Activities:**
+- "Try 'Freewriting' by setting a timer for 10 minutes and writing continuously about whatever comes to mind without stopping"
+- "Go on a 'Photo Walk' by taking your phone and walking for 30 minutes to capture five interesting patterns, textures, or colors"
+- "Create a 'mood playlist' by spending 20 minutes curating songs that capture a specific feeling you want to cultivate"
+
+#### **Learning & Skill Development:**
+- "Dedicate a 'Curiosity Hour' each week to explore a topic you're curious about through documentaries, articles, or tutorials"
+- "Try the '5-page rule' by committing to read just five pages of a book, and if you're not interested after five pages, you can stop without guilt"
+- "Learn a new practical skill like a specific cooking technique, basic coding concept, or new exercise using online videos"
+
+#### **Goal Setting & Planning:**
+- "Set SMART Goals by taking a vague goal and making it Specific, Measurable, Achievable, Relevant, and Time-bound"
+- "Create a Physical Vision Board by dedicating an hour to cutting out pictures and words that represent your goals"
+- "Practice 'Process Visualization' by spending 10 minutes visualizing the specific steps to complete a big task successfully"
+
+#### **Hobbies & Achievement Activities:**
+- "Take on a multi-day cooking project like baking a layered cake or preparing a traditional dish from start to finish"
+- "Build or assemble something with a clear end result, such as flat-pack furniture, a model kit, or a large jigsaw puzzle"
+- "Complete a DIY home improvement project like repotting plants, building a simple shelf, or repainting furniture"
+
 ### **Category Guidelines:**
 Choose from these common categories when applicable:
 - "Mindfulness" - meditation, breathing, present-moment practices
@@ -76,6 +103,7 @@ Choose from these common categories when applicable:
 - "Coping" - stress management, emotional regulation
 - "Creative" - art, music, writing, expression
 - "Educational" - learning, reading, skill development
+- "Personal Development" - growth, confidence, self-improvement
 
 ### **Weekly Repetitions Guidelines:**
 - Set realistic weekly repetition counts (1-7 times per week)
@@ -89,17 +117,19 @@ Choose from these common categories when applicable:
 - Use sparingly - most tasks should be flexible
 
 ### **Why Important Guidelines:**
-- Explain the therapeutic benefit clearly
+- Explain the therapeutic benefit clearly with scientific backing when possible
 - Connect to the client's specific goals
 - Use encouraging, motivating language
 - Keep it concise but meaningful
 - Explain how this complements existing work
+- Include psychological principles when relevant (e.g., "This aligns with the Yerkes-Dodson Law of optimal anxiety for growth")
 
 ### **Recommended Actions Guidelines:**
 - Provide step-by-step instructions
 - Make it easy to follow and implement
 - Include specific techniques or methods
 - Break complex tasks into manageable steps
+- Give specific timeframes and durations when appropriate
 
 ### **Tools to Help Guidelines:**
 - Suggest relevant apps, websites, books, or resources
@@ -109,14 +139,49 @@ Choose from these common categories when applicable:
   - Link (URL if available)
 - Recommend evidence-based resources
 - Examples: meditation apps, mood tracking tools, educational videos, books, online platforms
+- Include specific platforms like Coursera, Skillshare, Goodreads, Notion, Asana, etc.
 
 ### **Associated Emotions Guidelines:**
 - List key emotions or emotional shifts this task may address (e.g., "Fear - Courage", "Loneliness - Connection")
 - Use pairs or single words as appropriate
+- Focus on emotional transformation the task can facilitate
 
 ### **Further Information Guidelines:**
 - Add citations, references, or extra context if relevant (e.g., scientific studies, book references, expert quotes)
 - Keep concise but informative
+- Include psychological theories and research when applicable
+
+## **SPECIFIC RESOURCE SUGGESTIONS:**
+
+### **Learning Platforms:**
+- **Coursera**: University-level courses from top institutions
+- **Skillshare**: Creative and practical skills with project-based learning
+- **Khan Academy**: Free educational content across all subjects
+- **Domestika**: High-quality creative courses from industry experts
+
+### **Reading & Knowledge:**
+- **Goodreads**: Social network for readers with personalized recommendations
+- **Amazon Kindle**: E-book ecosystem with built-in dictionary and highlighting
+- **Project Gutenberg**: Free digital library of over 70,000 books
+- **Vijitha Yapa Bookshop**: Local Sri Lankan bookseller with online delivery
+
+### **Audio & Podcasts:**
+- **Spotify**: World's largest audio platform with millions of podcasts
+- **Apple Podcasts**: Default podcast app for Apple devices
+- **The Huberman Lab**: Science-based tools for health and well-being
+- **The Happiness Lab**: Evidence-based guide to improving mental well-being
+
+### **Productivity & Planning:**
+- **Notion**: All-in-one workspace for goal setting and organization
+- **Asana**: Project management tool for complex personal goals
+- **Google Calendar**: Essential tool for time blocking and scheduling
+- **Full Focus Planner**: Physical planner designed for structured goal achievement
+
+### **Creative Tools:**
+- **Behance**: Portfolio platform for creative inspiration
+- **Procreate**: Powerful digital illustration app for iPad
+- **Reveri**: Self-hypnosis and guided visualization app
+- **Primed Mind**: Performance-based visualization for confidence building
 
 ## **ANALYSIS APPROACH:**
 
@@ -130,5 +195,4 @@ Choose from these common categories when applicable:
 
 Remember: These additional action items will be presented to the practitioner for review and approval. They should be clinically appropriate, safe, and provide unique value beyond what's already been suggested.
 
-Respond ONLY with a JSON object in the format above. Do not include any explanation, markdown, or extra text. Your response must be valid JSON.
-`;
+Respond ONLY with a JSON object in the format above. Do not include any explanation, markdown, or extra text. Your response must be valid JSON.`;

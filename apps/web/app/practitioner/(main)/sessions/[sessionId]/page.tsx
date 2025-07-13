@@ -264,43 +264,37 @@ export default function SessionDetailPage() {
 
   if (isGenerating) {
     return (
-      <AnimatePresence>
-        <motion.div
-          key='plan-loading-overlay'
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4 }}
-          className='fixed inset-0 z-50 flex items-center justify-center bg-transparent'
-        >
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 180, damping: 18 }}
-            className='flex flex-col items-center justify-center'
-          >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
-              className='mb-8'
-            >
-              <svg width='72' height='72' viewBox='0 0 72 72' fill='none'>
-                <circle cx='36' cy='36' r='30' stroke='#6366F1' strokeWidth='8' strokeDasharray='36 16' />
+      <div
+        className='fixed inset-0 z-[9999] flex flex-col items-center justify-center min-h-screen w-full'
+        style={{
+          background:
+            'radial-gradient(ellipse at 20% 80%, #fbeee6 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, #eaf2f8 0%, transparent 60%), #fcfcfc',
+        }}
+      >
+        <div className='flex flex-col items-center justify-center'>
+          <div className='mb-4 flex items-center justify-center'>
+            <span className='inline-flex items-center justify-center rounded-full bg-gray-300/60 h-16 w-16'>
+              {/* Sparkle icon (Lucide 'Sparkles' or similar) */}
+              <svg
+                width='32'
+                height='32'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='#6b6461'
+                strokeWidth='1.5'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+              >
+                <path d='M12 3v2m0 14v2m9-9h-2M5 12H3m15.07-6.07-1.41 1.41M6.34 17.66l-1.41 1.41m12.02 0-1.41-1.41M6.34 6.34 4.93 4.93' />
+                <circle cx='12' cy='12' r='4' />
               </svg>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className='flex flex-col items-center'
-            >
-              <h2 className='text-2xl font-bold text-gray-900 mb-2'>Generating Action Plan...</h2>
-              <p className='text-base text-gray-600'>This may take a moment. Please wait.</p>
-            </motion.div>
-          </motion.div>
-        </motion.div>
-      </AnimatePresence>
+            </span>
+          </div>
+          <div className='text-center'>
+            <div className='text-lg font-medium text-gray-900'>Generating Action Plan</div>
+          </div>
+        </div>
+      </div>
     );
   }
   if (showActionPlan && generatedPlan) {
