@@ -147,7 +147,8 @@ export class PlanController {
   @ApiOperation({ summary: 'Generate action plan from session' })
   @ApiResponse({ status: 200, description: 'Plan generated successfully.' })
   async generatePlanFromSession(@Body() body: { sessionId: string }) {
-    return await this.planService.generatePlanFromSession(body.sessionId);
+    const result = await this.planService.generatePlanFromSession(body.sessionId);
+    return result;
   }
 
   @Post(':planId/generate-more-tasks')
@@ -200,5 +201,12 @@ export class PlanController {
     @Query('end') end: string
   ) {
     return await this.planService.getClientActionItemsInRange(clientId, start, end);
+  }
+
+  @Get('client/:clientId/active')
+  @ApiOperation({ summary: 'Get the active plan for a client on a specific date' })
+  @ApiResponse({ status: 200, description: 'Active plan for the date returned successfully.' })
+  async getActivePlanForDate(@Param('clientId') clientId: string, @Query('date') date: string) {
+    return await this.planService.getActivePlanForDate(clientId, date);
   }
 }

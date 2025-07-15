@@ -120,7 +120,6 @@ export class PlanService {
   }
 
   async getMostRecentPublishedPlanByClient(clientId: string) {
-    console.log('Getting most recent published plan for client:', clientId);
     const result = await this.prisma.plan.findFirst({
       where: {
         clientId,
@@ -150,20 +149,6 @@ export class PlanService {
       },
       orderBy: { publishedAt: 'desc' },
     });
-    console.log(
-      'Plan result:',
-      result
-        ? {
-            id: result.id,
-            actionItemsCount: result.actionItems.length,
-            actionItems: result.actionItems.map((item) => ({
-              id: item.id,
-              description: item.description,
-              completionsCount: item.completions.length,
-            })),
-          }
-        : 'No plan found'
-    );
     return result;
   }
 
@@ -311,7 +296,7 @@ export class PlanService {
   }
 
   async getPlanWithSuggestions(planId: string) {
-    return await this.prisma.plan.findUnique({
+    const plan = await this.prisma.plan.findUnique({
       where: { id: planId },
       include: {
         session: {
@@ -354,6 +339,12 @@ export class PlanService {
         },
       },
     });
+
+    if (!plan) {
+      return null;
+    }
+
+    return plan;
   }
 
   async addCustomActionItem(
@@ -399,74 +390,96 @@ export class PlanService {
   }
 
   async generatePlanFromSession(sessionId: string) {
-    const session = await this.prisma.session.findUnique({
-      where: { id: sessionId },
-      include: { plan: true },
-    });
-    if (!session) throw new Error('Session not found');
-    if (!session.transcript || !session.transcript.trim()) {
-      throw new Error('Session transcript is empty. Cannot generate action plan.');
-    }
-    let planId = session.plan?.id;
-    if (!planId) {
-      const newPlan = await this.prisma.plan.create({
-        data: {
-          sessionId: session.id,
-          practitionerId: session.practitionerId,
-          clientId: session.clientId,
-        },
-      });
-      planId = newPlan.id;
-    } else {
-      // Plan already exists, use existing planId
-    }
     try {
-      const combinedText = [session.transcript, session.aiSummary, session.notes].filter(Boolean).join('\n\n');
+      const session = await this.prisma.session.findUnique({
+        where: { id: sessionId },
+        include: { plan: true },
+      });
 
-      const aiResults = await this.aiService.processSession(combinedText);
-
-      await this.prisma.actionItem.deleteMany({ where: { planId } });
-      await this.prisma.suggestedActionItem.deleteMany({ where: { planId } });
-
-      if (aiResults.actionItemSuggestions?.sessionTasks?.length > 0) {
-        const sessionTaskItems = aiResults.actionItemSuggestions.sessionTasks.map((s) => ({
-          planId: planId,
-          description: s.description,
-          category: s.category,
-          target: s.target,
-          weeklyRepetitions: s.weeklyRepetitions || 1,
-          isMandatory: s.isMandatory || false,
-          whyImportant: s.whyImportant,
-          recommendedActions: s.recommendedActions,
-          toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
-          source: ActionItemSource.AI_SUGGESTED,
-        }));
-        await this.prisma.actionItem.createMany({ data: sessionTaskItems });
+      if (!session) {
+        throw new Error('Session not found');
       }
 
-      if (aiResults.actionItemSuggestions?.complementaryTasks?.length > 0) {
-        const complementaryItems = aiResults.actionItemSuggestions.complementaryTasks.map((s) => ({
-          planId: planId,
-          description: s.description,
-          category: s.category,
-          target: s.target,
-          weeklyRepetitions: s.weeklyRepetitions || 1,
-          isMandatory: s.isMandatory || false,
-          whyImportant: s.whyImportant,
-          recommendedActions: s.recommendedActions,
-          toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
-        }));
-        await this.prisma.suggestedActionItem.createMany({ data: complementaryItems });
+      if (!session.transcript || !session.transcript.trim()) {
+        throw new Error('Session transcript is empty. Cannot generate action plan.');
       }
+
+      let planId = session.plan?.id;
+      if (!planId) {
+        const newPlan = await this.prisma.plan.create({
+          data: {
+            sessionId: session.id,
+            practitionerId: session.practitionerId,
+            clientId: session.clientId,
+          },
+        });
+        planId = newPlan.id;
+      }
+
+      try {
+        const combinedText = [session.transcript, session.aiSummary, session.notes].filter(Boolean).join('\n\n');
+
+        const aiResults = await this.aiService.processSession(combinedText);
+
+        if (aiResults.actionItemSuggestions?.sessionTasks?.length > 0) {
+          try {
+            const sessionTaskItems = aiResults.actionItemSuggestions.sessionTasks.map((s) => ({
+              planId: planId,
+              description: s.description,
+              category: s.category,
+              target: s.target,
+              weeklyRepetitions: s.weeklyRepetitions || 1,
+              isMandatory: s.isMandatory || false,
+              whyImportant: s.whyImportant,
+              recommendedActions: s.recommendedActions,
+              toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
+              source: ActionItemSource.AI_SUGGESTED,
+            }));
+            await this.prisma.actionItem.createMany({ data: sessionTaskItems });
+          } catch (createError) {
+            console.error(`[PlanService] Error creating session task items:`, createError);
+            console.error(`[PlanService] Error details:`, createError.message);
+            throw new Error(`Failed to create session task items: ${createError.message}`);
+          }
+        }
+
+        if (aiResults.actionItemSuggestions?.complementaryTasks?.length > 0) {
+          try {
+            const complementaryItems = aiResults.actionItemSuggestions.complementaryTasks.map((s) => ({
+              planId: planId,
+              description: s.description,
+              category: s.category,
+              target: s.target,
+              weeklyRepetitions: s.weeklyRepetitions || 1,
+              isMandatory: s.isMandatory || false,
+              whyImportant: s.whyImportant,
+              recommendedActions: s.recommendedActions,
+              toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
+            }));
+            await this.prisma.suggestedActionItem.createMany({ data: complementaryItems });
+          } catch (createError) {
+            console.error(`[PlanService] Error creating complementary task items:`, createError);
+            console.error(`[PlanService] Error details:`, createError.message);
+            throw new Error(`Failed to create complementary task items: ${createError.message}`);
+          }
+        }
+      } catch (err) {
+        console.error(`[PlanService] Error during AI processing or database operations:`, err);
+        console.error(`[PlanService] Error stack:`, err.stack);
+        throw new Error(`Failed to generate action items: ${err.message}`);
+      }
+
+      const plan = await this.getPlanWithSuggestions(planId);
+      if (!plan) {
+        throw new Error(`Failed to retrieve plan ${planId} after generation`);
+      }
+
+      return JSON.parse(JSON.stringify(plan));
     } catch (err) {
-      throw new Error(`Failed to generate action items: ${err.message}`);
+      console.error(`[PlanService] Fatal error in generatePlanFromSession:`, err);
+      console.error(`[PlanService] Error stack:`, err.stack);
+      throw err;
     }
-    const plan = await this.getPlanWithSuggestions(planId);
-    if (!plan) {
-      throw new Error(`Failed to retrieve plan ${planId} after generation`);
-    }
-
-    return JSON.parse(JSON.stringify(plan));
   }
 
   async updateActionItem(
@@ -550,11 +563,9 @@ export class PlanService {
     }
 
     try {
-      // Get existing tasks for context
       const existingSessionTasks = plan.actionItems.map((item) => item.description);
       const existingComplementaryTasks = plan.suggestedActionItems.map((item) => item.description);
 
-      // Combine session data
       const sessionData = [session.transcript, session.aiSummary, session.notes].filter(Boolean).join('\n\n');
 
       const aiResults = await this.aiService.generateAdditionalComplementaryTasks(
@@ -574,7 +585,7 @@ export class PlanService {
           whyImportant: s.whyImportant,
           recommendedActions: s.recommendedActions,
           toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
-          status: SuggestedActionItemStatus.PENDING, // Explicitly set status
+          status: SuggestedActionItemStatus.PENDING,
         }));
 
         await this.prisma.suggestedActionItem.createMany({ data: complementaryItems });
@@ -594,10 +605,9 @@ export class PlanService {
 
   async getClientActionItemsInRange(clientId: string, start: string, end: string) {
     const endDate = new Date(end);
-    // Set endDate to end of day
+
     endDate.setHours(23, 59, 59, 999);
 
-    // Fetch all published plans for the client
     const plans = await this.prisma.plan.findMany({
       where: {
         clientId,
@@ -643,6 +653,55 @@ export class PlanService {
     });
 
     return allActionItems;
+  }
+
+  async getActivePlanForDate(clientId: string, date: string) {
+    const targetDate = new Date(date);
+    targetDate.setHours(23, 59, 59, 999);
+
+    const plan = await this.prisma.plan.findFirst({
+      where: {
+        clientId,
+        status: 'PUBLISHED',
+        publishedAt: { lte: targetDate },
+      },
+      orderBy: { publishedAt: 'desc' },
+      include: {
+        actionItems: {
+          include: {
+            resources: true,
+            completions: true,
+          },
+        },
+        practitioner: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profession: true,
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        session: {
+          select: {
+            id: true,
+            recordedAt: true,
+            status: true,
+            transcript: true,
+            filteredTranscript: true,
+            aiSummary: true,
+          },
+        },
+      },
+    });
+    return plan;
   }
 }
 

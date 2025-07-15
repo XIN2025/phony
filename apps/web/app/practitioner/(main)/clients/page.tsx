@@ -5,7 +5,8 @@ import { Button } from '@repo/ui/components/button';
 import { Card } from '@repo/ui/components/card';
 import { Input } from '@repo/ui/components/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
-import { Search, MessageCircle, Loader2 } from 'lucide-react';
+import { Search, MessageCircle, Loader2, Repeat, Trash2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/tooltip';
 import { getInitials, getAvatarUrl } from '@/lib/utils';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -240,19 +241,56 @@ export default function ClientsPage() {
                               </span>
                             </TableCell>
                             <TableCell className='py-3 sm:py-4 px-2 sm:px-4'>
-                              <div className='flex items-center gap-1 sm:gap-2'>
-                                <Link
-                                  href={`/practitioner/clients/${client.id}/messages`}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <Button
-                                    variant='ghost'
-                                    size='icon'
-                                    className='rounded-full hover:bg-[#E5D6D0] h-8 w-8 sm:h-10 sm:w-10'
+                              <div className='flex items-center justify-center gap-4 min-h-[40px]'>
+                                {!client.clientStatus || client.clientStatus === 'NEEDS_INTAKE' ? (
+                                  <>
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            className='rounded-full p-2 hover:bg-[#E5D6D0] focus:outline-none flex items-center justify-center'
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                            }}
+                                            aria-label='Resend Invitation'
+                                          >
+                                            <Repeat className='h-5 w-5 text-[#3b82f6]' />
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side='top'>Resend</TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            className='rounded-full p-2 hover:bg-red-100 focus:outline-none flex items-center justify-center'
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                            }}
+                                            aria-label='Delete Invitation'
+                                          >
+                                            <Trash2 className='h-5 w-5 text-red-600' />
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side='top'>Delete</TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  </>
+                                ) : (
+                                  <Link
+                                    href={`/practitioner/clients/${client.id}/messages`}
+                                    onClick={(e) => e.stopPropagation()}
                                   >
-                                    <MessageCircle className='h-4 w-4 sm:h-5 sm:w-5 text-[#b7a9a3] group-hover:text-black transition' />
-                                  </Button>
-                                </Link>
+                                    <Button
+                                      variant='ghost'
+                                      size='icon'
+                                      className='rounded-full hover:bg-[#E5D6D0] h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center'
+                                    >
+                                      <MessageCircle className='h-4 w-4 sm:h-5 sm:w-5 text-[#b7a9a3] group-hover:text-black transition' />
+                                    </Button>
+                                  </Link>
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>

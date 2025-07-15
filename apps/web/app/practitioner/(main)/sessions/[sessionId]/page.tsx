@@ -1,16 +1,15 @@
 'use client';
 
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { PlanEditor } from '@/components/practitioner/PlanEditor';
+import { useGeneratePlan, useGetSession, usePublishPlan, useUpdateSession } from '@/lib/hooks/use-api';
 import { Button } from '@repo/ui/components/button';
-import { ArrowLeft, Play, Pause, SkipBack, SkipForward, Edit2, X, Check } from 'lucide-react';
+import { Checkbox } from '@repo/ui/components/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui/components/dialog';
+import { ArrowLeft, Check, Edit2, Pause, Play, SkipBack, SkipForward, Sparkles, X } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { PlanEditor } from '@/components/practitioner/PlanEditor';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui/components/dialog';
-import { Checkbox } from '@repo/ui/components/checkbox';
-import { MarkdownRenderer } from '@/components/MarkdownRenderer';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useGetSession, useUpdateSession, usePublishPlan, useGeneratePlan } from '@/lib/hooks/use-api';
 
 type SuggestedActionItem = {
   id: string;
@@ -73,7 +72,6 @@ export default function SessionDetailPage() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [complianceChecked, setComplianceChecked] = useState(false);
 
-  // Use React Query hooks from use-api.ts
   const { data: session, isLoading, error, refetch } = useGetSession(sessionId);
 
   const updateSessionMutation = useUpdateSession();
@@ -129,7 +127,6 @@ export default function SessionDetailPage() {
   };
   const [audioError, setAudioError] = useState(false);
 
-  // Editing logic
   useEffect(() => {
     if (session) {
       setSummaryDraft(session.aiSummary);
@@ -273,21 +270,8 @@ export default function SessionDetailPage() {
       >
         <div className='flex flex-col items-center justify-center'>
           <div className='mb-4 flex items-center justify-center'>
-            <span className='inline-flex items-center justify-center rounded-full bg-gray-300/60 h-16 w-16'>
-              {/* Sparkle icon (Lucide 'Sparkles' or similar) */}
-              <svg
-                width='32'
-                height='32'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='#6b6461'
-                strokeWidth='1.5'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-              >
-                <path d='M12 3v2m0 14v2m9-9h-2M5 12H3m15.07-6.07-1.41 1.41M6.34 17.66l-1.41 1.41m12.02 0-1.41-1.41M6.34 6.34 4.93 4.93' />
-                <circle cx='12' cy='12' r='4' />
-              </svg>
+            <span className='inline-flex items-center justify-center rounded-full bg-[#d6d1ce] h-16 w-16'>
+              <Sparkles className='h-10 w-10 text-[#8c8681]' />
             </span>
           </div>
           <div className='text-center'>
@@ -326,7 +310,7 @@ export default function SessionDetailPage() {
         <div className='flex-1 w-full px-4 sm:px-8 py-4 max-w-6xl mx-auto flex flex-col gap-8'>
           <PlanEditor planId={generatedPlan.id} sessionId={session.id} clientId={session.client?.id || ''} />
         </div>
-        {/* Publish Confirmation Modal */}
+        {}
         <Dialog open={showPublishModal} onOpenChange={setShowPublishModal}>
           <DialogContent className='test-center-modal max-w-md w-full rounded-2xl p-8'>
             <DialogHeader>
@@ -458,7 +442,7 @@ export default function SessionDetailPage() {
       </div>
 
       <div className='flex-1 w-full px-4 sm:px-8 py-4 max-w-6xl mx-auto flex flex-col gap-8'>
-        {/* Session Summary (editable) */}
+        {}
         <div className='bg-white rounded-2xl shadow-lg p-6 mb-0'>
           <div className='flex items-center justify-between mb-2'>
             <div className='font-extrabold text-2xl mb-2'>Session Summary</div>
@@ -497,9 +481,9 @@ export default function SessionDetailPage() {
             <MarkdownRenderer content={session.aiSummary || ''} className='text-sm' />
           )}
         </div>
-        {/* Notes + Transcript grid */}
+        {}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
-          {/* Session Notes (editable) */}
+          {}
           <div className='bg-white rounded-2xl shadow-lg p-6 flex flex-col'>
             <div className='flex items-center justify-between mb-2'>
               <div className='font-bold text-base'>Session Notes</div>
@@ -548,7 +532,7 @@ export default function SessionDetailPage() {
               </div>
             )}
           </div>
-          {/* Transcript */}
+          {}
           <div className='bg-white rounded-2xl shadow-lg p-6 flex flex-col'>
             <div className='font-bold text-base mb-2'>Transcript</div>
             <div className='text-sm leading-relaxed flex-1 overflow-y-auto'>

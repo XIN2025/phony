@@ -149,7 +149,9 @@ export default function ClientSettingsPage() {
       <div className='flex items-center justify-between mb-6'>
         <div className='flex items-center gap-4'>
           <SidebarToggleButton />
-          <h1 className='text-3xl font-semibold'>Profile Settings</h1>
+          <h1 className='text-3xl font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+            Profile Settings
+          </h1>
         </div>
         <Button
           className='rounded-full px-6 py-2 text-base font-medium bg-black text-white hover:bg-gray-900 shadow-none'
@@ -195,7 +197,9 @@ export default function ClientSettingsPage() {
             style={{ boxShadow: '0 0 0 0 transparent' }}
           >
             <div className='p-10'>
-              <h2 className='text-xl font-semibold mb-1'>Profile Information</h2>
+              <h2 className='text-xl font-semibold mb-1' style={{ fontFamily: "'Playfair Display', serif" }}>
+                Profile Information
+              </h2>
               <p className='text-gray-500 text-base mb-6'>Update your profile details</p>
               <div className='flex flex-row items-center gap-4 mb-8'>
                 <div className='relative group'>
@@ -225,7 +229,9 @@ export default function ClientSettingsPage() {
                   </button>
                 </div>
                 <div className='flex flex-col items-start gap-1'>
-                  <h3 className='text-lg font-semibold'>{getUserDisplayName(user)}</h3>
+                  <h3 className='text-lg font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+                    {getUserDisplayName(user)}
+                  </h3>
                 </div>
               </div>
               <div className='space-y-6'>
@@ -282,7 +288,9 @@ export default function ClientSettingsPage() {
             style={{ boxShadow: '0 0 0 0 transparent' }}
           >
             <div className='p-10'>
-              <h2 className='text-xl font-semibold mb-2'>Medical History</h2>
+              <h2 className='text-xl font-semibold mb-2' style={{ fontFamily: "'Playfair Display', serif" }}>
+                Medical History
+              </h2>
               <p className='text-gray-500 text-base mb-6'>Update your medical history</p>
               <div className='space-y-6'>
                 <div>
@@ -477,7 +485,9 @@ export default function ClientSettingsPage() {
             style={{ boxShadow: '0 0 0 0 transparent' }}
           >
             <div className='p-10'>
-              <h2 className='text-xl font-semibold mb-2'>Email Notifications</h2>
+              <h2 className='text-xl font-semibold mb-2' style={{ fontFamily: "'Playfair Display', serif" }}>
+                Email Notifications
+              </h2>
               <p className='text-gray-500 text-base mb-6'>Manage how you receive notifications</p>
               <div className='space-y-6'>
                 <div className='flex items-center justify-between'>

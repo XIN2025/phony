@@ -27,7 +27,7 @@ import { useSidebar } from '@/context/SidebarContext';
 import Link from 'next/link';
 import { Badge } from '@repo/ui/components/badge';
 import {
-  useGetClientPlans,
+  useGetActivePlanForDate,
   useCompleteActionItem,
   useGetCurrentUser,
   useUndoTaskCompletion,
@@ -92,26 +92,34 @@ const ClientPage = () => {
     achievedValue: '',
   });
 
-  const {
-    data: plans = [],
-    isLoading: plansLoading,
-    error: plansError,
-    refetch: refetchPlans,
-  } = useGetClientPlans(session?.user?.id || '');
+  const today = new Date();
+  const [dateRange, setDateRange] = useState({
+    startDate: today,
+    endDate: today,
+    key: 'selection',
+  });
+  const selectedDate = dateRange.startDate;
 
-  const mostRecentPlan = Array.isArray(plans) && plans.length > 0 ? plans[0] : null;
-  const actionItems = mostRecentPlan
-    ? mostRecentPlan.actionItems.map((item: any) => {
-        const isCompleted = item.completions && item.completions.length > 0;
-        console.log(
-          `Task ${item.id} (${item.description}): completions=${item.completions?.length || 0}, isCompleted=${isCompleted}`,
-        );
-        return {
-          ...item,
-          isCompleted,
-        };
-      })
-    : [];
+  // Format selectedDate as YYYY-MM-DD
+  const selectedDateString = selectedDate.toISOString().slice(0, 10);
+
+  // Fetch the active plan for the selected date
+  const {
+    data: activePlan,
+    isLoading: planLoading,
+    error: planError,
+    refetch: refetchActivePlan,
+  } = useGetActivePlanForDate(session?.user?.id || '', selectedDateString);
+
+  // Use the actionItems from the active plan
+  const actionItems =
+    activePlan?.actionItems?.map((item: any) => {
+      const isCompleted = item.completions && item.completions.length > 0;
+      return {
+        ...item,
+        isCompleted,
+      };
+    }) || [];
 
   const getTodayShort = () => {
     const days = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
@@ -129,12 +137,6 @@ const ClientPage = () => {
     S: 'Saturday',
   };
 
-  const today = new Date();
-  const [dateRange, setDateRange] = useState({
-    startDate: today,
-    endDate: today,
-    key: 'selection',
-  });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [datePickerMounted, setDatePickerMounted] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
@@ -194,47 +196,43 @@ const ClientPage = () => {
   const [taskFilter, setTaskFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
   function isTaskForDate(task: ActionItem, date: Date) {
+    const dayOfWeek = date.getDay();
+    const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+    const selectedDayShort = dayMap[dayOfWeek];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    const selectedDate = new Date(date);
+    selectedDate.setHours(0, 0, 0, 0); // Reset time to start of day
+
     if (task.isMandatory) {
       if (task.isCompleted) {
-        const dayOfWeek = date.getDay();
-        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-        const selectedDayShort = dayMap[dayOfWeek];
-
+        // If task is completed, only show on its configured days
         if (task.daysOfWeek && task.daysOfWeek.length > 0) {
           return task.daysOfWeek.some((day) => day === selectedDayShort);
         }
         return true;
       } else {
-        const today = new Date();
-        const selectedDate = date;
-
+        // If task is NOT completed, show on ALL future dates until completed
+        // This makes mandatory tasks persist until they're done
         if (selectedDate >= today) {
           return true;
         }
 
-        const dayOfWeek = selectedDate.getDay();
-        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-        const selectedDayShort = dayMap[dayOfWeek];
-
+        // For past dates, only show if it was scheduled for that day
         if (task.daysOfWeek && task.daysOfWeek.length > 0) {
           return task.daysOfWeek.some((day) => day === selectedDayShort);
         }
         return true;
       }
     } else {
-      const dayOfWeek = date.getDay();
-      const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-      const selectedDayShort = dayMap[dayOfWeek];
-
+      // For non-mandatory tasks, only show on their configured days
       if (task.daysOfWeek && task.daysOfWeek.length > 0) {
         return task.daysOfWeek.some((day) => day === selectedDayShort);
       }
-
       return true;
     }
   }
 
-  const selectedDate = dateRange.startDate;
   const filteredByDate = actionItems.filter((task: ActionItem) => isTaskForDate(task, selectedDate));
 
   const filteredTasks = filteredByDate.filter((task: ActionItem) => {
@@ -247,7 +245,12 @@ const ClientPage = () => {
   const completeTaskMutation = useCompleteActionItem();
   const undoTaskCompletionMutation = useUndoTaskCompletion();
 
+  // Track which task is being updated
+  const [loadingTaskId, setLoadingTaskId] = useState<string | null>(null);
+
   const handleTaskToggle = async (task: ActionItem) => {
+    if (loadingTaskId) return; // Prevent double clicks
+    setLoadingTaskId(task.id);
     if (task.isCompleted) {
       return;
     }
@@ -264,8 +267,9 @@ const ClientPage = () => {
       });
       toast.success('Task marked as completed!');
     } catch (error) {
-      console.error('Failed to complete task:', error);
       toast.error('Failed to complete task. Please try again.');
+    } finally {
+      setLoadingTaskId(null);
     }
   };
 
@@ -296,36 +300,13 @@ const ClientPage = () => {
 
   useEffect(() => {}, [session, status]);
 
-  if (status === 'loading') {
-    return (
-      <div className='flex items-center justify-center min-h-screen p-4'>
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto'></div>
-          <p className='mt-4 text-gray-600'>Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === 'unauthenticated') {
-    return (
-      <div className='flex items-center justify-center min-h-screen p-4'>
-        <div className='text-center'>
-          <p className='text-gray-600'>Please log in to access your dashboard.</p>
-        </div>
-      </div>
-    );
-  }
-
+  // All hooks and variables must be defined before any return
   const { data: currentUser, isLoading: userLoading } = useGetCurrentUser();
-
   const completedTasks = filteredTasks.filter((task: ActionItem) => task.isCompleted);
   const avgCompletion = filteredTasks.length > 0 ? Math.round((completedTasks.length / filteredTasks.length) * 100) : 0;
   const tasksPending = filteredTasks.filter((task: ActionItem) => !task.isCompleted).length;
-
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
   const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<ActionItem | null>(null);
-
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<'happy' | 'neutral' | 'sad' | null>(null);
   const [taskForFeedback, setTaskForFeedback] = useState<ActionItem | null>(null);
@@ -335,41 +316,40 @@ const ClientPage = () => {
     setIsTaskDetailOpen(true);
   };
 
+  // Restore correct handleTaskToggleWithFeedback
   const handleTaskToggleWithFeedback = async (task: ActionItem) => {
-    console.log('handleTaskToggleWithFeedback called for task:', task.id, 'isCompleted:', task.isCompleted);
-
+    if (loadingTaskId) return; // Prevent double clicks
+    setLoadingTaskId(task.id);
     if (task.isCompleted) {
-      console.log('Task is completed, attempting to undo...');
       try {
         await undoTaskCompletionMutation.mutateAsync({
           taskId: task.id,
           clientId: session?.user?.id || '',
         });
         toast.success('Task marked as incomplete!');
-        // Force refetch to ensure UI updates
-        refetchPlans();
+        refetchActivePlan();
       } catch (error) {
-        console.error('Failed to undo task completion:', error);
         toast.error('Failed to undo task completion. Please try again.');
+      } finally {
+        setLoadingTaskId(null);
       }
       return;
     }
-
-    console.log('Task is not completed, opening feedback modal...');
     setTaskForFeedback(task);
     setFeedbackOpen(true);
     setSelectedFeedback(null);
+    setLoadingTaskId(null);
   };
 
+  // Restore handleFeedbackSelect for feedback modal
   const handleFeedbackSelect = (type: 'happy' | 'neutral' | 'sad') => {
     setSelectedFeedback(type);
   };
 
+  // Fix handleFeedbackSubmit to only use completeTaskMutation
   const handleFeedbackSubmit = async () => {
-    if (!taskForFeedback || !selectedFeedback) return;
-
-    console.log('handleFeedbackSubmit called for task:', taskForFeedback.id, 'feedback:', selectedFeedback);
-
+    if (!taskForFeedback || !selectedFeedback || loadingTaskId) return;
+    setLoadingTaskId(taskForFeedback.id);
     try {
       await completeTaskMutation.mutateAsync({
         taskId: taskForFeedback.id,
@@ -380,29 +360,40 @@ const ClientPage = () => {
           achievedValue: '',
         },
       });
-      console.log('Task completion successful');
       toast.success('Task marked as completed!');
       setFeedbackOpen(false);
       setSelectedFeedback(null);
       setTaskForFeedback(null);
-      // Force refetch to ensure UI updates
-      refetchPlans();
+      refetchActivePlan();
     } catch (error) {
-      console.error('Failed to complete task:', error);
       toast.error('Failed to complete task. Please try again.');
+    } finally {
+      setLoadingTaskId(null);
     }
   };
 
   return (
     <div className='flex flex-col w-full min-h-screen'>
+      {/* Loading state for tasks */}
+      {planLoading && (
+        <div className='flex items-center justify-center min-h-screen p-4 fixed inset-0 bg-white/80 z-50'>
+          <div className='text-center'>
+            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto'></div>
+            <p className='mt-4 text-blue-700'>Loading your tasks...</p>
+          </div>
+        </div>
+      )}
       {/* Header Section */}
       <div className='px-4 py-4 sm:px-6 lg:px-8'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-3 min-w-0 flex-1'>
             <SidebarToggleButton />
             <div className='min-w-0 flex-1'>
-              <h1 className='text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate'>
-                {userLoading ? 'Loading...' : `Good Morning ${currentUser?.firstName || 'User'}`}
+              <h1
+                className='text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate'
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                {userLoading ? 'Loading...' : `Welcome back  ${currentUser?.firstName || 'User'}`}
               </h1>
               <p className='text-sm text-gray-600 hidden sm:block'>Let's make today productive!</p>
             </div>
@@ -411,7 +402,7 @@ const ClientPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className='flex-1 px-4 py-4 sm:px-6 lg:px-8  mx-auto w-full'>
+      <div className='flex-1 px-2 sm:px-6 py-4 lg:px-8 mx-auto w-full'>
         {/* Stats Cards */}
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6'>
           <Card className='bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200/50 shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer'>
@@ -457,7 +448,12 @@ const ClientPage = () => {
             {/* Header */}
             <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4'>
               <div>
-                <h2 className='text-lg sm:text-xl font-bold text-gray-900 mb-1'>Your Tasks</h2>
+                <h2
+                  className='text-lg sm:text-xl font-bold text-gray-900 mb-1'
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  Your Tasks
+                </h2>
                 <p className='text-sm text-gray-600'>Manage your daily activities and goals</p>
               </div>
               <div className='flex flex-wrap gap-2 justify-start sm:justify-end items-center'>
@@ -553,7 +549,12 @@ const ClientPage = () => {
                     <Star className='w-4 h-4 text-red-600' />
                   </div>
                   <div>
-                    <h3 className='text-base sm:text-lg font-bold text-gray-900'>Mandatory Tasks</h3>
+                    <h3
+                      className='text-base sm:text-lg font-bold text-gray-900'
+                      style={{ fontFamily: "'Playfair Display', serif" }}
+                    >
+                      Mandatory Tasks
+                    </h3>
                     <p className='text-xs sm:text-sm text-gray-600'>Essential tasks for this week</p>
                   </div>
                 </div>
@@ -576,7 +577,13 @@ const ClientPage = () => {
                             onCheckedChange={() => handleTaskToggleWithFeedback(task)}
                             className='mt-0.5 flex-shrink-0'
                             data-checkbox='true'
+                            disabled={loadingTaskId === task.id}
                           />
+                          {loadingTaskId === task.id && (
+                            <div className='absolute inset-0 bg-white/60 flex items-center justify-center z-10 rounded-lg'>
+                              <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500'></div>
+                            </div>
+                          )}
                           <div className='flex-1 min-w-0'>
                             <div className='flex items-start justify-between gap-2'>
                               <span
@@ -666,7 +673,12 @@ const ClientPage = () => {
                     <Target className='w-4 h-4 text-green-600' />
                   </div>
                   <div>
-                    <h3 className='text-base sm:text-lg font-bold text-gray-900'>Daily Tasks</h3>
+                    <h3
+                      className='text-base sm:text-lg font-bold text-gray-900'
+                      style={{ fontFamily: "'Playfair Display', serif" }}
+                    >
+                      Daily Tasks
+                    </h3>
                     <p className='text-xs sm:text-sm text-gray-600'>Regular activities and goals</p>
                   </div>
                 </div>
@@ -689,7 +701,13 @@ const ClientPage = () => {
                             onCheckedChange={() => handleTaskToggleWithFeedback(task)}
                             className='mt-0.5 flex-shrink-0'
                             data-checkbox='true'
+                            disabled={loadingTaskId === task.id}
                           />
+                          {loadingTaskId === task.id && (
+                            <div className='absolute inset-0 bg-white/60 flex items-center justify-center z-10 rounded-lg'>
+                              <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500'></div>
+                            </div>
+                          )}
                           <div className='flex-1 min-w-0'>
                             <div className='flex items-start justify-between gap-2'>
                               <span
@@ -769,7 +787,10 @@ const ClientPage = () => {
                 <div className='w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4'>
                   <Target className='w-8 h-8 text-gray-400' />
                 </div>
-                <h3 className='text-lg font-semibold text-gray-900 mb-2'>
+                <h3
+                  className='text-lg font-semibold text-gray-900 mb-2'
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
                   {filteredByDate.length === 0
                     ? 'No tasks for this date'
                     : taskFilter === 'completed'
@@ -816,12 +837,17 @@ const ClientPage = () => {
 
       {/* Feedback Modal */}
       <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-        <DialogContent className='w-[95vw] max-w-[95vw] sm:max-w-md p-4 sm:p-6 flex flex-col items-center rounded-2xl overflow-y-auto max-h-[90vh] border border-gray-200 shadow-xl'>
+        <DialogContent className='w-[98vw] max-w-full sm:max-w-md p-2 sm:p-6 flex flex-col items-center rounded-xl overflow-y-auto max-h-[90vh] border border-gray-200 shadow-xl'>
           <DialogTitle asChild>
             <VisuallyHidden>Was this task helpful?</VisuallyHidden>
           </DialogTitle>
           <div className='text-center w-full mb-4 sm:mb-6'>
-            <div className='text-lg sm:text-xl font-bold text-gray-900 mb-2'>How was this task?</div>
+            <div
+              className='text-lg sm:text-xl font-bold text-gray-900 mb-2'
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              How was this task?
+            </div>
             <p className='text-sm text-gray-600'>Your feedback helps us improve your experience</p>
           </div>
           <div className='flex flex-row items-center justify-center gap-4 sm:gap-6 mb-4 sm:mb-6 w-full'>
@@ -833,6 +859,7 @@ const ClientPage = () => {
                   : 'border-gray-300 hover:border-green-300 hover:bg-green-50/50'
               }`}
               onClick={() => handleFeedbackSelect('happy')}
+              disabled={!!loadingTaskId}
             >
               <Smile className='w-8 h-8 sm:w-10 sm:h-10 text-green-600' />
             </button>
@@ -844,6 +871,7 @@ const ClientPage = () => {
                   : 'border-gray-300 hover:border-yellow-300 hover:bg-yellow-50/50'
               }`}
               onClick={() => handleFeedbackSelect('neutral')}
+              disabled={!!loadingTaskId}
             >
               <Meh className='w-8 h-8 sm:w-10 sm:h-10 text-yellow-600' />
             </button>
@@ -855,17 +883,24 @@ const ClientPage = () => {
                   : 'border-gray-300 hover:border-red-300 hover:bg-red-50/50'
               }`}
               onClick={() => handleFeedbackSelect('sad')}
+              disabled={!!loadingTaskId}
             >
               <Frown className='w-8 h-8 sm:w-10 sm:h-10 text-red-600' />
             </button>
           </div>
-          <button
-            className='w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full py-3 sm:py-4 text-sm sm:text-base font-semibold disabled:opacity-50 transition-all duration-200 hover:from-blue-700 hover:to-purple-700 hover:shadow-lg transform hover:scale-[1.02]'
+          <Button
             onClick={handleFeedbackSubmit}
-            disabled={!selectedFeedback}
+            disabled={!!loadingTaskId || !selectedFeedback}
+            className='w-full mt-4'
           >
-            Submit Feedback
-          </button>
+            {loadingTaskId ? (
+              <span className='flex items-center justify-center gap-2'>
+                <span className='animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500'></span> Submitting...
+              </span>
+            ) : (
+              'Submit Feedback'
+            )}
+          </Button>
         </DialogContent>
       </Dialog>
     </div>

@@ -113,6 +113,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const queryClient = useQueryClient();
 
   const isLoading = isClientLoading || isSessionsLoading;
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab');
@@ -147,7 +148,10 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   useEffect(() => {
     if (processingSession && processingSession.status === 'REVIEW_READY') {
       setShowProcessingModal(false);
-      router.push(`/practitioner/sessions/${processingSessionId}`);
+      setIsRedirecting(true);
+      setTimeout(() => {
+        router.push(`/practitioner/sessions/${processingSessionId}`);
+      }, 300); // slight delay for UX smoothness
     }
   }, [processingSession, processingSessionId, router]);
 
@@ -518,7 +522,9 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     <TabsContent value='plans' className='mt-0'>
       <div className='flex flex-col gap-6'>
         <div className='flex justify-between items-center mb-2'>
-          <h2 className='text-lg sm:text-xl font-semibold'>Plans</h2>
+          <h2 className='text-lg sm:text-xl font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+            Plans
+          </h2>
           <input
             type='text'
             placeholder='Search Plan'
@@ -619,7 +625,9 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     <TabsContent value='dashboard' className='mt-0'>
       <div className='flex flex-col gap-4 w-full mb-6 sm:mb-8'>
         <div className='flex flex-col md:flex-row md:items-center md:justify-between w-full gap-3 md:gap-0'>
-          <h2 className='text-lg sm:text-xl font-semibold mb-0'>Summary</h2>
+          <h2 className='text-lg sm:text-xl font-semibold mb-0' style={{ fontFamily: "'Playfair Display', serif" }}>
+            Summary
+          </h2>
           <div className='flex items-center gap-2'>
             <button
               ref={dateButtonRef}
@@ -668,20 +676,24 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           </div>
         </div>
         <div className='flex flex-col sm:flex-row gap-4 w-full'>
-          <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background'>
-            <CardHeader className='pb-2'>
+          <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background gap-0'>
+            <CardHeader className=''>
               <CardTitle className='text-sm sm:text-base font-semibold'>Avg Daily Tasks Completion</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl sm:text-3xl font-extrabold'>{completion}%</div>
+              <div className='text-2xl sm:text-3xl font-extrabold' style={{ fontFamily: "'Playfair Display', serif" }}>
+                {completion}%
+              </div>
             </CardContent>
           </Card>
-          <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background'>
-            <CardHeader className='pb-2'>
+          <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background gap-0'>
+            <CardHeader className=''>
               <CardTitle className='text-sm sm:text-base font-semibold'>Journal Entries</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl sm:text-3xl font-extrabold'>{filteredJournals.length}</div>
+              <div className='text-2xl sm:text-3xl font-extrabold' style={{ fontFamily: "'Playfair Display', serif" }}>
+                {filteredJournals.length}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -711,44 +723,40 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                 .reverse()
                 .map((date) => {
                   const dayTasks = filteredTasks.filter((t) => {
+                    const dayOfWeek = date.getDay();
+                    const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+                    const selectedDayShort = dayMap[dayOfWeek];
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0); // Reset time to start of day
+                    const selectedDate = new Date(date);
+                    selectedDate.setHours(0, 0, 0, 0); // Reset time to start of day
+
                     if (t.isMandatory) {
                       const isCompleted = t.completions && t.completions.length > 0;
                       if (isCompleted) {
-                        const dayOfWeek = date.getDay();
-                        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-                        const selectedDayShort = dayMap[dayOfWeek];
-
+                        // If task is completed, only show on its configured days
                         if (t.daysOfWeek && t.daysOfWeek.length > 0) {
                           return t.daysOfWeek.some((day: string) => day === selectedDayShort);
                         }
-
                         return true;
                       } else {
-                        const today = new Date();
-                        const selectedDate = date;
-
+                        // If task is NOT completed, show on ALL future dates until completed
+                        // This makes mandatory tasks persist until they're done
                         if (selectedDate >= today) {
                           return true;
                         }
 
-                        const dayOfWeek = selectedDate.getDay();
-                        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-                        const selectedDayShort = dayMap[dayOfWeek];
-
+                        // For past dates, only show if it was scheduled for that day
                         if (t.daysOfWeek && t.daysOfWeek.length > 0) {
                           return t.daysOfWeek.some((day: string) => day === selectedDayShort);
                         }
                         return true;
                       }
                     } else {
-                      const dayOfWeek = date.getDay();
-                      const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-                      const selectedDayShort = dayMap[dayOfWeek];
-
+                      // For non-mandatory tasks, only show on their configured days
                       if (t.daysOfWeek && t.daysOfWeek.length > 0) {
                         return t.daysOfWeek.some((day: string) => day === selectedDayShort);
                       }
-
                       return true;
                     }
                   });
@@ -783,7 +791,9 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     <TabsContent value='sessions' className='mt-0'>
       <div className='flex flex-col gap-6'>
         <div className='flex justify-between items-center mb-2'>
-          <h2 className='text-lg sm:text-xl font-semibold'>Past Sessions</h2>
+          <h2 className='text-lg sm:text-xl font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+            Past Sessions
+          </h2>
           <Button
             onClick={handleNewSession}
             className='bg-foreground text-background hover:bg-foreground/90 rounded-full px-4 sm:px-6 py-2 text-sm sm:text-base'
@@ -1252,7 +1262,17 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     );
   };
 
-  return <>{renderContent()}</>;
+  return (
+    <>
+      {isRedirecting && (
+        <div className='fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm'>
+          <Loader2 className='h-10 w-10 animate-spin text-black mb-4' />
+          <div className='text-lg font-semibold text-black'>Redirecting to review...</div>
+        </div>
+      )}
+      {renderContent()}
+    </>
+  );
 };
 
 export default function ClientDashboardPage({ params }: { params: Promise<{ clientId: string }> }) {

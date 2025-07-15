@@ -13,7 +13,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar'
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
-import { Eye, Loader2, MessageSquare, Users, BookText, Inbox } from 'lucide-react';
+import { Eye, Loader2, MessageSquare, Users, BookText, Inbox, Repeat, Trash2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/tooltip';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -21,6 +22,7 @@ import { useEffect, useState } from 'react';
 import { useGetCurrentUser } from '@/lib/hooks/use-api';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { useUnreadJournalCount } from '@/lib/hooks/use-unread-journals';
+import { toast } from 'sonner';
 
 const LoadingSpinner = () => (
   <div className='flex h-screen items-center justify-center'>
@@ -43,7 +45,7 @@ export default function PractitionerDashboard() {
   const { data: invitations = [], isLoading: isInvitationsLoading } = useGetInvitations();
   const { data: clients = [] } = useGetClients();
   const { mutate: deleteInvitation, isPending: isDeleting } = useDeleteInvitation();
-  const { mutate: resendInvitation, isPending: isResending } = useResendInvitation();
+  const resendInvitationMutation = useResendInvitation();
   const { mutate: cleanupExpiredInvitations, isPending: isCleaningUp } = useCleanupExpiredInvitations();
   const { count: unreadMessages, isLoading: isUnreadLoading } = useUnreadMessagesCount();
   const { data: unreadJournals = 0, isLoading: isUnreadJournalsLoading } = useUnreadJournalCount();
@@ -132,7 +134,7 @@ export default function PractitionerDashboard() {
             <div className='flex flex-col min-w-0 flex-1'>
               <span className='text-xs sm:text-sm font-medium text-gray-600'>Total Clients</span>
               <span className='text-2xl sm:text-3xl lg:text-4xl font-bold'>{totalClients}</span>
-              <span className='text-xs text-green-600 mt-1'>+2 from last month</span>
+              {}
             </div>
             <div className='p-2 sm:p-3 bg-gray-200/50 rounded-full flex-shrink-0 ml-2'>
               <Users className='h-4 w-4 sm:h-6 sm:w-6 text-gray-700' />
@@ -199,7 +201,7 @@ export default function PractitionerDashboard() {
                       <TableHead className='py-3 px-2 sm:px-4 text-left font-semibold text-gray-600 text-xs sm:text-sm hidden lg:table-cell'>
                         Last Active
                       </TableHead>
-                      <TableHead className='py-3 px-2 sm:px-4 text-left font-semibold text-gray-600 text-xs sm:text-sm'>
+                      <TableHead className='py-3 px-2 sm:px-4 text-center font-semibold text-gray-600 text-xs sm:text-sm'>
                         Actions
                       </TableHead>
                     </TableRow>
@@ -243,8 +245,8 @@ export default function PractitionerDashboard() {
                           <TableCell className='py-3 sm:py-4 px-2 sm:px-4 text-gray-700 text-xs sm:text-sm hidden lg:table-cell'>
                             {getLastActive(client)}
                           </TableCell>
-                          <TableCell className='py-3 sm:py-4 px-2 sm:px-4'>
-                            <div className='flex gap-1 sm:gap-2'>
+                          <TableCell className='py-3 sm:py-4 px-2 sm:px-4 text-center align-middle'>
+                            <div className='flex items-center justify-center gap-3 min-h-[32px]'>
                               <Link
                                 href={`/practitioner/clients/${client.id}/messages`}
                                 onClick={(e) => e.stopPropagation()}
@@ -252,7 +254,7 @@ export default function PractitionerDashboard() {
                                 <Button
                                   variant='ghost'
                                   size='icon'
-                                  className='rounded-full p-1 sm:p-2 hover:bg-gray-200/50 h-8 w-8 sm:h-10 sm:w-10'
+                                  className='rounded-full p-2 hover:bg-gray-200/50 h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center'
                                 >
                                   <MessageSquare className='h-4 w-4 sm:h-5 sm:w-5 text-gray-600' />
                                 </Button>
@@ -264,7 +266,7 @@ export default function PractitionerDashboard() {
                                 <Button
                                   variant='ghost'
                                   size='icon'
-                                  className='rounded-full p-1 sm:p-2 hover:bg-gray-200/50 h-8 w-8 sm:h-10 sm:w-10'
+                                  className='rounded-full p-2 hover:bg-gray-200/50 h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center'
                                 >
                                   <Eye className='h-4 w-4 sm:h-5 sm:w-5 text-gray-600' />
                                 </Button>
@@ -306,32 +308,55 @@ export default function PractitionerDashboard() {
                         <TableCell className='py-3 sm:py-4 px-2 sm:px-4 text-gray-700 text-xs sm:text-sm hidden lg:table-cell'>
                           -
                         </TableCell>
-                        <TableCell className='py-3 sm:py-4 px-2 sm:px-4'>
-                          <div className='flex gap-1 sm:gap-2'>
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              onClick={() => resendInvitation(invitation.id)}
-                              disabled={isResending || isDeleting}
-                              className='text-xs font-semibold text-gray-600 hover:bg-gray-200/50 h-8 px-2 sm:h-9 sm:px-3'
-                            >
-                              {isResending ? (
-                                <Loader2 className='mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin' />
-                              ) : null}
-                              Resend
-                            </Button>
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              onClick={() => deleteInvitation(invitation.id)}
-                              disabled={isResending || isDeleting}
-                              className='text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-100/50 h-8 px-2 sm:h-9 sm:px-3'
-                            >
-                              {isDeleting ? (
-                                <Loader2 className='mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin' />
-                              ) : null}
-                              Delete
-                            </Button>
+                        <TableCell className='py-3 sm:py-4 px-2 sm:px-4 text-center align-middle'>
+                          <div className='flex items-center justify-center gap-3 min-h-[32px]'>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    className='rounded-full p-2 hover:bg-gray-200/50 focus:outline-none flex items-center justify-center'
+                                    onClick={() => {
+                                      resendInvitationMutation.mutate(invitation.id, {
+                                        onSuccess: () => {
+                                          toast.success('Invitation resent successfully');
+                                        },
+                                        onError: () => {
+                                          toast.error('Failed to resend invitation');
+                                        },
+                                      });
+                                    }}
+                                    disabled={resendInvitationMutation.isPending || isDeleting}
+                                    aria-label='Resend Invitation'
+                                  >
+                                    {resendInvitationMutation.isPending ? (
+                                      <Loader2 className='h-4 w-4 animate-spin text-gray-600' />
+                                    ) : (
+                                      <Repeat className='h-5 w-5 text-blue-600' />
+                                    )}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side='top'>Resend</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    className='rounded-full p-2 hover:bg-red-100 focus:outline-none flex items-center justify-center'
+                                    onClick={() => deleteInvitation(invitation.id)}
+                                    disabled={resendInvitationMutation.isPending || isDeleting}
+                                    aria-label='Delete Invitation'
+                                  >
+                                    {isDeleting ? (
+                                      <Loader2 className='h-4 w-4 animate-spin text-red-600' />
+                                    ) : (
+                                      <Trash2 className='h-5 w-5 text-red-600' />
+                                    )}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side='top'>Delete</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -343,7 +368,7 @@ export default function PractitionerDashboard() {
           </div>
         </CardContent>
       </Card>
-      {/* Pending Invitations Section (optional, can be moved below or removed) */}
+      {}
     </div>
   );
 }

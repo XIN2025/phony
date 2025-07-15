@@ -75,14 +75,7 @@ export class PractitionerService {
       intakeFormTitle = form ? getIntakeFormTitle(form) : undefined;
     }
 
-    await this.sendInvitationEmail(
-      invitation,
-      practitioner,
-      normalizedEmail,
-      normalizedFirstName,
-      normalizedLastName,
-      intakeFormTitle
-    );
+    await this.sendInvitationEmail(invitation, practitioner, normalizedEmail, normalizedFirstName, normalizedLastName);
     return {
       id: invitation.id,
       clientEmail: invitation.clientEmail,
@@ -134,14 +127,7 @@ export class PractitionerService {
     }
 
     try {
-      await this.sendInvitationEmail(
-        newInvitation,
-        practitioner,
-        clientEmail,
-        clientFirstName,
-        clientLastName,
-        intakeFormTitle
-      );
+      await this.sendInvitationEmail(newInvitation, practitioner, clientEmail, clientFirstName, clientLastName);
     } catch {
       await this.prismaService.invitation.delete({ where: { id: newInvitation.id } });
       throwAuthError('Failed to resend invitation email', 'badRequest');
@@ -166,8 +152,7 @@ export class PractitionerService {
     practitioner: { firstName: string; lastName?: string | null; profession?: string | null },
     email: string,
     firstName: string,
-    lastName?: string | null,
-    intakeFormTitle?: string
+    lastName?: string | null
   ): Promise<void> {
     const invitationLink = `${config.frontendUrl}/client/auth/signup?token=${encodeURIComponent(invitation.token)}`;
     const practitionerName = getPractitionerName(practitioner);
@@ -178,7 +163,6 @@ export class PractitionerService {
       clientName,
       practitionerName,
       invitationLink,
-      intakeFormTitle,
     });
 
     if (!emailSent) throwAuthError('Failed to send invitation email', 'badRequest');
@@ -265,7 +249,7 @@ export class PractitionerService {
           typeof client.notificationSettings === 'string'
             ? JSON.parse(client.notificationSettings)
             : client.notificationSettings;
-      } catch (_error) {
+      } catch {
         notificationSettings = null;
       }
     }
@@ -367,7 +351,6 @@ export class PractitionerService {
         if (invitation.status === InvitationStatus.ACCEPTED) {
           status = 'JOINED';
         } else if (isExpired || invitation.status === InvitationStatus.EXPIRED) {
-          // Don't return expired invitations
           return null;
         } else {
           status = 'PENDING';

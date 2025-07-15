@@ -410,43 +410,51 @@ export class SessionService {
         sessionId: session.id,
       }));
 
-      const comprehensiveSummary = await this.aiService.generateComprehensiveSummary(sessionSummaries);
+      let comprehensiveSummary;
+      try {
+        comprehensiveSummary = await this.aiService.generateComprehensiveSummary(sessionSummaries);
+      } catch (aiError) {
+        throw new Error(`AI service failed: ${aiError.message}`);
+      }
 
       const latestSessionRecorded = Math.max(...sessionsWithSummaries.map((session) => session.recordedAt.getTime()));
 
-      await this.prisma.comprehensiveSummary.upsert({
-        where: {
-          clientId_lastSessionUpdate: {
-            clientId,
-            lastSessionUpdate: new Date(latestSessionRecorded),
+      try {
+        await this.prisma.comprehensiveSummary.upsert({
+          where: {
+            clientId_lastSessionUpdate: {
+              clientId,
+              lastSessionUpdate: new Date(latestSessionRecorded),
+            },
           },
-        },
-        update: {
-          title: comprehensiveSummary.title,
-          summary: comprehensiveSummary.summary,
-          keyInsights: comprehensiveSummary.keyInsights,
-          recommendations: comprehensiveSummary.recommendations,
-          lastSessionUpdate: new Date(latestSessionRecorded),
-          sessionCount: currentSessionCount,
-          updatedAt: new Date(),
-        },
-        create: {
-          clientId,
-          title: comprehensiveSummary.title,
-          summary: comprehensiveSummary.summary,
-          keyInsights: comprehensiveSummary.keyInsights,
-          recommendations: comprehensiveSummary.recommendations,
-          lastSessionUpdate: new Date(latestSessionRecorded),
-          sessionCount: currentSessionCount,
-        },
-      });
+          update: {
+            title: comprehensiveSummary.title,
+            summary: comprehensiveSummary.summary,
+            keyInsights: comprehensiveSummary.keyInsights,
+            recommendations: comprehensiveSummary.recommendations,
+            lastSessionUpdate: new Date(latestSessionRecorded),
+            sessionCount: currentSessionCount,
+            updatedAt: new Date(),
+          },
+          create: {
+            clientId,
+            title: comprehensiveSummary.title,
+            summary: comprehensiveSummary.summary,
+            keyInsights: comprehensiveSummary.keyInsights,
+            recommendations: comprehensiveSummary.recommendations,
+            lastSessionUpdate: new Date(latestSessionRecorded),
+            sessionCount: currentSessionCount,
+          },
+        });
+      } catch (dbError) {
+        throw new Error(`Failed to save comprehensive summary: ${dbError.message}`);
+      }
 
       return {
         ...comprehensiveSummary,
         isCached: false,
       };
     } catch (error) {
-      this.logger.error(`Error generating comprehensive summary for client ${clientId}:`, error.stack);
       throw new Error(`Failed to generate comprehensive summary: ${error.message}`);
     }
   }

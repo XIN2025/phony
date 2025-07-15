@@ -52,7 +52,6 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
 
   const uploadResourceMutation = useUploadResource();
 
-  // Update form when initialValues change
   React.useEffect(() => {
     if (initialValues) {
       setForm({
@@ -65,7 +64,7 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
         recommendedActions: initialValues.recommendedActions || '',
         toolsToHelp: initialValues.toolsToHelp || '',
       });
-      // Reset resource states when initialValues change
+
       setResources(initialValues.resources || []);
       setNewFiles([]);
       setNewLinks([]);
@@ -73,7 +72,6 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
       setShowLinkInput(false);
       setUploadingFiles(new Set());
     } else {
-      // Reset everything when no initialValues (new task)
       setForm({
         isMandatory: false,
         description: '',
@@ -109,7 +107,6 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
   const onDrop = async (acceptedFiles: FileWithPath[]) => {
     setNewFiles((prev: FileWithPath[]) => [...prev, ...acceptedFiles]);
 
-    // Upload files to backend
     for (const file of acceptedFiles) {
       setUploadingFiles((prev) => new Set(prev).add(file.name));
       try {
@@ -122,7 +119,7 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
             title: result.title,
           },
         ]);
-        // Remove from newFiles since it's now in resources
+
         setNewFiles((prev) => prev.filter((f) => f.name !== file.name));
       } catch (error) {
         console.error('Failed to upload file:', error);
@@ -156,43 +153,50 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
   };
 
   const handleSave = () => {
-    // Combine existing resources with new links
     const allResources = [...resources, ...newLinks];
     onSave({ ...form, resources: allResources });
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className='w-[95vw] max-w-2xl md:max-w-3xl lg:max-w-4xl border border-gray-300 rounded-2xl shadow-lg p-0 overflow-hidden !fixed !top-1/2 !left-1/2 !transform !-translate-x-1/2 !-translate-y-1/2 !z-[9999]'>
+      <DialogContent className='w-[98vw] max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl border border-gray-300 rounded-2xl shadow-lg p-0 overflow-y-auto max-h-[90vh] !fixed !top-1/2 !left-1/2 !transform !-translate-x-1/2 !-translate-y-1/2 !z-[9999]'>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             if (!readOnly) handleSave();
           }}
-          className='p-8 rounded-2xl w-full'
+          className='p-4 sm:p-8 rounded-2xl w-full max-w-full overflow-y-auto'
+          style={{ maxHeight: '80vh' }}
         >
           <DialogHeader>
-            <DialogTitle className='text-2xl font-bold mb-1'>Tasks</DialogTitle>
-            <DialogDescription className='text-base font-medium mb-4'>Daily Targeted Goals</DialogDescription>
+            <DialogTitle
+              className='text-xl sm:text-2xl font-bold mb-1'
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              Tasks
+            </DialogTitle>
+            <DialogDescription className='text-sm sm:text-base font-medium mb-4'>
+              Daily Targeted Goals
+            </DialogDescription>
           </DialogHeader>
           <div className='space-y-4'>
             <Input
               placeholder='Task name'
               value={form.description}
               onChange={(e) => handleChange('description', e.target.value)}
-              className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
+              className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base w-full ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
               disabled={readOnly}
             />
             <Input
               placeholder='Category'
               value={form.category}
               onChange={(e) => handleChange('category', e.target.value)}
-              className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
+              className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base w-full ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
               disabled={readOnly}
             />
             <div>
               <div className='font-medium mb-2'>Select Days</div>
-              <div className='flex gap-2'>
+              <div className='flex flex-wrap gap-2'>
                 {DAYS.map((d) => (
                   <button
                     type='button'
@@ -213,7 +217,7 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
                 placeholder='Why is this task important?'
                 value={form.whyImportant}
                 onChange={(e) => handleChange('whyImportant', e.target.value)}
-                className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base min-h-[40px] ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
+                className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base min-h-[40px] w-full ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
                 disabled={readOnly}
               />
             </div>
@@ -223,21 +227,21 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
                 placeholder='• Try a 20-minute High-Intensity Interval Training (HIIT) workout at home.\n• Go for a 30-minute brisk walk or light jog.\n• Take a 30-minute swim, alternating between faster and slower laps.'
                 value={form.recommendedActions}
                 onChange={(e) => handleChange('recommendedActions', e.target.value)}
-                className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base min-h-[60px] ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
+                className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base min-h-[60px] w-full ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
                 disabled={readOnly}
               />
             </div>
             <div>
               <div className='font-medium mb-2'>Tools to help</div>
-              <div className='flex gap-2 items-center'>
+              <div className='flex flex-wrap gap-2 items-center'>
                 <Input
                   placeholder='Add Description'
                   value={form.toolsToHelp}
                   onChange={(e) => handleChange('toolsToHelp', e.target.value)}
-                  className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base flex-1 ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
+                  className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base flex-1 min-w-0 w-full sm:w-auto ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
                   disabled={readOnly}
                 />
-                {/* File upload button */}
+                {}
                 <div
                   {...getRootProps()}
                   className='flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 border border-gray-300 cursor-pointer hover:bg-gray-200'
@@ -247,7 +251,7 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
                     📎
                   </span>
                 </div>
-                {/* Link add button */}
+                {}
                 <button
                   type='button'
                   onClick={() => setShowLinkInput(true)}
@@ -258,43 +262,48 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
                   </span>
                 </button>
               </div>
-              {/* Link input, only shown when typing a link */}
+              {}
               {showLinkInput && (
-                <div className='flex gap-2 mt-2'>
+                <div className='flex flex-col sm:flex-row gap-2 mt-2 w-full'>
                   <Input
                     placeholder='Paste a link (https://...)'
                     value={linkInput}
                     onChange={(e) => setLinkInput(e.target.value)}
-                    className='flex-1'
+                    className='flex-1 min-w-0'
                   />
-                  <Button type='button' onClick={handleAddLink} className='px-3'>
-                    Add
-                  </Button>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    onClick={() => {
-                      setShowLinkInput(false);
-                      setLinkInput('');
-                    }}
-                    className='px-3'
-                  >
-                    Cancel
-                  </Button>
+                  <div className='flex gap-2'>
+                    <Button type='button' onClick={handleAddLink} className='px-3'>
+                      Add
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      onClick={() => {
+                        setShowLinkInput(false);
+                        setLinkInput('');
+                      }}
+                      className='px-3'
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               )}
-              {/* Show all attachments as chips/icons below the input */}
-              <div className='flex flex-wrap gap-2 mt-2'>
-                {/* New files being uploaded */}
+              {}
+              <div className='flex flex-wrap gap-2 mt-2 w-full'>
+                {}
                 {newFiles.map((file, idx) => (
                   <div
                     key={`new-file-${idx}`}
-                    className='flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm'
+                    className='flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm max-w-full'
                   >
                     <span role='img' aria-label='File' className='text-yellow-600'>
                       📄
                     </span>
-                    <span className='text-yellow-800 font-medium truncate max-w-[200px]' title={file.name}>
+                    <span
+                      className='text-yellow-800 font-medium truncate max-w-[120px] sm:max-w-[200px]'
+                      title={file.name}
+                    >
                       {file.name}
                     </span>
                     {uploadingFiles.has(file.name) && <span className='text-yellow-600 text-xs'>Uploading...</span>}
@@ -311,11 +320,11 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
                   </div>
                 ))}
 
-                {/* Existing resources */}
+                {}
                 {resources.map((res, idx) => (
                   <div
                     key={`existing-resource-${idx}`}
-                    className='flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 transition-colors'
+                    className='flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 transition-colors max-w-full'
                   >
                     {res.type === 'LINK' ? (
                       <>
@@ -326,7 +335,7 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
                           href={res.url}
                           target='_blank'
                           rel='noopener noreferrer'
-                          className='text-green-800 font-medium truncate max-w-[200px] hover:underline'
+                          className='text-green-800 font-medium truncate max-w-[120px] sm:max-w-[200px] hover:underline'
                           title={res.title || res.url}
                         >
                           {res.title || res.url}
@@ -340,7 +349,7 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
                         <a
                           href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${res.url}`}
                           download
-                          className='text-purple-800 font-medium truncate max-w-[200px] hover:underline'
+                          className='text-purple-800 font-medium truncate max-w-[120px] sm:max-w-[200px] hover:underline'
                           title={res.title || res.url}
                         >
                           {res.title || res.url}
@@ -360,11 +369,11 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
                   </div>
                 ))}
 
-                {/* New links */}
+                {}
                 {newLinks.map((link, idx) => (
                   <div
                     key={`new-link-${idx}`}
-                    className='flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm hover:bg-green-100 transition-colors'
+                    className='flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm hover:bg-green-100 transition-colors max-w-full'
                   >
                     <span role='img' aria-label='Link' className='text-green-600'>
                       🔗
@@ -373,7 +382,7 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
                       href={link.url}
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='text-green-800 font-medium truncate max-w-[200px] hover:underline'
+                      className='text-green-800 font-medium truncate max-w-[120px] sm:max-w-[200px] hover:underline'
                       title={link.url}
                     >
                       {link.url}

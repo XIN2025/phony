@@ -215,7 +215,7 @@ export class AuthService {
       }
       const filename = generateUniqueFilename(file.originalname);
       const savedFilename = await saveFileToUploads(file, filename);
-      avatarUrl = `/uploads/${savedFilename}`;
+      avatarUrl = savedFilename;
     }
 
     let idProofUrl: string | undefined = undefined;
@@ -226,7 +226,7 @@ export class AuthService {
       }
       const filename = generateUniqueFilename(idProofFile.originalname);
       const savedFilename = await saveFileToUploads(idProofFile, filename);
-      idProofUrl = `/uploads/${savedFilename}`;
+      idProofUrl = savedFilename;
     }
 
     const user = await this.prismaService.user.create({
@@ -321,7 +321,7 @@ export class AuthService {
       }
       const filename = generateUniqueFilename(file.originalname);
       const savedFilename = await saveFileToUploads(file, filename);
-      avatarUrl = `/uploads/${savedFilename}`;
+      avatarUrl = savedFilename;
     }
 
     const userData = {
@@ -415,7 +415,7 @@ export class AuthService {
       }
       const filename = generateUniqueFilename(file.originalname);
       const savedFilename = await saveFileToUploads(file, filename);
-      avatarUrl = `/uploads/${savedFilename}`;
+      avatarUrl = savedFilename;
     }
 
     const updateData: Record<string, string> = {};
@@ -492,7 +492,7 @@ export class AuthService {
       }
       const filename = generateUniqueFilename(file.originalname);
       const savedFilename = await saveFileToUploads(file, filename);
-      dataToUpdate.avatarUrl = `/uploads/${savedFilename}`;
+      dataToUpdate.avatarUrl = savedFilename;
     }
 
     const user = await this.prismaService.user.update({

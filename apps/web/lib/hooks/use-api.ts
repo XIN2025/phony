@@ -884,11 +884,9 @@ export function useCompleteActionItem() {
     mutationFn: ({ taskId, completionData }: { taskId: string; completionData: any }) =>
       ApiClient.post(`/api/action-items/${taskId}/complete`, completionData),
     onSuccess: (_, { taskId }) => {
-      console.log('Task completion successful, invalidating queries...');
       queryClient.invalidateQueries({ queryKey: ['client-plans'] });
       queryClient.invalidateQueries({ queryKey: ['client-action-items'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
-      // Force immediate refetch
       queryClient.refetchQueries({ queryKey: ['client-plans'] });
     },
   });
@@ -901,11 +899,9 @@ export function useUndoTaskCompletion() {
     mutationFn: ({ taskId, clientId }: { taskId: string; clientId: string }) =>
       ApiClient.delete(`/api/action-items/${taskId}/complete?clientId=${encodeURIComponent(clientId)}`),
     onSuccess: (_, { taskId }) => {
-      console.log('Task undo successful, invalidating queries...');
       queryClient.invalidateQueries({ queryKey: ['client-plans'] });
       queryClient.invalidateQueries({ queryKey: ['client-action-items'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
-      // Force immediate refetch
       queryClient.refetchQueries({ queryKey: ['client-plans'] });
     },
   });
@@ -1063,5 +1059,14 @@ export function useUploadChatAttachment() {
         },
       });
     },
+  });
+}
+
+export function useGetActivePlanForDate(clientId: string, date: string) {
+  return useQuery({
+    queryKey: ['active-plan', clientId, date],
+    queryFn: () => ApiClient.get<any>(`/api/plans/client/${clientId}/active?date=${encodeURIComponent(date)}`),
+    enabled: !!clientId && !!date,
+    staleTime: 5 * 60 * 1000,
   });
 }

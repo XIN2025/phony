@@ -101,10 +101,8 @@ export class AiService {
   private convertToolsToHelpToString(toolsToHelp: unknown): string | undefined {
     if (!toolsToHelp) return undefined;
 
-    // If it's already a string, return as is
     if (typeof toolsToHelp === 'string') return toolsToHelp;
 
-    // If it's an array, convert to formatted string
     if (Array.isArray(toolsToHelp)) {
       return toolsToHelp
         .map((tool) => {
@@ -142,26 +140,32 @@ export class AiService {
       return '';
     }
 
-    if (rawTranscript.length > 100000) {
-      rawTranscript = rawTranscript.substring(0, 100000);
+    try {
+      if (rawTranscript.length > 100000) {
+        rawTranscript = rawTranscript.substring(0, 100000);
+      }
+
+      const prompt = this.getFilteredTranscriptPrompt();
+      const fullPrompt = `${prompt}\n\nPlease filter the following transcript:\n\n---\n\n${rawTranscript}`;
+
+      const result = await this.model.generateContent(fullPrompt);
+
+      if (!result || !result.response) {
+        throw new Error('No response from Gemini API');
+      }
+
+      const filteredText = result.response.text();
+
+      if (!filteredText) {
+        return rawTranscript;
+      }
+
+      return filteredText;
+    } catch (error) {
+      this.logger.error(`Error in filterTranscript:`, error);
+      this.logger.error(`Error stack:`, error.stack);
+      throw error;
     }
-
-    const prompt = this.getFilteredTranscriptPrompt();
-    const fullPrompt = `${prompt}\n\nPlease filter the following transcript:\n\n---\n\n${rawTranscript}`;
-
-    const result = await this.model.generateContent(fullPrompt);
-
-    if (!result || !result.response) {
-      throw new Error('No response from Gemini API');
-    }
-
-    const filteredText = result.response.text();
-
-    if (!filteredText) {
-      return rawTranscript;
-    }
-
-    return filteredText;
   }
 
   async generateStructuredSummary(filteredTranscript: string): Promise<SessionSummary> {
@@ -172,41 +176,49 @@ export class AiService {
       };
     }
 
-    const prompt = this.getMeetingSummaryPrompt();
-    const fullPrompt = `${prompt}\n\nGenerate a summary for the following transcript:\n\n---\n\n${filteredTranscript}`;
-
-    const result = await this.model.generateContent(fullPrompt);
-
-    if (!result || !result.response) {
-      throw new Error('No response from Gemini API');
-    }
-
-    const summaryText = result.response.text();
-
-    if (!summaryText) {
-      return {
-        title: 'Session Summary',
-        summary: 'AI summary generation failed - no response received.',
-      };
-    }
-
-    let parsedSummary: SessionSummary;
     try {
-      const jsonMatch = summaryText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
-      }
-      const jsonString = jsonMatch[0];
-      const jsonData = JSON.parse(jsonString);
-      parsedSummary = summarySchema.parse(jsonData);
-    } catch {
-      parsedSummary = {
-        title: 'Session Summary',
-        summary: summaryText,
-      };
-    }
+      const prompt = this.getMeetingSummaryPrompt();
+      const fullPrompt = `${prompt}\n\nGenerate a summary for the following transcript:\n\n---\n\n${filteredTranscript}`;
 
-    return parsedSummary;
+      const result = await this.model.generateContent(fullPrompt);
+
+      if (!result || !result.response) {
+        throw new Error('No response from Gemini API');
+      }
+
+      const summaryText = result.response.text();
+
+      if (!summaryText) {
+        return {
+          title: 'Session Summary',
+          summary: 'AI summary generation failed - no response received.',
+        };
+      }
+
+      let parsedSummary: SessionSummary;
+      try {
+        const jsonMatch = summaryText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error('No JSON found in response');
+        }
+        const jsonString = jsonMatch[0];
+        const jsonData = JSON.parse(jsonString);
+        parsedSummary = summarySchema.parse(jsonData);
+      } catch (parseError) {
+        this.logger.error(`Error parsing summary:`, parseError);
+        this.logger.error(`Raw summary text:`, summaryText.substring(0, 500) + '...');
+        parsedSummary = {
+          title: 'Session Summary',
+          summary: summaryText,
+        };
+      }
+
+      return parsedSummary;
+    } catch (error) {
+      this.logger.error(`Error in generateStructuredSummary:`, error);
+      this.logger.error(`Error stack:`, error.stack);
+      throw error;
+    }
   }
 
   async suggestActionItems(filteredTranscript: string): Promise<ActionItemSuggestions> {
@@ -214,33 +226,43 @@ export class AiService {
       return { sessionTasks: [], complementaryTasks: [] };
     }
 
-    const prompt = this.getActionItemSuggestionPrompt();
-    const fullPrompt = `${prompt}\n\nAnalyze the following session transcript and suggest action items:\n\n---\n\n${filteredTranscript}`;
-
-    const result = await this.model.generateContent(fullPrompt);
-
-    if (!result || !result.response) {
-      throw new Error('No response from Gemini API');
-    }
-
-    const suggestionText = result.response.text();
-
-    if (!suggestionText) {
-      return { sessionTasks: [], complementaryTasks: [] };
-    }
-
-    let parsedSuggestions: ActionItemSuggestions;
     try {
-      const jsonMatch = suggestionText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
-      }
-      parsedSuggestions = actionItemSuggestionsSchema.parse(JSON.parse(jsonMatch[0]));
-    } catch {
-      parsedSuggestions = { sessionTasks: [], complementaryTasks: [] };
-    }
+      const prompt = this.getActionItemSuggestionPrompt();
+      const fullPrompt = `${prompt}\n\nAnalyze the following session transcript and suggest action items:\n\n---\n\n${filteredTranscript}`;
 
-    return this.processActionItemSuggestions(parsedSuggestions);
+      const result = await this.model.generateContent(fullPrompt);
+
+      if (!result || !result.response) {
+        throw new Error('No response from Gemini API');
+      }
+
+      const suggestionText = result.response.text();
+
+      if (!suggestionText) {
+        return { sessionTasks: [], complementaryTasks: [] };
+      }
+
+      let parsedSuggestions: ActionItemSuggestions;
+      try {
+        const jsonMatch = suggestionText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error('No JSON found in response');
+        }
+        const jsonData = JSON.parse(jsonMatch[0]);
+        parsedSuggestions = actionItemSuggestionsSchema.parse(jsonData);
+      } catch (parseError) {
+        this.logger.error(`Error parsing action item suggestions:`, parseError);
+        this.logger.error(`Raw suggestion text:`, suggestionText.substring(0, 500) + '...');
+        parsedSuggestions = { sessionTasks: [], complementaryTasks: [] };
+      }
+
+      const processedSuggestions = this.processActionItemSuggestions(parsedSuggestions);
+      return processedSuggestions;
+    } catch (error) {
+      this.logger.error(`Error in suggestActionItems:`, error);
+      this.logger.error(`Error stack:`, error.stack);
+      throw error;
+    }
   }
 
   async processSession(rawTranscript: string): Promise<{
@@ -259,18 +281,24 @@ export class AiService {
       };
     }
 
-    const filteredTranscript = await this.filterTranscript(rawTranscript);
+    try {
+      const filteredTranscript = await this.filterTranscript(rawTranscript);
 
-    const [summary, actionItemSuggestions] = await Promise.all([
-      this.generateStructuredSummary(filteredTranscript),
-      this.suggestActionItems(filteredTranscript),
-    ]);
+      const [summary, actionItemSuggestions] = await Promise.all([
+        this.generateStructuredSummary(filteredTranscript),
+        this.suggestActionItems(filteredTranscript),
+      ]);
 
-    return {
-      filteredTranscript,
-      summary,
-      actionItemSuggestions,
-    };
+      return {
+        filteredTranscript,
+        summary,
+        actionItemSuggestions,
+      };
+    } catch (error) {
+      this.logger.error(`Error in processSession:`, error);
+      this.logger.error(`Error stack:`, error.stack);
+      throw error;
+    }
   }
 
   async generateAdditionalComplementaryTasks(
@@ -279,7 +307,6 @@ export class AiService {
     existingComplementaryTasks: string[]
   ): Promise<ActionItemSuggestions> {
     if (!sessionData || sessionData.trim().length === 0) {
-      console.log('No session data provided for additional task generation');
       return { sessionTasks: [], complementaryTasks: [] };
     }
 
@@ -287,10 +314,6 @@ export class AiService {
       ...existingSessionTasks.map((task) => `Session Task: ${task}`),
       ...existingComplementaryTasks.map((task) => `Complementary Task: ${task}`),
     ].join('\n');
-
-    console.log(
-      `Generating additional tasks with ${existingSessionTasks.length} session tasks and ${existingComplementaryTasks.length} complementary tasks`
-    );
 
     const prompt = this.getGenerateMoreTasksPrompt();
     const fullPrompt = `${prompt}\n\nAnalyze the following session data and existing tasks to generate additional complementary tasks:\n\n---\n\nSession Data:\n${sessionData}\n\n---\n\nExisting Tasks:\n${existingTasksContext || 'No existing tasks'}\n\n---`;
@@ -302,10 +325,8 @@ export class AiService {
     }
 
     const suggestionText = result.response.text();
-    console.log('AI response text:', suggestionText.substring(0, 500) + '...');
 
     if (!suggestionText) {
-      console.log('No suggestion text received from AI');
       return { sessionTasks: [], complementaryTasks: [] };
     }
 
@@ -317,26 +338,17 @@ export class AiService {
       }
 
       const jsonData = JSON.parse(jsonMatch[0]);
-      console.log('Parsed JSON data:', JSON.stringify(jsonData, null, 2));
 
-      // Handle the case where only complementaryTasks is returned (as expected by the prompt)
       if (jsonData.complementaryTasks && !jsonData.sessionTasks) {
         parsedSuggestions = {
-          sessionTasks: [], // Always empty for "generate more" requests
+          sessionTasks: [],
           complementaryTasks: jsonData.complementaryTasks,
         };
-        console.log(
-          `Successfully parsed ${parsedSuggestions.complementaryTasks?.length || 0} complementary tasks (sessionTasks was empty as expected)`
-        );
       } else {
-        // Try to parse with the full schema (for backward compatibility)
         parsedSuggestions = actionItemSuggestionsSchema.parse(jsonData);
-        console.log(
-          `Successfully parsed ${parsedSuggestions.complementaryTasks?.length || 0} complementary tasks using full schema`
-        );
       }
     } catch (error) {
-      console.error('Error parsing AI response:', error);
+      this.logger.error('Error parsing AI response:', error);
       parsedSuggestions = { sessionTasks: [], complementaryTasks: [] };
     }
 
@@ -380,12 +392,10 @@ export class AiService {
       };
     }
 
-    // Sort sessions chronologically (oldest first)
     const sortedSessions = sessionSummaries.sort(
       (a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime()
     );
 
-    // Prepare session data for AI analysis
     const sessionData = sortedSessions
       .map(
         (session, index) =>

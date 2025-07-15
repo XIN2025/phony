@@ -45,43 +45,40 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
   const { data: journalEntries = [] } = useGetClientJournalEntries(clientId || '');
 
   const dayTasks = allTasks.filter((t: any) => {
+    const dayOfWeek = selectedDate.getDay();
+    const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+    const selectedDayShort = dayMap[dayOfWeek];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    const selectedDateObj = new Date(selectedDate);
+    selectedDateObj.setHours(0, 0, 0, 0); // Reset time to start of day
+
     if (t.isMandatory) {
       const isCompleted = t.completions && t.completions.length > 0;
       if (isCompleted) {
-        const dayOfWeek = selectedDate.getDay();
-        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-        const selectedDayShort = dayMap[dayOfWeek];
-
+        // If task is completed, only show on its configured days
         if (t.daysOfWeek && t.daysOfWeek.length > 0) {
           return t.daysOfWeek.some((day: string) => day === selectedDayShort);
         }
         return true;
       } else {
-        const today = new Date();
-        const selectedDateObj = selectedDate;
-
+        // If task is NOT completed, show on ALL future dates until completed
+        // This makes mandatory tasks persist until they're done
         if (selectedDateObj >= today) {
           return true;
         }
 
-        const dayOfWeek = selectedDateObj.getDay();
-        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-        const selectedDayShort = dayMap[dayOfWeek];
-
+        // For past dates, only show if it was scheduled for that day
         if (t.daysOfWeek && t.daysOfWeek.length > 0) {
           return t.daysOfWeek.some((day: string) => day === selectedDayShort);
         }
         return true;
       }
     } else {
-      const dayOfWeek = selectedDate.getDay();
-      const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-      const selectedDayShort = dayMap[dayOfWeek];
-
+      // For non-mandatory tasks, only show on their configured days
       if (t.daysOfWeek && t.daysOfWeek.length > 0) {
         return t.daysOfWeek.some((day: string) => day === selectedDayShort);
       }
-
       return true;
     }
   });
@@ -174,7 +171,9 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
 
       <div className='w-full flex flex-col gap-8 px-2 pr-4'>
         <div className='flex flex-col md:flex-row md:items-center md:justify-between w-full gap-3 md:gap-0 mb-2'>
-          <h1 className='text-2xl font-bold'>Tasks</h1>
+          <h1 className='text-2xl font-bold   ' style={{ fontFamily: "'Playfair Display', serif" }}>
+            Tasks
+          </h1>
           <div className='flex items-center gap-2'>
             <button
               ref={dateButtonRef}
@@ -235,13 +234,17 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
         <div className='flex flex-row gap-6 mb-6'>
           <div className='flex-1'>
             <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col items-start'>
-              <div className='text-4xl font-extrabold mb-1'>{pending}</div>
+              <div className='text-4xl font-extrabold mb-1' style={{ fontFamily: "'Playfair Display', serif" }}>
+                {pending}
+              </div>
               <div className='text-lg font-semibold text-gray-700'>Tasks Pending</div>
             </div>
           </div>
           <div className='flex-1'>
             <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col items-start'>
-              <div className='text-3xl font-bold mb-1'>{engagement}</div>
+              <div className='text-3xl font-bold mb-1 ' style={{ fontFamily: "'Playfair Display', serif" }}>
+                {engagement}
+              </div>
               <div className='text-lg font-semibold text-gray-700'>Avg Engagement</div>
             </div>
           </div>
@@ -258,7 +261,9 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
           <div className='flex flex-row gap-8 w-full'>
             <div className='flex-1'>
               <div className='bg-white rounded-2xl shadow-md p-8'>
-                <div className='text-xl font-bold mb-4'>Mandatory tasks for the week</div>
+                <div className='text-xl font-bold mb-4' style={{ fontFamily: "'Playfair Display', serif" }}>
+                  Mandatory tasks for the week
+                </div>
                 <div className='flex flex-col gap-0'>
                   {mandatoryTasks.length === 0 ? (
                     <div className='text-muted-foreground text-sm mb-4 px-6 py-6'>
@@ -316,7 +321,9 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
 
             <div className='flex-1'>
               <div className='bg-white rounded-2xl shadow-md p-8'>
-                <div className='text-xl font-bold mb-4'>Daily Tasks</div>
+                <div className='text-xl font-bold mb-4' style={{ fontFamily: "'Playfair Display', serif" }}>
+                  Daily Tasks
+                </div>
                 <div className='flex flex-col gap-0'>
                   {dailyTasks.length === 0 ? (
                     <div className='text-muted-foreground text-sm mb-4 px-6 py-6'>No daily tasks for this date.</div>

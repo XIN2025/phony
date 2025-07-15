@@ -633,6 +633,19 @@
         "tags": ["plans"]
       }
     },
+    "/api/plans/client/{clientId}/active": {
+      "get": {
+        "operationId": "PlanController_getActivePlanForDate",
+        "parameters": [
+          { "name": "clientId", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "date", "required": true, "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Active plan for the date returned successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get the active plan for a client on a specific date",
+        "tags": ["plans"]
+      }
+    },
     "/api/action-items/{id}/complete": {
       "post": {
         "operationId": "ActionItemController_completeActionItem",

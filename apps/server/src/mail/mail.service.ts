@@ -55,12 +55,23 @@ export class MailService {
     html?: string;
   }): Promise<boolean> {
     try {
-      await this.mailerService.sendMail({
+      const result = await this.mailerService.sendMail({
         from: `"${config.mail.defaults.fromName}" <${config.mail.defaults.from}>`,
         ...options,
       });
+      console.log('[MailService] Raw email sent', {
+        to: options.to,
+        subject: options.subject,
+        messageId: result?.messageId,
+      });
       return true;
-    } catch {
+    } catch (error) {
+      console.error('[MailService] Failed to send raw email', {
+        to: options.to,
+        subject: options.subject,
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return false;
     }
   }
@@ -98,11 +109,31 @@ export class MailService {
     context: TemplateContextMap[T];
   }): Promise<boolean> {
     const html = this.renderTemplate(templates[options.templateName], options.context);
-    return this.sendMail({
-      to: options.to,
-      subject: options.subject,
-      html,
-    });
+    try {
+      const result = await this.mailerService.sendMail({
+        from: `"${config.mail.defaults.fromName}" <${config.mail.defaults.from}>`,
+        to: options.to,
+        subject: options.subject,
+        html,
+      });
+      console.log('[MailService] Template email sent', {
+        to: options.to,
+        subject: options.subject,
+        templateName: options.templateName,
+        messageId: result?.messageId,
+      });
+      return !!result?.messageId;
+    } catch (error) {
+      console.error('[MailService] Failed to send template email', {
+        to: options.to,
+        subject: options.subject,
+        templateName: options.templateName,
+        context: options.context,
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      return false;
+    }
   }
 
   /**
@@ -160,7 +191,6 @@ export class MailService {
    * @param options.clientName - Client's full name
    * @param options.practitionerName - Practitioner's name
    * @param options.invitationLink - Secure invitation link
-   * @param options.intakeFormTitle - Title of the intake form (optional)
    * @returns Promise resolving to true if email was sent successfully, false otherwise
    */
   async sendClientInvitation(options: {
@@ -168,14 +198,12 @@ export class MailService {
     clientName: string;
     practitionerName: string;
     invitationLink: string;
-    intakeFormTitle?: string;
   }): Promise<boolean> {
     try {
       const context = {
         clientName: options.clientName,
         practitionerName: options.practitionerName,
         invitationLink: options.invitationLink,
-        intakeFormTitle: options.intakeFormTitle || '',
       };
 
       const html = this.renderTemplate(clientInvitationTemplate, context);
@@ -187,8 +215,24 @@ export class MailService {
         html,
       });
 
+      // Log successful email send
+      console.log('[MailService] Invitation email sent', {
+        to: options.to,
+        subject: `You're invited to join ${options.practitionerName}'s practice`,
+        messageId: result?.messageId,
+      });
+
       return !!result.messageId;
-    } catch {
+    } catch (error) {
+      // Log error details for debugging
+      console.error('[MailService] Failed to send invitation email', {
+        to: options.to,
+        clientName: options.clientName,
+        practitionerName: options.practitionerName,
+        invitationLink: options.invitationLink,
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return false;
     }
   }
