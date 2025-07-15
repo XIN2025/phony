@@ -13,7 +13,6 @@ export const clientInvitationTemplate = `
   
   <p>{{practitionerName}} has invited you to join Continuum, a secure platform for your sessions together.</p>
   
-  {{intakeFormTitle}}
   
   <p>To get started, please click the button below to create your account:</p>
   
