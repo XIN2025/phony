@@ -1,0 +1,22 @@
+{
+  "name": "Continuum Healthcare Platform",
+  "short_name": "Continuum",
+  "description": "Secure, HIPAA-compliant platform for healthcare professionals and their clients.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e11d48",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

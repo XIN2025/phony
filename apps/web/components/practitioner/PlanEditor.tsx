@@ -275,8 +275,10 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
 
   const handleTaskDialogSave = (values: any) => {
     if (isEditingTask && editingTaskId) {
+      // Remove 'id' from values before sending to backend
+      const { id, ...rest } = values;
       saveTaskMutation.mutate(
-        { planId, itemId: editingTaskId, data: values },
+        { planId, itemId: editingTaskId, data: rest },
         {
           onSuccess: () => {
             toast.success('Task updated');
@@ -459,7 +461,6 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                   <Checkbox
                     checked={!!item.isMandatory}
                     onCheckedChange={(checked) => {
-                      // Optimistically update local state
                       setOptimisticPlanData((prev) => {
                         if (!prev) return prev;
                         return {
@@ -469,15 +470,16 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                           ),
                         };
                       });
+                      // Remove 'id' from item before sending
+                      const { id, ...rest } = item;
                       saveTaskMutation.mutate(
                         {
                           planId,
                           itemId: item.id,
-                          data: { ...item, isMandatory: checked === true },
+                          data: { ...rest, isMandatory: checked === true },
                         },
                         {
                           onError: () => {
-                            // Revert on error
                             setOptimisticPlanData(null);
                             toast.error('Failed to update mandatory status');
                           },

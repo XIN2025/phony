@@ -22,26 +22,18 @@ import {
   Save,
 } from 'lucide-react';
 import Link from 'next/link';
-import Quill from 'quill';
-import 'quill/dist/quill.snow.css';
 import { useEffect, useRef, useState } from 'react';
-import QuillEditor, { QuillEditorHandles } from '../QuillEditor';
+import dynamic from 'next/dynamic';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { useCreateJournalEntry } from '@/lib/hooks/use-api';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 
-const Font = (Quill as any).import('formats/font');
-if (Font) {
-  Font.whitelist = ['roboto', 'serif', 'sans-serif', 'monospace'];
-  (Quill as any).register(Font, true);
-}
-const Size = (Quill as any).import('attributors/style/size');
-if (Size) {
-  delete Size.whitelist;
-  (Quill as any).register(Size, true);
-}
+const QuillEditor = dynamic(() => import('../QuillEditor'), { ssr: false });
+
+// REMOVE all top-level Quill usage (Font, Size, etc.)
+// Only use Quill inside useEffect as already done below
 
 const DEFAULT_FONT_SIZE = 14;
 
@@ -71,7 +63,7 @@ const JournalEditors = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [title, setTitle] = useState('');
 
-  const quillEditorRef = useRef<QuillEditorHandles>(null);
+  const quillEditorRef = typeof window !== 'undefined' ? useRef<any>(null) : { current: null };
   const createJournalMutation = useCreateJournalEntry();
   const [notes, setNotes] = useState<NoteState[]>(
     Array(NUM_NOTES)
@@ -164,19 +156,38 @@ const JournalEditors = () => {
 
   const NOTE_TITLES = ['How are you feeling?', 'Task Feedback', "What's on your mind?"];
 
-  if (typeof window !== 'undefined') {
-    const styleId = 'quill-custom-fonts';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.innerHTML = `
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const Quill = require('quill');
+      require('quill/dist/quill.snow.css');
+      // Only use Quill inside useEffect as already done below
+      // const Font = Quill.import('formats/font');
+      // if (Font) {
+      //   Font.whitelist = ['roboto', 'serif', 'sans-serif', 'monospace'];
+      //   Quill.register(Font, true);
+      // }
+      // const Size = Quill.import('attributors/style/size');
+      // if (Size) {
+      //   delete Size.whitelist;
+      //   Quill.register(Size, true);
+      // }
+      const styleId = 'quill-custom-fonts';
+      if (!document.getElementById(styleId)) {
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.innerHTML = `
         .ql-font-roboto { font-family: 'Roboto', Arial, sans-serif; }
         .ql-font-serif { font-family: serif; }
         .ql-font-sans-serif { font-family: 'Arial', 'Helvetica', sans-serif; }
         .ql-font-monospace { font-family: 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace; }
       `;
-      document.head.appendChild(style);
+        document.head.appendChild(style);
+      }
     }
+  }, []);
+
+  if (typeof window === 'undefined') {
+    return null;
   }
 
   return (

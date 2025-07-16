@@ -24,7 +24,7 @@ export default function PractitionerAuthPage() {
   const [resendTimer, setResendTimer] = React.useState(0);
   const timerCleanupRef = React.useRef<(() => void) | null>(null);
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
 
   React.useEffect(() => {
     console.log('[PractitionerAuth] Session status changed:', {
@@ -35,12 +35,11 @@ export default function PractitionerAuthPage() {
       showOTP,
     });
 
-    if (status === 'authenticated' && session) {
+    if (status === 'authenticated' && session && session.user?.role === 'PRACTITIONER') {
       console.log('[PractitionerAuth] User authenticated, redirecting...', session.user);
-      const targetDashboard = session.user.role === 'PRACTITIONER' ? '/practitioner' : '/client';
-      router.replace(targetDashboard);
+      router.replace('/practitioner');
     }
-  }, [status, session?.user?.role, router]); // Fixed dependencies
+  }, [status, session?.user?.role, router, isLoading, showOTP]);
 
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useSendOtp();
 
@@ -121,9 +120,9 @@ export default function PractitionerAuthPage() {
         const errorMessage = handleLoginError(res.error, 'PRACTITIONER');
         toast.error(errorMessage);
       } else if (res?.ok) {
-        console.log('[PractitionerAuth] SignIn successful, waiting for session update...');
-        toast.success('Logged in successfully');
-        // Remove manual redirect - let useEffect handle it
+        console.log('[PractitionerAuth] SignIn successful, forcing session update...');
+        await update();
+        // The useEffect will handle the redirect once session is updated
       } else {
         console.warn('[PractitionerAuth] Unexpected signIn response:', res);
         toast.error('Login failed - unexpected response');

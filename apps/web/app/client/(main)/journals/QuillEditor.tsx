@@ -1,16 +1,18 @@
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
-import Quill from 'quill';
-import 'quill/dist/quill.snow.css';
-
-const Font = (Quill as any).import('formats/font');
-if (Font) {
-  Font.whitelist = ['roboto', 'serif', 'sans-serif', 'monospace'];
-  (Quill as any).register(Font, true);
-}
-const Size = (Quill as any).import('attributors/style/size');
-if (Size) {
-  delete Size.whitelist;
-  (Quill as any).register(Size, true);
+let Quill: any = null;
+if (typeof window !== 'undefined') {
+  Quill = require('quill');
+  require('quill/dist/quill.snow.css');
+  const Font = Quill.import('formats/font');
+  if (Font) {
+    Font.whitelist = ['roboto', 'serif', 'sans-serif', 'monospace'];
+    Quill.register(Font, true);
+  }
+  const Size = Quill.import('attributors/style/size');
+  if (Size) {
+    delete Size.whitelist;
+    Quill.register(Size, true);
+  }
 }
 
 export interface QuillEditorHandles {
@@ -30,7 +32,7 @@ interface QuillEditorProps {
 const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(
   ({ value, onChange, isActive, toolbarId }, ref) => {
     const editorRef = useRef<HTMLDivElement | null>(null);
-    const quillRef = useRef<Quill | null>(null);
+    const quillRef = useRef<any>(null);
     const lastValueRef = useRef<string>(value);
 
     useImperativeHandle(
@@ -38,12 +40,12 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(
       () => ({
         undo: () => {
           if (quillRef.current) {
-            (quillRef.current.getModule('history') as any).undo();
+            quillRef.current.getModule('history').undo();
           }
         },
         redo: () => {
           if (quillRef.current) {
-            (quillRef.current.getModule('history') as any).redo();
+            quillRef.current.getModule('history').redo();
           }
         },
         setFontSize: (size: number) => {
@@ -67,7 +69,7 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(
     );
 
     useEffect(() => {
-      if (!editorRef.current) return;
+      if (typeof window === 'undefined' || !editorRef.current || !Quill) return;
       if (quillRef.current) {
         quillRef.current.off('text-change');
         quillRef.current = null;
@@ -106,13 +108,18 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(
     }, [isActive, toolbarId]);
 
     useEffect(() => {
-      if (quillRef.current && value !== lastValueRef.current) {
+      if (typeof window === 'undefined' || !quillRef.current) return;
+      if (value !== lastValueRef.current) {
         const quill = quillRef.current;
         const delta = quill.clipboard.convert({ html: value });
         quill.setContents(delta);
         lastValueRef.current = value;
       }
     }, [value]);
+
+    if (typeof window === 'undefined') {
+      return null;
+    }
 
     return (
       <div

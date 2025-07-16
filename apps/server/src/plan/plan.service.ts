@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanStatus, ActionItemSource, SuggestedActionItemStatus } from '@repo/db';
 import { AiService } from '../ai/ai.service';
+import * as webpush from 'web-push';
+import { ConfigService } from '@nestjs/config';
 
 interface CreatePlanDto {
   sessionId: string;
@@ -30,8 +32,16 @@ interface CreatePlanDto {
 export class PlanService {
   constructor(
     private prisma: PrismaService,
-    private aiService: AiService
-  ) {}
+    private aiService: AiService,
+    private config: ConfigService
+  ) {
+    // Configure web-push with VAPID keys from env
+    webpush.setVapidDetails(
+      'mailto:support@continuum.com',
+      this.config.get('VAPID_PUBLIC_KEY'),
+      this.config.get('VAPID_PRIVATE_KEY')
+    );
+  }
 
   async createPlan(data: CreatePlanDto) {
     const plan = await this.prisma.plan.create({
@@ -80,13 +90,21 @@ export class PlanService {
   }
 
   async publishPlan(planId: string) {
-    return await this.prisma.plan.update({
+    const plan = await this.prisma.plan.update({
       where: { id: planId },
       data: {
         status: PlanStatus.PUBLISHED,
         publishedAt: new Date(),
       },
+      include: { client: true },
     });
+    // Send push notification to client
+    await this.sendPushToClient(plan.clientId, {
+      title: 'New Plan Published',
+      body: 'Your practitioner has published a new plan for you!',
+      url: `/client/plans/${planId}`,
+    });
+    return plan;
   }
 
   async getPlansByPractitioner(practitionerId: string) {
@@ -508,7 +526,6 @@ export class PlanService {
     if (!actionItem) {
       throw new Error('Resource not found. Please check the URL.');
     }
-
     const updated = await this.prisma.actionItem.update({
       where: { id: actionItemId },
       data: {
@@ -530,6 +547,15 @@ export class PlanService {
       },
       include: { resources: true },
     });
+    // Send push notification to client
+    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
+    if (plan) {
+      await this.sendPushToClient(plan.clientId, {
+        title: 'Plan Updated',
+        body: 'Your practitioner has updated your action plan tasks.',
+        url: `/client/plans/${planId}`,
+      });
+    }
     return updated;
   }
 
@@ -702,6 +728,30 @@ export class PlanService {
       },
     });
     return plan;
+  }
+
+  private async sendPushToClient(clientId: string, notification: { title: string; body: string; url: string }) {
+    const subscriptions = await this.prisma.pushSubscription.findMany({ where: { userId: clientId } });
+    for (const sub of subscriptions) {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: sub.keys,
+          },
+          JSON.stringify({
+            title: notification.title,
+            body: notification.body,
+            url: notification.url,
+          })
+        );
+      } catch (err) {
+        // Optionally handle unsubscribed endpoints
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          await this.prisma.pushSubscription.delete({ where: { id: sub.id } });
+        }
+      }
+    }
   }
 }
 

@@ -54,6 +54,7 @@ model User {
   messageReactions        MessageReaction[] @relation("MessageReactions")
   journalEntries          JournalEntry[] @relation("ClientJournalEntries")
   comprehensiveSummaries ComprehensiveSummary[] @relation("ClientComprehensiveSummaries")
+  pushSubscriptions       PushSubscription[]
 
   @@map("users")
 }
@@ -388,4 +389,15 @@ model JournalEntry {
   readBy        String[] @default([]) @map("read_by")
   
   @@map("journal_entries")
+}
+
+model PushSubscription {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  keys      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("push_subscriptions")
 }
