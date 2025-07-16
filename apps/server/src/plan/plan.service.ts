@@ -743,7 +743,12 @@ export class PlanService {
             title: notification.title,
             body: notification.body,
             url: notification.url,
-          })
+          }),
+          {
+            TTL: 86400, // 24 hours in seconds
+            urgency: 'high',
+            topic: 'plan-updates',
+          }
         );
       } catch (err) {
         // Optionally handle unsubscribed endpoints
