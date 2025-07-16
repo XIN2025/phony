@@ -89,7 +89,12 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const editPlanId = searchParams.get('editPlan');
   const [editingPlanId, setEditingPlanId] = useState<string | null>(editPlanId);
 
-  const [processingSessionId, setProcessingSessionId] = useState<string | null>(null);
+  const [processingSessionId, setProcessingSessionId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('processingSessionId');
+    }
+    return null;
+  });
 
   const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null);
   const [pendingDuration, setPendingDuration] = useState<string>('');
