@@ -1,13 +1,12 @@
 /** @type {import('next').NextConfig} */
 import withPWA from 'next-pwa';
 
-const isProd = process.env.NODE_ENV === 'production';
-
 const pwaConfig = {
   dest: 'public',
   swSrc: 'worker/index.js',
   disable: false,
   skipWaiting: true,
+  maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
   buildExcludes: [
     ({ asset }) => asset.name.includes('app-build-manifest.json'),
     ({ asset }) => asset.name.includes('build-manifest.json'),
@@ -17,7 +16,7 @@ const pwaConfig = {
     ({ asset }) => asset.name.includes('client-reference-manifest'),
     ({ asset }) => asset.name.includes('next-font-manifest.js'),
     ({ asset }) => asset.name.includes('next-font-manifest.json'),
-    ({ asset }) => /(_next|server).*\-manifest\.(js|json)$/.test(asset.name),
+    ({ asset }) => /(_next|server).*-manifest\.(js|json)$/.test(asset.name),
   ],
   manifestTransforms: [
     async (entries) => {
@@ -32,7 +31,7 @@ const pwaConfig = {
             !entry.url.includes('client-reference-manifest') &&
             !entry.url.includes('next-font-manifest.js') &&
             !entry.url.includes('next-font-manifest.json') &&
-            !/(_next|server).*\-manifest\.(js|json)$/.test(entry.url),
+            !/(_next|server).*-manifest\.(js|json)$/.test(entry.url),
         ),
         warnings: [],
       };
@@ -57,6 +56,4 @@ const nextConfig = {
   },
 };
 
-const withPwa = withPWA(pwaConfig);
-
-export default withPwa(nextConfig);
+export default withPWA(pwaConfig)(nextConfig);
