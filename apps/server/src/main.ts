@@ -18,7 +18,8 @@ async function bootstrap() {
       'http://localhost:3001',
       'http://localhost:3000',
       config.frontendUrl,
-      'https://4c8f7efae143.ngrok-free.app', // Allow ngrok frontend
+      'https://4c8f7efae143.ngrok-free.app',
+      'https://web.continuum.opengig.work',
     ],
     credentials: true,
   });

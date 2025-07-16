@@ -38,7 +38,7 @@ export class PlanService {
     // Configure web-push with VAPID keys from env
     webpush.setVapidDetails(
       'mailto:support@continuum.com',
-      this.config.get('VAPID_PUBLIC_KEY'),
+      this.config.get('NEXT_PUBLIC_VAPID_PUBLIC_KEY'),
       this.config.get('VAPID_PRIVATE_KEY')
     );
   }

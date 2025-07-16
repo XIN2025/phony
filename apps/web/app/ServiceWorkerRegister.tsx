@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { envConfig } from '@/config';
 
 export default function ServiceWorkerRegister() {
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function ServiceWorkerRegister() {
                   const permission = await Notification.requestPermission();
                   console.log('[Push] Notification permission:', permission);
                   if (permission === 'granted') {
-                    const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+                    const VAPID_PUBLIC_KEY = envConfig.vapidPublicKey;
                     if (!VAPID_PUBLIC_KEY) {
                       throw new Error(
                         'VAPID public key is missing. Please set NEXT_PUBLIC_VAPID_PUBLIC_KEY in your .env file.',

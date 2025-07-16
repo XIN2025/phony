@@ -3,6 +3,7 @@ export const envConfig = {
   apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   internalApiUrl: process.env.INTERNAL_API_URL || 'http://server:3001',
   nextAuthUrl: process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  vapidPublicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '',
 
   providers: {
     google: {
