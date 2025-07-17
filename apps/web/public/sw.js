@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   let e, t, s, a, i;
-  var r = {
+  var n = {
       187: () => {
         try {
           self['workbox:expiration:6.5.4'] && _();
@@ -33,16 +33,16 @@
         } catch (e) {}
       },
     },
-    n = {};
+    r = {};
   function o(e) {
-    var t = n[e];
+    var t = r[e];
     if (void 0 !== t) return t.exports;
-    var s = (n[e] = { exports: {} }),
+    var s = (r[e] = { exports: {} }),
       a = !0;
     try {
-      (r[e](s, s.exports, o), (a = !1));
+      (n[e](s, s.exports, o), (a = !1));
     } finally {
-      a && delete n[e];
+      a && delete r[e];
     }
     return s.exports;
   }
@@ -100,8 +100,8 @@
     if ((t.url && (a = new URL(t.url).origin), a !== self.location.origin))
       throw new l('cross-origin-copy-response', { origin: a });
     let i = t.clone(),
-      r = { headers: new Headers(i.headers), status: i.status, statusText: i.statusText },
-      n = s ? s(r) : r,
+      n = { headers: new Headers(i.headers), status: i.status, statusText: i.statusText },
+      r = s ? s(n) : n,
       o = !(function () {
         if (void 0 === e) {
           let t = new Response('');
@@ -117,7 +117,7 @@
       })()
         ? await i.blob()
         : i.body;
-    return new Response(o, n);
+    return new Response(o, r);
   }
   let m = (e) => new URL(String(e), location.href).href.replace(RegExp(`^${location.origin}`), '');
   function y(e, t) {
@@ -128,19 +128,19 @@
   async function b(e, t, s, a) {
     let i = y(t.url, s);
     if (t.url === i) return e.match(t, a);
-    let r = Object.assign(Object.assign({}, a), { ignoreSearch: !0 });
-    for (let n of await e.keys(t, r)) if (i === y(n.url, s)) return e.match(n, a);
+    let n = Object.assign(Object.assign({}, a), { ignoreSearch: !0 });
+    for (let r of await e.keys(t, n)) if (i === y(r.url, s)) return e.match(r, a);
   }
-  class R {
+  class v {
     constructor() {
       this.promise = new Promise((e, t) => {
         ((this.resolve = e), (this.reject = t));
       });
     }
   }
-  let v = new Set();
+  let R = new Set();
   async function x() {
-    for (let e of v) await e();
+    for (let e of R) await e();
   }
   function C(e) {
     return 'string' == typeof e ? new Request(e) : e;
@@ -152,7 +152,7 @@
       Object.assign(this, t),
       (this.event = t.event),
       (this._strategy = e),
-      (this._handlerDeferred = new R()),
+      (this._handlerDeferred = new v()),
       (this._extendLifetimePromises = []),
       (this._plugins = [...e.plugins]),
       (this._pluginStateMap = new Map()),
@@ -202,10 +202,10 @@
       let t,
         s = C(e),
         { cacheName: a, matchOptions: i } = this._strategy,
-        r = await this.getCacheKey(s, 'read'),
-        n = Object.assign(Object.assign({}, i), { cacheName: a });
-      for (let e of ((t = await caches.match(r, n)), this.iterateCallbacks('cachedResponseWillBeUsed')))
-        t = (await e({ cacheName: a, matchOptions: i, cachedResponse: t, request: r, event: this.event })) || void 0;
+        n = await this.getCacheKey(s, 'read'),
+        r = Object.assign(Object.assign({}, i), { cacheName: a });
+      for (let e of ((t = await caches.match(n, r)), this.iterateCallbacks('cachedResponseWillBeUsed')))
+        t = (await e({ cacheName: a, matchOptions: i, cachedResponse: t, request: n, event: this.event })) || void 0;
       return t;
     }
     async cachePut(e, t) {
@@ -215,17 +215,17 @@
       if (!t) throw new l('cache-put-with-no-response', { url: m(a.url) });
       let i = await this._ensureResponseSafeToCache(t);
       if (!i) return !1;
-      let { cacheName: r, matchOptions: n } = this._strategy,
-        o = await self.caches.open(r),
+      let { cacheName: n, matchOptions: r } = this._strategy,
+        o = await self.caches.open(n),
         c = this.hasCallback('cacheDidUpdate'),
-        h = c ? await b(o, a.clone(), ['__WB_REVISION__'], n) : null;
+        h = c ? await b(o, a.clone(), ['__WB_REVISION__'], r) : null;
       try {
         await o.put(a, c ? i.clone() : i);
       } catch (e) {
         if (e instanceof Error) throw ('QuotaExceededError' === e.name && (await x()), e);
       }
       for (let e of this.iterateCallbacks('cacheDidUpdate'))
-        await e({ cacheName: r, oldResponse: h, newResponse: i.clone(), request: a, event: this.event });
+        await e({ cacheName: n, oldResponse: h, newResponse: i.clone(), request: a, event: this.event });
       return !0;
     }
     async getCacheKey(e, t) {
@@ -274,7 +274,7 @@
       return (!s && t && 200 !== t.status && (t = void 0), t);
     }
   }
-  class T {
+  class S {
     constructor(e = {}) {
       ((this.cacheName = d.getRuntimeName(e.cacheName)),
         (this.plugins = e.plugins || []),
@@ -291,8 +291,8 @@
         s = 'string' == typeof e.request ? new Request(e.request) : e.request,
         a = new E(this, { event: t, request: s, params: 'params' in e ? e.params : void 0 }),
         i = this._getResponse(a, s, t),
-        r = this._awaitComplete(i, a, s, t);
-      return [i, r];
+        n = this._awaitComplete(i, a, s, t);
+      return [i, n];
     }
     async _getResponse(e, t, s) {
       let a;
@@ -301,8 +301,8 @@
         if (!(a = await this._handle(t, e)) || 'error' === a.type) throw new l('no-response', { url: t.url });
       } catch (i) {
         if (i instanceof Error) {
-          for (let r of e.iterateCallbacks('handlerDidError'))
-            if ((a = await r({ error: i, event: s, request: t }))) break;
+          for (let n of e.iterateCallbacks('handlerDidError'))
+            if ((a = await n({ error: i, event: s, request: t }))) break;
         }
         if (a);
         else throw i;
@@ -311,25 +311,25 @@
       return a;
     }
     async _awaitComplete(e, t, s, a) {
-      let i, r;
+      let i, n;
       try {
         i = await e;
       } catch (e) {}
       try {
         (await t.runCallbacks('handlerDidRespond', { event: a, request: s, response: i }), await t.doneWaiting());
       } catch (e) {
-        e instanceof Error && (r = e);
+        e instanceof Error && (n = e);
       }
-      if ((await t.runCallbacks('handlerDidComplete', { event: a, request: s, response: i, error: r }), t.destroy(), r))
-        throw r;
+      if ((await t.runCallbacks('handlerDidComplete', { event: a, request: s, response: i, error: n }), t.destroy(), n))
+        throw n;
     }
   }
-  class D extends T {
+  class N extends S {
     constructor(e = {}) {
       ((e.cacheName = d.getPrecacheName(e.cacheName)),
         super(e),
         (this._fallbackToNetwork = !1 !== e.fallbackToNetwork),
-        this.plugins.push(D.copyRedirectedCacheableResponsesPlugin));
+        this.plugins.push(N.copyRedirectedCacheableResponsesPlugin));
     }
     async _handle(e, t) {
       let s = await t.cacheMatch(e);
@@ -342,11 +342,11 @@
         a = t.params || {};
       if (this._fallbackToNetwork) {
         let i = a.integrity,
-          r = e.integrity,
-          n = !r || r === i;
-        ((s = await t.fetch(new Request(e, { integrity: 'no-cors' !== e.mode ? r || i : void 0 }))),
+          n = e.integrity,
+          r = !n || n === i;
+        ((s = await t.fetch(new Request(e, { integrity: 'no-cors' !== e.mode ? n || i : void 0 }))),
           i &&
-            n &&
+            r &&
             'no-cors' !== e.mode &&
             (this._useDefaultCacheabilityPluginIfNeeded(), await t.cachePut(e, s.clone())));
       } else throw new l('missing-precache-entry', { cacheName: this.cacheName, url: e.url });
@@ -362,17 +362,17 @@
       let e = null,
         t = 0;
       for (let [s, a] of this.plugins.entries())
-        a !== D.copyRedirectedCacheableResponsesPlugin &&
-          (a === D.defaultPrecacheCacheabilityPlugin && (e = s), a.cacheWillUpdate && t++);
+        a !== N.copyRedirectedCacheableResponsesPlugin &&
+          (a === N.defaultPrecacheCacheabilityPlugin && (e = s), a.cacheWillUpdate && t++);
       0 === t
-        ? this.plugins.push(D.defaultPrecacheCacheabilityPlugin)
+        ? this.plugins.push(N.defaultPrecacheCacheabilityPlugin)
         : t > 1 && null !== e && this.plugins.splice(e, 1);
     }
   }
-  ((D.defaultPrecacheCacheabilityPlugin = {
+  ((N.defaultPrecacheCacheabilityPlugin = {
     cacheWillUpdate: async ({ response: e }) => (!e || e.status >= 400 ? null : e),
   }),
-    (D.copyRedirectedCacheableResponsesPlugin = {
+    (N.copyRedirectedCacheableResponsesPlugin = {
       cacheWillUpdate: async ({ response: e }) => (e.redirected ? await w(e) : e),
     }));
   class L {
@@ -380,7 +380,7 @@
       ((this._urlsToCacheKeys = new Map()),
         (this._urlsToCacheModes = new Map()),
         (this._cacheKeysToIntegrities = new Map()),
-        (this._strategy = new D({
+        (this._strategy = new N({
           cacheName: d.getPrecacheName(e),
           plugins: [...t, new g({ precacheController: this })],
           fallbackToNetwork: s,
@@ -442,8 +442,8 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
         for (let [s, a] of (this.strategy.plugins.push(t), this._urlsToCacheKeys)) {
           let t = this._cacheKeysToIntegrities.get(a),
             i = this._urlsToCacheModes.get(s),
-            r = new Request(s, { integrity: t, cache: i, credentials: 'same-origin' });
-          await Promise.all(this.strategy.handleAll({ params: { cacheKey: a }, request: r, event: e }));
+            n = new Request(s, { integrity: t, cache: i, credentials: 'same-origin' });
+          await Promise.all(this.strategy.handleAll({ params: { cacheKey: a }, request: n, event: e }));
         }
         let { updatedURLs: s, notUpdatedURLs: a } = t;
         return { updatedURLs: s, notUpdatedURLs: a };
@@ -489,16 +489,16 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
   }
   let k = () => (t || (t = new L()), t);
   o(465);
-  let U = (e) => (e && 'object' == typeof e ? e : { handle: e });
-  class N {
+  let D = (e) => (e && 'object' == typeof e ? e : { handle: e });
+  class T {
     constructor(e, t, s = 'GET') {
-      ((this.handler = U(t)), (this.match = e), (this.method = s));
+      ((this.handler = D(t)), (this.match = e), (this.method = s));
     }
     setCatchHandler(e) {
-      this.catchHandler = U(e);
+      this.catchHandler = D(e);
     }
   }
-  class P extends N {
+  class U extends T {
     constructor(e, t, s) {
       super(
         ({ url: t }) => {
@@ -510,7 +510,7 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
       );
     }
   }
-  class S {
+  class W {
     constructor() {
       ((this._routes = new Map()), (this._defaultHandlerMap = new Map()));
     }
@@ -544,23 +544,23 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
         a = new URL(e.url, location.href);
       if (!a.protocol.startsWith('http')) return;
       let i = a.origin === location.origin,
-        { params: r, route: n } = this.findMatchingRoute({ event: t, request: e, sameOrigin: i, url: a }),
-        o = n && n.handler,
+        { params: n, route: r } = this.findMatchingRoute({ event: t, request: e, sameOrigin: i, url: a }),
+        o = r && r.handler,
         c = e.method;
       if ((!o && this._defaultHandlerMap.has(c) && (o = this._defaultHandlerMap.get(c)), !o)) return;
       try {
-        s = o.handle({ url: a, request: e, event: t, params: r });
+        s = o.handle({ url: a, request: e, event: t, params: n });
       } catch (e) {
         s = Promise.reject(e);
       }
-      let l = n && n.catchHandler;
+      let l = r && r.catchHandler;
       return (
         s instanceof Promise &&
           (this._catchHandler || l) &&
           (s = s.catch(async (s) => {
             if (l)
               try {
-                return await l.handle({ url: a, request: e, event: t, params: r });
+                return await l.handle({ url: a, request: e, event: t, params: n });
               } catch (e) {
                 e instanceof Error && (s = e);
               }
@@ -572,23 +572,23 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
     }
     findMatchingRoute({ url: e, sameOrigin: t, request: s, event: a }) {
       for (let i of this._routes.get(s.method) || []) {
-        let r,
-          n = i.match({ url: e, sameOrigin: t, request: s, event: a });
-        if (n)
+        let n,
+          r = i.match({ url: e, sameOrigin: t, request: s, event: a });
+        if (r)
           return (
-            (Array.isArray((r = n)) && 0 === r.length) || (n.constructor === Object && 0 === Object.keys(n).length)
-              ? (r = void 0)
-              : 'boolean' == typeof n && (r = void 0),
-            { route: i, params: r }
+            (Array.isArray((n = r)) && 0 === n.length) || (r.constructor === Object && 0 === Object.keys(r).length)
+              ? (n = void 0)
+              : 'boolean' == typeof r && (n = void 0),
+            { route: i, params: n }
           );
       }
       return {};
     }
     setDefaultHandler(e, t = 'GET') {
-      this._defaultHandlerMap.set(t, U(e));
+      this._defaultHandlerMap.set(t, D(e));
     }
     setCatchHandler(e) {
-      this._catchHandler = U(e);
+      this._catchHandler = D(e);
     }
     registerRoute(e) {
       (this._routes.has(e.method) || this._routes.set(e.method, []), this._routes.get(e.method).push(e));
@@ -600,24 +600,24 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
       else throw new l('unregister-route-route-not-registered');
     }
   }
-  let I = () => (s || ((s = new S()).addFetchListener(), s.addCacheListener()), s);
-  function q(e, t, s) {
+  let P = () => (s || ((s = new W()).addFetchListener(), s.addCacheListener()), s);
+  function I(e, t, s) {
     let a;
     if ('string' == typeof e) {
       let i = new URL(e, location.href);
-      a = new N(({ url: e }) => e.href === i.href, t, s);
-    } else if (e instanceof RegExp) a = new P(e, t, s);
-    else if ('function' == typeof e) a = new N(e, t, s);
-    else if (e instanceof N) a = e;
+      a = new T(({ url: e }) => e.href === i.href, t, s);
+    } else if (e instanceof RegExp) a = new U(e, t, s);
+    else if ('function' == typeof e) a = new T(e, t, s);
+    else if (e instanceof T) a = e;
     else
       throw new l('unsupported-route-type', {
         moduleName: 'workbox-routing',
         funcName: 'registerRoute',
         paramName: 'capture',
       });
-    return (I().registerRoute(a), a);
+    return (P().registerRoute(a), a);
   }
-  class M extends N {
+  class q extends T {
     constructor(e, t) {
       super(({ request: s }) => {
         let a = e.getURLsToCacheKeys();
@@ -630,21 +630,21 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
             urlManipulation: i,
           } = {},
         ) {
-          let r = new URL(e, location.href);
-          ((r.hash = ''), yield r.href);
-          let n = (function (e, t = []) {
+          let n = new URL(e, location.href);
+          ((n.hash = ''), yield n.href);
+          let r = (function (e, t = []) {
             for (let s of [...e.searchParams.keys()]) t.some((e) => e.test(s)) && e.searchParams.delete(s);
             return e;
-          })(r, t);
-          if ((yield n.href, s && n.pathname.endsWith('/'))) {
-            let e = new URL(n.href);
+          })(n, t);
+          if ((yield r.href, s && r.pathname.endsWith('/'))) {
+            let e = new URL(r.href);
             ((e.pathname += s), yield e.href);
           }
           if (a) {
-            let e = new URL(n.href);
+            let e = new URL(r.href);
             ((e.pathname += '.html'), yield e.href);
           }
-          if (i) for (let e of i({ url: r })) yield e.href;
+          if (i) for (let e of i({ url: n })) yield e.href;
         })(s.url, t)) {
           let t = a.get(i);
           if (t) {
@@ -655,11 +655,11 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
       }, e.strategy);
     }
   }
-  let K = { cacheWillUpdate: async ({ response: e }) => (200 === e.status || 0 === e.status ? e : null) };
-  class A extends T {
+  let M = { cacheWillUpdate: async ({ response: e }) => (200 === e.status || 0 === e.status ? e : null) };
+  class K extends S {
     constructor(e = {}) {
       (super(e),
-        this.plugins.some((e) => 'cacheWillUpdate' in e) || this.plugins.unshift(K),
+        this.plugins.some((e) => 'cacheWillUpdate' in e) || this.plugins.unshift(M),
         (this._networkTimeoutSeconds = e.networkTimeoutSeconds || 0));
     }
     async _handle(e, t) {
@@ -667,14 +667,14 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
         a = [],
         i = [];
       if (this._networkTimeoutSeconds) {
-        let { id: r, promise: n } = this._getTimeoutPromise({ request: e, logs: a, handler: t });
-        ((s = r), i.push(n));
+        let { id: n, promise: r } = this._getTimeoutPromise({ request: e, logs: a, handler: t });
+        ((s = n), i.push(r));
       }
-      let r = this._getNetworkPromise({ timeoutId: s, request: e, logs: a, handler: t });
-      i.push(r);
-      let n = await t.waitUntil((async () => (await t.waitUntil(Promise.race(i))) || (await r))());
-      if (!n) throw new l('no-response', { url: e.url });
-      return n;
+      let n = this._getNetworkPromise({ timeoutId: s, request: e, logs: a, handler: t });
+      i.push(n);
+      let r = await t.waitUntil((async () => (await t.waitUntil(Promise.race(i))) || (await n))());
+      if (!r) throw new l('no-response', { url: e.url });
+      return r;
     }
     _getTimeoutPromise({ request: e, logs: t, handler: s }) {
       let a;
@@ -688,17 +688,17 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
       };
     }
     async _getNetworkPromise({ timeoutId: e, request: t, logs: s, handler: a }) {
-      let i, r;
+      let i, n;
       try {
-        r = await a.fetchAndCachePut(t);
+        n = await a.fetchAndCachePut(t);
       } catch (e) {
         e instanceof Error && (i = e);
       }
-      return (e && clearTimeout(e), (i || !r) && (r = await a.cacheMatch(t)), r);
+      return (e && clearTimeout(e), (i || !n) && (n = await a.cacheMatch(t)), n);
     }
   }
   o(475);
-  class W {
+  class A {
     constructor(e = {}) {
       ((this._statuses = e.statuses), (this._headers = e.headers));
     }
@@ -714,7 +714,7 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
   class O {
     constructor(e) {
       ((this.cacheWillUpdate = async ({ response: e }) => (this._cacheableResponse.isResponseCacheable(e) ? e : null)),
-        (this._cacheableResponse = new W(e)));
+        (this._cacheableResponse = new A(e)));
     }
   }
   function B(e) {
@@ -725,32 +725,32 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
     H = new WeakMap(),
     V = new WeakMap(),
     $ = new WeakMap(),
-    G = new WeakMap(),
-    Q = {
+    J = new WeakMap(),
+    Y = {
       get(e, t, s) {
         if (e instanceof IDBTransaction) {
           if ('done' === t) return H.get(e);
           if ('objectStoreNames' === t) return e.objectStoreNames || V.get(e);
           if ('store' === t) return s.objectStoreNames[1] ? void 0 : s.objectStore(s.objectStoreNames[0]);
         }
-        return J(e[t]);
+        return G(e[t]);
       },
       set: (e, t, s) => ((e[t] = s), !0),
       has: (e, t) => (e instanceof IDBTransaction && ('done' === t || 'store' === t)) || t in e,
     };
-  function J(e) {
+  function G(e) {
     if (e instanceof IDBRequest) {
       let t = new Promise((t, s) => {
         let a = () => {
-            (e.removeEventListener('success', i), e.removeEventListener('error', r));
+            (e.removeEventListener('success', i), e.removeEventListener('error', n));
           },
           i = () => {
-            (t(J(e.result)), a());
+            (t(G(e.result)), a());
           },
-          r = () => {
+          n = () => {
             (s(e.error), a());
           };
-        (e.addEventListener('success', i), e.addEventListener('error', r));
+        (e.addEventListener('success', i), e.addEventListener('error', n));
       });
       return (
         t
@@ -758,7 +758,7 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
             t instanceof IDBCursor && F.set(t, e);
           })
           .catch(() => {}),
-        G.set(t, e),
+        J.set(t, e),
         t
       );
     }
@@ -771,14 +771,14 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
               (i = [IDBCursor.prototype.advance, IDBCursor.prototype.continue, IDBCursor.prototype.continuePrimaryKey])
             ).includes(e)
             ? function (...t) {
-                return (e.apply(Y(this), t), J(F.get(this)));
+                return (e.apply(Q(this), t), G(F.get(this)));
               }
             : function (...t) {
-                return J(e.apply(Y(this), t));
+                return G(e.apply(Q(this), t));
               }
           : function (t, ...s) {
-              let a = e.call(Y(this), t, ...s);
-              return (V.set(a, t.sort ? t.sort() : [t]), J(a));
+              let a = e.call(Q(this), t, ...s);
+              return (V.set(a, t.sort ? t.sort() : [t]), G(a));
             };
       return (e instanceof IDBTransaction &&
         (function (e) {
@@ -786,26 +786,26 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
           let t = new Promise((t, s) => {
             let a = () => {
                 (e.removeEventListener('complete', i),
-                  e.removeEventListener('error', r),
-                  e.removeEventListener('abort', r));
+                  e.removeEventListener('error', n),
+                  e.removeEventListener('abort', n));
               },
               i = () => {
                 (t(), a());
               },
-              r = () => {
+              n = () => {
                 (s(e.error || new DOMException('AbortError', 'AbortError')), a());
               };
-            (e.addEventListener('complete', i), e.addEventListener('error', r), e.addEventListener('abort', r));
+            (e.addEventListener('complete', i), e.addEventListener('error', n), e.addEventListener('abort', n));
           });
           H.set(e, t);
         })(e),
       j(e, a || (a = [IDBDatabase, IDBObjectStore, IDBIndex, IDBCursor, IDBTransaction])))
-        ? new Proxy(e, Q)
+        ? new Proxy(e, Y)
         : e;
     })(e);
-    return (t !== e && ($.set(e, t), G.set(t, e)), t);
+    return (t !== e && ($.set(e, t), J.set(t, e)), t);
   }
-  let Y = (e) => G.get(e),
+  let Q = (e) => J.get(e),
     z = ['get', 'getKey', 'getAll', 'getAllKeys', 'count'],
     X = ['put', 'add', 'delete', 'clear'],
     Z = new Map();
@@ -816,14 +816,14 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
       a = t !== s,
       i = X.includes(s);
     if (!(s in (a ? IDBIndex : IDBObjectStore).prototype) || !(i || z.includes(s))) return;
-    let r = async function (e, ...t) {
-      let r = this.transaction(e, i ? 'readwrite' : 'readonly'),
-        n = r.store;
-      return (a && (n = n.index(t.shift())), (await Promise.all([n[s](...t), i && r.done]))[0]);
+    let n = async function (e, ...t) {
+      let n = this.transaction(e, i ? 'readwrite' : 'readonly'),
+        r = n.store;
+      return (a && (r = r.index(t.shift())), (await Promise.all([r[s](...t), i && n.done]))[0]);
     };
-    return (Z.set(t, r), r);
+    return (Z.set(t, n), n);
   }
-  ((Q = ((e) => ({ ...e, get: (t, s, a) => ee(t, s) || e.get(t, s, a), has: (t, s) => !!ee(t, s) || e.has(t, s) }))(Q)),
+  ((Y = ((e) => ({ ...e, get: (t, s, a) => ee(t, s) || e.get(t, s, a), has: (t, s) => !!ee(t, s) || e.has(t, s) }))(Y)),
     o(187));
   let et = 'cache-entries',
     es = (e) => {
@@ -844,7 +844,7 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
         this._cacheName &&
           (function (e, { blocked: t } = {}) {
             let s = indexedDB.deleteDatabase(e);
-            (t && s.addEventListener('blocked', (e) => t(e.oldVersion, e)), J(s).then(() => void 0));
+            (t && s.addEventListener('blocked', (e) => t(e.oldVersion, e)), G(s).then(() => void 0));
           })(this._cacheName));
     }
     async setTimestamp(e, t) {
@@ -861,15 +861,15 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
       let s = await this.getDb(),
         a = await s.transaction(et).store.index('timestamp').openCursor(null, 'prev'),
         i = [],
-        r = 0;
+        n = 0;
       for (; a; ) {
         let s = a.value;
-        (s.cacheName === this._cacheName && ((e && s.timestamp < e) || (t && r >= t) ? i.push(a.value) : r++),
+        (s.cacheName === this._cacheName && ((e && s.timestamp < e) || (t && n >= t) ? i.push(a.value) : n++),
           (a = await a.continue()));
       }
-      let n = [];
-      for (let e of i) (await s.delete(et, e.id), n.push(e.url));
-      return n;
+      let r = [];
+      for (let e of i) (await s.delete(et, e.id), r.push(e.url));
+      return r;
     }
     _getId(e) {
       return this._cacheName + '|' + es(e);
@@ -877,18 +877,18 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
     async getDb() {
       return (
         this._db ||
-          (this._db = await (function (e, t, { blocked: s, upgrade: a, blocking: i, terminated: r } = {}) {
-            let n = indexedDB.open(e, 1),
-              o = J(n);
+          (this._db = await (function (e, t, { blocked: s, upgrade: a, blocking: i, terminated: n } = {}) {
+            let r = indexedDB.open(e, 1),
+              o = G(r);
             return (
               a &&
-                n.addEventListener('upgradeneeded', (e) => {
-                  a(J(n.result), e.oldVersion, e.newVersion, J(n.transaction), e);
+                r.addEventListener('upgradeneeded', (e) => {
+                  a(G(r.result), e.oldVersion, e.newVersion, G(r.transaction), e);
                 }),
-              s && n.addEventListener('blocked', (e) => s(e.oldVersion, e.newVersion, e)),
+              s && r.addEventListener('blocked', (e) => s(e.oldVersion, e.newVersion, e)),
               o
                 .then((e) => {
-                  (r && e.addEventListener('close', () => r()),
+                  (n && e.addEventListener('close', () => n()),
                     i && e.addEventListener('versionchange', (e) => i(e.oldVersion, e.newVersion, e)));
                 })
                 .catch(() => {}),
@@ -936,17 +936,17 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
       ((this._rerunRequested = !1), await this._timestampModel.expireEntries(1 / 0));
     }
   }
-  class er {
+  class en {
     constructor(e = {}) {
       ((this.cachedResponseWillBeUsed = async ({ event: e, request: t, cacheName: s, cachedResponse: a }) => {
         if (!a) return null;
         let i = this._isResponseDateFresh(a),
-          r = this._getCacheExpiration(s);
-        B(r.expireEntries());
-        let n = r.updateTimestamp(t.url);
+          n = this._getCacheExpiration(s);
+        B(n.expireEntries());
+        let r = n.updateTimestamp(t.url);
         if (e)
           try {
-            e.waitUntil(n);
+            e.waitUntil(r);
           } catch (e) {}
         return i ? a : null;
       }),
@@ -957,7 +957,7 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
         (this._config = e),
         (this._maxAgeSeconds = e.maxAgeSeconds),
         (this._cacheExpirations = new Map()),
-        e.purgeOnQuotaError && v.add(() => this.deleteCacheAndMetadata()));
+        e.purgeOnQuotaError && R.add(() => this.deleteCacheAndMetadata()));
     }
     _getCacheExpiration(e) {
       if (e === d.getRuntimeName()) throw new l('expire-custom-caches-only');
@@ -980,206 +980,208 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
     }
   }
   (!(function (e, t) {
-    (k().precache(e), q(new M(k(), void 0)));
+    (k().precache(e), I(new q(k(), void 0)));
   })([
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/1360-9b7115a0286eac95.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/142-f70a8e8ff352c2f4.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/1612-0e21d4a3cf760690.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/2518-7a75899e802026c0.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/2561-6db31dd2ab429d49.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/302ecd0c-72ab4e4164b9f86a.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/3412-bb6ab09d179a8930.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/344-3ec544f71866e79e.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/3621-75b1e83dcce0700a.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/369cbde2-422c9c1336c9072c.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/3730-19278fad79580b92.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/3963-b5c4803a9a5c5707.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/4298-42ee1e7b9eb69c93.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/4493-332e18673afa6cc2.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/4531-654e487b6bb1039d.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/4580-03d4818f07dd3d29.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/4815-14444cd90757ba71.js' },
+    { revision: 'b73dce51ad6d9b256e3fb2613c98fad3', url: '/_next/static/IW6C6FLgwf_iGy9WJBvv1/_buildManifest.js' },
+    { revision: 'b6652df95db52feb4daf4eca35380933', url: '/_next/static/IW6C6FLgwf_iGy9WJBvv1/_ssgManifest.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/1360-9b7115a0286eac95.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/142-f70a8e8ff352c2f4.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/1612-0e21d4a3cf760690.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/2518-7a75899e802026c0.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/2561-6db31dd2ab429d49.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/302ecd0c-72ab4e4164b9f86a.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/3412-bb6ab09d179a8930.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/344-3ec544f71866e79e.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/3621-75b1e83dcce0700a.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/369cbde2-422c9c1336c9072c.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/3730-19278fad79580b92.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/3963-b5c4803a9a5c5707.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/4298-42ee1e7b9eb69c93.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/4493-332e18673afa6cc2.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/4531-654e487b6bb1039d.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/4580-03d4818f07dd3d29.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/4815-14444cd90757ba71.js' },
     { revision: 'af646ed7dbe89c9d', url: '/_next/static/chunks/5008.af646ed7dbe89c9d.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/5593-68fd3f5cbe460f37.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/5618-5ac057c50e40ff5e.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/5675-230e599af32589db.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/5912-7000988ea3c26c83.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/5954-9ea0a60ba2294700.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/5981-868b57fc7cd3d579.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/6054-6d0931eaeb9a57b3.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/6155-be3a9ca770360bfa.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/6414-f964e04bedf751ab.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/6552-57742d8bf7bf650b.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/6641-0b5ff13b2ca9545d.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/6686-2bcef49f23b32b85.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/6724-5b759f1606511fc6.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/5593-68fd3f5cbe460f37.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/5618-5ac057c50e40ff5e.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/5675-230e599af32589db.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/5912-7000988ea3c26c83.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/5954-9ea0a60ba2294700.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/5981-868b57fc7cd3d579.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/6054-6d0931eaeb9a57b3.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/6155-be3a9ca770360bfa.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/6414-f964e04bedf751ab.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/6552-57742d8bf7bf650b.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/6641-0b5ff13b2ca9545d.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/6686-2bcef49f23b32b85.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/6724-5b759f1606511fc6.js' },
     { revision: 'f2b386eecb4e7b2a', url: '/_next/static/chunks/6844.f2b386eecb4e7b2a.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/7070-05b9f1f10ccfc428.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/7648-37703062afeee202.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/7070-05b9f1f10ccfc428.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/7648-37703062afeee202.js' },
     { revision: 'dc460df7db66e6fb', url: '/_next/static/chunks/7953.dc460df7db66e6fb.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/8005-9fdc493bef468d67.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/8007-490335d26b2554b7.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/8043-538ef371c1da670f.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/8132-4cd8969e18b41032.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/8400-ce2178b6e06c6fa5.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/8654-9dc115ca560b7b0c.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/8916-597debf59bccda93.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/9042-8da73a22d07820d1.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/9266-903f7fbe403d09f1.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/9454-920ab04548b21e15.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/9520-27a34efc175500d4.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/_not-found/page-87a208fb946adc44.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/8005-9fdc493bef468d67.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/8007-490335d26b2554b7.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/8043-538ef371c1da670f.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/8132-4cd8969e18b41032.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/8400-ce2178b6e06c6fa5.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/8654-9dc115ca560b7b0c.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/8916-597debf59bccda93.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/9042-8da73a22d07820d1.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/9266-903f7fbe403d09f1.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/9454-920ab04548b21e15.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/9520-27a34efc175500d4.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/_not-found/page-87a208fb946adc44.js' },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/api/auth/%5B...nextauth%5D/route-950e096f0a4f9f45.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/api/save-subscription/route-efcef6c87236b1a2.js',
     },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/client/(main)/forms/page-0b9481e3dd793a0d.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/client/(main)/forms/page-0b9481e3dd793a0d.js' },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/client/(main)/journals/%5BentryId%5D/edit/page-cbe53ef919344605.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/client/(main)/journals/%5BentryId%5D/page-8e84828870e6ab90.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/client/(main)/journals/new/page-38867615715f2124.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/client/(main)/journals/page-ccfa61bc59e054de.js',
     },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/client/(main)/layout-67ab0b243df86440.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/client/(main)/layout-67ab0b243df86440.js' },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/client/(main)/messages/page-c080fba8a74e8e06.js',
     },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/client/(main)/page-cee72ecfaac5c13a.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/client/(main)/page-cee72ecfaac5c13a.js' },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/client/(main)/settings/page-478c581c7ddcf7d7.js',
     },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/client/auth/layout-ea87e2bdd4c5127c.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/client/auth/otp/page-c1e9e04e906acbcb.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/client/auth/page-3a5672ee87cb91dc.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/client/auth/signup/page-34c51351b40ccf39.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/client/intake/page-c65b349284c2e66c.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/client/auth/layout-ea87e2bdd4c5127c.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/client/auth/otp/page-c1e9e04e906acbcb.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/client/auth/page-3a5672ee87cb91dc.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/client/auth/signup/page-34c51351b40ccf39.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/client/intake/page-c65b349284c2e66c.js' },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/client/medical-details/page-abc637a7627df25c.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/client/personal-details/page-812e9d01cc1bcf9b.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/client/profile-setup/page-d0751345de5fe78a.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/client/response-sent/page-31fef7e0de25c014.js',
     },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/error-7cb7a921b31600cc.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/layout-59b6351dc6e23662.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/loading-fea29ac3f58d55d9.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/not-found-9cb54adbffa4b640.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/page-6907a07d6b6808eb.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/error-7cb7a921b31600cc.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/layout-2bd809b2db1c86d6.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/loading-fea29ac3f58d55d9.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/not-found-9cb54adbffa4b640.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/page-6907a07d6b6808eb.js' },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/clients/%5BclientId%5D/dashboard/journals/%5BentryId%5D/page-c40852d99187bbaa.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/clients/%5BclientId%5D/dashboard/page-da1f3a57df37dbab.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/clients/%5BclientId%5D/messages/page-457141f479849c3a.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/clients/%5BclientId%5D/plans/%5BplanId%5D/page-6864ee70d2a69aa3.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/clients/%5BclientId%5D/profile/page-2c3fd6c28a84fbef.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/clients/%5BclientId%5D/tasks/%5Bdate%5D/page-fc1f5316b697be05.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/clients/page-9fe92cb814dd0a14.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/forms/%5BformId%5D/page-9717602f27673851.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/forms/new/page-7d3f43556522acbc.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/forms/page-e80076b3061fb558.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/layout-a11b09a4e142defe.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/messages/page-f68b5d4585a723c6.js',
     },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/practitioner/(main)/page-8c54da3c2c1ebe66.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/practitioner/(main)/page-8c54da3c2c1ebe66.js' },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/sessions/%5BsessionId%5D/page-73af4e0fa51acbc2.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/sessions/page-618a21dfcbec462f.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/(main)/settings/page-56c0ed6d7b85815c.js',
     },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/practitioner/auth/layout-534c80bbeecc83be.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/practitioner/auth/page-342a2036730f1afd.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/practitioner/auth/layout-534c80bbeecc83be.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/practitioner/auth/page-342a2036730f1afd.js' },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/auth/signup/page-9e623838510bd724.js',
     },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/invite/layout-98aaa75af54d48bc.js',
     },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/practitioner/invite/page-4b446f95809ff63e.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/practitioner/invite/page-4b446f95809ff63e.js' },
     {
-      revision: 'oTm1scofgksb5NNmzQfg5',
+      revision: 'IW6C6FLgwf_iGy9WJBvv1',
       url: '/_next/static/chunks/app/practitioner/invite/success/page-8cd08a842282c21b.js',
     },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/app/practitioner/layout-9cc9a0f5c388c28b.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/f85d6200-563f98cf76178a47.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/framework-75e4e36823871521.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/main-2e2297694b1b5189.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/main-app-92eb1c9f39f0ea5d.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/pages/_app-fe3ef6fd75a7b25b.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/pages/_error-943381cab371d3aa.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/app/practitioner/layout-9cc9a0f5c388c28b.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/f85d6200-563f98cf76178a47.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/framework-75e4e36823871521.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/main-2e2297694b1b5189.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/main-app-92eb1c9f39f0ea5d.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/pages/_app-fe3ef6fd75a7b25b.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/pages/_error-943381cab371d3aa.js' },
     { revision: '846118c33b2c0e922d7b3a7676f81f6f', url: '/_next/static/chunks/polyfills-42372ed130431b0a.js' },
-    { revision: 'oTm1scofgksb5NNmzQfg5', url: '/_next/static/chunks/webpack-39266943b8f58cea.js' },
+    { revision: 'IW6C6FLgwf_iGy9WJBvv1', url: '/_next/static/chunks/webpack-39266943b8f58cea.js' },
     { revision: '014993a177f3f5d5', url: '/_next/static/css/014993a177f3f5d5.css' },
+    { revision: '0335864f24a057c3', url: '/_next/static/css/0335864f24a057c3.css' },
     { revision: '602f5ad336f21e3d', url: '/_next/static/css/602f5ad336f21e3d.css' },
     { revision: '78ac2cf553c350fa', url: '/_next/static/css/78ac2cf553c350fa.css' },
     { revision: 'b768cd3c08ab615c', url: '/_next/static/css/b768cd3c08ab615c.css' },
-    { revision: 'fec4f13ee5269473', url: '/_next/static/css/fec4f13ee5269473.css' },
     { revision: 'befd9c0fdfa3d8a645d5f95717ed6420', url: '/_next/static/media/26a46d62cd723877-s.woff2' },
     { revision: '62f762afb90d7743f6916ea0cce473af', url: '/_next/static/media/47f136985ef5b5cb-s.woff2' },
     { revision: '774586d4bcb09cb42f38fc490d25b01b', url: '/_next/static/media/4ead58c4dcc3f285-s.woff2' },
@@ -1191,50 +1193,95 @@ This is generally NOT safe. Learn more at https://bit.ly/wb-precache`));
     { revision: 'd54db44de5ccb18886ece2fda72bdfe0', url: '/_next/static/media/df0a9ae256c0569c-s.woff2' },
     { revision: '65850a373e258f1c897a2b3d75eb74de', url: '/_next/static/media/e4af272ccee01ff0-s.p.woff2' },
     { revision: 'fe89f9f565f22acf40ad703bdc3c7dcc', url: '/_next/static/media/f7c8bed65df13031-s.woff2' },
-    { revision: 'b73dce51ad6d9b256e3fb2613c98fad3', url: '/_next/static/oTm1scofgksb5NNmzQfg5/_buildManifest.js' },
-    { revision: 'b6652df95db52feb4daf4eca35380933', url: '/_next/static/oTm1scofgksb5NNmzQfg5/_ssgManifest.js' },
     { revision: 'bb9f1706cec9b540cfe722afa5d23ccc', url: '/auth.jpg' },
     { revision: '4564f00dbd5936ad96f8b50c089cec5a', url: '/icons/icon-192x192.png' },
     { revision: '4564f00dbd5936ad96f8b50c089cec5a', url: '/icons/icon-512x512.png' },
     { revision: '9f0e37d16e79938bfba7e00b659eeaaa', url: '/logo.svg' },
     { revision: '9ec7a037e0204e8a4ac295d59d30fe45', url: '/manifest.json' },
-    { revision: 'c74ea87c171bcee423896a037ab69206', url: '/sw.js' },
+    { revision: '64e0fc363d6ec764a681f9f404d09ae2', url: '/sw.js' },
   ]),
-    q(
-      /^https?.*/,
-      new A({
-        cacheName: 'http-calls',
-        networkTimeoutSeconds: 15,
-        plugins: [new er({ maxEntries: 150, maxAgeSeconds: 2592e3 }), new O({ statuses: [0, 200] })],
+    I(
+      ({ url: e }) => e.pathname.startsWith('/api/'),
+      new K({
+        cacheName: 'api-cache',
+        plugins: [new O({ statuses: [0, 200] }), new en({ maxEntries: 50, maxAgeSeconds: 300 })],
       }),
-      'GET',
     ),
     self.addEventListener('push', function (e) {
       console.log('[SW] Push event received:', e);
       let t = {};
       if (e.data)
         try {
-          t = e.data.json();
+          ((t = e.data.json()), console.log('[SW] Parsed push data as JSON:', t));
         } catch (s) {
-          (console.error('[SW] Error parsing push data:', s), (t = { title: 'Notification', body: e.data.text() }));
+          console.log('[SW] Failed to parse as JSON, trying as text:', s.message);
+          try {
+            let s = e.data.text();
+            console.log('[SW] Raw text data:', s);
+            try {
+              ((t = JSON.parse(s)), console.log('[SW] Successfully parsed text as JSON:', t));
+            } catch (e) {
+              (console.log('[SW] Treating as plain text message'),
+                (t = { title: 'New Notification', body: s || 'You have a new message.' }));
+            }
+          } catch (e) {
+            (console.error('[SW] Error reading push data as text:', e),
+              (t = { title: 'New Notification', body: 'You have a new message.' }));
+          }
         }
+      else
+        (console.log('[SW] No data in push event, using default notification'),
+          (t = { title: 'New Notification', body: 'You have a new message.' }));
       let s = t.title || 'New Notification',
         a = {
           body: t.body || 'You have a new message.',
           icon: '/icons/icon-192x192.png',
           badge: '/icons/icon-192x192.png',
-          data: { url: t.url || '/' },
+          data: { url: t.url || '/', timestamp: Date.now() },
+          requireInteraction: !1,
+          silent: !1,
+          tag: t.tag || 'default',
+          actions: t.actions || [],
         };
-      e.waitUntil(self.registration.showNotification(s, a));
+      (console.log('[SW] Showing notification with options:', a),
+        e.waitUntil(
+          self.registration
+            .showNotification(s, a)
+            .then(() => {
+              console.log('[SW] Notification shown successfully');
+            })
+            .catch((e) => {
+              console.error('[SW] Error showing notification:', e);
+            }),
+        ));
     }),
     self.addEventListener('notificationclick', function (e) {
-      (console.log('[SW] Notification click received.'), e.notification.close());
-      let t = e.notification.data.url || '/';
-      e.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: !0 }).then((e) => {
-          for (let s of e) if (s.url === t && 'focus' in s) return s.focus();
-          if (clients.openWindow) return clients.openWindow(t);
-        }),
-      );
+      (console.log('[SW] Notification click received:', e), e.notification.close());
+      let t = e.notification.data?.url || '/';
+      (console.log('[SW] Opening URL:', t),
+        e.waitUntil(
+          clients
+            .matchAll({ type: 'window', includeUncontrolled: !0 })
+            .then((e) => {
+              for (let s of (console.log('[SW] Found window clients:', e.length), e))
+                if (s.url === t && 'focus' in s) return (console.log('[SW] Focusing existing window'), s.focus());
+              if (clients.openWindow) return (console.log('[SW] Opening new window'), clients.openWindow(t));
+            })
+            .catch((e) => {
+              console.error('[SW] Error handling notification click:', e);
+            }),
+        ));
+    }),
+    self.addEventListener('notificationclose', function (e) {
+      console.log('[SW] Notification closed:', e);
+    }),
+    self.addEventListener('install', function (e) {
+      (console.log('[SW] Service Worker installing...'), self.skipWaiting());
+    }),
+    self.addEventListener('activate', function (e) {
+      (console.log('[SW] Service Worker activating...'), e.waitUntil(self.clients.claim()));
+    }),
+    self.addEventListener('message', function (e) {
+      (console.log('[SW] Message received:', e.data), e.data && 'SKIP_WAITING' === e.data.type && self.skipWaiting());
     }));
 })();

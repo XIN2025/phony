@@ -26,6 +26,8 @@ const optionalEnvVars = {
   DATABASE_URL: process.env.DATABASE_URL || 'mongodb://localhost:27017/continuum',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   DEEPGRAM_API_KEY: process.env.DEEPGRAM_API_KEY || '',
+  VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '',
+  VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY || '',
 };
 
 export const config = {
@@ -61,5 +63,9 @@ export const config = {
   ai: {
     geminiApiKey: optionalEnvVars.GEMINI_API_KEY,
     deepgramApiKey: optionalEnvVars.DEEPGRAM_API_KEY,
+  },
+  vapid: {
+    publicKey: optionalEnvVars.VAPID_PUBLIC_KEY,
+    privateKey: optionalEnvVars.VAPID_PRIVATE_KEY,
   },
 };

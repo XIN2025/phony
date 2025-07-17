@@ -24,7 +24,7 @@
         (r.r(t),
           r.d(t, {
             PrecacheController: () => u.PrecacheController,
-            PrecacheFallbackPlugin: () => f.PrecacheFallbackPlugin,
+            PrecacheFallbackPlugin: () => g.PrecacheFallbackPlugin,
             PrecacheRoute: () => d.PrecacheRoute,
             PrecacheStrategy: () => p.PrecacheStrategy,
             addPlugins: () => a.addPlugins,
@@ -47,7 +47,7 @@
           u = r(5),
           d = r(41),
           p = r(20),
-          f = r(51);
+          g = r(51);
         (r(15), r(52));
       },
       (e, t, r) => {
@@ -726,16 +726,16 @@
             if (!h) return !1;
             const { cacheName: u, matchOptions: d } = this._strategy,
               p = await self.caches.open(u),
-              f = this.hasCallback('cacheDidUpdate'),
-              g = f ? await (0, a.cacheMatchIgnoreParams)(p, n.clone(), ['__WB_REVISION__'], d) : null;
+              g = this.hasCallback('cacheDidUpdate'),
+              f = g ? await (0, a.cacheMatchIgnoreParams)(p, n.clone(), ['__WB_REVISION__'], d) : null;
             try {
-              await p.put(n, f ? h.clone() : h);
+              await p.put(n, g ? h.clone() : h);
             } catch (e) {
               if (e instanceof Error)
                 throw ('QuotaExceededError' === e.name && (await (0, s.executeQuotaErrorCallbacks)()), e);
             }
             for (const e of this.iterateCallbacks('cacheDidUpdate'))
-              await e({ cacheName: u, oldResponse: g, newResponse: h.clone(), request: n, event: this.event });
+              await e({ cacheName: u, oldResponse: f, newResponse: h.clone(), request: n, event: this.event });
             return !0;
           }
           async getCacheKey(e, t) {
@@ -1749,7 +1749,7 @@
         }
       },
       (e, t, r) => {
-        (r.r(t), r.d(t, { a: () => h, i: () => a, r: () => d, u: () => m, w: () => g }));
+        (r.r(t), r.d(t, { a: () => h, i: () => a, r: () => d, u: () => m, w: () => f }));
         const a = (e, t) => t.some((t) => e instanceof t);
         let n, s;
         const o = new WeakMap(),
@@ -1764,7 +1764,7 @@
               if ('objectStoreNames' === t) return e.objectStoreNames || c.get(e);
               if ('store' === t) return r.objectStoreNames[1] ? void 0 : r.objectStore(r.objectStoreNames[0]);
             }
-            return g(e[t]);
+            return f(e[t]);
           },
           set: (e, t, r) => ((e[t] = r), !0),
           has: (e, t) => (e instanceof IDBTransaction && ('done' === t || 'store' === t)) || t in e,
@@ -1783,17 +1783,17 @@
                 ])
               ).includes(e)
               ? function (...t) {
-                  return (e.apply(m(this), t), g(o.get(this)));
+                  return (e.apply(m(this), t), f(o.get(this)));
                 }
               : function (...t) {
-                  return g(e.apply(m(this), t));
+                  return f(e.apply(m(this), t));
                 }
             : function (t, ...r) {
                 const a = e.call(m(this), t, ...r);
-                return (c.set(a, t.sort ? t.sort() : [t]), g(a));
+                return (c.set(a, t.sort ? t.sort() : [t]), f(a));
               };
         }
-        function f(e) {
+        function g(e) {
           return 'function' == typeof e
             ? p(e)
             : (e instanceof IDBTransaction &&
@@ -1819,7 +1819,7 @@
                 ? new Proxy(e, u)
                 : e);
         }
-        function g(e) {
+        function f(e) {
           if (e instanceof IDBRequest)
             return (function (e) {
               const t = new Promise((t, r) => {
@@ -1827,7 +1827,7 @@
                     (e.removeEventListener('success', n), e.removeEventListener('error', s));
                   },
                   n = () => {
-                    (t(g(e.result)), a());
+                    (t(f(e.result)), a());
                   },
                   s = () => {
                     (r(e.error), a());
@@ -1845,7 +1845,7 @@
               );
             })(e);
           if (l.has(e)) return l.get(e);
-          const t = f(e);
+          const t = g(e);
           return (t !== e && (l.set(e, t), h.set(t, e)), t);
         }
         const m = (e) => h.get(e);
@@ -1953,44 +1953,93 @@
       o = r(72);
     ((0, e.precacheAndRoute)(self.__WB_MANIFEST),
       (0, t.registerRoute)(
-        /^https?.*/,
+        ({ url: e }) => e.pathname.startsWith('/api/'),
         new n.NetworkFirst({
-          cacheName: 'http-calls',
-          networkTimeoutSeconds: 15,
+          cacheName: 'api-cache',
           plugins: [
-            new o.ExpirationPlugin({ maxEntries: 150, maxAgeSeconds: 2592e3 }),
             new s.CacheableResponsePlugin({ statuses: [0, 200] }),
+            new o.ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 300 }),
           ],
         }),
-        'GET',
       ),
       self.addEventListener('push', function (e) {
         console.log('[SW] Push event received:', e);
         let t = {};
         if (e.data)
           try {
-            t = e.data.json();
+            ((t = e.data.json()), console.log('[SW] Parsed push data as JSON:', t));
           } catch (r) {
-            (console.error('[SW] Error parsing push data:', r), (t = { title: 'Notification', body: e.data.text() }));
+            console.log('[SW] Failed to parse as JSON, trying as text:', r.message);
+            try {
+              const r = e.data.text();
+              console.log('[SW] Raw text data:', r);
+              try {
+                ((t = JSON.parse(r)), console.log('[SW] Successfully parsed text as JSON:', t));
+              } catch (e) {
+                (console.log('[SW] Treating as plain text message'),
+                  (t = { title: 'New Notification', body: r || 'You have a new message.' }));
+              }
+            } catch (e) {
+              (console.error('[SW] Error reading push data as text:', e),
+                (t = { title: 'New Notification', body: 'You have a new message.' }));
+            }
           }
+        else
+          (console.log('[SW] No data in push event, using default notification'),
+            (t = { title: 'New Notification', body: 'You have a new message.' }));
         const r = t.title || 'New Notification',
           a = {
             body: t.body || 'You have a new message.',
             icon: '/icons/icon-192x192.png',
             badge: '/icons/icon-192x192.png',
-            data: { url: t.url || '/' },
+            data: { url: t.url || '/', timestamp: Date.now() },
+            requireInteraction: !1,
+            silent: !1,
+            tag: t.tag || 'default',
+            actions: t.actions || [],
           };
-        e.waitUntil(self.registration.showNotification(r, a));
+        (console.log('[SW] Showing notification with options:', a),
+          e.waitUntil(
+            self.registration
+              .showNotification(r, a)
+              .then(() => {
+                console.log('[SW] Notification shown successfully');
+              })
+              .catch((e) => {
+                console.error('[SW] Error showing notification:', e);
+              }),
+          ));
       }),
       self.addEventListener('notificationclick', function (e) {
-        (console.log('[SW] Notification click received.'), e.notification.close());
-        const t = e.notification.data.url || '/';
-        e.waitUntil(
-          clients.matchAll({ type: 'window', includeUncontrolled: !0 }).then((e) => {
-            for (let r of e) if (r.url === t && 'focus' in r) return r.focus();
-            if (clients.openWindow) return clients.openWindow(t);
-          }),
-        );
+        var t;
+        (console.log('[SW] Notification click received:', e), e.notification.close());
+        const r = (null === (t = e.notification.data) || void 0 === t ? void 0 : t.url) || '/';
+        (console.log('[SW] Opening URL:', r),
+          e.waitUntil(
+            clients
+              .matchAll({ type: 'window', includeUncontrolled: !0 })
+              .then((e) => {
+                console.log('[SW] Found window clients:', e.length);
+                for (let t of e)
+                  if (t.url === r && 'focus' in t) return (console.log('[SW] Focusing existing window'), t.focus());
+                if (clients.openWindow) return (console.log('[SW] Opening new window'), clients.openWindow(r));
+              })
+              .catch((e) => {
+                console.error('[SW] Error handling notification click:', e);
+              }),
+          ));
+      }),
+      self.addEventListener('notificationclose', function (e) {
+        console.log('[SW] Notification closed:', e);
+      }),
+      self.addEventListener('install', function (e) {
+        (console.log('[SW] Service Worker installing...'), self.skipWaiting());
+      }),
+      self.addEventListener('activate', function (e) {
+        (console.log('[SW] Service Worker activating...'), e.waitUntil(self.clients.claim()));
+      }),
+      self.addEventListener('message', function (e) {
+        (console.log('[SW] Message received:', e.data), e.data && 'SKIP_WAITING' === e.data.type && self.skipWaiting());
       }));
   })();
 })();

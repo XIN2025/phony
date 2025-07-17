@@ -6,17 +6,68 @@ import { PrismaClient } from '@repo/db';
 const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.id) {
+      console.error('[SaveSubscription] Unauthorized request - no session or user ID');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+    console.log(`[SaveSubscription] Processing subscription for user: ${userId}`);
+
+    const subscription = await req.json();
+
+    // Validate subscription data
+    if (!subscription || !subscription.endpoint || !subscription.keys) {
+      console.error('[SaveSubscription] Invalid subscription data:', subscription);
+      return NextResponse.json({ error: 'Invalid subscription data' }, { status: 400 });
+    }
+
+    console.log(`[SaveSubscription] Saving subscription with endpoint: ${subscription.endpoint}`);
+
+    // Save or update the subscription for this user
+    const savedSubscription = await prisma.pushSubscription.upsert({
+      where: { endpoint: subscription.endpoint },
+      update: {
+        keys: subscription.keys,
+        userId,
+        updatedAt: new Date(),
+      },
+      create: {
+        endpoint: subscription.endpoint,
+        keys: subscription.keys,
+        userId,
+      },
+    });
+
+    console.log(`[SaveSubscription] Successfully saved subscription: ${savedSubscription.id}`);
+
+    return NextResponse.json(
+      {
+        message: 'Subscription saved successfully.',
+        subscriptionId: savedSubscription.id,
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error('[SaveSubscription] Error saving subscription:', error);
+
+    if (error instanceof Error) {
+      return NextResponse.json(
+        {
+          error: 'Failed to save subscription',
+          details: error.message,
+        },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        error: 'Failed to save subscription',
+      },
+      { status: 500 },
+    );
   }
-  const userId = session.user.id;
-  const subscription = await req.json();
-  // Save or update the subscription for this user
-  await prisma.pushSubscription.upsert({
-    where: { endpoint: subscription.endpoint },
-    update: { keys: subscription.keys, userId },
-    create: { endpoint: subscription.endpoint, keys: subscription.keys, userId },
-  });
-  return NextResponse.json({ message: 'Subscription saved.' }, { status: 201 });
 }

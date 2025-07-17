@@ -3,7 +3,7 @@ import withPWA from 'next-pwa';
 
 const pwaConfig = {
   dest: 'public',
-  swSrc: 'worker/index.js',
+  swSrc: '../../worker/index.js',
   disable: false,
   skipWaiting: true,
   maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,

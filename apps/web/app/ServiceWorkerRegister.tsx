@@ -8,48 +8,76 @@ export default function ServiceWorkerRegister() {
     // Only run in production or localhost
     const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
     const isProd = process.env.NODE_ENV === 'production';
+
     if ((isProd || isLocalhost) && 'serviceWorker' in navigator) {
+      console.log('[SW] Service worker registration starting...');
+
       // Unregister any old service workers (one-time cleanup)
       navigator.serviceWorker.getRegistrations().then((registrations) => {
         if (registrations.length > 0) {
           console.log('[SW] Unregistering old service workers...');
           registrations.forEach((reg) => reg.unregister());
         }
+
         // Register the new service worker after cleanup
-        window.addEventListener('load', () => {
+        const registerServiceWorker = () => {
           const swUrl = `/sw.js?cb=${Date.now()}`; // cache-busting query param
           console.log(`[SW] Attempting to register service worker at: ${swUrl}`);
+
           navigator.serviceWorker
             .register(swUrl)
             .then(async (registration) => {
               console.log('[SW] Registration successful:', registration);
+
               // Wait for the service worker to be active before subscribing to push
               await waitForServiceWorkerActive(registration);
               console.log('[SW] Service worker is active. Proceeding with push registration.');
+
               // --- Push Notification Registration ---
               if ('Notification' in window && 'PushManager' in window) {
                 try {
                   const permission = await Notification.requestPermission();
                   console.log('[Push] Notification permission:', permission);
+
                   if (permission === 'granted') {
                     const VAPID_PUBLIC_KEY = envConfig.vapidPublicKey;
                     if (!VAPID_PUBLIC_KEY) {
-                      throw new Error(
-                        'VAPID public key is missing. Please set NEXT_PUBLIC_VAPID_PUBLIC_KEY in your .env file.',
+                      console.error(
+                        '[Push] VAPID public key is missing. Please set NEXT_PUBLIC_VAPID_PUBLIC_KEY in your .env file.',
                       );
+                      return;
                     }
+
                     const subscribeOptions = {
                       userVisibleOnly: true,
                       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
                     };
+
                     const subscription = await registration.pushManager.subscribe(subscribeOptions);
-                    console.log('[Push] Push subscription:', subscription);
+                    console.log('[Push] Push subscription created:', subscription);
+
                     // Send subscription to backend
-                    await fetch('/api/save-subscription', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(subscription),
-                    });
+                    try {
+                      const response = await fetch('/api/save-subscription', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(subscription),
+                      });
+
+                      if (response.ok) {
+                        console.log('[Push] Subscription saved to backend successfully');
+                      } else {
+                        console.error(
+                          '[Push] Failed to save subscription to backend:',
+                          response.status,
+                          response.statusText,
+                        );
+                      }
+                    } catch (fetchError) {
+                      console.error('[Push] Error saving subscription to backend:', fetchError);
+                    }
+                  } else {
+                    console.log('[Push] Notification permission denied by user');
                   }
                 } catch (err) {
                   console.error('[Push] Error during push registration:', err);
@@ -62,10 +90,17 @@ export default function ServiceWorkerRegister() {
             .catch((registrationError) => {
               console.error('[SW] Registration failed:', registrationError);
               if (registrationError && registrationError.message) {
-                alert('Service Worker registration failed: ' + registrationError.message);
+                console.error('[SW] Registration error details:', registrationError.message);
               }
             });
-        });
+        };
+
+        // Register service worker after page load
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', registerServiceWorker);
+        } else {
+          registerServiceWorker();
+        }
       });
     } else {
       console.warn(
@@ -73,6 +108,7 @@ export default function ServiceWorkerRegister() {
       );
     }
   }, []);
+
   return null;
 }
 
@@ -93,27 +129,32 @@ async function waitForServiceWorkerActive(registration: ServiceWorkerRegistratio
   if (registration.active) {
     return;
   }
+
   return new Promise((resolve) => {
-    if (registration.installing) {
-      registration.installing.addEventListener('statechange', function listener(e) {
-        if ((e.target as ServiceWorker).state === 'activated') {
-          resolve();
-        }
-      });
-    } else if (registration.waiting) {
-      registration.waiting.addEventListener('statechange', function listener(e) {
-        if ((e.target as ServiceWorker).state === 'activated') {
-          resolve();
-        }
-      });
-    } else {
-      // Fallback: poll until active
-      const interval = setInterval(() => {
-        if (registration.active) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 100);
-    }
+    const checkActive = () => {
+      if (registration.active) {
+        resolve();
+        return;
+      }
+
+      if (registration.installing) {
+        registration.installing.addEventListener('statechange', function listener(e) {
+          if ((e.target as ServiceWorker).state === 'activated') {
+            resolve();
+          }
+        });
+      } else if (registration.waiting) {
+        registration.waiting.addEventListener('statechange', function listener(e) {
+          if ((e.target as ServiceWorker).state === 'activated') {
+            resolve();
+          }
+        });
+      } else {
+        // Fallback: poll until active
+        setTimeout(checkActive, 100);
+      }
+    };
+
+    checkActive();
   });
 }

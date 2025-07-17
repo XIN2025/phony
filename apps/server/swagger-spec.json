@@ -646,6 +646,26 @@
         "tags": ["plans"]
       }
     },
+    "/api/plans/test-push/{clientId}": {
+      "post": {
+        "operationId": "PlanController_testPushNotification",
+        "parameters": [{ "name": "clientId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Test notification sent." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Test push notification for a client",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/test-push/{clientId}/custom": {
+      "post": {
+        "operationId": "PlanController_testPushNotificationWithData",
+        "parameters": [{ "name": "clientId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Custom test notification sent." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Test push notification with custom data for a client",
+        "tags": ["plans"]
+      }
+    },
     "/api/action-items/{id}/complete": {
       "post": {
         "operationId": "ActionItemController_completeActionItem",

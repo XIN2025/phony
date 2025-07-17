@@ -36,11 +36,20 @@ export class PlanService {
     private config: ConfigService
   ) {
     // Configure web-push with VAPID keys from env
-    webpush.setVapidDetails(
-      'mailto:support@continuum.com',
-      this.config.get('NEXT_PUBLIC_VAPID_PUBLIC_KEY'),
-      this.config.get('VAPID_PRIVATE_KEY')
-    );
+    const vapidPublicKey = this.config.get('vapid.publicKey');
+    const vapidPrivateKey = this.config.get('vapid.privateKey');
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      console.warn('[Push] VAPID keys not configured. Push notifications will be disabled.');
+      console.warn('[Push] Please set NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables.');
+    } else {
+      try {
+        webpush.setVapidDetails('mailto:support@continuum.com', vapidPublicKey, vapidPrivateKey);
+        console.log('[Push] VAPID configuration successful');
+      } catch (error) {
+        console.error('[Push] Failed to configure VAPID:', error);
+      }
+    }
   }
 
   async createPlan(data: CreatePlanDto) {
@@ -732,30 +741,75 @@ export class PlanService {
 
   private async sendPushToClient(clientId: string, notification: { title: string; body: string; url: string }) {
     const subscriptions = await this.prisma.pushSubscription.findMany({ where: { userId: clientId } });
+
+    if (subscriptions.length === 0) {
+      console.log(`[Push] No push subscriptions found for client ${clientId}`);
+      return;
+    }
+
+    console.log(`[Push] Found ${subscriptions.length} subscription(s) for client ${clientId}`);
+
     for (const sub of subscriptions) {
       try {
+        console.log(`[Push] Sending notification to subscription ${sub.id} for client ${clientId}`);
+
+        const payload = JSON.stringify({
+          title: notification.title,
+          body: notification.body,
+          url: notification.url,
+          timestamp: Date.now(),
+        });
+
+        console.log(`[Push] Payload size: ${payload.length} bytes`);
+
         await webpush.sendNotification(
           {
             endpoint: sub.endpoint,
             keys: sub.keys,
           },
-          JSON.stringify({
-            title: notification.title,
-            body: notification.body,
-            url: notification.url,
-          }),
+          payload,
           {
-            TTL: 86400, // 24 hours in seconds
+            TTL: 86400, // 24 hours in seconds (fixed: uppercase 'TTL' as required by web-push)
             urgency: 'high',
             topic: 'plan-updates',
           }
         );
+
+        console.log(`[Push] Successfully sent notification to subscription ${sub.id}`);
       } catch (err) {
-        // Optionally handle unsubscribed endpoints
+        console.error(`[Push] Failed to send notification to subscription ${sub.id}:`, err);
+
+        // Handle unsubscribed endpoints
         if (err.statusCode === 410 || err.statusCode === 404) {
+          console.log(`[Push] Removing invalid subscription ${sub.id} (status: ${err.statusCode})`);
           await this.prisma.pushSubscription.delete({ where: { id: sub.id } });
+        } else if (err.statusCode === 413) {
+          console.error(`[Push] Payload too large for subscription ${sub.id}`);
+        } else if (err.statusCode === 429) {
+          console.error(`[Push] Rate limited for subscription ${sub.id}`);
+        } else {
+          console.error(`[Push] Unknown error for subscription ${sub.id}:`, err.message);
         }
       }
+    }
+  }
+
+  // Test method for push notifications
+  async testPushNotification(clientId: string) {
+    console.log(`[Push] Testing push notification for client ${clientId}`);
+
+    try {
+      await this.sendPushToClient(clientId, {
+        title: 'Test Notification',
+        body: 'This is a test push notification from Continuum.',
+        url: '/client',
+      });
+
+      console.log(`[Push] Test notification sent successfully for client ${clientId}`);
+      return { success: true, message: 'Test notification sent' };
+    } catch (error) {
+      console.error(`[Push] Test notification failed for client ${clientId}:`, error);
+      return { success: false, error: error.message };
     }
   }
 }
