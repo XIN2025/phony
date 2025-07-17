@@ -111,7 +111,7 @@ export class PlanService {
     await this.sendPushToClient(plan.clientId, {
       title: 'New Plan Published',
       body: 'Your practitioner has published a new plan for you!',
-      url: `/client/plans/${planId}`,
+      url: '/',
     });
     return plan;
   }
@@ -562,7 +562,7 @@ export class PlanService {
       await this.sendPushToClient(plan.clientId, {
         title: 'Plan Updated',
         body: 'Your practitioner has updated your action plan tasks.',
-        url: `/client/plans/${planId}`,
+        url: '/',
       });
     }
     return updated;
@@ -739,7 +739,7 @@ export class PlanService {
     return plan;
   }
 
-  private async sendPushToClient(clientId: string, notification: { title: string; body: string; url: string }) {
+  private async sendPushToClient(clientId: string, notification: { title: string; body: string; url?: string }) {
     const subscriptions = await this.prisma.pushSubscription.findMany({ where: { userId: clientId } });
 
     if (subscriptions.length === 0) {
@@ -756,7 +756,7 @@ export class PlanService {
         const payload = JSON.stringify({
           title: notification.title,
           body: notification.body,
-          url: notification.url,
+          url: '/', // Always send client to home page
           timestamp: Date.now(),
         });
 
@@ -769,7 +769,7 @@ export class PlanService {
           },
           payload,
           {
-            TTL: 86400, // 24 hours in seconds (fixed: uppercase 'TTL' as required by web-push)
+            TTL: 86400, // 24 hours in seconds
             urgency: 'high',
             topic: 'plan-updates',
           }
@@ -802,7 +802,7 @@ export class PlanService {
       await this.sendPushToClient(clientId, {
         title: 'Test Notification',
         body: 'This is a test push notification from Continuum.',
-        url: '/client',
+        url: '/',
       });
 
       console.log(`[Push] Test notification sent successfully for client ${clientId}`);
