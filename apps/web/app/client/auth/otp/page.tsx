@@ -182,7 +182,7 @@ export default function ClientOtpPage() {
   return (
     <>
       <AuthHeader title='Enter OTP' />
-      <form className='space-y-6' onSubmit={handleVerifyOtp}>
+      <form className='space-y-6 px-2 w-full max-w-xs mx-auto' onSubmit={handleVerifyOtp}>
         <div className='text-center'>
           <p className='text-sm text-muted-foreground mb-4'>We've sent you an OTP at "{email}"</p>
           <div className='flex justify-center mb-6'>

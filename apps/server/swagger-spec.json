@@ -1,1 +1,1023 @@
-{"openapi":"3.0.0","paths":{"/api":{"get":{"operationId":"AppController_getHello","parameters":[],"responses":{"200":{"description":""}},"tags":["App"]}},"/api/auth/otp/verify":{"post":{"operationId":"AuthController_verifyOtp","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/VerifyOtpDto"}}}},"responses":{"default":{"description":"","content":{"application/json":{"schema":{"$ref":"#/components/schemas/LoginResponseDto"}}}}},"tags":["auth"]}},"/api/auth/otp/verify-invitation":{"post":{"operationId":"AuthController_verifyInvitationOtp","parameters":[],"responses":{"default":{"description":"Whether the invitation OTP was verified successfully","content":{"application/json":{"schema":{"type":"boolean"}}}}},"tags":["auth"]}},"/api/auth/invitation/check-intake-form":{"post":{"operationId":"AuthController_checkInvitationIntakeForm","parameters":[],"responses":{"default":{"description":"Whether the invitation has an intake form attached","content":{"application/json":{"schema":{"type":"boolean"}}}}},"tags":["auth"]}},"/api/auth/otp":{"post":{"operationId":"AuthController_otpAuth","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/OtpAuthDto"}}}},"responses":{"default":{"description":"Whether the OTP was sent successfully","content":{"application/json":{"schema":{"type":"boolean"}}}}},"tags":["auth"]}},"/api/auth/practitioner/signup":{"post":{"operationId":"AuthController_practitionerSignUp","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/PractitionerSignUpDto"}}}},"responses":{"default":{"description":"","content":{"application/json":{"schema":{"$ref":"#/components/schemas/LoginResponseDto"}}}}},"tags":["auth"]}},"/api/auth/client/signup":{"post":{"operationId":"AuthController_clientSignUp","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ClientSignUpDto"}}}},"responses":{"default":{"description":"","content":{"application/json":{"schema":{"$ref":"#/components/schemas/LoginResponseDto"}}}}},"tags":["auth"]}},"/api/auth/profile":{"post":{"operationId":"AuthController_updateProfile","parameters":[],"responses":{"201":{"description":""}},"tags":["auth"]}},"/api/auth/me":{"get":{"operationId":"AuthController_getCurrentUser","parameters":[],"responses":{"200":{"description":"User information retrieved successfully."}},"summary":"Get current user information","tags":["auth"]}},"/api/practitioner/invitations/token/{token}":{"get":{"operationId":"PractitionerController_getInvitationByToken","parameters":[{"name":"token","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Invitation details found."},"404":{"description":"Invitation not found."}},"security":[{"bearer":[]}],"summary":"Get invitation details by token","tags":["practitioner"]}},"/api/practitioner/invite-client":{"post":{"operationId":"PractitionerController_inviteClient","parameters":[],"responses":{"201":{"description":"Client invitation sent successfully"},"400":{"description":"Bad request - client already exists or invitation already sent"},"404":{"description":"Practitioner not found"}},"security":[{"bearer":[]}],"summary":"Invite a client to the platform","tags":["practitioner"]}},"/api/practitioner/invitations":{"get":{"operationId":"PractitionerController_getInvitations","parameters":[],"responses":{"200":{"description":"List of invitations retrieved successfully"}},"security":[{"bearer":[]}],"summary":"Get all invitations sent by the practitioner","tags":["practitioner"]}},"/api/practitioner/invitations/{id}/resend":{"post":{"operationId":"PractitionerController_resendInvitation","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"201":{"description":"Invitation resent successfully"},"404":{"description":"Invitation not found"}},"security":[{"bearer":[]}],"summary":"Resend a specific invitation","tags":["practitioner"]}},"/api/practitioner/invitations/{id}":{"delete":{"operationId":"PractitionerController_deleteInvitation","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Invitation deleted successfully"},"403":{"description":"Forbidden - invitation does not belong to practitioner"},"404":{"description":"Invitation not found"}},"security":[{"bearer":[]}],"summary":"Delete a specific invitation","tags":["practitioner"]}},"/api/practitioner/invitations/cleanup-expired":{"post":{"operationId":"PractitionerController_cleanupExpiredInvitations","parameters":[],"responses":{"200":{"description":"Expired invitations cleaned up successfully"}},"security":[{"bearer":[]}],"summary":"Cleanup expired invitations","tags":["practitioner"]}},"/api/practitioner/clients":{"get":{"operationId":"PractitionerController_getClients","parameters":[],"responses":{"200":{"description":"List of clients retrieved successfully"}},"security":[{"bearer":[]}],"summary":"Get all clients of the practitioner","tags":["practitioner"]}},"/api/practitioner/clients/{clientId}":{"get":{"operationId":"PractitionerController_getClientDetails","parameters":[{"name":"clientId","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Client details retrieved successfully"},"403":{"description":"Forbidden - client does not belong to practitioner"},"404":{"description":"Client not found"}},"security":[{"bearer":[]}],"summary":"Get detailed client information","tags":["practitioner"]}},"/api/intake-forms":{"post":{"operationId":"IntakeFormController_create","parameters":[],"responses":{"201":{"description":"The form has been successfully created."}},"security":[{"bearer":[]}],"summary":"Create a new intake form","tags":["intake-forms"]},"get":{"operationId":"IntakeFormController_findAll","parameters":[],"responses":{"200":{"description":"List of intake forms."}},"security":[{"bearer":[]}],"summary":"Get all intake forms for the logged-in practitioner","tags":["intake-forms"]}},"/api/intake-forms/{id}":{"get":{"operationId":"IntakeFormController_findOne","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"The intake form."},"403":{"description":"Forbidden."},"404":{"description":"Form not found."}},"security":[{"bearer":[]}],"summary":"Get a specific intake form by ID","tags":["intake-forms"]},"put":{"operationId":"IntakeFormController_update","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"The form has been successfully updated."},"403":{"description":"Forbidden."},"404":{"description":"Form not found."}},"security":[{"bearer":[]}],"summary":"Update an intake form","tags":["intake-forms"]},"delete":{"operationId":"IntakeFormController_remove","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"204":{"description":"The form has been successfully deleted."},"403":{"description":"Forbidden."},"404":{"description":"Form not found."}},"security":[{"bearer":[]}],"summary":"Delete an intake form","tags":["intake-forms"]}},"/api/client/intake-form":{"get":{"operationId":"ClientController_getIntakeForm","parameters":[],"responses":{"200":{"description":"Intake form retrieved successfully."},"404":{"description":"No intake form found for client."}},"security":[{"bearer":[]}],"summary":"Get intake form for client","tags":["client"]}},"/api/client/intake-form/submit":{"post":{"operationId":"ClientController_submitIntakeForm","parameters":[],"responses":{"200":{"description":"Intake form submitted successfully."}},"security":[{"bearer":[]}],"summary":"Submit intake form answers","tags":["client"]}},"/api/client/fix-statuses":{"post":{"operationId":"ClientController_fixClientStatuses","parameters":[],"responses":{"200":{"description":"Client statuses fixed successfully."}},"security":[{"bearer":[]}],"summary":"Fix client statuses that are inconsistent with their submissions","tags":["client"]}},"/api/users":{"get":{"operationId":"UsersController_getAllUsers","parameters":[],"responses":{"200":{"description":"List of all users."}},"security":[{"bearer":[]}],"summary":"Get all users","tags":["users"]},"post":{"operationId":"UsersController_createUser","parameters":[],"responses":{"201":{"description":"The user has been successfully created."}},"security":[{"bearer":[]}],"summary":"Create a new user","tags":["users"]}},"/api/users/practitioner":{"get":{"operationId":"UsersController_getAllPractitioner","parameters":[],"responses":{"200":{"description":"List of all practitioners."}},"security":[{"bearer":[]}],"summary":"Get all practitioners","tags":["users"]}},"/api/users/clients":{"get":{"operationId":"UsersController_getAllClient","parameters":[],"responses":{"200":{"description":"List of all clients."}},"security":[{"bearer":[]}],"summary":"Get all clients","tags":["users"]}},"/api/users/{id}":{"get":{"operationId":"UsersController_getUserById","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"The user."},"404":{"description":"User not found."}},"security":[{"bearer":[]}],"summary":"Get user by ID","tags":["users"]}},"/api/sessions":{"post":{"operationId":"SessionController_createSession","parameters":[],"responses":{"201":{"description":"Session created successfully."}},"security":[{"bearer":[]}],"summary":"Create a new session","tags":["sessions"]}},"/api/sessions/{id}/upload":{"post":{"operationId":"SessionController_uploadAudio","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"requestBody":{"required":true,"content":{"multipart/form-data":{"schema":{"type":"object","properties":{"audio":{"type":"string","format":"binary"},"durationSeconds":{"type":"number"}}}}}},"responses":{"201":{"description":"Audio uploaded successfully."}},"security":[{"bearer":[]}],"summary":"Upload audio for a session","tags":["sessions"]}},"/api/sessions/{id}":{"put":{"operationId":"SessionController_updateSession","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Session updated successfully."}},"security":[{"bearer":[]}],"summary":"Update session details","tags":["sessions"]},"get":{"operationId":"SessionController_getSessionById","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Session retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get session by ID","tags":["sessions"]}},"/api/sessions/client/{clientId}/comprehensive-summary":{"post":{"operationId":"SessionController_generateComprehensiveSummary","parameters":[{"name":"clientId","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Comprehensive summary generated successfully."}},"security":[{"bearer":[]}],"summary":"Generate comprehensive summary for client","tags":["sessions"]}},"/api/sessions/{id}/status":{"put":{"operationId":"SessionController_updateSessionStatus","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Session status updated successfully."}},"security":[{"bearer":[]}],"summary":"Update session status","tags":["sessions"]}},"/api/sessions/practitioner/{id}":{"get":{"operationId":"SessionController_getSessionsByPractitioner","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Sessions retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get sessions by practitioner","tags":["sessions"]}},"/api/sessions/practitioner/me":{"get":{"operationId":"SessionController_getMySessions","parameters":[],"responses":{"200":{"description":"Sessions retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get sessions for current practitioner","tags":["sessions"]}},"/api/sessions/client/{id}":{"get":{"operationId":"SessionController_getSessionsByClient","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Sessions retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get sessions by client","tags":["sessions"]}},"/api/plans":{"post":{"operationId":"PlanController_createPlan","parameters":[],"responses":{"201":{"description":"Plan created successfully."}},"security":[{"bearer":[]}],"summary":"Create a new plan","tags":["plans"]}},"/api/plans/{id}/publish":{"patch":{"operationId":"PlanController_publishPlan","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Plan published successfully."}},"security":[{"bearer":[]}],"summary":"Publish a plan","tags":["plans"]}},"/api/plans/practitioner/{id}":{"get":{"operationId":"PlanController_getPlansByPractitioner","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Plans retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get plans by practitioner","tags":["plans"]}},"/api/plans/client/{id}":{"get":{"operationId":"PlanController_getPlansByClient","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Plans retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get plans by client","tags":["plans"]}},"/api/plans/{id}":{"get":{"operationId":"PlanController_getPlanById","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Plan retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get plan by ID","tags":["plans"]},"put":{"operationId":"PlanController_updatePlan","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Plan updated successfully."}},"security":[{"bearer":[]}],"summary":"Update a plan","tags":["plans"]}},"/api/plans/{id}/with-suggestions":{"get":{"operationId":"PlanController_getPlanWithSuggestions","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Plan with suggestions retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get plan with AI suggestions","tags":["plans"]}},"/api/plans/{id}/suggestions":{"get":{"operationId":"PlanController_getSuggestedActionItems","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Suggested action items retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get suggested action items for a plan","tags":["plans"]}},"/api/plans/suggestions/{suggestionId}/approve":{"post":{"operationId":"PlanController_approveSuggestedActionItem","parameters":[{"name":"suggestionId","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Suggested action item approved successfully."}},"security":[{"bearer":[]}],"summary":"Approve a suggested action item","tags":["plans"]}},"/api/plans/suggestions/{suggestionId}/reject":{"post":{"operationId":"PlanController_rejectSuggestedActionItem","parameters":[{"name":"suggestionId","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Suggested action item rejected successfully."}},"security":[{"bearer":[]}],"summary":"Reject a suggested action item","tags":["plans"]}},"/api/plans/suggestions/{suggestionId}":{"patch":{"operationId":"PlanController_updateSuggestedActionItem","parameters":[{"name":"suggestionId","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Suggested action item updated successfully."}},"security":[{"bearer":[]}],"summary":"Edit a suggested action item","tags":["plans"]}},"/api/plans/{id}/action-items":{"post":{"operationId":"PlanController_addCustomActionItem","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"201":{"description":"Custom action item added successfully."}},"security":[{"bearer":[]}],"summary":"Add a custom action item to a plan","tags":["plans"]}},"/api/plans/generate":{"post":{"operationId":"PlanController_generatePlanFromSession","parameters":[],"responses":{"200":{"description":"Plan generated successfully."}},"security":[{"bearer":[]}],"summary":"Generate action plan from session","tags":["plans"]}},"/api/plans/{planId}/generate-more-tasks":{"post":{"operationId":"PlanController_generateMoreComplementaryTasks","parameters":[{"name":"planId","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Additional tasks generated successfully."}},"security":[{"bearer":[]}],"summary":"Generate additional complementary tasks for a plan","tags":["plans"]}},"/api/plans/{planId}/action-items/{actionItemId}":{"patch":{"operationId":"PlanController_updateActionItem","parameters":[{"name":"planId","required":true,"in":"path","schema":{"type":"string"}},{"name":"actionItemId","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Action item updated successfully."}},"security":[{"bearer":[]}],"summary":"Update an action item in a plan","tags":["plans"]},"delete":{"operationId":"PlanController_deleteActionItem","parameters":[{"name":"planId","required":true,"in":"path","schema":{"type":"string"}},{"name":"actionItemId","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Action item deleted successfully."}},"security":[{"bearer":[]}],"summary":"Delete an action item from a plan","tags":["plans"]}},"/api/plans/client/{id}/action-items":{"get":{"operationId":"PlanController_getClientActionItemsInRange","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}},{"name":"start","required":true,"in":"query","schema":{"type":"string"}},{"name":"end","required":true,"in":"query","schema":{"type":"string"}}],"responses":{"200":{"description":"Action items retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get all action items for a client in a date range","tags":["plans"]}},"/api/plans/client/{clientId}/active":{"get":{"operationId":"PlanController_getActivePlanForDate","parameters":[{"name":"clientId","required":true,"in":"path","schema":{"type":"string"}},{"name":"date","required":true,"in":"query","schema":{"type":"string"}}],"responses":{"200":{"description":"Active plan for the date returned successfully."}},"security":[{"bearer":[]}],"summary":"Get the active plan for a client on a specific date","tags":["plans"]}},"/api/action-items/{id}/complete":{"post":{"operationId":"ActionItemController_completeActionItem","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"201":{"description":"Action item completed successfully."}},"security":[{"bearer":[]}],"summary":"Mark action item as completed","tags":["action-items"]},"delete":{"operationId":"ActionItemController_undoActionItemCompletion","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}},{"name":"clientId","required":true,"in":"query","schema":{"type":"string"}}],"responses":{"200":{"description":"Action item completion undone successfully."}},"security":[{"bearer":[]}],"summary":"Undo action item completion","tags":["action-items"]}},"/api/action-items/{id}/completions":{"get":{"operationId":"ActionItemController_getActionItemCompletions","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}},{"name":"clientId","required":true,"in":"query","schema":{"type":"string"}}],"responses":{"200":{"description":"Completions retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get completions for an action item","tags":["action-items"]}},"/api/action-items/completions/client/{clientId}":{"get":{"operationId":"ActionItemController_getClientCompletions","parameters":[{"name":"clientId","required":true,"in":"path","schema":{"type":"string"}},{"name":"planId","required":true,"in":"query","schema":{"type":"string"}}],"responses":{"200":{"description":"Client completions retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get all completions for a client","tags":["action-items"]}},"/api/action-items/completions/{id}":{"put":{"operationId":"ActionItemController_updateCompletion","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Completion updated successfully."}},"security":[{"bearer":[]}],"summary":"Update a completion","tags":["action-items"]},"delete":{"operationId":"ActionItemController_deleteCompletion","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Completion deleted successfully."}},"security":[{"bearer":[]}],"summary":"Delete a completion","tags":["action-items"]}},"/api/action-items/{id}":{"get":{"operationId":"ActionItemController_getActionItemById","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Action item retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get action item by ID","tags":["action-items"]}},"/api/action-items/upload-resource":{"post":{"operationId":"ActionItemController_uploadResource","parameters":[],"responses":{"201":{"description":"File uploaded successfully."}},"security":[{"bearer":[]}],"summary":"Upload a file as a resource for an action item","tags":["action-items"]}},"/api/journal":{"post":{"operationId":"JournalController_createJournalEntry","parameters":[],"responses":{"201":{"description":"Journal entry created successfully."}},"security":[{"bearer":[]}],"summary":"Create a new journal entry","tags":["journal"]},"get":{"operationId":"JournalController_getJournalEntries","parameters":[],"responses":{"200":{"description":"Journal entries retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get all journal entries for the current user","tags":["journal"]}},"/api/journal/search":{"get":{"operationId":"JournalController_searchJournalEntries","parameters":[{"name":"q","required":true,"in":"query","schema":{"type":"string"}}],"responses":{"200":{"description":"Search results retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Search journal entries","tags":["journal"]}},"/api/journal/{id}":{"get":{"operationId":"JournalController_getJournalEntryById","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Journal entry retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get a specific journal entry","tags":["journal"]},"put":{"operationId":"JournalController_updateJournalEntry","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Journal entry updated successfully."}},"security":[{"bearer":[]}],"summary":"Update a journal entry","tags":["journal"]},"delete":{"operationId":"JournalController_deleteJournalEntry","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Journal entry deleted successfully."}},"security":[{"bearer":[]}],"summary":"Delete a journal entry","tags":["journal"]}},"/api/journal/client/{clientId}":{"get":{"operationId":"JournalController_getClientJournalEntries","parameters":[{"name":"clientId","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Client journal entries retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get journal entries for a specific client (practitioner only)","tags":["journal"]}},"/api/journal/{id}/read":{"post":{"operationId":"JournalController_markJournalEntryAsRead","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Journal entry marked as read successfully."}},"security":[{"bearer":[]}],"summary":"Mark a journal entry as read by the current practitioner","tags":["journal"]}},"/api/journal/unread/count":{"get":{"operationId":"JournalController_getUnreadJournalCount","parameters":[],"responses":{"200":{"description":"Unread journal count retrieved successfully."}},"security":[{"bearer":[]}],"summary":"Get unread journal count for the current practitioner","tags":["journal"]}},"/api/chat/conversations":{"get":{"operationId":"ChatController_getConversations","parameters":[],"responses":{"200":{"description":"List of conversations."}},"security":[{"bearer":[]}],"summary":"Get conversations for the authenticated user","tags":["Chat"]},"post":{"operationId":"ChatController_createOrGetConversation","parameters":[],"responses":{"200":{"description":"Conversation created or retrieved."}},"security":[{"bearer":[]}],"summary":"Create or get a conversation","tags":["Chat"]}},"/api/chat/conversations/{conversationId}":{"get":{"operationId":"ChatController_getConversation","parameters":[{"name":"conversationId","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Conversation details."}},"security":[{"bearer":[]}],"summary":"Get conversation by ID","tags":["Chat"]}},"/api/chat/conversations/{conversationId}/messages":{"get":{"operationId":"ChatController_getMessages","parameters":[{"name":"conversationId","required":true,"in":"path","schema":{"type":"string"}},{"name":"page","required":true,"in":"query","schema":{"type":"string"}},{"name":"limit","required":true,"in":"query","schema":{"type":"string"}}],"responses":{"200":{"description":"Conversation messages."}},"security":[{"bearer":[]}],"summary":"Get messages in a conversation","tags":["Chat"]}},"/api/chat/messages":{"post":{"operationId":"ChatController_sendMessage","parameters":[],"responses":{"201":{"description":"Message sent."}},"security":[{"bearer":[]}],"summary":"Send a message","tags":["Chat"]}},"/api/chat/conversations/{conversationId}/read":{"post":{"operationId":"ChatController_markMessagesAsRead","parameters":[{"name":"conversationId","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Messages marked as read."}},"security":[{"bearer":[]}],"summary":"Mark messages as read","tags":["Chat"]}},"/api/chat/messages/{messageId}/reactions":{"post":{"operationId":"ChatController_addReaction","parameters":[{"name":"messageId","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"201":{"description":"Reaction added."}},"security":[{"bearer":[]}],"summary":"Add reaction to message","tags":["Chat"]}},"/api/chat/messages/{messageId}/reactions/{emoji}":{"delete":{"operationId":"ChatController_removeReaction","parameters":[{"name":"messageId","required":true,"in":"path","schema":{"type":"string"}},{"name":"emoji","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Reaction removed."}},"security":[{"bearer":[]}],"summary":"Remove reaction from message","tags":["Chat"]}},"/api/chat/upload-attachment":{"post":{"operationId":"ChatController_uploadAttachment","parameters":[],"responses":{"201":{"description":"File uploaded successfully."}},"security":[{"bearer":[]}],"summary":"Upload a file attachment for chat messages","tags":["Chat"]}}},"info":{"title":"NestJS API","description":"API for NestJS","version":"1.0","contact":{}},"tags":[{"name":"API","description":""}],"servers":[],"components":{"securitySchemes":{"bearer":{"scheme":"bearer","bearerFormat":"JWT","type":"http"}},"schemas":{"VerifyOtpDto":{"type":"object","properties":{"email":{"type":"string"},"otp":{"type":"string"},"role":{"type":"string","enum":["PRACTITIONER","CLIENT"]}},"required":["email","otp","role"]},"UserDto":{"type":"object","properties":{"id":{"type":"string"},"email":{"type":"string"},"firstName":{"type":"string"},"lastName":{"type":"string","nullable":true},"avatarUrl":{"type":"string","nullable":true},"phoneNumber":{"type":"string","nullable":true},"allergies":{"type":"array","items":{"type":"string"},"nullable":true},"medicalHistory":{"type":"array","items":{"type":"string"},"nullable":true},"symptoms":{"type":"array","items":{"type":"string"},"nullable":true},"medications":{"type":"array","items":{"type":"string"},"nullable":true},"notificationSettings":{"type":"object","nullable":true,"additionalProperties":false,"properties":{"emailReminders":{"type":"boolean"},"practitionerMessages":{"type":"boolean"},"engagementPrompts":{"type":"boolean"},"marketingEmails":{"type":"boolean"}}},"role":{"type":"string","enum":["PRACTITIONER","CLIENT"]},"profession":{"type":"string","nullable":true},"clientStatus":{"type":"string","enum":["ACTIVE","NEEDS_INTAKE","INTAKE_COMPLETED"],"nullable":true},"practitionerId":{"type":"string","nullable":true},"isEmailVerified":{"type":"boolean"},"idProofUrl":{"type":"string","nullable":true}},"required":["id","email","firstName","lastName","avatarUrl","phoneNumber","allergies","medicalHistory","symptoms","medications","notificationSettings","role","profession","clientStatus","practitionerId","isEmailVerified","idProofUrl"]},"LoginResponseDto":{"type":"object","properties":{"token":{"type":"string"},"user":{"$ref":"#/components/schemas/UserDto"}},"required":["token","user"]},"OtpAuthDto":{"type":"object","properties":{"email":{"type":"string"}},"required":["email"]},"PractitionerSignUpDto":{"type":"object","properties":{"email":{"type":"string"},"otp":{"type":"string"},"role":{"type":"string","enum":["PRACTITIONER"],"default":"PRACTITIONER"},"firstName":{"type":"string"},"lastName":{"type":"string"},"profession":{"type":"string"}},"required":["email","otp","role","firstName","profession"]},"ClientSignUpDto":{"type":"object","properties":{"email":{"type":"string"},"firstName":{"type":"string"},"lastName":{"type":"string"},"invitationToken":{"type":"string"},"dob":{"type":"string"},"gender":{"type":"string"},"profession":{"type":"string"},"phoneNumber":{"type":"string"},"allergies":{"type":"array","items":{"type":"string"}},"medicalHistory":{"type":"array","items":{"type":"string"}},"symptoms":{"type":"array","items":{"type":"string"}},"medications":{"type":"array","items":{"type":"string"}},"notificationSettings":{"type":"object"}},"required":["email","firstName","invitationToken"]}}}}
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["App"]
+      }
+    },
+    "/api/auth/otp/verify": {
+      "post": {
+        "operationId": "AuthController_verifyOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VerifyOtpDto" } } }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponseDto" } } }
+          }
+        },
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/otp/verify-invitation": {
+      "post": {
+        "operationId": "AuthController_verifyInvitationOtp",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Whether the invitation OTP was verified successfully",
+            "content": { "application/json": { "schema": { "type": "boolean" } } }
+          }
+        },
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/invitation/check-intake-form": {
+      "post": {
+        "operationId": "AuthController_checkInvitationIntakeForm",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Whether the invitation has an intake form attached",
+            "content": { "application/json": { "schema": { "type": "boolean" } } }
+          }
+        },
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/otp": {
+      "post": {
+        "operationId": "AuthController_otpAuth",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OtpAuthDto" } } }
+        },
+        "responses": {
+          "default": {
+            "description": "Whether the OTP was sent successfully",
+            "content": { "application/json": { "schema": { "type": "boolean" } } }
+          }
+        },
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/practitioner/signup": {
+      "post": {
+        "operationId": "AuthController_practitionerSignUp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PractitionerSignUpDto" } } }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponseDto" } } }
+          }
+        },
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/client/signup": {
+      "post": {
+        "operationId": "AuthController_clientSignUp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientSignUpDto" } } }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponseDto" } } }
+          }
+        },
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/profile": {
+      "post": {
+        "operationId": "AuthController_updateProfile",
+        "parameters": [],
+        "responses": { "201": { "description": "" } },
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "AuthController_getCurrentUser",
+        "parameters": [],
+        "responses": { "200": { "description": "User information retrieved successfully." } },
+        "summary": "Get current user information",
+        "tags": ["auth"]
+      }
+    },
+    "/api/practitioner/invitations/token/{token}": {
+      "get": {
+        "operationId": "PractitionerController_getInvitationByToken",
+        "parameters": [{ "name": "token", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Invitation details found." },
+          "404": { "description": "Invitation not found." }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Get invitation details by token",
+        "tags": ["practitioner"]
+      }
+    },
+    "/api/practitioner/invite-client": {
+      "post": {
+        "operationId": "PractitionerController_inviteClient",
+        "parameters": [],
+        "responses": {
+          "201": { "description": "Client invitation sent successfully" },
+          "400": { "description": "Bad request - client already exists or invitation already sent" },
+          "404": { "description": "Practitioner not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Invite a client to the platform",
+        "tags": ["practitioner"]
+      }
+    },
+    "/api/practitioner/invitations": {
+      "get": {
+        "operationId": "PractitionerController_getInvitations",
+        "parameters": [],
+        "responses": { "200": { "description": "List of invitations retrieved successfully" } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get all invitations sent by the practitioner",
+        "tags": ["practitioner"]
+      }
+    },
+    "/api/practitioner/invitations/{id}/resend": {
+      "post": {
+        "operationId": "PractitionerController_resendInvitation",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": {
+          "201": { "description": "Invitation resent successfully" },
+          "404": { "description": "Invitation not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Resend a specific invitation",
+        "tags": ["practitioner"]
+      }
+    },
+    "/api/practitioner/invitations/{id}": {
+      "delete": {
+        "operationId": "PractitionerController_deleteInvitation",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Invitation deleted successfully" },
+          "403": { "description": "Forbidden - invitation does not belong to practitioner" },
+          "404": { "description": "Invitation not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Delete a specific invitation",
+        "tags": ["practitioner"]
+      }
+    },
+    "/api/practitioner/invitations/cleanup-expired": {
+      "post": {
+        "operationId": "PractitionerController_cleanupExpiredInvitations",
+        "parameters": [],
+        "responses": { "200": { "description": "Expired invitations cleaned up successfully" } },
+        "security": [{ "bearer": [] }],
+        "summary": "Cleanup expired invitations",
+        "tags": ["practitioner"]
+      }
+    },
+    "/api/practitioner/clients": {
+      "get": {
+        "operationId": "PractitionerController_getClients",
+        "parameters": [],
+        "responses": { "200": { "description": "List of clients retrieved successfully" } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get all clients of the practitioner",
+        "tags": ["practitioner"]
+      }
+    },
+    "/api/practitioner/clients/{clientId}": {
+      "get": {
+        "operationId": "PractitionerController_getClientDetails",
+        "parameters": [{ "name": "clientId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Client details retrieved successfully" },
+          "403": { "description": "Forbidden - client does not belong to practitioner" },
+          "404": { "description": "Client not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Get detailed client information",
+        "tags": ["practitioner"]
+      }
+    },
+    "/api/intake-forms": {
+      "post": {
+        "operationId": "IntakeFormController_create",
+        "parameters": [],
+        "responses": { "201": { "description": "The form has been successfully created." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Create a new intake form",
+        "tags": ["intake-forms"]
+      },
+      "get": {
+        "operationId": "IntakeFormController_findAll",
+        "parameters": [],
+        "responses": { "200": { "description": "List of intake forms." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get all intake forms for the logged-in practitioner",
+        "tags": ["intake-forms"]
+      }
+    },
+    "/api/intake-forms/{id}": {
+      "get": {
+        "operationId": "IntakeFormController_findOne",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "The intake form." },
+          "403": { "description": "Forbidden." },
+          "404": { "description": "Form not found." }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Get a specific intake form by ID",
+        "tags": ["intake-forms"]
+      },
+      "put": {
+        "operationId": "IntakeFormController_update",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "The form has been successfully updated." },
+          "403": { "description": "Forbidden." },
+          "404": { "description": "Form not found." }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Update an intake form",
+        "tags": ["intake-forms"]
+      },
+      "delete": {
+        "operationId": "IntakeFormController_remove",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": {
+          "204": { "description": "The form has been successfully deleted." },
+          "403": { "description": "Forbidden." },
+          "404": { "description": "Form not found." }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Delete an intake form",
+        "tags": ["intake-forms"]
+      }
+    },
+    "/api/client/intake-form": {
+      "get": {
+        "operationId": "ClientController_getIntakeForm",
+        "parameters": [],
+        "responses": {
+          "200": { "description": "Intake form retrieved successfully." },
+          "404": { "description": "No intake form found for client." }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Get intake form for client",
+        "tags": ["client"]
+      }
+    },
+    "/api/client/intake-form/submit": {
+      "post": {
+        "operationId": "ClientController_submitIntakeForm",
+        "parameters": [],
+        "responses": { "200": { "description": "Intake form submitted successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Submit intake form answers",
+        "tags": ["client"]
+      }
+    },
+    "/api/client/fix-statuses": {
+      "post": {
+        "operationId": "ClientController_fixClientStatuses",
+        "parameters": [],
+        "responses": { "200": { "description": "Client statuses fixed successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Fix client statuses that are inconsistent with their submissions",
+        "tags": ["client"]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "operationId": "UsersController_getAllUsers",
+        "parameters": [],
+        "responses": { "200": { "description": "List of all users." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get all users",
+        "tags": ["users"]
+      },
+      "post": {
+        "operationId": "UsersController_createUser",
+        "parameters": [],
+        "responses": { "201": { "description": "The user has been successfully created." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Create a new user",
+        "tags": ["users"]
+      }
+    },
+    "/api/users/practitioner": {
+      "get": {
+        "operationId": "UsersController_getAllPractitioner",
+        "parameters": [],
+        "responses": { "200": { "description": "List of all practitioners." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get all practitioners",
+        "tags": ["users"]
+      }
+    },
+    "/api/users/clients": {
+      "get": {
+        "operationId": "UsersController_getAllClient",
+        "parameters": [],
+        "responses": { "200": { "description": "List of all clients." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get all clients",
+        "tags": ["users"]
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "operationId": "UsersController_getUserById",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "The user." }, "404": { "description": "User not found." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get user by ID",
+        "tags": ["users"]
+      }
+    },
+    "/api/sessions": {
+      "post": {
+        "operationId": "SessionController_createSession",
+        "parameters": [],
+        "responses": { "201": { "description": "Session created successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Create a new session",
+        "tags": ["sessions"]
+      }
+    },
+    "/api/sessions/{id}/upload": {
+      "post": {
+        "operationId": "SessionController_uploadAudio",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "audio": { "type": "string", "format": "binary" },
+                  "durationSeconds": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Audio uploaded successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Upload audio for a session",
+        "tags": ["sessions"]
+      }
+    },
+    "/api/sessions/{id}": {
+      "put": {
+        "operationId": "SessionController_updateSession",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Session updated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Update session details",
+        "tags": ["sessions"]
+      },
+      "get": {
+        "operationId": "SessionController_getSessionById",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Session retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get session by ID",
+        "tags": ["sessions"]
+      }
+    },
+    "/api/sessions/client/{clientId}/comprehensive-summary": {
+      "post": {
+        "operationId": "SessionController_generateComprehensiveSummary",
+        "parameters": [{ "name": "clientId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Comprehensive summary generated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Generate comprehensive summary for client",
+        "tags": ["sessions"]
+      }
+    },
+    "/api/sessions/{id}/status": {
+      "put": {
+        "operationId": "SessionController_updateSessionStatus",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Session status updated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Update session status",
+        "tags": ["sessions"]
+      }
+    },
+    "/api/sessions/practitioner/{id}": {
+      "get": {
+        "operationId": "SessionController_getSessionsByPractitioner",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Sessions retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get sessions by practitioner",
+        "tags": ["sessions"]
+      }
+    },
+    "/api/sessions/practitioner/me": {
+      "get": {
+        "operationId": "SessionController_getMySessions",
+        "parameters": [],
+        "responses": { "200": { "description": "Sessions retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get sessions for current practitioner",
+        "tags": ["sessions"]
+      }
+    },
+    "/api/sessions/client/{id}": {
+      "get": {
+        "operationId": "SessionController_getSessionsByClient",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Sessions retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get sessions by client",
+        "tags": ["sessions"]
+      }
+    },
+    "/api/plans": {
+      "post": {
+        "operationId": "PlanController_createPlan",
+        "parameters": [],
+        "responses": { "201": { "description": "Plan created successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Create a new plan",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/{id}/publish": {
+      "patch": {
+        "operationId": "PlanController_publishPlan",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Plan published successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Publish a plan",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/practitioner/{id}": {
+      "get": {
+        "operationId": "PlanController_getPlansByPractitioner",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Plans retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get plans by practitioner",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/client/{id}": {
+      "get": {
+        "operationId": "PlanController_getPlansByClient",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Plans retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get plans by client",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/{id}": {
+      "get": {
+        "operationId": "PlanController_getPlanById",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Plan retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get plan by ID",
+        "tags": ["plans"]
+      },
+      "put": {
+        "operationId": "PlanController_updatePlan",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Plan updated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Update a plan",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/{id}/with-suggestions": {
+      "get": {
+        "operationId": "PlanController_getPlanWithSuggestions",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Plan with suggestions retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get plan with AI suggestions",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/{id}/suggestions": {
+      "get": {
+        "operationId": "PlanController_getSuggestedActionItems",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Suggested action items retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get suggested action items for a plan",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/suggestions/{suggestionId}/approve": {
+      "post": {
+        "operationId": "PlanController_approveSuggestedActionItem",
+        "parameters": [{ "name": "suggestionId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Suggested action item approved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Approve a suggested action item",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/suggestions/{suggestionId}/reject": {
+      "post": {
+        "operationId": "PlanController_rejectSuggestedActionItem",
+        "parameters": [{ "name": "suggestionId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Suggested action item rejected successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Reject a suggested action item",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/suggestions/{suggestionId}": {
+      "patch": {
+        "operationId": "PlanController_updateSuggestedActionItem",
+        "parameters": [{ "name": "suggestionId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Suggested action item updated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Edit a suggested action item",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/{id}/action-items": {
+      "post": {
+        "operationId": "PlanController_addCustomActionItem",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "201": { "description": "Custom action item added successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Add a custom action item to a plan",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/generate": {
+      "post": {
+        "operationId": "PlanController_generatePlanFromSession",
+        "parameters": [],
+        "responses": { "200": { "description": "Plan generated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Generate action plan from session",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/{planId}/generate-more-tasks": {
+      "post": {
+        "operationId": "PlanController_generateMoreComplementaryTasks",
+        "parameters": [{ "name": "planId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Additional tasks generated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Generate additional complementary tasks for a plan",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/{planId}/action-items/{actionItemId}": {
+      "patch": {
+        "operationId": "PlanController_updateActionItem",
+        "parameters": [
+          { "name": "planId", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "actionItemId", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Action item updated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Update an action item in a plan",
+        "tags": ["plans"]
+      },
+      "delete": {
+        "operationId": "PlanController_deleteActionItem",
+        "parameters": [
+          { "name": "planId", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "actionItemId", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Action item deleted successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Delete an action item from a plan",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/client/{id}/action-items": {
+      "get": {
+        "operationId": "PlanController_getClientActionItemsInRange",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "start", "required": true, "in": "query", "schema": { "type": "string" } },
+          { "name": "end", "required": true, "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Action items retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get all action items for a client in a date range",
+        "tags": ["plans"]
+      }
+    },
+    "/api/plans/client/{clientId}/active": {
+      "get": {
+        "operationId": "PlanController_getActivePlanForDate",
+        "parameters": [
+          { "name": "clientId", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "date", "required": true, "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Active plan for the date returned successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get the active plan for a client on a specific date",
+        "tags": ["plans"]
+      }
+    },
+    "/api/action-items/{id}/complete": {
+      "post": {
+        "operationId": "ActionItemController_completeActionItem",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "201": { "description": "Action item completed successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Mark action item as completed",
+        "tags": ["action-items"]
+      },
+      "delete": {
+        "operationId": "ActionItemController_undoActionItemCompletion",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "clientId", "required": true, "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Action item completion undone successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Undo action item completion",
+        "tags": ["action-items"]
+      }
+    },
+    "/api/action-items/{id}/completions": {
+      "get": {
+        "operationId": "ActionItemController_getActionItemCompletions",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "clientId", "required": true, "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Completions retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get completions for an action item",
+        "tags": ["action-items"]
+      }
+    },
+    "/api/action-items/completions/client/{clientId}": {
+      "get": {
+        "operationId": "ActionItemController_getClientCompletions",
+        "parameters": [
+          { "name": "clientId", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "planId", "required": true, "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Client completions retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get all completions for a client",
+        "tags": ["action-items"]
+      }
+    },
+    "/api/action-items/completions/{id}": {
+      "put": {
+        "operationId": "ActionItemController_updateCompletion",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Completion updated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Update a completion",
+        "tags": ["action-items"]
+      },
+      "delete": {
+        "operationId": "ActionItemController_deleteCompletion",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Completion deleted successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Delete a completion",
+        "tags": ["action-items"]
+      }
+    },
+    "/api/action-items/{id}": {
+      "get": {
+        "operationId": "ActionItemController_getActionItemById",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Action item retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get action item by ID",
+        "tags": ["action-items"]
+      }
+    },
+    "/api/action-items/upload-resource": {
+      "post": {
+        "operationId": "ActionItemController_uploadResource",
+        "parameters": [],
+        "responses": { "201": { "description": "File uploaded successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Upload a file as a resource for an action item",
+        "tags": ["action-items"]
+      }
+    },
+    "/api/journal": {
+      "post": {
+        "operationId": "JournalController_createJournalEntry",
+        "parameters": [],
+        "responses": { "201": { "description": "Journal entry created successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Create a new journal entry",
+        "tags": ["journal"]
+      },
+      "get": {
+        "operationId": "JournalController_getJournalEntries",
+        "parameters": [],
+        "responses": { "200": { "description": "Journal entries retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get all journal entries for the current user",
+        "tags": ["journal"]
+      }
+    },
+    "/api/journal/search": {
+      "get": {
+        "operationId": "JournalController_searchJournalEntries",
+        "parameters": [{ "name": "q", "required": true, "in": "query", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Search results retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Search journal entries",
+        "tags": ["journal"]
+      }
+    },
+    "/api/journal/{id}": {
+      "get": {
+        "operationId": "JournalController_getJournalEntryById",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Journal entry retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get a specific journal entry",
+        "tags": ["journal"]
+      },
+      "put": {
+        "operationId": "JournalController_updateJournalEntry",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Journal entry updated successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Update a journal entry",
+        "tags": ["journal"]
+      },
+      "delete": {
+        "operationId": "JournalController_deleteJournalEntry",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Journal entry deleted successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Delete a journal entry",
+        "tags": ["journal"]
+      }
+    },
+    "/api/journal/client/{clientId}": {
+      "get": {
+        "operationId": "JournalController_getClientJournalEntries",
+        "parameters": [{ "name": "clientId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Client journal entries retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get journal entries for a specific client (practitioner only)",
+        "tags": ["journal"]
+      }
+    },
+    "/api/journal/{id}/read": {
+      "post": {
+        "operationId": "JournalController_markJournalEntryAsRead",
+        "parameters": [{ "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Journal entry marked as read successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Mark a journal entry as read by the current practitioner",
+        "tags": ["journal"]
+      }
+    },
+    "/api/journal/unread/count": {
+      "get": {
+        "operationId": "JournalController_getUnreadJournalCount",
+        "parameters": [],
+        "responses": { "200": { "description": "Unread journal count retrieved successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get unread journal count for the current practitioner",
+        "tags": ["journal"]
+      }
+    },
+    "/api/chat/conversations": {
+      "get": {
+        "operationId": "ChatController_getConversations",
+        "parameters": [],
+        "responses": { "200": { "description": "List of conversations." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get conversations for the authenticated user",
+        "tags": ["Chat"]
+      },
+      "post": {
+        "operationId": "ChatController_createOrGetConversation",
+        "parameters": [],
+        "responses": { "200": { "description": "Conversation created or retrieved." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Create or get a conversation",
+        "tags": ["Chat"]
+      }
+    },
+    "/api/chat/conversations/{conversationId}": {
+      "get": {
+        "operationId": "ChatController_getConversation",
+        "parameters": [{ "name": "conversationId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Conversation details." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get conversation by ID",
+        "tags": ["Chat"]
+      }
+    },
+    "/api/chat/conversations/{conversationId}/messages": {
+      "get": {
+        "operationId": "ChatController_getMessages",
+        "parameters": [
+          { "name": "conversationId", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "page", "required": true, "in": "query", "schema": { "type": "string" } },
+          { "name": "limit", "required": true, "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Conversation messages." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get messages in a conversation",
+        "tags": ["Chat"]
+      }
+    },
+    "/api/chat/messages": {
+      "post": {
+        "operationId": "ChatController_sendMessage",
+        "parameters": [],
+        "responses": { "201": { "description": "Message sent." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Send a message",
+        "tags": ["Chat"]
+      }
+    },
+    "/api/chat/conversations/{conversationId}/read": {
+      "post": {
+        "operationId": "ChatController_markMessagesAsRead",
+        "parameters": [{ "name": "conversationId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Messages marked as read." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Mark messages as read",
+        "tags": ["Chat"]
+      }
+    },
+    "/api/chat/messages/{messageId}/reactions": {
+      "post": {
+        "operationId": "ChatController_addReaction",
+        "parameters": [{ "name": "messageId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "responses": { "201": { "description": "Reaction added." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Add reaction to message",
+        "tags": ["Chat"]
+      }
+    },
+    "/api/chat/messages/{messageId}/reactions/{emoji}": {
+      "delete": {
+        "operationId": "ChatController_removeReaction",
+        "parameters": [
+          { "name": "messageId", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "emoji", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Reaction removed." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Remove reaction from message",
+        "tags": ["Chat"]
+      }
+    },
+    "/api/chat/upload-attachment": {
+      "post": {
+        "operationId": "ChatController_uploadAttachment",
+        "parameters": [],
+        "responses": { "201": { "description": "File uploaded successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Upload a file attachment for chat messages",
+        "tags": ["Chat"]
+      }
+    }
+  },
+  "info": { "title": "NestJS API", "description": "API for NestJS", "version": "1.0", "contact": {} },
+  "tags": [{ "name": "API", "description": "" }],
+  "servers": [],
+  "components": {
+    "securitySchemes": { "bearer": { "scheme": "bearer", "bearerFormat": "JWT", "type": "http" } },
+    "schemas": {
+      "VerifyOtpDto": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "otp": { "type": "string" },
+          "role": { "type": "string", "enum": ["PRACTITIONER", "CLIENT"] }
+        },
+        "required": ["email", "otp", "role"]
+      },
+      "UserDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string", "nullable": true },
+          "avatarUrl": { "type": "string", "nullable": true },
+          "phoneNumber": { "type": "string", "nullable": true },
+          "allergies": { "type": "array", "items": { "type": "string" }, "nullable": true },
+          "medicalHistory": { "type": "array", "items": { "type": "string" }, "nullable": true },
+          "symptoms": { "type": "array", "items": { "type": "string" }, "nullable": true },
+          "medications": { "type": "array", "items": { "type": "string" }, "nullable": true },
+          "notificationSettings": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": false,
+            "properties": {
+              "emailReminders": { "type": "boolean" },
+              "practitionerMessages": { "type": "boolean" },
+              "engagementPrompts": { "type": "boolean" },
+              "marketingEmails": { "type": "boolean" }
+            }
+          },
+          "role": { "type": "string", "enum": ["PRACTITIONER", "CLIENT"] },
+          "profession": { "type": "string", "nullable": true },
+          "clientStatus": {
+            "type": "string",
+            "enum": ["ACTIVE", "NEEDS_INTAKE", "INTAKE_COMPLETED"],
+            "nullable": true
+          },
+          "practitionerId": { "type": "string", "nullable": true },
+          "isEmailVerified": { "type": "boolean" },
+          "idProofUrl": { "type": "string", "nullable": true }
+        },
+        "required": [
+          "id",
+          "email",
+          "firstName",
+          "lastName",
+          "avatarUrl",
+          "phoneNumber",
+          "allergies",
+          "medicalHistory",
+          "symptoms",
+          "medications",
+          "notificationSettings",
+          "role",
+          "profession",
+          "clientStatus",
+          "practitionerId",
+          "isEmailVerified",
+          "idProofUrl"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": { "token": { "type": "string" }, "user": { "$ref": "#/components/schemas/UserDto" } },
+        "required": ["token", "user"]
+      },
+      "OtpAuthDto": { "type": "object", "properties": { "email": { "type": "string" } }, "required": ["email"] },
+      "PractitionerSignUpDto": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "otp": { "type": "string" },
+          "role": { "type": "string", "enum": ["PRACTITIONER"], "default": "PRACTITIONER" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "profession": { "type": "string" }
+        },
+        "required": ["email", "otp", "role", "firstName", "profession"]
+      },
+      "ClientSignUpDto": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "invitationToken": { "type": "string" },
+          "dob": { "type": "string" },
+          "gender": { "type": "string" },
+          "profession": { "type": "string" },
+          "phoneNumber": { "type": "string" },
+          "allergies": { "type": "array", "items": { "type": "string" } },
+          "medicalHistory": { "type": "array", "items": { "type": "string" } },
+          "symptoms": { "type": "array", "items": { "type": "string" } },
+          "medications": { "type": "array", "items": { "type": "string" } },
+          "notificationSettings": { "type": "object" }
+        },
+        "required": ["email", "firstName", "invitationToken"]
+      }
+    }
+  }
+}

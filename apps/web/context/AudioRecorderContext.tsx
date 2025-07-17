@@ -52,33 +52,52 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
     setAudioBlob(null);
 
     try {
-      const systemStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: true,
-      });
+      let systemStream: MediaStream | null = null;
+      let userStream: MediaStream | null = null;
+      let combinedStream: MediaStream | null = null;
+      let triedSystemAudio = false;
+      let systemAudioAvailable = false;
 
-      const userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      if (systemStream.getAudioTracks().length === 0) {
-        toast.error('Tab audio not shared', {
-          description: 'Please ensure you check "Share tab audio" in the browser prompt.',
-        });
-        systemStream.getTracks().forEach((track) => track.stop());
-        userStream.getTracks().forEach((track) => track.stop());
-        setStatus('error');
-        setError('Tab audio permission denied.');
-        return;
+      // Explicitly check for getDisplayMedia support (desktop only)
+      if ('getDisplayMedia' in navigator.mediaDevices) {
+        triedSystemAudio = true;
+        try {
+          systemStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true, // required by spec, but we won't use video
+            audio: true,
+          });
+          if (systemStream && systemStream.getAudioTracks().length > 0) {
+            systemAudioAvailable = true;
+          }
+        } catch (err) {
+          // User denied or not available
+          systemStream = null;
+        }
       }
 
-      const audioContext = new AudioContext();
-      const systemSource = audioContext.createMediaStreamSource(systemStream);
-      const userSource = audioContext.createMediaStreamSource(userStream);
-      const destination = audioContext.createMediaStreamDestination();
+      // Always get microphone audio
+      userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      systemSource.connect(destination);
-      userSource.connect(destination);
+      if (systemAudioAvailable && systemStream) {
+        // Combine system and mic audio using Web Audio API
+        const audioContext = new AudioContext();
+        const destination = audioContext.createMediaStreamDestination();
+        const systemSource = audioContext.createMediaStreamSource(systemStream);
+        const userSource = audioContext.createMediaStreamSource(userStream);
+        systemSource.connect(destination);
+        userSource.connect(destination);
+        combinedStream = destination.stream;
+        // Stop video tracks (we don't need them)
+        systemStream.getVideoTracks().forEach((track) => track.stop());
+      } else {
+        // Only mic audio available
+        combinedStream = userStream;
+        if (triedSystemAudio && !systemAudioAvailable) {
+          toast.info('System audio capture is not available on this device/browser. Only microphone will be recorded.');
+        }
+      }
 
-      combinedStreamRef.current = destination.stream;
+      combinedStreamRef.current = combinedStream;
 
       audioChunksRef.current = [];
       const mimeType = getSupportedMimeType();
@@ -112,7 +131,7 @@ export const AudioRecorderProvider = ({ children }: { children: ReactNode }) => 
 
       const audioTracks = combinedStreamRef.current.getAudioTracks();
       if (audioTracks.length === 0) {
-        throw new Error('The combined stream has no audio tracks. Recording cannot start.');
+        throw new Error('The stream has no audio tracks. Recording cannot start.');
       }
 
       recorder.start();

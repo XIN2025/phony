@@ -1100,7 +1100,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                 </div>
               )}
 
-              <div className='flex items-center gap-2 sm:gap-3'>
+              <div className='flex flex-col xs:flex-row items-stretch xs:items-center gap-2 sm:gap-3 w-full xs:w-auto'>
                 <Link href={`/practitioner/clients/${clientId}/messages`}>
                   <Button variant='outline' className='rounded-full p-2 border border-border'>
                     <MessageCircle className='h-4 w-4' />
@@ -1136,7 +1136,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
             <div className='w-full px-4 sm:px-8 lg:px-16 flex flex-col gap-6 sm:gap-8'>
               <div className='w-full'>
                 <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full'>
-                  <TabsList className='flex gap-1 bg-transparent p-0 justify-start w-full sm:w-fit mb-6 overflow-x-auto'>
+                  <TabsList className='flex flex-wrap gap-1 bg-transparent p-0 justify-start w-full sm:w-fit mb-6'>
                     <TabTrigger value='dashboard'>Dashboard</TabTrigger>
                     <TabTrigger value='sessions'>Sessions</TabTrigger>
                     <TabTrigger value='plans'>Plans</TabTrigger>
