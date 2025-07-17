@@ -307,6 +307,19 @@
         "tags": ["client"]
       }
     },
+    "/api/client/intake-form/submission": {
+      "get": {
+        "operationId": "ClientController_getIntakeFormSubmission",
+        "parameters": [],
+        "responses": {
+          "200": { "description": "Intake form submission retrieved successfully." },
+          "404": { "description": "No intake form submission found for client." }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Get intake form submission for client",
+        "tags": ["client"]
+      }
+    },
     "/api/users": {
       "get": {
         "operationId": "UsersController_getAllUsers",
@@ -1007,7 +1020,6 @@
           "lastName": { "type": "string" },
           "invitationToken": { "type": "string" },
           "dob": { "type": "string" },
-          "gender": { "type": "string" },
           "profession": { "type": "string" },
           "phoneNumber": { "type": "string" },
           "allergies": { "type": "array", "items": { "type": "string" } },

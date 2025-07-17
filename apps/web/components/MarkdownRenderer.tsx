@@ -12,7 +12,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
   }
 
   return (
-    <div className={`markdown-content ${className}`}>
+    <div className={`markdown-content w-full max-w-full min-w-0 overflow-x-auto ${className}`}>
       <ReactMarkdown
         components={{
           h1: ({ children }) => (

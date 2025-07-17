@@ -25,7 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/ca
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
 import { Tabs, TabsContent, TabsList } from '@repo/ui/components/tabs';
-import { ArrowLeft, MessageCircle } from 'lucide-react';
+import { ArrowLeft, MessageCircle, ClipboardList, BookText } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -47,6 +47,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { DateRange } from 'react-date-range';
 import { createPortal } from 'react-dom';
 import { Loader2 } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/avatar';
+import { getAvatarUrl, getInitials } from '@/lib/utils';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 
 type PopulatedActionItem = ActionItem & { resources: Resource[]; completions: ActionItemCompletion[] };
 type PopulatedPlan = Plan & { actionItems: PopulatedActionItem[] };
@@ -119,6 +122,8 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
   const isLoading = isClientLoading || isSessionsLoading;
   const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const [showIntakeSurvey, setShowIntakeSurvey] = useState(false);
 
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab');
@@ -268,6 +273,46 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     });
   }, [journalEntries, dateRange]);
 
+  const weekDates = getDateRangeArray(dateRange.startDate, dateRange.endDate);
+  const totalTasks = weekDates.reduce((sum, date) => {
+    return (
+      sum +
+      filteredTasks.filter((t) => {
+        const dayOfWeek = date.getDay();
+        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+        const selectedDayShort = dayMap[dayOfWeek];
+        if (t.isMandatory) {
+          if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+            return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+          }
+          return true;
+        } else {
+          if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+            return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+          }
+          return true;
+        }
+      }).length
+    );
+  }, 0);
+  const completedTasks = weekDates.reduce((sum, date) => {
+    return (
+      sum +
+      filteredTasks.filter((t) => {
+        const dayOfWeek = date.getDay();
+        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+        const selectedDayShort = dayMap[dayOfWeek];
+        if (t.completions && t.completions.length > 0) {
+          if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+            return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+          }
+          return true;
+        }
+        return false;
+      }).length
+    );
+  }, 0);
+
   const completion = useMemo(() => {
     if (filteredTasks.length === 0) return 0;
     const completed = filteredTasks.filter((t) => t.completions && t.completions.length > 0).length;
@@ -327,11 +372,17 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   };
 
   const handleGenerateComprehensiveSummary = async () => {
+    // Check if summary is cached and up to date
+    if (isSummaryCached && comprehensiveSummary && comprehensiveSummary.lastSessionCount === sessions.length) {
+      setShowComprehensiveSummary(true);
+      toast.info('Showing cached summary (no new sessions).');
+      return;
+    }
     try {
       setShowComprehensiveSummary(true);
       setIsSummaryCached(false);
       const summary = await generateComprehensiveSummaryMutation.mutateAsync(clientId);
-      setComprehensiveSummary(summary);
+      setComprehensiveSummary({ ...summary, lastSessionCount: sessions.length });
       setIsSummaryCached(summary.isCached || false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to generate comprehensive summary');
@@ -488,20 +539,23 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     let badgeClass = 'bg-gray-200 text-gray-700';
     let emoji = '';
     if (feedback === 'Happy') {
-      badgeClass = 'bg-green-100 text-green-800';
+      badgeClass = 'bg-[#C7E8D4] text-black';
       emoji = '😊';
     } else if (feedback === 'Neutral') {
-      badgeClass = 'bg-yellow-100 text-yellow-800';
+      badgeClass = 'bg-[#F8EFC7] text-black';
       emoji = '😐';
     } else if (feedback === 'Sad') {
-      badgeClass = 'bg-red-100 text-red-800';
+      badgeClass = 'bg-[#F8D7D7] text-black';
       emoji = '🙁';
     } else if (feedback === 'Nil') {
-      badgeClass = 'bg-gray-200 text-gray-700';
+      badgeClass = 'bg-[#D1CDCB] text-black';
       emoji = '';
     }
     return (
-      <span className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold ${badgeClass}`}>
+      <span
+        className={`inline-flex items-center rounded-full px-5 py-1.5 text-sm font-semibold ${badgeClass}`}
+        style={{ minWidth: 80, justifyContent: 'center' }}
+      >
         {emoji && <span className='mr-1'>{emoji}</span>}
         {feedback}
       </span>
@@ -511,13 +565,13 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const journalBadge = (journal: string) => {
     if (journal === 'Yes') {
       return (
-        <span className='inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-800'>
+        <span className='inline-flex items-center rounded-full px-4 py-1 text-sm font-semibold bg-[#C7D7F8] text-black'>
           Yes
         </span>
       );
     }
     return (
-      <span className='inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-600'>
+      <span className='inline-flex items-center rounded-full px-4 py-1 text-sm font-semibold bg-[#D1CDCB] text-black'>
         No
       </span>
     );
@@ -626,171 +680,272 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     </TabsContent>
   );
 
-  const renderDashboardTab = () => (
-    <TabsContent value='dashboard' className='mt-0'>
-      <div className='flex flex-col gap-4 w-full mb-6 sm:mb-8'>
-        <div className='flex flex-col md:flex-row md:items-center md:justify-between w-full gap-3 md:gap-0'>
-          <h2 className='text-lg sm:text-xl font-semibold mb-0' style={{ fontFamily: "'Playfair Display', serif" }}>
-            Summary
-          </h2>
-          <div className='flex items-center gap-2'>
+  const renderDashboardTab = () => {
+    const weekTasks = weekDates.flatMap((date) => {
+      const dayOfWeek = date.getDay();
+      const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+      const selectedDayShort = dayMap[dayOfWeek];
+      return filteredTasks.filter((t) => {
+        if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+          return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+        }
+        return true;
+      });
+    });
+    const avgFeedback = getAvgFeedbackForDay(weekTasks);
+    let feedbackEmoji = '';
+    let feedbackText = '';
+    if (avgFeedback === 'Happy') {
+      feedbackEmoji = '😊';
+      feedbackText = 'Happy';
+    } else if (avgFeedback === 'Neutral') {
+      feedbackEmoji = '😐';
+      feedbackText = 'Neutral';
+    } else if (avgFeedback === 'Sad') {
+      feedbackEmoji = '🙁';
+      feedbackText = 'Sad';
+    } else {
+      feedbackEmoji = '';
+      feedbackText = 'Nil';
+    }
+
+    return (
+      <TabsContent value='dashboard' className='mt-0'>
+        <div className='flex flex-col gap-6 w-full mb-8'>
+          {/* Date Picker Button */}
+          <div className='flex justify-end mb-2'>
             <button
               ref={dateButtonRef}
-              className='rounded-full border border-gray-300 px-4 py-2 text-sm bg-white shadow hover:bg-gray-50 transition'
+              className='flex items-center gap-2 px-4 py-2 rounded-full border border-[#ececec] border-gray-700 shadow-sm text-base font-semibold hover:bg-[#f6f5f4] transition-all min-w-[220px]'
               onClick={() => setShowDatePicker((v) => !v)}
+              aria-label='Select date range'
               type='button'
             >
-              {dateRange.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} –{' '}
+              <span className='mr-2'>
+                <svg width='20' height='20' fill='none' viewBox='0 0 24 24'>
+                  <rect x='3' y='5' width='18' height='16' rx='3' stroke='#222' strokeWidth='1.5' />
+                  <path d='M16 3v4M8 3v4' stroke='#222' strokeWidth='1.5' strokeLinecap='round' />
+                </svg>
+              </span>
+              {dateRange.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              <span className='mx-1'>-</span>
               {dateRange.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </button>
-            {datePickerMounted &&
-              showDatePicker &&
-              createPortal(
-                <div
-                  ref={datePickerRef}
-                  className='absolute z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 max-w-full max-h-[90vh] w-[350px] sm:w-auto overflow-auto flex flex-col items-center animate-fadeIn'
-                  style={{
-                    top: pickerPosition.top,
-                    left: pickerPosition.left,
-                    position: 'absolute',
-                    minWidth: pickerPosition.width,
+          </div>
+          {/* Calendar Overlay */}
+          {datePickerMounted &&
+            showDatePicker &&
+            createPortal(
+              <div
+                ref={datePickerRef}
+                style={{
+                  position: 'absolute',
+                  top: pickerPosition.top,
+                  left: pickerPosition.left,
+                  zIndex: 50,
+                  width: 350,
+                  background: 'white',
+                  borderRadius: 16,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                  border: '1px solid #ececec',
+                  padding: 16,
+                }}
+                className='calendar-float'
+              >
+                <DateRange
+                  ranges={[dateRange]}
+                  onChange={(ranges) => {
+                    const range = ranges.selection || {};
+                    setDateRange({
+                      startDate: range.startDate || dateRange.startDate,
+                      endDate: range.endDate || dateRange.endDate,
+                      key: 'selection',
+                    });
+                    setShowDatePicker(false);
                   }}
-                  role='dialog'
-                  aria-modal='true'
-                >
-                  <DateRange
-                    editableDateInputs={true}
-                    onChange={(ranges) => {
-                      const selection = ranges.selection;
-                      if (selection) {
-                        setDateRange({
-                          startDate: selection.startDate || dateRange.startDate,
-                          endDate: selection.endDate || selection.startDate || dateRange.endDate,
-                          key: 'selection',
+                  moveRangeOnFirstSelection={false}
+                  months={1}
+                  direction='horizontal'
+                  rangeColors={['#222']}
+                  editableDateInputs={false}
+                  showMonthAndYearPickers={true}
+                />
+              </div>,
+              document.body,
+            )}
+          {/* End Date Picker */}
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-full'>
+            <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-6 flex flex-col items-start gap-2'>
+              <div className='flex items-center justify-between w-full'>
+                <div className='text-[2rem] font-extrabold' style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {completion}%
+                </div>
+                <ClipboardList className='h-10 w-10 text-[#807171]' />
+              </div>
+              <div className='text-base font-semibold text-black/80'>Avg Daily Tasks Completion</div>
+            </div>
+            <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-6 flex flex-col items-start gap-2'>
+              <div className='flex items-center justify-between w-full'>
+                <div className='text-[2rem] font-extrabold' style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {filteredJournals.length}
+                </div>
+                <BookText className='h-10 w-10 text-[#807171]' />
+              </div>
+              <div className='text-base font-semibold text-black/80'>Journal Entries</div>
+            </div>
+          </div>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-full'>
+            <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-0 flex-1 min-w-0'>
+              <div className='p-6 pb-2'>
+                <div className='text-2xl font-bold mb-4' style={{ fontFamily: "'Playfair Display', serif" }}>
+                  Last Week's Overview
+                </div>
+              </div>
+              <div className='overflow-x-auto w-full'>
+                <Table className='min-w-[320px] sm:min-w-[600px] bg-white rounded-2xl overflow-hidden text-xs sm:text-sm'>
+                  <TableHeader>
+                    <TableRow className='bg-white'>
+                      <TableHead className='px-7 py-4 text-left text-base font-bold text-black border-b border-[#e5e5e5]'>
+                        Date
+                      </TableHead>
+                      <TableHead className='px-7 py-4 text-left text-base font-bold text-black border-b border-[#e5e5e5]'>
+                        Tasks
+                      </TableHead>
+                      <TableHead className='px-7 py-4 text-left text-base font-bold text-black border-b border-[#e5e5e5]'>
+                        Avg Task Feedback
+                      </TableHead>
+                      <TableHead className='px-7 py-4 text-left text-base font-bold text-black border-b border-[#e5e5e5]'>
+                        Journal Entry
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getDateRangeArray(dateRange.startDate, dateRange.endDate)
+                      .reverse()
+                      .map((date) => {
+                        const dayTasks = filteredTasks.filter((t) => {
+                          const dayOfWeek = date.getDay();
+                          const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+                          const selectedDayShort = dayMap[dayOfWeek];
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const selectedDate = new Date(date);
+                          selectedDate.setHours(0, 0, 0, 0);
+                          if (t.isMandatory) {
+                            const isCompleted = t.completions && t.completions.length > 0;
+                            if (isCompleted) {
+                              if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+                                return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+                              }
+                              return true;
+                            } else {
+                              if (selectedDate >= today) {
+                                return true;
+                              }
+                              if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+                                return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+                              }
+                              return true;
+                            }
+                          } else {
+                            if (t.daysOfWeek && t.daysOfWeek.length > 0) {
+                              return t.daysOfWeek.some((day: string) => day === selectedDayShort);
+                            }
+                            return true;
+                          }
                         });
-                      }
-                    }}
-                    moveRangeOnFirstSelection={false}
-                    ranges={[dateRange]}
-                    maxDate={new Date()}
-                    rangeColors={['#2563eb']}
-                  />
-                </div>,
-                document.body,
-              )}
+                        const completed = dayTasks.filter((t) => t.completions && t.completions.length > 0).length;
+                        const feedback = getAvgFeedbackForDay(dayTasks);
+                        const journal = filteredJournals.some((j) => isSameDay(new Date(j.createdAt), date))
+                          ? 'Yes'
+                          : 'No';
+                        return (
+                          <TableRow
+                            key={date.toISOString()}
+                            className='border-b last:border-b-0 border-[#ececec] bg-white hover:bg-[#f6f5f4] transition-colors cursor-pointer'
+                            onClick={() =>
+                              router.push(`/practitioner/clients/${clientId}/tasks/${formatDateForUrl(date)}`)
+                            }
+                          >
+                            <TableCell className='px-7 py-4 whitespace-nowrap text-base text-black'>
+                              {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </TableCell>
+                            <TableCell className='px-7 py-4 whitespace-nowrap text-base text-black'>{`${completed}/${dayTasks.length}`}</TableCell>
+                            <TableCell className='px-7 py-4 whitespace-nowrap'>{feedbackBadge(feedback)}</TableCell>
+                            <TableCell className='px-7 py-4 whitespace-nowrap'>{journalBadge(journal)}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+            <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-4 sm:p-6 flex flex-col gap-4 w-full min-w-0'>
+              <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2'>
+                <div
+                  className='text-2xl font-bold flex items-center'
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  Snapshot
+                  {isSummaryCached && (
+                    <span className='ml-2 px-2 py-0.5 text-xs rounded-full bg-[#f6f5f4] text-gray-600 border border-gray-300'>
+                      Cached
+                    </span>
+                  )}
+                </div>
+                <Button
+                  variant='outline'
+                  className='rounded-full border border-black px-4 py-1.5 text-base font-semibold hover:bg-[#f6f5f4] transition-all w-full sm:w-auto mt-2 sm:mt-0'
+                  onClick={handleGenerateComprehensiveSummary}
+                  disabled={generateComprehensiveSummaryMutation.isPending}
+                >
+                  {generateComprehensiveSummaryMutation.isPending ? 'Generating...' : 'Generate Snapshot'}
+                </Button>
+              </div>
+              <div className='text-lg font-semibold text-[#2d4739] mb-2'>Last Week's Progress</div>
+              <div className='flex flex-col sm:flex-row gap-3 mb-2'>
+                <div className='flex-1 bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col items-center mb-2 sm:mb-0'>
+                  <div className='text-xs text-gray-500 mb-1'>Tasks Done</div>
+                  <div className='text-xl font-bold'>
+                    {completedTasks}/{totalTasks}
+                  </div>
+                </div>
+                <div className='flex-1 bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col items-center'>
+                  <div className='text-xs text-gray-500 mb-1'>Avg Task Feedback</div>
+                  <div className='text-xl font-bold flex items-center gap-1'>
+                    <span>{feedbackEmoji}</span>
+                    <span>{feedbackText}</span>
+                  </div>
+                </div>
+              </div>
+              <div className='bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 mb-2 overflow-x-auto'>
+                <div className='text-xs font-semibold mb-1'>Previous Session Summary</div>
+                <div className='text-sm text-gray-700'>
+                  {comprehensiveSummary?.summary ? (
+                    <MarkdownRenderer content={comprehensiveSummary.summary} />
+                  ) : (
+                    'No summary available.'
+                  )}
+                </div>
+              </div>
+              <div className='bg-white border border-[#ececec] rounded-xl p-3 sm:p-4'>
+                <div className='text-xs font-semibold mb-1'>Insights</div>
+                <div className='text-sm text-gray-700'>
+                  {Array.isArray(comprehensiveSummary?.keyInsights)
+                    ? comprehensiveSummary.keyInsights.map((insight: string, idx: number) => (
+                        <div key={idx} className='mb-1'>
+                          • {insight}
+                        </div>
+                      ))
+                    : 'No insights available.'}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div className='flex flex-col sm:flex-row gap-4 w-full'>
-          <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background gap-0'>
-            <CardHeader className=''>
-              <CardTitle className='text-sm sm:text-base font-semibold'>Avg Daily Tasks Completion</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl sm:text-3xl font-extrabold' style={{ fontFamily: "'Playfair Display', serif" }}>
-                {completion}%
-              </div>
-            </CardContent>
-          </Card>
-          <Card className='flex-1 min-w-[180px] border border-border rounded-2xl shadow-none bg-background gap-0'>
-            <CardHeader className=''>
-              <CardTitle className='text-sm sm:text-base font-semibold'>Journal Entries</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl sm:text-3xl font-extrabold' style={{ fontFamily: "'Playfair Display', serif" }}>
-                {filteredJournals.length}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-      {}
-      <div className='mt-8'>
-        <div className='bg-white rounded-2xl shadow-md p-0 border border-[#ececec]'>
-          <Table className='min-w-full bg-white rounded-2xl overflow-hidden'>
-            <TableHeader>
-              <TableRow className='bg-white'>
-                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
-                  Date
-                </TableHead>
-                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
-                  Tasks
-                </TableHead>
-                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
-                  Avg Task Feedback
-                </TableHead>
-                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
-                  Journal Entry
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {getDateRangeArray(dateRange.startDate, dateRange.endDate)
-                .reverse()
-                .map((date) => {
-                  const dayTasks = filteredTasks.filter((t) => {
-                    const dayOfWeek = date.getDay();
-                    const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-                    const selectedDayShort = dayMap[dayOfWeek];
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0); // Reset time to start of day
-                    const selectedDate = new Date(date);
-                    selectedDate.setHours(0, 0, 0, 0); // Reset time to start of day
-
-                    if (t.isMandatory) {
-                      const isCompleted = t.completions && t.completions.length > 0;
-                      if (isCompleted) {
-                        // If task is completed, only show on its configured days
-                        if (t.daysOfWeek && t.daysOfWeek.length > 0) {
-                          return t.daysOfWeek.some((day: string) => day === selectedDayShort);
-                        }
-                        return true;
-                      } else {
-                        // If task is NOT completed, show on ALL future dates until completed
-                        // This makes mandatory tasks persist until they're done
-                        if (selectedDate >= today) {
-                          return true;
-                        }
-
-                        // For past dates, only show if it was scheduled for that day
-                        if (t.daysOfWeek && t.daysOfWeek.length > 0) {
-                          return t.daysOfWeek.some((day: string) => day === selectedDayShort);
-                        }
-                        return true;
-                      }
-                    } else {
-                      // For non-mandatory tasks, only show on their configured days
-                      if (t.daysOfWeek && t.daysOfWeek.length > 0) {
-                        return t.daysOfWeek.some((day: string) => day === selectedDayShort);
-                      }
-                      return true;
-                    }
-                  });
-                  const completed = dayTasks.filter((t) => t.completions && t.completions.length > 0).length;
-                  const feedback = getAvgFeedbackForDay(dayTasks);
-                  const journal = filteredJournals.some((j) => isSameDay(new Date(j.createdAt), date)) ? 'Yes' : 'No';
-                  return (
-                    <TableRow
-                      key={date.toISOString()}
-                      className='cursor-pointer hover:bg-gray-50 transition-colors border-b last:border-b-0 border-[#ececec]'
-                      onClick={() => router.push(`/practitioner/clients/${clientId}/tasks/${formatDateForUrl(date)}`)}
-                    >
-                      <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
-                        {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </TableCell>
-                      <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
-                        {`${completed}/${dayTasks.length}`}
-                      </TableCell>
-                      <TableCell className='px-7 py-5 whitespace-nowrap'>{feedbackBadge(feedback)}</TableCell>
-                      <TableCell className='px-7 py-5 whitespace-nowrap'>{journalBadge(journal)}</TableCell>
-                    </TableRow>
-                  );
-                })}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-    </TabsContent>
-  );
+      </TabsContent>
+    );
+  };
 
   const renderSessionsTab = () => (
     <TabsContent value='sessions' className='mt-0'>
@@ -799,12 +954,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           <h2 className='text-lg sm:text-xl font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
             Past Sessions
           </h2>
-          <Button
-            onClick={handleNewSession}
-            className='bg-foreground text-background hover:bg-foreground/90 rounded-full px-4 sm:px-6 py-2 text-sm sm:text-base'
-          >
-            + New Session
-          </Button>
         </div>
         <div className='overflow-x-auto'>
           <div className='bg-white rounded-2xl shadow-md p-0 min-w-[400px] sm:min-w-0'>
@@ -1076,14 +1225,18 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                 <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
               </button>
             </div>
-            <div className='flex justify-between items-start sm:items-center gap-2 px-2 sm:px-0 mt-2'>
-              {isLoading ? (
-                <div>
-                  <Skeleton className='h-8 w-48' />
-                  <Skeleton className='h-4 w-32 mt-2' />
-                </div>
-              ) : client ? (
-                <div>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-2 sm:px-0 mt-2 max-w-full'>
+              <div className='flex flex-row items-center gap-3 w-full sm:w-auto min-w-0'>
+                <Avatar className='h-12 w-12'>
+                  <AvatarImage
+                    src={getAvatarUrl(client?.avatarUrl, client)}
+                    alt={`${client?.firstName || ''} ${client?.lastName || ''}`.trim()}
+                  />
+                  <AvatarFallback>
+                    {getInitials({ firstName: client?.firstName, lastName: client?.lastName })}
+                  </AvatarFallback>
+                </Avatar>
+                <div className='flex flex-col'>
                   <h1
                     className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'
                     style={{ fontFamily: "'Playfair Display', serif" }}
@@ -1094,39 +1247,18 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                     Client since {new Date(client.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-              ) : (
-                <div>
-                  <h1 className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'>Client Not Found</h1>
-                </div>
-              )}
-
-              <div className='flex flex-col xs:flex-row items-stretch xs:items-center gap-2 sm:gap-3 w-full xs:w-auto'>
-                <Link href={`/practitioner/clients/${clientId}/messages`}>
-                  <Button variant='outline' className='rounded-full p-2 border border-border'>
+              </div>
+              <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto min-w-0'>
+                <Link href={`/practitioner/clients/${clientId}/messages`} className='ml-0 sm:ml-0'>
+                  <Button variant='outline' className='rounded-full p-2 border border-border w-full sm:w-auto min-w-0'>
                     <MessageCircle className='h-4 w-4' />
                   </Button>
                 </Link>
                 <Button
-                  onClick={handleGenerateComprehensiveSummary}
-                  disabled={sessions.length === 0 || generateComprehensiveSummaryMutation.isPending}
-                  variant='outline'
-                  className='rounded-full px-4 sm:px-6 py-2 text-sm font-medium border border-border'
+                  onClick={handleNewSession}
+                  className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all w-full sm:w-auto min-w-0'
                 >
-                  {generateComprehensiveSummaryMutation.isPending ? (
-                    <>
-                      <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                      Taking Snapshot...
-                    </>
-                  ) : (
-                    'Take a Snapshot'
-                  )}
-                </Button>
-                <Button
-                  variant='outline'
-                  className='rounded-full px-4 sm:px-6 py-2 text-sm font-medium border border-border'
-                  onClick={handleViewProfile}
-                >
-                  View Profile
+                  + New Session
                 </Button>
               </div>
             </div>
@@ -1136,17 +1268,191 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
             <div className='w-full px-4 sm:px-8 lg:px-16 flex flex-col gap-6 sm:gap-8'>
               <div className='w-full'>
                 <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full'>
-                  <TabsList className='flex flex-wrap gap-1 bg-transparent p-0 justify-start w-full sm:w-fit mb-6'>
-                    <TabTrigger value='dashboard'>Dashboard</TabTrigger>
-                    <TabTrigger value='sessions'>Sessions</TabTrigger>
-                    <TabTrigger value='plans'>Plans</TabTrigger>
-                    <TabTrigger value='journal'>Journal</TabTrigger>
+                  <TabsList className='flex flex-row gap-0 bg-[#f6f5f4] border border-[#d1d1d1] rounded-full  shadow-sm w-full sm:w-fit mb-6 overflow-x-auto whitespace-nowrap'>
+                    <TabTrigger
+                      value='dashboard'
+                      className='rounded-full px-7 py-2 text-base font-normal data-[state=active]:bg-[#d1cdcb] data-[state=active]:text-black data-[state=active]: py-3'
+                    >
+                      Summary
+                    </TabTrigger>
+                    <TabTrigger
+                      value='sessions'
+                      className='rounded-full px-7 py-2 text-base font-normal data-[state=active]:bg-[#d1cdcb] data-[state=active]:text-black data-[state=active]: py-3'
+                    >
+                      Sessions
+                    </TabTrigger>
+                    <TabTrigger
+                      value='plans'
+                      className='rounded-full px-7 py-2 text-base font-normal data-[state=active]:bg-[#d1cdcb] data-[state=active]:text-black data-[state=active]: py-3'
+                    >
+                      Plans
+                    </TabTrigger>
+                    <TabTrigger
+                      value='journal'
+                      className='rounded-full px-7 py-2 text-base font-normal data-[state=active]:bg-[#d1cdcb] data-[state=active]:text-black data-[state=active]: py-3'
+                    >
+                      Journal
+                    </TabTrigger>
+                    <TabTrigger
+                      value='profile'
+                      className='rounded-full px-7 py-2 text-base font-normal data-[state=active]:bg-[#d1cdcb] data-[state=active]:text-black data-[state=active]: py-3'
+                    >
+                      Profile
+                    </TabTrigger>
                   </TabsList>
-
                   {renderDashboardTab()}
                   {renderSessionsTab()}
                   {renderPlansTab()}
                   {renderJournalTab()}
+                  <TabsContent value='profile' className='mt-0'>
+                    {/* Inline profile tab content, adapted from profile/page.tsx */}
+                    {client && (
+                      <div className='w-full flex flex-col pt-6 px-2 sm:px-0 min-h-screen'>
+                        <div className='w-full flex flex-col gap-4 mx-auto'>
+                          <div className='grid grid-cols-1 md:grid-cols-2 px-2 md:px-8 gap-6 max-w-full'>
+                            <div className='bg-white rounded-2xl shadow-md p-4 md:p-8 flex flex-col gap-4 min-h-[180px] md:min-h-[260px]'>
+                              <div className='flex items-center gap-4 mb-4'>
+                                <Avatar className='h-16 w-16 border-2 border-gray-200'>
+                                  <AvatarImage src={getAvatarUrl(client.avatarUrl, client)} />
+                                  <AvatarFallback className='text-2xl'>
+                                    {getInitials({ firstName: client.firstName, lastName: client.lastName })}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className='font-semibold text-xl'>
+                                    {client.firstName} {client.lastName}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className='grid grid-cols-1 gap-2 text-base'>
+                                <div>
+                                  <span className='font-semibold'>Email ID:</span>{' '}
+                                  <span className='font-normal'>{client.email}</span>
+                                </div>
+                                <div>
+                                  <span className='font-semibold'>Phone Number:</span>{' '}
+                                  <span className='font-normal'>{client.phoneNumber || '-'}</span>
+                                </div>
+                                <div>
+                                  <span className='font-semibold'>DOB:</span>{' '}
+                                  <span className='font-normal'>{client.dob || '-'}</span>
+                                </div>
+                                <div>
+                                  <span className='font-semibold'>Occupation:</span>{' '}
+                                  <span className='font-normal'>{client.profession || '-'}</span>
+                                </div>
+                                <div>
+                                  <span className='font-semibold'>Client Since:</span>{' '}
+                                  <span className='font-normal'>
+                                    {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : '-'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col gap-4 min-h-[260px]'>
+                              <div className='font-semibold text-xl mb-4'>Client Information</div>
+                              <div className='grid grid-cols-1 gap-2 text-base'>
+                                <div>
+                                  <span className='font-semibold'>Relevant Medical History:</span>{' '}
+                                  <span className='font-normal'>
+                                    {client.medicalHistory && client.medicalHistory.length > 0
+                                      ? client.medicalHistory.join(', ')
+                                      : 'Nil'}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className='font-semibold'>Current Symptoms:</span>{' '}
+                                  <span className='font-normal'>
+                                    {client.symptoms && client.symptoms.length > 0 ? client.symptoms.join(', ') : '-'}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className='font-semibold'>Current Medications:</span>{' '}
+                                  <span className='font-normal'>
+                                    {client.medications && client.medications.length > 0
+                                      ? client.medications.join(', ')
+                                      : '-'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className='mb-6 md:px-8'>
+                            <div className='rounded-2xl bg-white/80 shadow p-6 flex flex-col sm:flex-row sm:items-center justify-between mb-2 border border-[#ececec]'>
+                              <div>
+                                <div className='text-lg font-semibold mb-1'>Intake Survey Responses</div>
+                                <div className='text-xs text-muted-foreground'>
+                                  {isClientLoading
+                                    ? 'Loading...'
+                                    : client.intakeFormSubmission && client.intakeFormSubmission.submittedAt
+                                      ? `Submitted on ${new Date(client.intakeFormSubmission.submittedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`
+                                      : 'No submission found.'}
+                                </div>
+                              </div>
+                              <Button
+                                variant='outline'
+                                className='rounded-full px-6 py-2 mt-4 sm:mt-0 flex items-center gap-2 border border-black text-base font-semibold hover:bg-[#f6f5f4] transition-all'
+                                onClick={() => setShowIntakeSurvey((v) => !v)}
+                                disabled={!client.intakeFormSubmission || isClientLoading}
+                              >
+                                {showIntakeSurvey ? (
+                                  <>
+                                    <span>⏶</span> Hide
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>⏷</span> Show
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                            {showIntakeSurvey && client.intakeFormSubmission && (
+                              <div className='rounded-2xl bg-white/80 shadow p-6 border border-[#ececec] mt-2'>
+                                <div className='text-lg font-semibold mb-4'>Intake Survey Responses</div>
+                                <div className='text-xs text-muted-foreground mb-6'>
+                                  Submitted on{' '}
+                                  {client.intakeFormSubmission.submittedAt
+                                    ? new Date(client.intakeFormSubmission.submittedAt).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric',
+                                      })
+                                    : ''}
+                                </div>
+                                <div className='flex flex-col gap-4'>
+                                  {client.intakeFormSubmission.form &&
+                                  client.intakeFormSubmission.form.questions &&
+                                  client.intakeFormSubmission.answers ? (
+                                    client.intakeFormSubmission.form.questions
+                                      .sort((a: any, b: any) => a.order - b.order)
+                                      .map((question: any, idx: number) => {
+                                        const answerObj = client.intakeFormSubmission.answers.find(
+                                          (ans: any) => ans.questionId === question.id,
+                                        );
+                                        let answerValue = answerObj ? answerObj.value : '';
+                                        if (typeof answerValue === 'object' && answerValue !== null) {
+                                          answerValue = JSON.stringify(answerValue);
+                                        }
+                                        return (
+                                          <div key={question.id} className='mb-2'>
+                                            <div className='text-sm font-medium mb-1'>{question.text}</div>
+                                            <div className='bg-[#f6f5f4] rounded-md px-4 py-2 text-base'>
+                                              {answerValue || <span className='text-gray-400'>No answer</span>}
+                                            </div>
+                                          </div>
+                                        );
+                                      })
+                                  ) : (
+                                    <div className='text-gray-400'>No questions or answers found.</div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
                 </Tabs>
               </div>
             </div>
@@ -1256,13 +1562,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
             </DialogContent>
           </Dialog>
         )}
-        <ComprehensiveSummaryModal
-          isOpen={showComprehensiveSummary}
-          onClose={() => setShowComprehensiveSummary(false)}
-          summary={comprehensiveSummary}
-          isLoading={generateComprehensiveSummaryMutation.isPending}
-          clientName={`${client?.firstName} ${client?.lastName}`}
-        />
       </>
     );
   };

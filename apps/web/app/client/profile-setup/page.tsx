@@ -6,9 +6,12 @@ import { useRouter } from 'next/navigation';
 import { Logo } from '@repo/ui/components/logo';
 import { ProfileSetupForm } from '@/components/ProfileSetupForm';
 import { Loader2 } from 'lucide-react';
+import { useCheckInvitationIntakeForm } from '@/lib/hooks/use-api';
+import { useSignUpContext } from '@/context/signup-context';
 
 export default function ClientProfileSetupPage() {
   const router = useRouter();
+  const { mutate: checkIntakeForm } = useCheckInvitationIntakeForm();
 
   if (false) {
     return (
@@ -47,7 +50,28 @@ export default function ClientProfileSetupPage() {
         <ProfileSetupForm
           onSuccess={() => {
             toast.success('Profile setup completed successfully!');
-            router.push('/client/medical-details');
+            // After profile setup, check for intake form and route accordingly
+            const token = new URLSearchParams(window.location.search).get('token');
+            const { email, invitationToken } = useSignUpContext().signUpData;
+            if (!email || !invitationToken) {
+              router.push('/client');
+              return;
+            }
+            checkIntakeForm(
+              { invitationToken },
+              {
+                onSuccess: (checkResult) => {
+                  if (checkResult.hasIntakeForm) {
+                    router.push(`/client/intake?token=${token}`);
+                  } else {
+                    router.push(`/client`);
+                  }
+                },
+                onError: () => {
+                  router.push(`/client`);
+                },
+              },
+            );
           }}
         />
       </div>

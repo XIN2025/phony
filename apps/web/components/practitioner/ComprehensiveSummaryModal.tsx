@@ -39,12 +39,12 @@ export function ComprehensiveSummaryModal({
   if (!mounted || !isOpen) return null;
 
   return createPortal(
-    <div className='fixed inset-0 z-[9999] flex items-center justify-center p-4'>
+    <div className='fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4'>
       {/* Backdrop */}
       <div className='absolute inset-0 bg-black/50 backdrop-blur-sm' onClick={onClose} />
 
       {/* Modal */}
-      <div className='relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6'>
+      <div className='relative bg-white rounded-lg shadow-xl w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[90vh] overflow-y-auto p-2 sm:p-6'>
         {/* Header */}
         <div className='flex items-start justify-between mb-4 gap-4'>
           <div className='flex-1 min-w-0'>

@@ -55,7 +55,7 @@ export default function ClientMessagesPage({ params }: { params: Promise<{ clien
   const clientDisplayName = client ? `${client.firstName} ${client.lastName}` : 'Client';
 
   return (
-    <div className='flex flex-col h-screen w-full overflow-hidden'>
+    <div className='flex flex-col h-screen w-full max-w-full overflow-x-hidden'>
       <PageHeader
         title={`Messages with ${clientDisplayName}`}
         subtitle='Direct messaging with your client'
@@ -64,7 +64,7 @@ export default function ClientMessagesPage({ params }: { params: Promise<{ clien
         leftElement={<SidebarToggleButton />}
       />
 
-      <div className='flex-1 min-h-0 px-14 overflow-hidden p-1'>
+      <div className='flex-1 min-h-0 px-2 sm:px-6 md:px-14 overflow-hidden p-1'>
         <ChatContainer participantId={clientId} height='calc(100vh - 200px)' className='w-full h-full' />
       </div>
     </div>

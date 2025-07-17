@@ -265,7 +265,6 @@ export class PractitionerService {
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
       dob: client.dob || '',
-      gender: client.gender || '',
       profession: client.profession || '',
       allergies: client.allergies || [],
       medicalHistory: client.medicalHistory || [],

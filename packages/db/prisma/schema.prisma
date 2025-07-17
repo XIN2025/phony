@@ -16,7 +16,6 @@ model User {
   firstName       String
   lastName        String?
   dob             String?
-  gender          String?
   idProofUrl      String?
   profession      String?
   avatarUrl       String?  @map("avatar_url")

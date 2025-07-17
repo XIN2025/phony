@@ -102,10 +102,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={cn('group w-full px-3 sm:px-4 lg:px-6 mb-2 sm:mb-3', isGrouped && 'mt-0 mb-1 sm:mb-2')}
+      className={cn('group w-full px-3 sm:px-4 lg:px-6 mb-2 sm:mb-3 max-w-full', isGrouped && 'mt-0 mb-1 sm:mb-2')}
     >
       <div
-        className={cn('flex gap-2 sm:gap-3 lg:gap-4 w-full', isOwn ? 'ml-auto flex-row-reverse' : 'mr-auto flex-row')}
+        className={cn(
+          'flex gap-2 sm:gap-3 lg:gap-4 w-full min-w-0',
+          isOwn ? 'ml-auto flex-row-reverse' : 'mr-auto flex-row',
+        )}
         style={{
           marginLeft: isOwn ? 'auto' : '0',
           marginRight: isOwn ? '0' : 'auto',
@@ -113,22 +116,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       >
         {!isOwn &&
           (showAvatar && !isGrouped ? (
-            <Avatar className='h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mt-1 ring-2 ring-background shadow-sm flex-shrink-0'>
-              <AvatarImage src={getAvatarUrl(messageAuthor?.avatarUrl)} />
-              <AvatarFallback className='text-xs font-medium bg-gradient-to-br from-blue-100 to-purple-100 text-blue-700'>
-                {getInitials(messageAuthor || {})}
-              </AvatarFallback>
-            </Avatar>
+            <Avatar className='h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mt-1 ring-2 ring-background shadow-sm flex-shrink-0' />
           ) : (
             <div className='w-6 sm:w-7 lg:w-8 flex-shrink-0' />
           ))}
 
-        <div className={cn('flex flex-col gap-1 sm:gap-2', isOwn ? 'items-end' : 'items-start')}>
-          <div className='relative'>
+        <div className={cn('flex flex-col gap-1 sm:gap-2 min-w-0', isOwn ? 'items-end' : 'items-start')}>
+          <div className='relative min-w-0'>
             <div
               className={cn(
                 'relative px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl break-words transition-all duration-200 hover:shadow-md',
-                'inline-block max-w-[70vw] sm:max-w-[60vw] md:max-w-[50vw] lg:max-w-[40vw] xl:max-w-[35vw]',
+                'inline-block max-w-[90vw] sm:max-w-[60vw] md:max-w-[50vw] lg:max-w-[40vw] xl:max-w-[35vw]',
                 'text-sm sm:text-base leading-relaxed',
                 isOwn
                   ? 'bg-primary text-primary-foreground shadow-md'
@@ -230,12 +228,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {isOwn &&
           (showAvatar && !isGrouped ? (
-            <Avatar className='h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mt-1 ring-2 ring-background shadow-sm flex-shrink-0'>
-              <AvatarImage src={getAvatarUrl(messageAuthor?.avatarUrl)} />
-              <AvatarFallback className='text-xs font-medium bg-gradient-to-br from-green-100 to-blue-100 text-green-700'>
-                {getInitials(messageAuthor || {})}
-              </AvatarFallback>
-            </Avatar>
+            <Avatar className='h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mt-1 ring-2 ring-background shadow-sm flex-shrink-0' />
           ) : (
             <div className='w-6 sm:w-7 lg:w-8 flex-shrink-0' />
           ))}

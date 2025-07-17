@@ -87,7 +87,7 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ open, on
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className='w-[95vw] max-w-3xl max-h-[90vh] sm:max-h-[80vh] overflow-hidden mx-4 sm:mx-auto'>
+      <DialogContent className='w-[98vw] max-w-full sm:max-w-3xl max-h-[90vh] sm:max-h-[80vh] overflow-hidden mx-2 sm:mx-auto'>
         <div className='flex items-center gap-2 mb-4'>
           <Button onClick={onClose} variant='ghost' className='p-2 rounded-full'>
             <ArrowLeft className='w-5 h-5' />
@@ -101,7 +101,7 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ open, on
           {sections.length > 0 ? (
             sections.map((section, index) => (
               <Card key={index} className='bg-white border border-gray-200 shadow-none rounded-xl'>
-                <CardContent className='p-4 min-h-[120px] flex items-start'>
+                <CardContent className='p-4 min-h-[80px] sm:min-h-[120px] flex items-start'>
                   <h3
                     className='text-sm font-semibold text-gray-900 mb-2'
                     style={{ fontFamily: "'Playfair Display', serif" }}

@@ -17,7 +17,9 @@ export function AuthLayout({ children }: AuthLayoutProps) {
 
       {/* Right side with gradient background */}
       <div className='via-yellow-25 flex min-h-screen flex-1 items-center justify-center bg-gradient-to-r from-red-50 to-blue-50 p-4'>
-        <div className='w-full max-w-lg space-y-8 rounded-xl bg-white/80 p-8 shadow-lg'>{children}</div>
+        <div className='w-full max-w-full space-y-8 rounded-xl bg-white/80 p-2 shadow-lg sm:max-w-lg sm:p-8'>
+          {children}
+        </div>
       </div>
     </div>
   );

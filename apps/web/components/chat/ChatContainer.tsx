@@ -809,7 +809,10 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
 
   return (
     <div
-      className={cn('flex bg-background border border-gray-700 rounded-lg shadow-sm overflow-hidden w-full', className)}
+      className={cn(
+        'flex flex-col md:flex-row bg-background border border-gray-700 rounded-lg shadow-sm overflow-hidden w-full',
+        className,
+      )}
       style={{ height, maxHeight: height }}
     >
       <div
@@ -821,7 +824,7 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
         {/* Sidebar - Only visible for practitioners */}
         {session?.user?.role !== 'CLIENT' && !participantId && (
           <>
-            <div className='hidden md:flex w-72 lg:w-80 xl:w-96 flex-shrink-0' style={{ height }}>
+            <div className='hidden md:flex w-64 lg:w-80 xl:w-96 flex-shrink-0 h-full'>
               <SidebarContent
                 participantId={participantId}
                 searchTerm={searchTerm}
@@ -846,7 +849,7 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
             {showSidebar && (
               <div className='fixed inset-0 z-50 md:hidden'>
                 <div className='absolute inset-0 bg-black/50' onClick={() => setShowSidebar(false)} />
-                <div className='absolute left-0 top-0 h-full w-72 max-w-[85vw] bg-background'>
+                <div className='absolute left-0 top-0 h-full w-11/12 max-w-xs bg-background'>
                   <SidebarContent
                     participantId={participantId}
                     searchTerm={searchTerm}
@@ -876,8 +879,8 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
         <div className='flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden max-h-full'>
           {selectedConversation ? (
             <>
-              <div className='p-3 sm:p-4 border-b border-border/60 bg-muted/5 backdrop-blur-sm flex-shrink-0'>
-                <div className='flex items-center space-x-3'>
+              <div className='p-2 sm:p-3 md:p-4 border-b border-border/60 bg-muted/5 backdrop-blur-sm flex-shrink-0'>
+                <div className='flex items-center space-x-2 sm:space-x-3'>
                   {/* Only show sidebar toggle for practitioners */}
                   {session?.user?.role !== 'CLIENT' && !participantId && (
                     <Button variant='ghost' size='icon' className='md:hidden' onClick={() => setShowSidebar(true)}>
@@ -892,25 +895,27 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
                     return (
                       <>
                         <div className='relative'>
-                          <Avatar className='h-10 w-10 border-2 border-background shadow-sm'>
+                          <Avatar className='h-8 w-8 sm:h-10 sm:w-10 border-2 border-background shadow-sm'>
                             <AvatarImage
                               src={getAvatarUrl(getConversationAvatar(conversation))}
                               alt={getConversationDisplayName(conversation)}
                             />
-                            <AvatarFallback className='text-sm font-medium bg-gradient-to-br from-blue-100 to-purple-100 text-blue-700'>
+                            <AvatarFallback className='text-xs sm:text-sm font-medium bg-gradient-to-br from-blue-100 to-purple-100 text-blue-700'>
                               {getInitials(getConversationDisplayName(conversation))}
                             </AvatarFallback>
                           </Avatar>
                           <div
                             className={cn(
-                              'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background',
+                              'absolute -bottom-0.5 -right-0.5 w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full border-2 border-background',
                               getOnlineStatusColor(getParticipantUserId(conversation)),
                             )}
                           />
                         </div>
                         <div className='flex-1 min-w-0'>
-                          <div className='font-medium truncate'>{getConversationDisplayName(conversation)}</div>
-                          <div className='text-sm text-muted-foreground flex items-center gap-2'>
+                          <div className='font-medium truncate text-xs sm:text-base'>
+                            {getConversationDisplayName(conversation)}
+                          </div>
+                          <div className='text-xs sm:text-sm text-muted-foreground flex items-center gap-2'>
                             <span>
                               {session?.user?.role === 'CLIENT' ? 'Practitioner' : 'Client'} •{' '}
                               {getOnlineStatusText(getParticipantUserId(conversation))}
@@ -925,7 +930,7 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
 
               <div className='flex-1 min-h-0 max-h-full overflow-hidden'>
                 <ScrollArea className='h-full w-full'>
-                  <div className='p-3 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 lg:space-y-4'>
+                  <div className='p-2 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 lg:space-y-4'>
                     {isLoadingMessages ? (
                       <div className='space-y-4'>
                         {[...Array(3)].map((_, i) => (
@@ -933,18 +938,18 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
                             key={i}
                             className={cn('flex animate-pulse', i % 2 === 0 ? 'justify-end' : 'justify-start')}
                           >
-                            <div className='max-w-xs space-y-2'>
-                              <div className='h-12 bg-muted rounded-lg' />
-                              <div className='h-3 bg-muted rounded w-16' />
+                            <div className='max-w-[70vw] sm:max-w-xs space-y-2'>
+                              <div className='h-10 sm:h-12 bg-muted rounded-lg' />
+                              <div className='h-2 sm:h-3 bg-muted rounded w-12 sm:w-16' />
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : messages.length === 0 ? (
-                      <div className='text-center text-muted-foreground py-12'>
-                        <MessageCircle className='h-16 w-16 mx-auto mb-4 text-muted-foreground/50' />
-                        <p className='text-lg font-medium mb-2'>No messages yet</p>
-                        <p className='text-sm'>Start the conversation by sending a message!</p>
+                      <div className='text-center text-muted-foreground py-8 sm:py-12'>
+                        <MessageCircle className='h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 text-muted-foreground/50' />
+                        <p className='text-base sm:text-lg font-medium mb-2'>No messages yet</p>
+                        <p className='text-xs sm:text-sm'>Start the conversation by sending a message!</p>
                       </div>
                     ) : (
                       <>
@@ -989,12 +994,12 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
               <div className='p-2 sm:p-3 md:p-4 lg:p-6 border-t border-border/60 bg-muted/5 backdrop-blur-sm flex-shrink-0'>
                 {/* Attachment preview */}
                 {attachments.length > 0 && (
-                  <div className='mb-3 p-3 bg-muted/30 rounded-lg border border-border/30'>
+                  <div className='mb-2 sm:mb-3 p-2 sm:p-3 bg-muted/30 rounded-lg border border-border/30'>
                     <div className='flex flex-wrap gap-2'>
                       {attachments.map((attachment, index) => (
                         <div
                           key={index}
-                          className='flex items-center gap-2 px-3 py-2 bg-background rounded-lg border border-border/50'
+                          className='flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-background rounded-lg border border-border/50'
                         >
                           {attachment.type === 'LINK' ? (
                             <Link className='w-4 h-4 text-blue-500' />
@@ -1007,7 +1012,7 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
                               📄
                             </span>
                           )}
-                          <span className='text-sm truncate max-w-[150px]'>
+                          <span className='text-xs sm:text-sm truncate max-w-[80px] sm:max-w-[150px]'>
                             {attachment.title || attachment.fileName || 'Attachment'}
                           </span>
                           <button
@@ -1025,12 +1030,12 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
 
                 {/* Link input */}
                 {showLinkInput && (
-                  <div className='mb-3 flex gap-2'>
+                  <div className='mb-2 sm:mb-3 flex gap-2'>
                     <Input
                       value={linkInput}
                       onChange={(e) => setLinkInput(e.target.value)}
                       placeholder='Paste a link (https://...)'
-                      className='flex-1'
+                      className='flex-1 text-xs sm:text-sm'
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -1038,13 +1043,14 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
                         }
                       }}
                     />
-                    <Button type='button' onClick={handleAddLink} size='sm'>
+                    <Button type='button' onClick={handleAddLink} size='sm' className='text-xs sm:text-sm'>
                       Add
                     </Button>
                     <Button
                       type='button'
                       variant='outline'
                       size='sm'
+                      className='text-xs sm:text-sm'
                       onClick={() => {
                         setShowLinkInput(false);
                         setLinkInput('');
@@ -1056,14 +1062,14 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
                 )}
 
                 <form onSubmit={handleSendMessage} className='flex items-center space-x-2 sm:space-x-3'>
-                  <div className='flex-1 flex items-center space-x-2 bg-background rounded-xl border border-muted-foreground/20 h-10 sm:h-11 md:h-12 px-3'>
+                  <div className='flex-1 flex items-center space-x-2 bg-background rounded-xl border border-muted-foreground/20 h-9 sm:h-10 md:h-12 px-2 sm:px-3'>
                     <Input
                       ref={messageInputRef}
                       value={messageText}
                       onChange={(e) => setMessageText(e.target.value)}
                       placeholder='Type a message...'
                       disabled={isSendingMessage}
-                      className='flex-1 border-0 bg-transparent focus-visible:ring-0 p-0 text-sm md:text-base h-full'
+                      className='flex-1 border-0 bg-transparent focus-visible:ring-0 p-0 text-xs sm:text-sm md:text-base h-full'
                       autoComplete='off'
                     />
 
@@ -1071,7 +1077,7 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
                     <div className='flex items-center gap-1'>
                       <div
                         {...getRootProps()}
-                        className='p-1.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors'
+                        className='p-1 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors'
                         title='Attach file'
                       >
                         <input {...getInputProps()} />
@@ -1081,7 +1087,7 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
                       <button
                         type='button'
                         onClick={() => setShowLinkInput(true)}
-                        className='p-1.5 rounded-lg hover:bg-muted/50 transition-colors'
+                        className='p-1 rounded-lg hover:bg-muted/50 transition-colors'
                         title='Add link'
                       >
                         <Link className='w-4 h-4 text-muted-foreground hover:text-foreground' />
@@ -1095,7 +1101,7 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
                     type='submit'
                     disabled={(!messageText.trim() && attachments.length === 0) || isSendingMessage}
                     size='icon'
-                    className='h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 rounded-full shrink-0'
+                    className='h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full shrink-0'
                   >
                     {isSendingMessage ? (
                       <Loader2 className='h-4 w-4 sm:h-5 sm:w-5 animate-spin' />

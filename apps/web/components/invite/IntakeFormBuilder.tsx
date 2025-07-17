@@ -221,7 +221,7 @@ export function IntakeFormBuilder({
   return (
     <form
       onSubmit={form.handleSubmit(handleFormSubmit)}
-      className='w-full max-w-full overflow-x-hidden px-4 sm:px-6 md:px-8 flex flex-col gap-8'
+      className='w-full max-w-full min-w-0 overflow-x-hidden px-2 sm:px-4 md:px-8 flex flex-col gap-8'
     >
       {/* Form Title & Description Card */}
       <div className='bg-white rounded-2xl shadow p-4 sm:p-8 flex flex-col gap-6'>

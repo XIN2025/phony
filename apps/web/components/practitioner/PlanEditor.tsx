@@ -402,8 +402,15 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
   const suggestedItems = currentPlanData?.suggestedActionItems || [];
 
   return (
-    <div className='space-y-8 w-full max-w-[1350px] mx-auto px-2 sm:px-6 md:px-10'>
-      <div className='rounded-3xl shadow-2xl bg-white p-6 sm:p-10 w-full mx-0' style={{ borderColor: '#B0B3B8' }}>
+    <div className='space-y-8 w-full max-w-full md:max-w-[1350px] mx-auto px-2 sm:px-6 md:px-10'>
+      {/* Responsive header and publish button */}
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4'>
+        {showHeader && <h2 className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'>Edit Action Plan</h2>}
+        {onPublishClick && (
+          <PublishPlanButton onClick={onPublishClick} disabled={!!isPublishing} isPublishing={!!isPublishing} />
+        )}
+      </div>
+      <div className='rounded-3xl shadow-2xl bg-white p-4 sm:p-10 w-full mx-0' style={{ borderColor: '#B0B3B8' }}>
         <div className='flex items-center justify-between mb-2 sm:mb-4 border-b pb-2'>
           <div className='font-bold text-lg sm:text-xl text-gray-900 text-left underline underline-offset-4'>
             Tasks mentioned during session
@@ -414,13 +421,13 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
         </div>
         <div className='space-y-0 divide-y divide-gray-200'>
           {actionItems.map((item: ActionItem) => (
-            <div key={item.id} className='flex flex-col py-4 w-full'>
-              <div className='flex flex-row items-center w-full'>
-                <div className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-[140px] flex-1'>
+            <div key={item.id} className='flex flex-col py-4 w-full min-w-0'>
+              <div className='flex flex-col sm:flex-row items-start sm:items-center w-full gap-2 sm:gap-0 min-w-0'>
+                <div className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-0 flex-1 break-words'>
                   {item.description}
                 </div>
-                <div className='flex-1' />
-                <div className='flex items-center gap-1 min-w-[70px] justify-end'>
+                <div className='flex-1 min-w-0' />
+                <div className='flex flex-wrap items-center gap-1 min-w-0 justify-end'>
                   <Button
                     variant='ghost'
                     size='icon'
@@ -440,12 +447,12 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                   </Button>
                 </div>
               </div>
-              <div className='flex flex-row items-center w-full mt-1 text-xs'>
+              <div className='flex flex-col sm:flex-row items-start sm:items-center w-full mt-1 text-xs gap-2 sm:gap-0'>
                 <div className='text-gray-700 min-w-[110px]'>
                   Duration: <span className='font-medium'>15 Minutes</span>
                 </div>
                 <div className='flex-1 flex justify-center'>
-                  <div className='flex items-center gap-1 min-w-[220px]'>
+                  <div className='flex flex-wrap items-center gap-1 min-w-[220px]'>
                     Weekly Repetition (Days):
                     {DAYS.map((d) => (
                       <span
@@ -457,7 +464,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                     ))}
                   </div>
                 </div>
-                <div className='flex items-center gap-1 min-w-[120px] justify-end pr-2'>
+                <div className='flex flex-wrap items-center gap-1 min-w-[120px] justify-end pr-2'>
                   <Checkbox
                     checked={!!item.isMandatory}
                     onCheckedChange={(checked) => {
@@ -499,7 +506,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
           ))}
         </div>
       </div>
-      <div className='rounded-3xl shadow-2xl bg-white p-6 sm:p-10 w-full mx-0 mt-8' style={{ borderColor: '#B0B3B8' }}>
+      <div className='rounded-3xl shadow-2xl bg-white p-4 sm:p-10 w-full mx-0 mt-8' style={{ borderColor: '#B0B3B8' }}>
         <div className='flex items-center justify-between mb-2 sm:mb-4 border-b pb-2'>
           <div className='font-bold text-lg sm:text-xl flex items-center gap-2 text-gray-900 text-left underline underline-offset-4'>
             <span>✧</span> Complementary Tasks
@@ -516,16 +523,16 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
         </div>
         <div className='space-y-0 divide-y divide-gray-200'>
           {suggestedItems.map((item: SuggestedActionItem) => (
-            <div key={item.id} className='flex flex-col py-4 w-full'>
-              <div className='flex flex-row items-center w-full'>
+            <div key={item.id} className='flex flex-col py-4 w-full min-w-0'>
+              <div className='flex flex-col sm:flex-row items-start sm:items-center w-full gap-2 sm:gap-0 min-w-0'>
                 <div
-                  className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-[140px] flex-1 cursor-pointer hover:underline'
+                  className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-0 flex-1 cursor-pointer hover:underline break-words'
                   onClick={() => setViewingSuggestion(item)}
                 >
                   {item.description}
                 </div>
-                <div className='flex-1' />
-                <div className='min-w-[140px] pl-2 flex items-center justify-end'>
+                <div className='flex-1 min-w-0' />
+                <div className='min-w-0 pl-2 flex flex-wrap items-center justify-end'>
                   <Button
                     size='sm'
                     variant='outline'
@@ -537,12 +544,12 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                   </Button>
                 </div>
               </div>
-              <div className='flex flex-row items-center w-full mt-1 text-xs'>
+              <div className='flex flex-col sm:flex-row items-start sm:items-center w-full mt-1 text-xs gap-2 sm:gap-0'>
                 <div className='text-gray-700 min-w-[110px]'>
                   Duration: <span className='font-medium'>15 Minutes</span>
                 </div>
                 <div className='flex-1 flex justify-center'>
-                  <div className='flex items-center gap-1 min-w-[220px]'>
+                  <div className='flex flex-wrap items-center gap-1 min-w-[220px]'>
                     Weekly Repetition (Days):
                     {DAYS.map((d) => (
                       <span
@@ -554,7 +561,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                     ))}
                   </div>
                 </div>
-                <div className='flex items-center gap-1 min-w-[120px] justify-end pr-2'>
+                <div className='flex flex-wrap items-center gap-1 min-w-[120px] justify-end pr-2'>
                   <Checkbox
                     checked={!!item.isMandatory}
                     onCheckedChange={() => {

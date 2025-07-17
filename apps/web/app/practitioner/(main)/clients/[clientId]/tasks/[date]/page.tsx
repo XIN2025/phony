@@ -3,7 +3,7 @@
 import { TaskEditorDialog } from '@/components/practitioner/TaskEditorDialog';
 import { useGetClientActionItemsInRange, useGetClientJournalEntries } from '@/lib/hooks/use-api';
 import { getEngagementForDay, getRatingEmoji, isSameDay } from '@/lib/utils';
-import { ArrowLeft, Calendar } from 'lucide-react';
+import { ArrowLeft, Calendar, ClipboardList, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import DatePicker from 'react-date-picker';
@@ -234,16 +234,22 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
         <div className='flex flex-row gap-6 mb-6'>
           <div className='flex-1'>
             <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col items-start'>
-              <div className='text-4xl font-extrabold mb-1' style={{ fontFamily: "'Playfair Display', serif" }}>
-                {pending}
+              <div className='flex items-center justify-between w-full'>
+                <div className='text-4xl font-extrabold' style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {pending}
+                </div>
+                <ClipboardList className='h-10 w-10 text-[#807171]' />
               </div>
               <div className='text-lg font-semibold text-gray-700'>Tasks Pending</div>
             </div>
           </div>
           <div className='flex-1'>
             <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col items-start'>
-              <div className='text-3xl font-bold mb-1 ' style={{ fontFamily: "'Playfair Display', serif" }}>
-                {engagement}
+              <div className='flex items-center justify-between w-full'>
+                <div className='text-3xl font-bold' style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {engagement}
+                </div>
+                <Sparkles className='h-10 w-10 text-[#807171]' />
               </div>
               <div className='text-lg font-semibold text-gray-700'>Avg Engagement</div>
             </div>

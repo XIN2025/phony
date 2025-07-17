@@ -40,9 +40,6 @@ export default function ClientSettingsPage() {
 
   // Medical History and Notifications from user data
   const [allergies, setAllergies] = useState<string[]>(user?.allergies || []);
-  const [medicalHistory, setMedicalHistory] = useState<string[]>(user?.medicalHistory || []);
-  const [symptoms, setSymptoms] = useState<string[]>(user?.symptoms || []);
-  const [medications, setMedications] = useState<string[]>(user?.medications || []);
   const [notificationSettings, setNotificationSettings] = useState({
     emailReminders: user?.notificationSettings?.emailReminders ?? true,
     practitionerMessages: user?.notificationSettings?.practitionerMessages ?? true,
@@ -54,38 +51,20 @@ export default function ClientSettingsPage() {
     setNotificationSettings((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const addMedicalItem = (type: 'allergies' | 'medicalHistory' | 'symptoms' | 'medications', value: string) => {
+  const addMedicalItem = (type: 'allergies', value: string) => {
     if (!value.trim()) return;
 
     switch (type) {
       case 'allergies':
         setAllergies((prev) => [...prev, value.trim()]);
         break;
-      case 'medicalHistory':
-        setMedicalHistory((prev) => [...prev, value.trim()]);
-        break;
-      case 'symptoms':
-        setSymptoms((prev) => [...prev, value.trim()]);
-        break;
-      case 'medications':
-        setMedications((prev) => [...prev, value.trim()]);
-        break;
     }
   };
 
-  const removeMedicalItem = (type: 'allergies' | 'medicalHistory' | 'symptoms' | 'medications', index: number) => {
+  const removeMedicalItem = (type: 'allergies', index: number) => {
     switch (type) {
       case 'allergies':
         setAllergies((prev) => prev.filter((_, i) => i !== index));
-        break;
-      case 'medicalHistory':
-        setMedicalHistory((prev) => prev.filter((_, i) => i !== index));
-        break;
-      case 'symptoms':
-        setSymptoms((prev) => prev.filter((_, i) => i !== index));
-        break;
-      case 'medications':
-        setMedications((prev) => prev.filter((_, i) => i !== index));
         break;
     }
   };
@@ -124,9 +103,6 @@ export default function ClientSettingsPage() {
     formData.append('lastName', lastName);
     formData.append('phoneNumber', phone);
     formData.append('allergies', JSON.stringify(allergies));
-    formData.append('medicalHistory', JSON.stringify(medicalHistory));
-    formData.append('symptoms', JSON.stringify(symptoms));
-    formData.append('medications', JSON.stringify(medications));
     formData.append('notificationSettings', JSON.stringify(notificationSettings));
 
     if (avatarFile) {
@@ -175,12 +151,6 @@ export default function ClientSettingsPage() {
             onClick={() => setActiveTab('profile')}
           >
             Profile
-          </button>
-          <button
-            className={`px-4 py-1 rounded-full text-sm font-medium transition-all ${activeTab === 'medical' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
-            onClick={() => setActiveTab('medical')}
-          >
-            Medical History
           </button>
           <button
             className={`px-4 py-1 rounded-full text-sm font-medium transition-all ${activeTab === 'notifications' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
@@ -278,203 +248,6 @@ export default function ClientSettingsPage() {
             >
               Delete Account
             </Button>
-          </div>
-        </div>
-      )}
-      {activeTab === 'medical' && (
-        <div className='w-full'>
-          <div
-            className='w-full rounded-xl border border-[#BDBDBD] bg-white mb-4'
-            style={{ boxShadow: '0 0 0 0 transparent' }}
-          >
-            <div className='p-10'>
-              <h2 className='text-xl font-semibold mb-2' style={{ fontFamily: "'Playfair Display', serif" }}>
-                Medical History
-              </h2>
-              <p className='text-gray-500 text-base mb-6'>Update your medical history</p>
-              <div className='space-y-6'>
-                <div>
-                  <Label htmlFor='allergies' className='text-base font-medium'>
-                    Known Allergies
-                  </Label>
-                  <div className='flex gap-2 mt-2'>
-                    <Input
-                      id='allergies'
-                      placeholder='Enter allergies'
-                      className='flex-1'
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          addMedicalItem('allergies', e.currentTarget.value);
-                          e.currentTarget.value = '';
-                        }
-                      }}
-                    />
-                    <Button
-                      type='button'
-                      onClick={() => {
-                        const input = document.getElementById('allergies') as HTMLInputElement;
-                        addMedicalItem('allergies', input.value);
-                        input.value = '';
-                      }}
-                      className='px-4'
-                    >
-                      Add
-                    </Button>
-                  </div>
-                  <div className='flex flex-wrap gap-2 mt-2'>
-                    {allergies.map((a, i) => (
-                      <span
-                        key={i}
-                        className='px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-sm flex items-center gap-1'
-                      >
-                        {a}
-                        <button
-                          onClick={() => removeMedicalItem('allergies', i)}
-                          className='text-red-500 hover:text-red-700'
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor='medicalHistory' className='text-base font-medium'>
-                    Relevant Medical History
-                  </Label>
-                  <div className='flex gap-2 mt-2'>
-                    <Input
-                      id='medicalHistory'
-                      placeholder='Enter medical history'
-                      className='flex-1'
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          addMedicalItem('medicalHistory', e.currentTarget.value);
-                          e.currentTarget.value = '';
-                        }
-                      }}
-                    />
-                    <Button
-                      type='button'
-                      onClick={() => {
-                        const input = document.getElementById('medicalHistory') as HTMLInputElement;
-                        addMedicalItem('medicalHistory', input.value);
-                        input.value = '';
-                      }}
-                      className='px-4'
-                    >
-                      Add
-                    </Button>
-                  </div>
-                  <div className='flex flex-wrap gap-2 mt-2'>
-                    {medicalHistory.map((m, i) => (
-                      <span
-                        key={i}
-                        className='px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-sm flex items-center gap-1'
-                      >
-                        {m}
-                        <button
-                          onClick={() => removeMedicalItem('medicalHistory', i)}
-                          className='text-red-500 hover:text-red-700'
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor='symptoms' className='text-base font-medium'>
-                    Current Symptoms
-                  </Label>
-                  <div className='flex gap-2 mt-2'>
-                    <Input
-                      id='symptoms'
-                      placeholder='Enter current symptoms'
-                      className='flex-1'
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          addMedicalItem('symptoms', e.currentTarget.value);
-                          e.currentTarget.value = '';
-                        }
-                      }}
-                    />
-                    <Button
-                      type='button'
-                      onClick={() => {
-                        const input = document.getElementById('symptoms') as HTMLInputElement;
-                        addMedicalItem('symptoms', input.value);
-                        input.value = '';
-                      }}
-                      className='px-4'
-                    >
-                      Add
-                    </Button>
-                  </div>
-                  <div className='flex flex-wrap gap-2 mt-2'>
-                    {symptoms.map((s, i) => (
-                      <span
-                        key={i}
-                        className='px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-sm flex items-center gap-1'
-                      >
-                        {s}
-                        <button
-                          onClick={() => removeMedicalItem('symptoms', i)}
-                          className='text-red-500 hover:text-red-700'
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor='medications' className='text-base font-medium'>
-                    Current Medications
-                  </Label>
-                  <div className='flex gap-2 mt-2'>
-                    <Input
-                      id='medications'
-                      placeholder='Enter current medications'
-                      className='flex-1'
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          addMedicalItem('medications', e.currentTarget.value);
-                          e.currentTarget.value = '';
-                        }
-                      }}
-                    />
-                    <Button
-                      type='button'
-                      onClick={() => {
-                        const input = document.getElementById('medications') as HTMLInputElement;
-                        addMedicalItem('medications', input.value);
-                        input.value = '';
-                      }}
-                      className='px-4'
-                    >
-                      Add
-                    </Button>
-                  </div>
-                  <div className='flex flex-wrap gap-2 mt-2'>
-                    {medications.map((m, i) => (
-                      <span
-                        key={i}
-                        className='px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-sm flex items-center gap-1'
-                      >
-                        {m}
-                        <button
-                          onClick={() => removeMedicalItem('medications', i)}
-                          className='text-red-500 hover:text-red-700'
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       )}

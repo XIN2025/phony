@@ -15,13 +15,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/client/auth', request.url));
   }
 
-  // Allow access to invitation signup flow without authentication
-  const invitationSignupRoutes = [
-    '/client/auth/signup',
-    '/client/personal-details',
-    '/client/medical-details',
-    '/client/response-sent',
-  ];
+  const invitationSignupRoutes = ['/client/auth/signup', '/client/personal-details', '/client/response-sent'];
 
   const isInvitationSignupRoute = invitationSignupRoutes.some((route) => pathname.startsWith(route));
 
@@ -46,20 +40,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/practitioner/auth', request.url));
     }
 
-    // Handle client status-based redirects for authenticated clients
-    // Don't redirect users who are on intake-related pages (intake, response-sent)
-    // as they might be in the middle of completing the intake flow
     const isOnIntakeFlow = pathname.includes('/intake') || pathname.includes('/response-sent');
 
-    // Also don't redirect if they have a token in the URL (likely coming from intake flow)
     const hasToken = request.nextUrl.searchParams.has('token');
 
-    // Check referrer to see if user is coming from response-sent or intake pages
     const referrer = request.headers.get('referer') || '';
     const isFromIntakeFlow = referrer.includes('/client/response-sent') || referrer.includes('/client/intake');
 
-    // If user is going to main dashboard (/client) and coming from intake flow, allow it regardless of status
-    // This handles the case where the session token hasn't been updated yet but they just completed intake
     const isGoingToDashboard = pathname === '/client';
     const allowDashboardFromIntake = isGoingToDashboard && isFromIntakeFlow;
 

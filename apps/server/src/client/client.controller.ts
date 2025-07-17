@@ -40,4 +40,20 @@ export class ClientController {
   async fixClientStatuses() {
     return this.clientService.fixClientStatuses();
   }
+
+  @Get('intake-form/submission')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get intake form submission for client' })
+  @ApiResponse({ status: 200, description: 'Intake form submission retrieved successfully.' })
+  @ApiResponse({ status: 404, description: 'No intake form submission found for client.' })
+  async getIntakeFormSubmission(@Request() req) {
+    const clientId = req.user.id;
+    const submissions = await this.clientService.getSubmissionsByClient(clientId);
+    if (!submissions || submissions.length === 0) {
+      return { submission: null };
+    }
+    // Only one submission per client is expected
+    const submission = submissions[0];
+    return { submission };
+  }
 }

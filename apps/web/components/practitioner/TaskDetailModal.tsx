@@ -35,8 +35,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ open, onClose,
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className='!fixed !top-1/2 !left-1/2 !transform !-translate-x-1/2 !-translate-y-1/2 w-[90vw] max-w-2xl md:max-w-3xl lg:max-w-4xl p-0 overflow-hidden rounded-2xl bg-white/95 backdrop-blur-sm border border-white/50 shadow-xl !z-[9999]'>
-        <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 sm:p-8 border-b border-gray-200/50'>
+      <DialogContent className='!fixed !top-1/2 !left-1/2 !transform !-translate-x-1/2 !-translate-y-1/2 w-[98vw] max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl p-0 overflow-hidden rounded-2xl bg-white/95 backdrop-blur-sm border border-white/50 shadow-xl !z-[9999]'>
+        <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-8 border-b border-gray-200/50'>
           <DialogHeader className='space-y-3'>
             <div className='flex items-start justify-between'>
               <div className='flex-1 min-w-0'>
@@ -80,7 +80,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ open, onClose,
           </DialogHeader>
         </div>
 
-        <div className='p-6 sm:p-8 space-y-6 max-h-[70vh] overflow-y-auto'>
+        <div className='p-4 sm:p-8 space-y-6 max-h-[70vh] overflow-y-auto'>
           {/* Task Details */}
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             {task.target && (

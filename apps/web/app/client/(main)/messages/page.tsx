@@ -9,7 +9,7 @@ import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButt
 const ClientMessagesPage = () => {
   const { setSidebarOpen } = useSidebar();
   return (
-    <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0 h-screen'>
+    <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0 h-screen max-w-full overflow-x-hidden'>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <SidebarToggleButton />

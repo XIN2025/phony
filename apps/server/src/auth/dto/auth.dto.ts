@@ -82,11 +82,6 @@ export class ClientSignUpDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  gender?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
   profession?: string;
 
   @ApiProperty({ required: false })

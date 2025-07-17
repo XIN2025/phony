@@ -23,10 +23,8 @@ export default function ClientOtpPage() {
   const { mutate: verifyRegularOtp, isPending: isVerifyingRegular } = useVerifyOtp();
   const { mutate: resendOtp, isPending: isResending } = useSendOtp();
 
-  // Determine if this is invitation flow (has token) or regular login flow
   const isInvitationFlow = !!token;
 
-  // Resend timer logic
   const [resendTimer, setResendTimer] = useState(0);
   const timerCleanupRef = useRef<(() => void) | null>(null);
 
@@ -59,7 +57,6 @@ export default function ClientOtpPage() {
       return;
     }
 
-    // For invitation flow, validate token and signup data
     if (isInvitationFlow) {
       if (!token) {
         toast.error('Invalid access. Please start from the invitation link.');
@@ -88,7 +85,6 @@ export default function ClientOtpPage() {
     }
 
     if (isInvitationFlow) {
-      // Invitation flow
       if (!token) {
         toast.error('Invitation token is required.');
         return;
@@ -109,14 +105,12 @@ export default function ClientOtpPage() {
         },
       );
     } else {
-      // Regular login flow
       verifyRegularOtp(
         { email, otp, role: 'CLIENT' },
         {
           onSuccess: async (response) => {
             toast.success('Signed in successfully!');
 
-            // Sign in with NextAuth
             const signInResult = await signIn('credentials', {
               email: response.user.email,
               token: response.token,
@@ -129,7 +123,6 @@ export default function ClientOtpPage() {
               return;
             }
 
-            // Redirect to client dashboard
             router.push('/client');
           },
           onError: (error: any) => {
@@ -182,47 +175,53 @@ export default function ClientOtpPage() {
   return (
     <>
       <AuthHeader title='Enter OTP' />
-      <form className='space-y-6 px-2 w-full max-w-xs mx-auto' onSubmit={handleVerifyOtp}>
-        <div className='text-center'>
-          <p className='text-sm text-muted-foreground mb-4'>We've sent you an OTP at "{email}"</p>
-          <div className='flex justify-center mb-6'>
-            <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-              <InputOTPGroup className='gap-2'>
-                {Array.from({ length: 6 }, (_, i) => (
-                  <InputOTPSlot key={i} index={i} className='w-12 h-12 text-lg font-semibold' />
-                ))}
-              </InputOTPGroup>
-            </InputOTP>
-          </div>
-          <div className='flex justify-center gap-4 mb-6'>
-            <button type='button' onClick={handleChangeEmail} className='text-sm text-primary hover:underline'>
-              Change Email
-            </button>
-            {resendTimer > 0 ? (
-              <span className='text-sm text-muted-foreground'>Resend OTP in {resendTimer}s</span>
-            ) : (
-              <button
-                type='button'
-                onClick={handleResendOtp}
-                disabled={isResending}
-                className='text-sm text-primary hover:underline disabled:opacity-50'
-              >
-                {isResending ? 'Sending...' : 'Resend OTP'}
+      <div className='flex justify-center w-full'>
+        <form className='space-y-6 w-full max-w-full p-4 sm:p-6' onSubmit={handleVerifyOtp}>
+          <div className='text-center'>
+            <p className='text-sm text-muted-foreground mb-4'>We've sent you an OTP at "{email}"</p>
+            <div className='flex justify-center mb-6'>
+              <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+                <InputOTPGroup className='gap-2 sm:gap-2 gap-1'>
+                  {Array.from({ length: 6 }, (_, i) => (
+                    <InputOTPSlot
+                      key={i}
+                      index={i}
+                      className='w-10 h-10 sm:w-12 sm:h-12 text-base sm:text-lg font-semibold'
+                    />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+            <div className='flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-6'>
+              <button type='button' onClick={handleChangeEmail} className='text-sm text-primary hover:underline'>
+                Change Email
               </button>
-            )}
+              {resendTimer > 0 ? (
+                <span className='text-sm text-muted-foreground'>Resend OTP in {resendTimer}s</span>
+              ) : (
+                <button
+                  type='button'
+                  onClick={handleResendOtp}
+                  disabled={isResending}
+                  className='text-sm text-primary hover:underline disabled:opacity-50'
+                >
+                  {isResending ? 'Sending...' : 'Resend OTP'}
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-        <Button
-          type='submit'
-          className='w-full rounded-full'
-          disabled={(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) || otp.length !== 6}
-        >
-          {(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) && (
-            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-          )}
-          {isInvitationFlow ? 'Next' : 'Sign In'}
-        </Button>
-      </form>
+          <Button
+            type='submit'
+            className='w-full rounded-full'
+            disabled={(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) || otp.length !== 6}
+          >
+            {(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) && (
+              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+            )}
+            {isInvitationFlow ? 'Next' : 'Sign In'}
+          </Button>
+        </form>
+      </div>
     </>
   );
 }

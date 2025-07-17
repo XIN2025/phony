@@ -70,17 +70,23 @@ export default function LandingPage() {
     <div className='min-h-screen bg-gradient-to-r from-red-50 via-yellow-25 to-blue-50'>
       {/* Navigation */}
       <nav className='fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-border z-50'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='flex justify-between items-center h-16'>
-            <div className='flex items-center space-x-3'>
-              <Image src='/logo.svg' alt='Continuum' width={132} height={132} className='mt-10 w-60 h-60' />
+        <div className='max-w-7xl mx-auto px-2 sm:px-4 lg:px-8'>
+          <div className='flex flex-col sm:flex-row justify-between items-center h-auto sm:h-16 py-2 sm:py-0'>
+            <div className='flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-0'>
+              <Image
+                src='/logo.svg'
+                alt='Continuum'
+                width={132}
+                height={132}
+                className='w-32 h-12 sm:w-60 sm:h-16 mt-0 sm:mt-10'
+              />
             </div>
-            <div className='flex items-center space-x-4'>
-              <Button variant='ghost' onClick={() => router.push('/client/auth')}>
+            <div className='flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto'>
+              <Button variant='ghost' className='w-full sm:w-auto' onClick={() => router.push('/client/auth')}>
                 Client Login
               </Button>
               <Button
-                className='bg-black text-white hover:bg-gray-800'
+                className='bg-black text-white hover:bg-gray-800 w-full sm:w-auto'
                 onClick={() => router.push('/practitioner/auth')}
               >
                 Practitioner Login
@@ -91,10 +97,10 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className='pt-24 pb-16 px-4 sm:px-6 lg:px-8'>
+      <section className='pt-28 pb-16 px-2 sm:px-6 lg:px-8'>
         <div className='max-w-7xl mx-auto text-center'>
           <motion.h1
-            className='text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight'
+            className='text-3xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight break-words'
             style={{ fontFamily: "'Playfair Display', serif" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -108,7 +114,7 @@ export default function LandingPage() {
           </motion.h1>
 
           <motion.p
-            className='text-xl sm:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed'
+            className='text-base sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed'
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -118,14 +124,14 @@ export default function LandingPage() {
           </motion.p>
 
           <motion.div
-            className='flex flex-col sm:flex-row gap-4 justify-center items-center'
+            className='flex flex-col sm:flex-row gap-4 justify-center items-center w-full'
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
             <Button
               size='lg'
-              className='px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 bg-black text-white hover:bg-gray-800'
+              className='px-6 py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 bg-black text-white hover:bg-gray-800 w-full sm:w-auto'
               onClick={() => router.push('/practitioner/auth')}
             >
               Start Your Free Trial
@@ -134,7 +140,7 @@ export default function LandingPage() {
             <Button
               variant='outline'
               size='lg'
-              className='px-8 py-4 text-lg font-semibold border-foreground text-foreground hover:bg-accent hover:text-accent-foreground'
+              className='px-6 py-3 text-base sm:text-lg font-semibold border-foreground text-foreground hover:bg-accent hover:text-accent-foreground w-full sm:w-auto'
               onClick={() => router.push('/client/auth')}
             >
               Client Access
@@ -144,7 +150,7 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section className='py-16 px-4 sm:px-6 lg:px-8 bg-white/80'>
+      <section className='py-16 px-2 sm:px-6 lg:px-8 bg-white/80'>
         <div className='max-w-7xl mx-auto'>
           <motion.div
             className='text-center mb-16'
@@ -202,7 +208,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className='py-16 px-4 sm:px-6 lg:px-8'>
+      <section className='py-16 px-2 sm:px-6 lg:px-8'>
         <div className='max-w-7xl mx-auto'>
           <motion.div
             className='text-center mb-16'
@@ -251,7 +257,7 @@ export default function LandingPage() {
       </section>
 
       {/* Trust & Security Section */}
-      <section className='py-16 px-4 sm:px-6 lg:px-8 bg-white/80'>
+      <section className='py-16 px-2 sm:px-6 lg:px-8 bg-white/80'>
         <div className='max-w-7xl mx-auto'>
           <motion.div
             className='text-center mb-16'
@@ -271,7 +277,7 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+          <div className='grid grid-cols-1 gap-8 md:grid-cols-2'>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -342,7 +348,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className='py-16 px-4 sm:px-6 lg:px-8 bg-black'>
+      <section className='py-16 px-2 sm:px-6 lg:px-8 bg-black'>
         <div className='max-w-4xl mx-auto text-center'>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -356,11 +362,11 @@ export default function LandingPage() {
             <p className='text-xl text-gray-300 mb-8 max-w-2xl mx-auto'>
               Join thousands of practitioners who are already providing better support to their clients with Continuum.
             </p>
-            <div className='flex flex-col sm:flex-row gap-4 justify-center items-center'>
+            <div className='flex flex-col sm:flex-row gap-4 justify-center items-center w-full'>
               <Button
                 size='lg'
                 variant='secondary'
-                className='px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 bg-white text-black hover:bg-gray-100'
+                className='px-6 py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 bg-white text-black hover:bg-gray-100 w-full sm:w-auto'
                 onClick={() => router.push('/practitioner/auth')}
               >
                 Start Free Trial
@@ -369,7 +375,7 @@ export default function LandingPage() {
               <Button
                 size='lg'
                 variant='outline'
-                className='px-8 py-4 text-lg font-semibold border-white text-white hover:bg-white hover:text-black transition-all duration-300 bg-transparent'
+                className='px-6 py-3 text-base sm:text-lg font-semibold border-white text-white hover:bg-white hover:text-black transition-all duration-300 bg-transparent w-full sm:w-auto'
                 onClick={() => router.push('/client/auth')}
               >
                 Client Login
@@ -380,12 +386,12 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className='py-8 px-4 sm:px-6 lg:px-8 bg-white/80 border-t border-border'>
+      <footer className='py-8 px-2 sm:px-6 lg:px-8 bg-white/80 border-t border-border'>
         <div className='max-w-7xl mx-auto text-center'>
           <div className='flex items-center justify-center mb-4'>
             <Image src='/logo.svg' alt='Continuum' width={24} height={24} className='w-6 h-6' />
           </div>
-          <p className='text-muted-foreground text-sm'>
+          <p className='text-muted-foreground text-xs sm:text-sm break-words'>
             © 2025 Continuum. Empowering therapeutic practices with AI-assisted tools.
           </p>
         </div>

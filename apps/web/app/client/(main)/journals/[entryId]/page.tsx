@@ -39,19 +39,19 @@ export default function JournalEntryViewPage({ params }: { params: Promise<{ ent
     });
   };
   return (
-    <div className='flex flex-col w-full min-h-screen '>
+    <div className='flex flex-col w-full min-h-screen max-w-full overflow-x-hidden'>
       <PageHeader
         title={entry.title || 'Untitled Journal'}
         subtitle={formatDate(entry.updatedAt || entry.createdAt)}
         onBack={() => router.back()}
         showBackButton
-        className='mb-4 border-b-0  px-4 sm:px-8 pt-6'
+        className='mb-4 border-b-0 px-4 sm:px-8 pt-6'
       />
-      <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 px-4 sm:px-8'>
+      <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 px-2 sm:px-8 max-w-full'>
         {sections.length > 0 ? (
           sections.map((section, index) => (
             <Card key={index} className='bg-white border border-gray-200 shadow-none rounded-xl'>
-              <CardContent className='p-4 min-h-[120px] flex flex-col items-start'>
+              <CardContent className='p-4 min-h-[80px] sm:min-h-[120px] flex flex-col items-start'>
                 <h3
                   className='text-sm font-semibold text-gray-900 mb-2'
                   style={{ fontFamily: "'Playfair Display', serif" }}
@@ -67,7 +67,7 @@ export default function JournalEntryViewPage({ params }: { params: Promise<{ ent
           ))
         ) : (
           <Card className='bg-white border border-gray-200 shadow-none rounded-xl col-span-3'>
-            <CardContent className='p-4 min-h-[120px] flex items-center justify-center'>
+            <CardContent className='p-4 min-h-[80px] sm:min-h-[120px] flex items-center justify-center'>
               <div
                 className='prose prose-sm max-w-none text-gray-800 leading-relaxed w-full'
                 dangerouslySetInnerHTML={{ __html: entry.content }}

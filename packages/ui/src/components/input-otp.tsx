@@ -45,8 +45,8 @@ function InputOTPSlot({
       data-active={isActive}
       className={cn(
         'bg-background relative flex items-center justify-center rounded-md border-2 border-zinc-300 font-medium transition-all',
-        'h-10 w-10 text-lg',
-        'sm:h-14 sm:w-14 sm:text-2xl',
+        'h-10 w-10 text-base', // default for mobile
+        'sm:h-14 sm:w-14 sm:text-2xl', // larger on sm+
         'focus-within:border-zinc-900 focus-within:ring-2 focus-within:ring-zinc-900/20',
         isActive && 'z-10 border-zinc-900 ring-2 ring-zinc-900/50',
         className

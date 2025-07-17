@@ -17,7 +17,6 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
     { href: '/client/journals', icon: Book, label: 'Journals' },
   ];
 
-  // Show loading state during authentication checks
   if (isLoading) {
     return (
       <div className='flex h-screen items-center justify-center'>
@@ -29,7 +28,6 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Don't render anything if not authenticated (hook will handle redirects)
   if (!isAuthenticated) {
     return (
       <div className='flex h-screen items-center justify-center'>
@@ -42,7 +40,7 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className='relative min-h-screen w-full'>
+    <div className='relative min-h-screen w-full max-w-full overflow-x-hidden'>
       {/* Gradient background - matching practitioner style */}
       <div className='absolute inset-0 z-0 bg-gradient-to-r from-red-50 via-orange-30 to-blue-50' />
 
@@ -56,7 +54,10 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
           />
         </div>
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side='left' className='w-[280px] sm:w-[320px] p-0 bg-transparent'>
+          <SheetContent
+            side='left'
+            className='w-[70vw] max-w-xs sm:w-[280px] sm:max-w-sm md:w-[320px] p-0 bg-transparent'
+          >
             <SheetHeader className='sr-only'>
               <SheetTitle>Navigation Menu</SheetTitle>
             </SheetHeader>

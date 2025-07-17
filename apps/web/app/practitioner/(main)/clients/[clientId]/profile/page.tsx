@@ -6,7 +6,6 @@ import { useGetClient, useGetClientIntakeForm } from '@/lib/hooks/use-api';
 import { getAvatarUrl, getInitials } from '@/lib/utils';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-// Removed PageHeader import
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 
 export default function ClientProfilePage({ params }: { params: Promise<{ clientId: string }> }) {
@@ -27,7 +26,6 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
     return <div className='flex items-center justify-center min-h-screen'>Loading...</div>;
   }
 
-  // Helper for Q&A rendering
   const renderQA = (label: string, value: string | undefined, key?: string) => (
     <div className='mb-4' key={key}>
       <div className='font-medium text-sm mb-1'>{label}</div>
@@ -35,22 +33,19 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
     </div>
   );
 
-  // Extract DOB, gender, occupation if available
   const dob = client?.dob || '';
-  const gender = client?.gender || '';
   const occupation = client?.profession || '';
 
   return (
-    <div className='w-full flex flex-col pt-6 px-2 sm:px-0 min-h-screen'>
-      <div className='w-full flex flex-col gap-4  mx-auto'>
+    <div className='w-full flex flex-col pt-6 px-2 sm:px-0 min-h-screen max-w-full overflow-x-hidden'>
+      <div className='w-full flex flex-col gap-4 mx-auto'>
         {/* Back button row */}
         <div className='flex items-center mb-2'>
           <button
             type='button'
             aria-label='Back'
             onClick={() => router.back()}
-            className='text-muted-foreground hover:text-foreground focus:outline-none'
-            style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className='text-muted-foreground hover:text-foreground focus:outline-none w-10 h-10 flex items-center justify-center sm:w-11 sm:h-11'
           >
             <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
           </button>
@@ -68,9 +63,9 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
           </div>
         </div>
         {/* Top section: Two-column grid */}
-        <div className='grid grid-cols-1 md:grid-cols-2 px-8 gap-6'>
+        <div className='grid grid-cols-1 md:grid-cols-2 px-2 md:px-8 gap-6 max-w-full'>
           {/* Personal Details */}
-          <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col gap-4 min-h-[260px]'>
+          <div className='bg-white rounded-2xl shadow-md p-4 md:p-8 flex flex-col gap-4 min-h-[180px] md:min-h-[260px]'>
             <div className='flex items-center gap-4 mb-4'>
               <Avatar className='h-16 w-16 border-2 border-gray-200'>
                 <AvatarImage src={getAvatarUrl(client.avatarUrl, client)} />
@@ -96,9 +91,6 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
                 <span className='font-semibold'>DOB:</span> <span className='font-normal'>{dob}</span>
               </div>
               <div>
-                <span className='font-semibold'>Gender:</span> <span className='font-normal'>{gender}</span>
-              </div>
-              <div>
                 <span className='font-semibold'>Occupation:</span> <span className='font-normal'>{occupation}</span>
               </div>
               <div>
@@ -114,18 +106,6 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
             <div className='font-semibold text-xl mb-4'>Client Information</div>
             <div className='grid grid-cols-1 gap-2 text-base'>
               <div>
-                <span className='font-semibold'>Relevant Medical History:</span>{' '}
-                <span className='font-normal'>
-                  {client.medicalHistory && client.medicalHistory.length > 0 ? client.medicalHistory.join(', ') : 'Nil'}
-                </span>
-              </div>
-              <div>
-                <span className='font-semibold'>Current Symptoms:</span>{' '}
-                <span className='font-normal'>
-                  {client.symptoms && client.symptoms.length > 0 ? client.symptoms.join(', ') : '-'}
-                </span>
-              </div>
-              <div>
                 <span className='font-semibold'>Current Medications:</span>{' '}
                 <span className='font-normal'>
                   {client.medications && client.medications.length > 0 ? client.medications.join(', ') : '-'}
@@ -135,7 +115,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
           </div>
         </div>
         {/* Intake Survey Responses */}
-        <div className='w-full px-8'>
+        <div className='w-full px-2 md:px-8 max-w-full'>
           <div className='flex justify-end mb-2'>
             <button
               className='border border-gray-300 rounded-full px-5 py-1.5 text-sm font-medium bg-white hover:bg-gray-100 transition shadow-sm'
@@ -145,7 +125,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
             </button>
           </div>
           {showIntake && (
-            <div className='bg-white rounded-2xl shadow-md px-2 p-8'>
+            <div className='bg-white rounded-2xl shadow-md px-2 p-4 md:p-8'>
               <div className='font-semibold text-xl mb-1'>Intake Survey Responses</div>
               {client.intakeFormSubmission ? (
                 <>

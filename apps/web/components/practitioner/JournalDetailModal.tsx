@@ -64,7 +64,7 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ open, on
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className='!fixed !top-1/2 !left-1/2 !transform !-translate-x-1/2 !-translate-y-1/2 w-[90vw] max-w-2xl md:max-w-3xl lg:max-w-4xl p-0 overflow-hidden rounded-2xl bg-white/95 backdrop-blur-sm border border-white/50 shadow-xl !z-[9999]'>
+      <DialogContent className='!fixed !top-1/2 !left-1/2 !transform !-translate-x-1/2 !-translate-y-1/2 w-[95vw] max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl p-0 overflow-hidden rounded-2xl bg-white/95 backdrop-blur-sm border border-white/50 shadow-xl !z-[9999]'>
         <DialogHeader>
           <DialogTitle className='sr-only'>Journal Entry Details</DialogTitle>
         </DialogHeader>

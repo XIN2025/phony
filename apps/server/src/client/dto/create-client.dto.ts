@@ -35,11 +35,6 @@ export class CreateClientDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  gender: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
   occupation: string;
 
   @ApiProperty({ type: [String] })

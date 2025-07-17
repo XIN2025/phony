@@ -12,14 +12,8 @@ interface SignUpData {
   lastName?: string;
   phoneNumber?: string;
   dob?: string;
-  gender?: string;
   occupation?: string;
   profileImage?: File | null;
-
-  // From Medical Details
-  medicalHistory?: string;
-  symptoms?: string;
-  medications?: string;
 }
 
 interface SignUpContextType {

@@ -1070,3 +1070,17 @@ export function useGetActivePlanForDate(clientId: string, date: string) {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+export function useGetClientIntakeFormSubmission(clientId: string) {
+  return useQuery({
+    queryKey: ['client-intake-form-submission', clientId],
+    queryFn: async () => {
+      if (!clientId) return null;
+
+      const res = await ApiClient.get<{ submission: any }>(`/api/client/intake-form/submission`);
+      return res.submission || null;
+    },
+    enabled: !!clientId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
