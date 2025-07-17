@@ -17,6 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@repo/ui/components/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input-otp';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
+import { SignupStepper } from '@/components/SignupStepper';
 
 const signUpSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Please enter a valid email address.'),
@@ -473,6 +474,7 @@ export default function PractitionerSignUpPage() {
 
   return (
     <>
+      <SignupStepper totalSteps={4} currentStep={step} />
       <div className='flex flex-col space-y-2 text-center'>
         <h1 className='text-2xl font-bold tracking-tight'>Create Practitioner Account</h1>
         <p className='text-muted-foreground'>Join our platform to help clients on their journey.</p>

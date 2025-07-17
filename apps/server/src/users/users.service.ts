@@ -71,9 +71,21 @@ export class UsersService {
   }
 
   async deleteUser(id: string) {
-    return await this.prisma.user.delete({
-      where: { id },
+    // First, get the user to retrieve their email
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new Error('User not found');
+    const deletedUser = await this.prisma.user.delete({ where: { id } });
+    // After deleting the user, reset invitations for this email
+    await this.prisma.invitation.updateMany({
+      where: {
+        clientEmail: user.email,
+        status: 'ACCEPTED',
+      },
+      data: {
+        status: 'PENDING',
+      },
     });
+    return deletedUser;
   }
 
   async getUserByEmail(email: string) {

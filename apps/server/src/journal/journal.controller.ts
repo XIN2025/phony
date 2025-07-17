@@ -1,9 +1,25 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  Query,
+  UseGuards,
+  Request,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
 import { JournalService } from './journal.service';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/user.decorator';
 import { RequestUser } from '../auth/dto/request-user.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { saveFileToUploads, validateFileUpload } from '../common/utils/user.utils';
+import { extname } from 'path';
 
 interface CreateJournalEntryDto {
   title?: string;
@@ -89,6 +105,27 @@ export class JournalController {
       throw new Error('Unauthorized: Only practitioners can mark journal entries as read');
     }
     return await this.journalService.markJournalEntryAsRead(entryId, user.id);
+  }
+
+  @Post('upload-image')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload an image for a journal entry' })
+  @ApiResponse({ status: 201, description: 'Image uploaded successfully.' })
+  async uploadJournalImage(@Request() req, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new Error('No file provided');
+    }
+    const { isValid, error } = validateFileUpload(file);
+    if (!isValid) {
+      throw new Error(error || 'Invalid file upload');
+    }
+    const ext = extname(file.originalname).toLowerCase();
+    if (!['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
+      throw new Error('Only JPG, PNG, GIF, and WEBP images are allowed.');
+    }
+    const filename = `${Date.now()}-${file.originalname}`;
+    const url = await saveFileToUploads(file, filename, 'uploads');
+    return { url, type: 'IMAGE', title: file.originalname };
   }
 
   @Get('unread/count')

@@ -12,6 +12,7 @@ import { clearAllAuthData } from '@/lib/auth-utils';
 import { useGetInvitationByToken, useSendOtp } from '@/lib/hooks/use-api';
 import { useSignUpContext } from '@/context/signup-context';
 import { AuthHeader } from '@repo/ui/components/auth-layout';
+import { SignupStepper } from '@/components/SignupStepper';
 
 export default function ClientSignUpPage() {
   const router = useRouter();
@@ -165,6 +166,7 @@ export default function ClientSignUpPage() {
 
   return (
     <>
+      <SignupStepper totalSteps={4} currentStep={1} />
       <AuthHeader title='Create Account' />
       <form onSubmit={handleNext} className='space-y-6'>
         <div>

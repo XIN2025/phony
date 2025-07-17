@@ -1084,3 +1084,17 @@ export function useGetClientIntakeFormSubmission(clientId: string) {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+export function useUploadJournalImage() {
+  return useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return ApiClient.post<{ url: string; type: 'IMAGE'; title: string }>('/api/journal/upload-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    },
+  });
+}

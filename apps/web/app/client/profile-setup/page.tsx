@@ -8,6 +8,7 @@ import { ProfileSetupForm } from '@/components/ProfileSetupForm';
 import { Loader2 } from 'lucide-react';
 import { useCheckInvitationIntakeForm } from '@/lib/hooks/use-api';
 import { useSignUpContext } from '@/context/signup-context';
+import { SignupStepper } from '@/components/SignupStepper';
 
 export default function ClientProfileSetupPage() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function ClientProfileSetupPage() {
 
   return (
     <div className='flex flex-col w-full max-w-full overflow-x-hidden px-4 sm:px-6 md:px-8 min-w-0'>
+      <SignupStepper totalSteps={4} currentStep={4} />
       <div className='text-center mb-8'>
         <h1 className='text-2xl font-bold mb-2' style={{ fontFamily: "'Playfair Display', serif" }}>
           Welcome to Continuum

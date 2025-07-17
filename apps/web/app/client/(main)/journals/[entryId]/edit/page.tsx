@@ -186,8 +186,6 @@ const JournalEditor = ({ entryId }: { entryId: string }) => {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const Quill = require('quill');
-      require('quill/dist/quill.snow.css');
       // Only use Quill inside useEffect as already done below
       // const Font = Quill.import('formats/font');
       // if (Font) {
@@ -285,211 +283,80 @@ const JournalEditor = ({ entryId }: { entryId: string }) => {
       </div>
 
       <div className='flex flex-col md:flex-row gap-6 w-full items-start'>
-        {[...Array(NUM_NOTES)].map((_, i) => {
-          const toolbarId = `quill-toolbar-${i}`;
-          return (
-            <div
-              key={i}
-              className={
-                `relative bg-transparent rounded-2xl shadow-lg border border-white/50 p-4 pt-8 flex flex-col transition-all duration-150 min-h-[260px] ` +
-                (activeIndex === i ? 'w-auto min-w-fit ' + 'ring-2 ring-blue-500' : 'w-96')
-              }
-              style={{ outline: 'none', cursor: 'pointer' }}
-              onClick={() => {
-                if (activeIndex !== i && window && (window as any).quillRef) {
-                  const quill = (window as any).quillRef;
-                  if (quill) {
-                    const html = quill.root.innerHTML;
-                    setNotes((prev) => {
-                      const updated = Array.isArray(prev) ? [...prev] : [];
-                      const safeIndex = Math.max(0, Math.min(activeIndex, updated.length - 1));
-                      const prevArr = prev || [];
-                      const prevNote = updated[safeIndex] ?? { content: '', history: { undo: [], redo: [] } };
-                      updated[safeIndex] = { content: html, history: prevNote.history };
-                      return updated;
-                    });
-                  }
+        {[...Array(NUM_NOTES)].map((_, i) => (
+          <div
+            key={i}
+            className={
+              `relative bg-transparent rounded-2xl shadow-lg border border-white/50 p-4 pt-8 flex flex-col transition-all duration-150 min-h-[260px] ` +
+              (activeIndex === i ? 'w-auto min-w-fit ' + 'ring-2 ring-blue-500' : 'w-96')
+            }
+            style={{ outline: 'none', cursor: 'pointer' }}
+            onClick={() => {
+              if (activeIndex !== i && window && (window as any).quillRef) {
+                const quill = (window as any).quillRef;
+                if (quill) {
+                  const html = quill.root.innerHTML;
+                  setNotes((prev) => {
+                    const updated = Array.isArray(prev) ? [...prev] : [];
+                    const safeIndex = Math.max(0, Math.min(activeIndex, updated.length - 1));
+                    const prevArr = prev || [];
+                    const prevNote = updated[safeIndex] ?? { content: '', history: { undo: [], redo: [] } };
+                    updated[safeIndex] = { content: html, history: prevNote.history };
+                    return updated;
+                  });
                 }
-                setActiveIndex(i);
-              }}
-              tabIndex={0}
-            >
-              <div className='absolute top-0 right-0 w-8 h-8'>
-                <svg width='32' height='32' className='absolute top-0 right-0 pointer-events-none'>
-                  <polygon points='0,0 32,0 32,32' fill='#e5e7eb' />
-                  <polyline points='0,0 32,0 32,32' fill='none' stroke='#d1d5db' strokeWidth='2' />
-                </svg>
-              </div>
-              <div className='font-medium text-sm text-gray-700 mb-2 select-none'>{NOTE_TITLES[i]}</div>
-              {activeIndex === i ? (
-                <>
-                  <div className='w-full mb-4'>
-                    <div
-                      id={toolbarId}
-                      className='flex flex-wrap items-center gap-1 bg-gray-100 rounded-lg p-2 shadow-sm'
-                    >
-                      {/* Essential tools - always visible */}
-                      <div className='flex items-center gap-1 flex-shrink-0'>
-                        <Button type='button' variant='ghost' size='icon' onClick={handleUndo} className='h-8 w-8'>
-                          <Undo2 size={16} />
-                        </Button>
-                        <Button type='button' variant='ghost' size='icon' onClick={handleRedo} className='h-8 w-8'>
-                          <Redo2 size={16} />
-                        </Button>
-                      </div>
-
-                      {/* Font size controls - always visible */}
-                      <div className='flex items-center gap-1 flex-shrink-0'>
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          size='icon'
-                          onClick={handleDecreaseFont}
-                          className='h-8 w-8'
-                        >
-                          <Minus size={16} />
-                        </Button>
-                        <input
-                          type='number'
-                          min={8}
-                          max={100}
-                          value={fontSize}
-                          onChange={handleFontSizeInput}
-                          onBlur={handleFontSizeBlur}
-                          onKeyDown={handleFontSizeKeyDown}
-                          className='w-12 text-center rounded border border-gray-300 bg-white px-1 py-1 text-xs mx-1 h-8'
-                          style={{ appearance: 'textfield' }}
-                        />
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          size='icon'
-                          onClick={handleIncreaseFont}
-                          className='h-8 w-8'
-                        >
-                          <Plus size={16} />
-                        </Button>
-                      </div>
-
-                      {/* Font family - hidden on small screens */}
-                      <div className='hidden sm:flex items-center flex-shrink-0'>
-                        <Select
-                          onValueChange={(val) => {
-                            if (quillEditorRef.current) {
-                              quillEditorRef.current.setFontFamily(val.toLowerCase());
-                            }
-                          }}
-                          defaultValue='roboto'
-                        >
-                          <SelectTrigger className='h-8 min-w-[80px] max-w-[100px] text-xs'>
-                            <SelectValue placeholder='Font' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value='roboto'>Roboto</SelectItem>
-                            <SelectItem value='serif'>Serif</SelectItem>
-                            <SelectItem value='sans-serif'>Sans Serif</SelectItem>
-                            <SelectItem value='monospace'>Monospace</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Image and Link - always visible */}
-                      <div className='flex items-center gap-1 flex-shrink-0'>
-                        <Button type='button' variant='ghost' size='icon' className='ql-image h-8 w-8'>
-                          <Image size={16} />
-                        </Button>
-                        <Button type='button' variant='ghost' size='icon' className='ql-link h-8 w-8'>
-                          <LucideLink size={16} />
-                        </Button>
-                      </div>
-
-                      {/* Text formatting - bold and italic always visible, underline hidden on small screens */}
-                      <div className='flex items-center gap-1 flex-shrink-0'>
-                        <Button type='button' variant='ghost' size='icon' className='ql-bold h-8 w-8'>
-                          <Bold size={16} />
-                        </Button>
-                        <Button type='button' variant='ghost' size='icon' className='ql-italic h-8 w-8'>
-                          <Italic size={16} />
-                        </Button>
-                      </div>
-                      <div className='hidden sm:flex items-center gap-1 flex-shrink-0'>
-                        <Button type='button' variant='ghost' size='icon' className='ql-underline h-8 w-8'>
-                          <Underline size={16} />
-                        </Button>
-                      </div>
-
-                      {/* Color picker - hidden on small screens */}
-                      <div className='hidden sm:flex items-center gap-1 flex-shrink-0'>
-                        <select className='ql-color mx-1 h-8 w-12 rounded border border-gray-300 bg-white text-xs'></select>
-                      </div>
-
-                      {/* Text alignment - hidden on small screens */}
-                      <div className='hidden md:flex items-center gap-1 flex-shrink-0'>
-                        <Button type='button' variant='ghost' size='icon' className='ql-align h-8 w-8' value=''>
-                          <AlignLeft size={16} />
-                        </Button>
-                        <Button type='button' variant='ghost' size='icon' className='ql-align h-8 w-8' value='center'>
-                          <AlignCenter size={16} />
-                        </Button>
-                        <Button type='button' variant='ghost' size='icon' className='ql-align h-8 w-8' value='right'>
-                          <AlignRight size={16} />
-                        </Button>
-                        <Button type='button' variant='ghost' size='icon' className='ql-align h-8 w-8' value='justify'>
-                          <AlignJustify size={16} />
-                        </Button>
-                      </div>
-
-                      {/* Lists - hidden on small screens */}
-                      <div className='hidden md:flex items-center gap-1 flex-shrink-0'>
-                        <Button type='button' variant='ghost' size='icon' className='ql-list h-8 w-8' value='ordered'>
-                          <ListOrdered size={16} />
-                        </Button>
-                        <Button type='button' variant='ghost' size='icon' className='ql-list h-8 w-8' value='bullet'>
-                          <List size={16} />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <QuillEditor
-                      ref={quillEditorRef}
-                      value={notes[i]?.content ?? ''}
-                      onChange={(val) =>
-                        setNotes((prev) => {
-                          const updated = [...prev];
-                          const prevNote = updated[i] ?? { content: '', history: { undo: [], redo: [] } };
-                          updated[i] = {
-                            ...prevNote,
-                            content: val,
-                            history: prevNote.history,
-                          };
-                          return updated;
-                        })
-                      }
-                      isActive={true}
-                      toolbarId={toolbarId}
-                    />
-                  </div>
-                </>
-              ) : (
-                <div
-                  className='ql-editor flex-1'
-                  style={{
-                    cursor: 'pointer',
-                    padding: 0,
-                    background: 'transparent',
-                    boxShadow: 'none',
-                    wordBreak: 'break-word',
-                    overflowWrap: 'anywhere',
-                    whiteSpace: 'pre-wrap',
-                    minHeight: 120,
-                  }}
-                  dangerouslySetInnerHTML={{ __html: typeof notes[i]?.content === 'string' ? notes[i]?.content : '' }}
-                />
-              )}
+              }
+              setActiveIndex(i);
+            }}
+            tabIndex={0}
+          >
+            <div className='absolute top-0 right-0 w-8 h-8'>
+              <svg width='32' height='32' className='absolute top-0 right-0 pointer-events-none'>
+                <polygon points='0,0 32,0 32,32' fill='#e5e7eb' />
+                <polyline points='0,0 32,0 32,32' fill='none' stroke='#d1d5db' strokeWidth='2' />
+              </svg>
             </div>
-          );
-        })}
+            <div className='font-medium text-sm text-gray-700 mb-2 select-none'>{NOTE_TITLES[i]}</div>
+            {activeIndex === i ? (
+              <>
+                <div className='flex-1 min-w-0'>
+                  <QuillEditor
+                    ref={quillEditorRef}
+                    value={notes[i]?.content ?? ''}
+                    onChange={(val) =>
+                      setNotes((prev) => {
+                        const updated = [...prev];
+                        const prevNote = updated[i] ?? { content: '', history: { undo: [], redo: [] } };
+                        updated[i] = {
+                          ...prevNote,
+                          content: val,
+                          history: prevNote.history,
+                        };
+                        return updated;
+                      })
+                    }
+                    isActive={true}
+                  />
+                </div>
+              </>
+            ) : (
+              <div
+                className='ql-editor flex-1'
+                style={{
+                  cursor: 'pointer',
+                  padding: 0,
+                  background: 'transparent',
+                  boxShadow: 'none',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'anywhere',
+                  whiteSpace: 'pre-wrap',
+                  minHeight: 120,
+                }}
+                dangerouslySetInnerHTML={{ __html: typeof notes[i]?.content === 'string' ? notes[i]?.content : '' }}
+              />
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

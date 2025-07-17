@@ -10,6 +10,7 @@ import { useSendOtp, useVerifyInvitationOtp, useVerifyOtp } from '@/lib/hooks/us
 import { useSignUpContext } from '@/context/signup-context';
 import { AuthHeader } from '@repo/ui/components/auth-layout';
 import { signIn } from 'next-auth/react';
+import { SignupStepper } from '@/components/SignupStepper';
 
 export default function ClientOtpPage() {
   const router = useRouter();
@@ -174,6 +175,7 @@ export default function ClientOtpPage() {
 
   return (
     <>
+      <SignupStepper totalSteps={4} currentStep={2} />
       <AuthHeader title='Enter OTP' />
       <div className='flex justify-center w-full'>
         <form className='space-y-6 w-full max-w-full p-4 sm:p-6' onSubmit={handleVerifyOtp}>

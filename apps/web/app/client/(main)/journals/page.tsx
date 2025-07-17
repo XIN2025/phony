@@ -5,6 +5,7 @@ import { Button } from '@repo/ui/components/button';
 import { Card } from '@repo/ui/components/card';
 import { Input } from '@repo/ui/components/input';
 import { Plus, Search, Trash2 } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -139,6 +140,19 @@ export default function JournalsPage() {
               </div>
               <div className='px-4 py-2 border-t border-gray-100 bg-gray-50 text-xs text-gray-700 font-medium truncate flex items-center justify-between'>
                 <span className='truncate flex-1'>{entry.title || 'Untitled Journal'}</span>
+                <Link
+                  href={`/client/journals/${entry.id}/edit`}
+                  onClick={(e) => e.stopPropagation()}
+                  className='ml-2 flex-shrink-0'
+                >
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='h-6 w-6 rounded-full hover:bg-blue-50 hover:text-blue-600'
+                  >
+                    <Pencil className='h-3 w-3' />
+                  </Button>
+                </Link>
                 <Button
                   variant='ghost'
                   size='icon'

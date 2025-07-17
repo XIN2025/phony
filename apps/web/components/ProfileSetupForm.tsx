@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useState, ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -25,9 +25,10 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 interface ProfileSetupFormProps {
   onSuccess?: () => void;
+  stepper?: ReactNode;
 }
 
-export function ProfileSetupForm({ onSuccess }: ProfileSetupFormProps) {
+export function ProfileSetupForm({ onSuccess, stepper }: ProfileSetupFormProps) {
   const { data: session, update } = useSession();
   const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -172,7 +173,7 @@ export function ProfileSetupForm({ onSuccess }: ProfileSetupFormProps) {
               )}
             </div>
           </div>
-
+          {stepper}
           <Button type='submit' className='w-full' disabled={completeProfileMutation.isPending}>
             {completeProfileMutation.isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             Complete Profile

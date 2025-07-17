@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSignUpContext } from '@/context/signup-context';
 import { AuthLayout, AuthHeader } from '@repo/ui/components/auth-layout';
 import { useCheckInvitationIntakeForm, useClientSignup } from '@/lib/hooks/use-api';
+import { SignupStepper } from '@/components/SignupStepper';
 
 const validatePhoneNumber = (value: string): string => {
   return value.replace(/[^0-9+\-()\s]/g, '');
@@ -126,6 +127,7 @@ export default function PersonalDetailsPage() {
 
   return (
     <AuthLayout>
+      <SignupStepper totalSteps={4} currentStep={3} />
       <AuthHeader title='Personal Details' />
       <form onSubmit={handleNext} className='space-y-6'>
         <div className='flex justify-center mb-8'>
