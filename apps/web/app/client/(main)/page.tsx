@@ -40,6 +40,8 @@ import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { createPortal } from 'react-dom';
+import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/avatar';
+import { getAvatarUrl, getInitials, getUserDisplayName } from '@/lib/utils';
 
 interface ActionItem {
   id: string;
@@ -386,454 +388,266 @@ const ClientPage = () => {
       {/* Header Section */}
       <div className='px-4 py-4 sm:px-6 lg:px-8'>
         <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-3 min-w-0 flex-1'>
+          <div className='flex items-center'>
             <SidebarToggleButton />
-            <div className='min-w-0 flex-1'>
-              <h1
-                className='text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate'
-                style={{ fontFamily: "'Playfair Display', serif" }}
-              >
-                {userLoading ? 'Loading...' : `Welcome back  ${currentUser?.firstName || 'User'}`}
-              </h1>
-              <p className='text-sm text-gray-600 hidden sm:block'>Let's make today productive!</p>
-            </div>
+            {/* Show 'Continuum' only on small screens, next to the sidebar toggle */}
+            <span
+              className='ml-3 text-xl font-bold text-primary sm:hidden'
+              style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}
+            >
+              Continuum
+            </span>
           </div>
+          <Avatar className='h-10 w-10 block sm:hidden ml-2'>
+            <AvatarImage
+              src={getAvatarUrl(currentUser?.avatarUrl, currentUser)}
+              alt={getUserDisplayName(currentUser) || 'User'}
+            />
+            <AvatarFallback>{getInitials(currentUser || 'U')}</AvatarFallback>
+          </Avatar>
+        </div>
+        <div className='mt-4'>
+          <h1 className='text-2xl font-bold text-gray-900' style={{ fontFamily: "'Playfair Display', serif" }}>
+            {userLoading ? 'Loading...' : `Good morning ${currentUser?.firstName || 'User'}`}
+          </h1>
+          <p className='text-sm text-gray-600'>Let's have a great day today</p>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className='flex-1 px-2 sm:px-6 py-4 lg:px-8 mx-auto w-full'>
-        {/* Stats Cards */}
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6'>
-          <Card className='bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200/50 shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer'>
-            <CardContent className='p-4 sm:p-6'>
-              <div className='flex justify-between items-start'>
-                <div className='flex flex-col min-w-0 flex-1'>
-                  <span className='text-xs sm:text-sm font-semibold text-blue-700 mb-1'>Task Completion</span>
-                  <span className='text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-900'>{avgCompletion}%</span>
-                  <span className='text-xs text-green-600 mt-1 flex items-center gap-1'>
-                    <span className='w-1.5 h-1.5 bg-green-500 rounded-full'></span>
-                    +5% from last week
-                  </span>
-                </div>
-                <div className='p-2 sm:p-3 bg-blue-500/20 rounded-full flex-shrink-0 ml-2'>
-                  <Target className='h-4 w-4 sm:h-5 sm:w-5 text-blue-700' />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Tasks Section Header */}
+      <div className='px-4 sm:px-6 lg:px-8 flex items-center justify-between mt-2 mb-4'>
+        <h2 className='text-lg sm:text-xl font-bold text-gray-900' style={{ fontFamily: "'Playfair Display', serif" }}>
+          Tasks
+        </h2>
+        <button
+          ref={dateButtonRef}
+          className='text-xs px-3 py-2 rounded-full bg-white border border-gray-300 hover:bg-gray-50 transition shadow-sm flex items-center gap-2'
+          onClick={() => setShowDatePicker((v) => !v)}
+          type='button'
+        >
+          {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+        </button>
+        {datePickerMounted &&
+          showDatePicker &&
+          createPortal(
+            <div
+              ref={datePickerRef}
+              className={
+                typeof window !== 'undefined' && window.innerWidth < 640
+                  ? 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/30'
+                  : 'absolute z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 max-w-full max-h-[90vh] w-[350px] sm:w-auto overflow-auto flex flex-col items-center animate-fadeIn'
+              }
+              style={
+                typeof window !== 'undefined' && window.innerWidth < 640
+                  ? {
+                      left: '50%',
+                      top: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '95vw',
+                      maxWidth: 350,
+                      background: 'white',
+                      borderRadius: '1rem',
+                      padding: 16,
+                    }
+                  : {
+                      top: pickerPosition.top,
+                      left: pickerPosition.left,
+                      position: 'absolute',
+                      minWidth: pickerPosition.width,
+                    }
+              }
+              role='dialog'
+              aria-modal='true'
+            >
+              <DateRange
+                editableDateInputs={true}
+                onChange={(ranges) => {
+                  const selection = ranges.selection;
+                  if (selection) {
+                    setDateRange({
+                      startDate: selection.startDate || dateRange.startDate,
+                      endDate: selection.startDate || dateRange.endDate,
+                      key: 'selection',
+                    });
+                    setShowDatePicker(false);
+                  }
+                }}
+                moveRangeOnFirstSelection={false}
+                ranges={[dateRange]}
+                maxDate={new Date()}
+                rangeColors={['#2563eb']}
+                showDateDisplay={false}
+              />
+            </div>,
+            document.body,
+          )}
+      </div>
 
-          <Card className='bg-gradient-to-br from-purple-50 to-pink-100 border border-purple-200/50 shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer'>
-            <CardContent className='p-4 sm:p-6'>
-              <div className='flex justify-between items-start'>
-                <div className='flex flex-col min-w-0 flex-1'>
-                  <span className='text-xs sm:text-sm font-semibold text-purple-700 mb-1'>Tasks Pending</span>
-                  <span className='text-2xl sm:text-3xl lg:text-4xl font-bold text-purple-900'>{tasksPending}</span>
-                  <span className='text-xs text-purple-600 mt-1 flex items-center gap-1'>
-                    <span className='w-1.5 h-1.5 bg-purple-500 rounded-full'></span>
-                    Ready to tackle
-                  </span>
-                </div>
-                <div className='p-2 sm:p-3 bg-purple-500/20 rounded-full flex-shrink-0 ml-2'>
-                  <Clock className='h-4 w-4 sm:h-5 sm:w-5 text-purple-700' />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Summary Cards */}
+      <div className='px-4 sm:px-6 lg:px-8 grid grid-cols-2 gap-4 mb-6'>
+        <Card className='bg-white rounded-xl shadow-md p-4 flex flex-col items-center justify-center'>
+          <span className='text-2xl font-bold text-gray-900'>{tasksPending}</span>
+          <span className='text-xs text-gray-600 mt-1'>Tasks Pending</span>
+        </Card>
+        <Card
+          className='bg-white rounded-xl shadow-md p-4 flex flex-col items-center justify-center cursor-pointer'
+          onClick={() => (window.location.href = '/client/journals/new')}
+        >
+          <span className='text-2xl'>
+            <Calendar className='inline w-6 h-6 text-blue-500' />
+          </span>
+          <span className='text-xs text-gray-600 mt-1'>Add new journal entry</span>
+        </Card>
+      </div>
 
-        {/* Tasks Container */}
-        <Card className='shadow-sm border border-gray-200'>
-          <CardContent className='p-4 sm:p-6'>
-            {/* Header */}
-            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4'>
-              <div>
-                <h2
-                  className='text-lg sm:text-xl font-bold text-gray-900 mb-1'
-                  style={{ fontFamily: "'Playfair Display', serif" }}
-                >
-                  Your Tasks
-                </h2>
-                <p className='text-sm text-gray-600'>Manage your daily activities and goals</p>
-              </div>
-              <div className='flex flex-wrap gap-2 justify-start sm:justify-end items-center'>
-                <button
-                  ref={dateButtonRef}
-                  className='text-xs px-3 py-2 rounded-full bg-white border border-gray-300 hover:bg-gray-50 transition shadow-sm flex items-center gap-2'
-                  onClick={() => setShowDatePicker((v) => !v)}
-                  type='button'
-                >
-                  {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </button>
-                {datePickerMounted &&
-                  showDatePicker &&
-                  createPortal(
-                    <div
-                      ref={datePickerRef}
-                      className='absolute z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 max-w-full max-h-[90vh] w-[350px] sm:w-auto overflow-auto flex flex-col items-center animate-fadeIn'
-                      style={{
-                        top: pickerPosition.top,
-                        left: pickerPosition.left,
-                        position: 'absolute',
-                        minWidth: pickerPosition.width,
-                      }}
-                      role='dialog'
-                      aria-modal='true'
-                    >
-                      <DateRange
-                        editableDateInputs={true}
-                        onChange={(ranges) => {
-                          const selection = ranges.selection;
-                          if (selection) {
-                            setDateRange({
-                              startDate: selection.startDate || dateRange.startDate,
-                              endDate: selection.startDate || dateRange.endDate,
-                              key: 'selection',
-                            });
-                            setShowDatePicker(false);
-                          }
-                        }}
-                        moveRangeOnFirstSelection={false}
-                        ranges={[dateRange]}
-                        maxDate={new Date()}
-                        rangeColors={['#2563eb']}
-                        showDateDisplay={false}
+      {/* Task Lists */}
+      <div className='px-4 sm:px-6 lg:px-8 flex flex-col gap-6'>
+        {/* Mandatory Tasks Card */}
+        <Card className='bg-white rounded-xl shadow-md p-4 mb-2'>
+          <CardHeader className='p-0 mb-2'>
+            <CardTitle
+              className='text-base sm:text-lg font-bold text-gray-900'
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              Mandatory Tasks
+            </CardTitle>
+          </CardHeader>
+          <CardContent className='p-0'>
+            {filteredTasks.filter((task: ActionItem) => task.isMandatory).length === 0 ? (
+              <div className='text-center text-gray-400 text-sm py-4'>No mandatory tasks</div>
+            ) : (
+              <div className='space-y-3'>
+                {filteredTasks
+                  .filter((task: ActionItem) => task.isMandatory)
+                  .map((task: ActionItem) => (
+                    <div key={task.id} className='flex items-center gap-3'>
+                      <Checkbox
+                        checked={task.isCompleted}
+                        onCheckedChange={() => handleTaskToggleWithFeedback(task)}
+                        className='flex-shrink-0'
+                        data-checkbox='true'
+                        disabled={loadingTaskId === task.id}
                       />
-                    </div>,
-                    document.body,
-                  )}
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className={`text-xs px-3 py-2 rounded-full border transition-colors ${
-                    taskFilter === 'all'
-                      ? 'bg-white text-gray-900 border-gray-800 shadow-sm'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setTaskFilter('all')}
-                >
-                  All Tasks
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className={`text-xs px-3 py-2 rounded-full border transition-colors ${
-                    taskFilter === 'pending'
-                      ? 'bg-white text-gray-900 border-gray-800 shadow-sm'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setTaskFilter('pending')}
-                >
-                  Pending
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className={`text-xs px-3 py-2 rounded-full border transition-colors ${
-                    taskFilter === 'completed'
-                      ? 'bg-white text-gray-900 border-gray-800 shadow-sm'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setTaskFilter('completed')}
-                >
-                  Completed
-                </Button>
-              </div>
-            </div>
-
-            {/* Mandatory Tasks */}
-            {filteredTasks.filter((task: ActionItem) => task.isMandatory).length > 0 && (
-              <div className='mb-6'>
-                <div className='flex items-center gap-2 mb-4'>
-                  <div className='p-1.5 bg-red-100 rounded-lg'>
-                    <Star className='w-4 h-4 text-red-600' />
-                  </div>
-                  <div>
-                    <h3
-                      className='text-base sm:text-lg font-bold text-gray-900'
-                      style={{ fontFamily: "'Playfair Display', serif" }}
-                    >
-                      Mandatory Tasks
-                    </h3>
-                    <p className='text-xs sm:text-sm text-gray-600'>Essential tasks for this week</p>
-                  </div>
-                </div>
-                <div className='space-y-3'>
-                  {filteredTasks
-                    .filter((task: ActionItem) => task.isMandatory)
-                    .map((task: ActionItem) => (
-                      <div
-                        key={task.id}
-                        className='group border border-gray-200 rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-blue-50/50 transition-all duration-200 shadow-sm hover:shadow-md'
-                        onClick={(e) => {
-                          if (!(e.target as HTMLElement).closest('[data-checkbox]')) {
-                            handleTaskDetailClick(task);
-                          }
-                        }}
+                      <span
+                        className={`font-semibold text-sm ${task.isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}
                       >
-                        <div className='flex items-start gap-3'>
-                          <Checkbox
-                            checked={task.isCompleted}
-                            onCheckedChange={() => handleTaskToggleWithFeedback(task)}
-                            className='mt-0.5 flex-shrink-0'
-                            data-checkbox='true'
-                            disabled={loadingTaskId === task.id}
-                          />
-                          {loadingTaskId === task.id && (
-                            <div className='absolute inset-0 bg-white/60 flex items-center justify-center z-10 rounded-lg'>
-                              <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500'></div>
-                            </div>
-                          )}
-                          <div className='flex-1 min-w-0'>
-                            <div className='flex items-start justify-between gap-2'>
-                              <span
-                                className={`font-semibold text-sm sm:text-base leading-relaxed ${task.isCompleted ? 'text-gray-500 line-through' : 'text-gray-800'}`}
-                              >
-                                {task.description}
-                              </span>
-                              <div className='flex items-center gap-1 flex-shrink-0'>
-                                {task.isMandatory && (
-                                  <Badge variant='outline' className='text-xs bg-red-100 text-red-700 border-red-200'>
-                                    <Star className='w-3 h-3 mr-1' />
-                                    Required
-                                  </Badge>
-                                )}
-                                {task.isCompleted && (
-                                  <Badge
-                                    variant='default'
-                                    className='text-xs bg-green-100 text-green-700 border-green-200'
-                                  >
-                                    <CheckCircle className='w-3 h-3 mr-1' />
-                                    Done
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                            <div className='flex items-center gap-2 mt-1'>
-                              <Clock className='w-3 h-3 text-gray-500' />
-                              <span className='text-xs text-gray-600 mt-1 block'>
-                                {(task.daysOfWeek ?? []).length === 0
-                                  ? 'Daily'
-                                  : (task.daysOfWeek ?? [])
-                                      .filter((d): d is string => typeof d === 'string')
-                                      .map((d: string) => DAY_NAME_MAP[d] || d)
-                                      .join(', ')}
-                              </span>
-                            </div>
-                            {/* Show resources if available */}
-                            {task.resources && task.resources.length > 0 && (
-                              <div className='flex flex-wrap gap-1 mt-2'>
-                                {task.resources.map((resource, index) => (
-                                  <div
-                                    key={index}
-                                    className='flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs'
-                                  >
-                                    {resource.type === 'LINK' ? (
-                                      <span role='img' aria-label='Link' className='text-blue-600'>
-                                        🔗
-                                      </span>
-                                    ) : (
-                                      <span role='img' aria-label='File' className='text-blue-600'>
-                                        📄
-                                      </span>
-                                    )}
-                                    <a
-                                      href={
-                                        resource.type === 'LINK'
-                                          ? resource.url
-                                          : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${resource.url}`
-                                      }
-                                      target='_blank'
-                                      rel='noopener noreferrer'
-                                      className='text-blue-800 hover:underline truncate max-w-[120px]'
-                                      title={resource.title || resource.url}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                      }}
-                                    >
-                                      {resource.title || resource.url}
-                                    </a>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                        {task.description}
+                      </span>
+                      <button className='ml-auto' tabIndex={-1}>
+                        <Info className='w-4 h-4 text-gray-400' />
+                      </button>
+                      <div className='flex items-center gap-1'>
+                        <button
+                          onClick={() => {
+                            setTaskForFeedback(task);
+                            setFeedbackOpen(true);
+                            setSelectedFeedback(null);
+                          }}
+                          className='rounded-full p-1 hover:bg-gray-100'
+                        >
+                          <Smile className='w-4 h-4 text-green-500' />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setTaskForFeedback(task);
+                            setFeedbackOpen(true);
+                            setSelectedFeedback(null);
+                          }}
+                          className='rounded-full p-1 hover:bg-gray-100'
+                        >
+                          <Meh className='w-4 h-4 text-yellow-500' />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setTaskForFeedback(task);
+                            setFeedbackOpen(true);
+                            setSelectedFeedback(null);
+                          }}
+                          className='rounded-full p-1 hover:bg-gray-100'
+                        >
+                          <Frown className='w-4 h-4 text-red-500' />
+                        </button>
                       </div>
-                    ))}
-                </div>
+                    </div>
+                  ))}
               </div>
             )}
+          </CardContent>
+        </Card>
 
-            {/* Daily Tasks */}
-            {filteredTasks.filter((task: ActionItem) => !task.isMandatory).length > 0 && (
-              <div>
-                <div className='flex items-center gap-2 mb-4'>
-                  <div className='p-1.5 bg-green-100 rounded-lg'>
-                    <Target className='w-4 h-4 text-green-600' />
-                  </div>
-                  <div>
-                    <h3
-                      className='text-base sm:text-lg font-bold text-gray-900'
-                      style={{ fontFamily: "'Playfair Display', serif" }}
-                    >
-                      Daily Tasks
-                    </h3>
-                    <p className='text-xs sm:text-sm text-gray-600'>Regular activities and goals</p>
-                  </div>
-                </div>
-                <div className='space-y-3'>
-                  {filteredTasks
-                    .filter((task: ActionItem) => !task.isMandatory)
-                    .map((task: ActionItem) => (
-                      <div
-                        key={task.id}
-                        className='group border border-gray-200 rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-green-50/50 transition-all duration-200 shadow-sm hover:shadow-md'
-                        onClick={(e) => {
-                          if (!(e.target as HTMLElement).closest('[data-checkbox]')) {
-                            handleTaskDetailClick(task);
-                          }
-                        }}
+        {/* Daily Tasks Card */}
+        <Card className='bg-white rounded-xl shadow-md p-4 mb-2'>
+          <CardHeader className='p-0 mb-2'>
+            <CardTitle
+              className='text-base sm:text-lg font-bold text-gray-900'
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              Daily Tasks
+            </CardTitle>
+          </CardHeader>
+          <CardContent className='p-0'>
+            {filteredTasks.filter((task: ActionItem) => !task.isMandatory).length === 0 ? (
+              <div className='text-center text-gray-400 text-sm py-4'>No daily tasks</div>
+            ) : (
+              <div className='space-y-3'>
+                {filteredTasks
+                  .filter((task: ActionItem) => !task.isMandatory)
+                  .map((task: ActionItem) => (
+                    <div key={task.id} className='flex items-center gap-3'>
+                      <Checkbox
+                        checked={task.isCompleted}
+                        onCheckedChange={() => handleTaskToggleWithFeedback(task)}
+                        className='flex-shrink-0'
+                        data-checkbox='true'
+                        disabled={loadingTaskId === task.id}
+                      />
+                      <span
+                        className={`font-semibold text-sm ${task.isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}
                       >
-                        <div className='flex items-start gap-3'>
-                          <Checkbox
-                            checked={task.isCompleted}
-                            onCheckedChange={() => handleTaskToggleWithFeedback(task)}
-                            className='mt-0.5 flex-shrink-0'
-                            data-checkbox='true'
-                            disabled={loadingTaskId === task.id}
-                          />
-                          {loadingTaskId === task.id && (
-                            <div className='absolute inset-0 bg-white/60 flex items-center justify-center z-10 rounded-lg'>
-                              <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500'></div>
-                            </div>
-                          )}
-                          <div className='flex-1 min-w-0'>
-                            <div className='flex items-start justify-between gap-2'>
-                              <span
-                                className={`font-semibold text-sm sm:text-base leading-relaxed ${task.isCompleted ? 'text-gray-500 line-through' : 'text-gray-800'}`}
-                              >
-                                {task.description}
-                              </span>
-                              {task.isCompleted && (
-                                <Badge
-                                  variant='default'
-                                  className='text-xs bg-green-100 text-green-700 border-green-200 flex-shrink-0'
-                                >
-                                  <CheckCircle className='w-3 h-3 mr-1' />
-                                  Done
-                                </Badge>
-                              )}
-                            </div>
-                            <div className='flex items-center gap-2 mt-1'>
-                              <Clock className='w-3 h-3 text-gray-500' />
-                              <span className='text-xs text-gray-600 mt-1 block'>
-                                {(task.daysOfWeek ?? []).length === 0
-                                  ? 'Daily'
-                                  : (task.daysOfWeek ?? [])
-                                      .filter((d): d is string => typeof d === 'string')
-                                      .map((d: string) => DAY_NAME_MAP[d] || d)
-                                      .join(', ')}
-                              </span>
-                            </div>
-                            {/* Show resources if available */}
-                            {task.resources && task.resources.length > 0 && (
-                              <div className='flex flex-wrap gap-1 mt-2'>
-                                {task.resources.map((resource, index) => (
-                                  <div
-                                    key={index}
-                                    className='flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full text-xs'
-                                  >
-                                    {resource.type === 'LINK' ? (
-                                      <span role='img' aria-label='Link' className='text-green-600'>
-                                        🔗
-                                      </span>
-                                    ) : (
-                                      <span role='img' aria-label='File' className='text-green-600'>
-                                        📄
-                                      </span>
-                                    )}
-                                    <a
-                                      href={
-                                        resource.type === 'LINK'
-                                          ? resource.url
-                                          : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${resource.url}`
-                                      }
-                                      target='_blank'
-                                      rel='noopener noreferrer'
-                                      className='text-green-800 hover:underline truncate max-w-[120px]'
-                                      title={resource.title || resource.url}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                      }}
-                                    >
-                                      {resource.title || resource.url}
-                                    </a>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                        {task.description}
+                      </span>
+                      <button className='ml-auto' tabIndex={-1}>
+                        <Info className='w-4 h-4 text-gray-400' />
+                      </button>
+                      <div className='flex items-center gap-1'>
+                        <button
+                          onClick={() => {
+                            setTaskForFeedback(task);
+                            setFeedbackOpen(true);
+                            setSelectedFeedback(null);
+                          }}
+                          className='rounded-full p-1 hover:bg-gray-100'
+                        >
+                          <Smile className='w-4 h-4 text-green-500' />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setTaskForFeedback(task);
+                            setFeedbackOpen(true);
+                            setSelectedFeedback(null);
+                          }}
+                          className='rounded-full p-1 hover:bg-gray-100'
+                        >
+                          <Meh className='w-4 h-4 text-yellow-500' />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setTaskForFeedback(task);
+                            setFeedbackOpen(true);
+                            setSelectedFeedback(null);
+                          }}
+                          className='rounded-full p-1 hover:bg-gray-100'
+                        >
+                          <Frown className='w-4 h-4 text-red-500' />
+                        </button>
                       </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* Empty State */}
-            {filteredTasks.length === 0 && (
-              <div className='text-center py-8'>
-                <div className='w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4'>
-                  <Target className='w-8 h-8 text-gray-400' />
-                </div>
-                <h3
-                  className='text-lg font-semibold text-gray-900 mb-2'
-                  style={{ fontFamily: "'Playfair Display', serif" }}
-                >
-                  {filteredByDate.length === 0
-                    ? 'No tasks for this date'
-                    : taskFilter === 'completed'
-                      ? 'No completed tasks yet'
-                      : taskFilter === 'pending'
-                        ? 'No pending tasks'
-                        : 'No tasks yet'}
-                </h3>
-                <p className='text-sm text-gray-600'>
-                  {filteredByDate.length === 0
-                    ? 'Try selecting a different date or check with your practitioner.'
-                    : taskFilter === 'completed'
-                      ? 'Complete some tasks to see them here.'
-                      : taskFilter === 'pending'
-                        ? 'All tasks for this date are completed!'
-                        : 'Your practitioner will assign tasks for you soon.'}
-                </p>
+                    </div>
+                  ))}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Task Detail Modal */}
-      {selectedTaskForDetail && (
-        <TaskEditorDialog
-          open={isTaskDetailOpen}
-          onClose={() => setIsTaskDetailOpen(false)}
-          onSave={() => {}}
-          initialValues={{
-            description: selectedTaskForDetail.description,
-            category: selectedTaskForDetail.category || '',
-            frequency: selectedTaskForDetail.frequency || '',
-            weeklyRepetitions: selectedTaskForDetail.weeklyRepetitions || 1,
-            daysOfWeek: selectedTaskForDetail.daysOfWeek || [],
-            whyImportant: selectedTaskForDetail.whyImportant || '',
-            recommendedActions: selectedTaskForDetail.recommendedActions || '',
-            toolsToHelp: selectedTaskForDetail.toolsToHelp || '',
-            resources: selectedTaskForDetail.resources || [],
-          }}
-          readOnly={true}
-        />
-      )}
 
       {/* Feedback Modal */}
       <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
@@ -853,11 +667,7 @@ const ClientPage = () => {
           <div className='flex flex-row items-center justify-center gap-4 sm:gap-6 mb-4 sm:mb-6 w-full'>
             <button
               aria-label='Happy'
-              className={`rounded-full p-3 sm:p-4 border-2 transition-all duration-200 hover:scale-105 ${
-                selectedFeedback === 'happy'
-                  ? 'border-green-500 bg-green-50 shadow-lg'
-                  : 'border-gray-300 hover:border-green-300 hover:bg-green-50/50'
-              }`}
+              className={`rounded-full p-3 sm:p-4 border-2 transition-all duration-200 hover:scale-105 ${selectedFeedback === 'happy' ? 'border-green-500 bg-green-50 shadow-lg' : 'border-gray-300 hover:border-green-300 hover:bg-green-50/50'}`}
               onClick={() => handleFeedbackSelect('happy')}
               disabled={!!loadingTaskId}
             >
@@ -865,11 +675,7 @@ const ClientPage = () => {
             </button>
             <button
               aria-label='Neutral'
-              className={`rounded-full p-3 sm:p-4 border-2 transition-all duration-200 hover:scale-105 ${
-                selectedFeedback === 'neutral'
-                  ? 'border-yellow-500 bg-yellow-50 shadow-lg'
-                  : 'border-gray-300 hover:border-yellow-300 hover:bg-yellow-50/50'
-              }`}
+              className={`rounded-full p-3 sm:p-4 border-2 transition-all duration-200 hover:scale-105 ${selectedFeedback === 'neutral' ? 'border-yellow-500 bg-yellow-50 shadow-lg' : 'border-gray-300 hover:border-yellow-300 hover:bg-yellow-50/50'}`}
               onClick={() => handleFeedbackSelect('neutral')}
               disabled={!!loadingTaskId}
             >
@@ -877,11 +683,7 @@ const ClientPage = () => {
             </button>
             <button
               aria-label='Sad'
-              className={`rounded-full p-3 sm:p-4 border-2 transition-all duration-200 hover:scale-105 ${
-                selectedFeedback === 'sad'
-                  ? 'border-red-500 bg-red-50 shadow-lg'
-                  : 'border-gray-300 hover:border-red-300 hover:bg-red-50/50'
-              }`}
+              className={`rounded-full p-3 sm:p-4 border-2 transition-all duration-200 hover:scale-105 ${selectedFeedback === 'sad' ? 'border-red-500 bg-red-50 shadow-lg' : 'border-gray-300 hover:border-red-300 hover:bg-red-50/50'}`}
               onClick={() => handleFeedbackSelect('sad')}
               disabled={!!loadingTaskId}
             >

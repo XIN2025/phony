@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Delete, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '../auth/decorators/public.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserRole } from '@repo/db';
+import { NotFoundException } from '@nestjs/common';
 
 @ApiTags('users')
 @Controller('users')
@@ -60,5 +61,18 @@ export class UsersController {
     }
   ) {
     return await this.usersService.createUser(userData);
+  }
+
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Delete current user account' })
+  @ApiResponse({ status: 200, description: 'User account deleted successfully.' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  async deleteCurrentUser(@Request() req) {
+    const userId = req.user.id;
+    console.log('[Delete User] userId from JWT:', userId);
+    const result = await this.usersService.deleteUser(userId);
+    console.log('[Delete User] deleteUser result:', result);
+    return result;
   }
 }

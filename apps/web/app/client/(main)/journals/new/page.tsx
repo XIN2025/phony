@@ -30,6 +30,9 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStatus } from '@/lib/hooks/use-session';
+import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/avatar';
+import { useGetCurrentUser } from '@/lib/hooks/use-api';
+import { getAvatarUrl, getUserDisplayName, getInitials } from '@/lib/utils';
 
 const QuillEditor = dynamic(() => import('../QuillEditor'), { ssr: false });
 
@@ -75,6 +78,8 @@ const JournalEditors = () => {
         history: { undo: [], redo: [] },
       })),
   );
+
+  const { data: currentUser } = useGetCurrentUser();
 
   const handleSwitchNote = (newIndex: number) => {
     setActiveIndex(newIndex);
@@ -195,8 +200,32 @@ const JournalEditors = () => {
 
   const toolbarId = 'quill-toolbar-main';
 
+  // Mobile header - only on small screens
+  // Place above all content
+  const mobileHeader = (
+    <div className='flex items-center justify-between px-4 pt-2 pb-2 mb-2 w-full sm:hidden'>
+      <div className='flex items-center'>
+        <SidebarToggleButton />
+        <span
+          className='ml-3 text-xl font-bold text-primary'
+          style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}
+        >
+          Continuum
+        </span>
+      </div>
+      <Avatar className='h-10 w-10 ml-2'>
+        <AvatarImage
+          src={getAvatarUrl(currentUser?.avatarUrl, currentUser)}
+          alt={getUserDisplayName(currentUser) || 'User'}
+        />
+        <AvatarFallback>{getInitials(currentUser || 'U')}</AvatarFallback>
+      </Avatar>
+    </div>
+  );
+
   return (
-    <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0 max-w-full'>
+    <div className='flex flex-col w-full pt-0 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0 max-w-full'>
+      {mobileHeader}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <Link

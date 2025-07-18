@@ -10,7 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar'
 import { User } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
 import { useSignUpContext } from '@/context/signup-context';
-import { AuthLayout, AuthHeader } from '@repo/ui/components/auth-layout';
+import { AuthLayout } from '@repo/ui/components/auth-layout';
+import { AuthHeader } from '@/components/PageHeader';
 import { useCheckInvitationIntakeForm, useClientSignup } from '@/lib/hooks/use-api';
 import { SignupStepper } from '@/components/SignupStepper';
 
@@ -127,9 +128,15 @@ export default function PersonalDetailsPage() {
 
   return (
     <AuthLayout>
-      <SignupStepper totalSteps={4} currentStep={3} />
-      <AuthHeader title='Personal Details' />
-      <form onSubmit={handleNext} className='space-y-6'>
+      <div className=' sm:px-8  pb-2'>
+        <AuthHeader />
+      </div>
+      <div className='px-4 sm:px-8 pt-2 pb-4'>
+        <h2 className='text-xl font-semibold mb-2' style={{ color: '#7A6E5A', fontFamily: 'Playfair Display, serif' }}>
+          Your Profile
+        </h2>
+      </div>
+      <form onSubmit={handleNext} className='space-y-6 px-4 sm:px-8 max-w-md mx-auto w-full'>
         <div className='flex justify-center mb-8'>
           <label htmlFor='profile-photo-upload' className='cursor-pointer flex flex-col items-center'>
             {profileImagePreview ? (
@@ -154,67 +161,54 @@ export default function PersonalDetailsPage() {
             />
           </label>
         </div>
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-          <div>
-            <Label htmlFor='first-name' className='block text-sm font-medium mb-2'>
-              First Name
-            </Label>
-            <Input
-              id='first-name'
-              placeholder='Your first name'
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor='last-name' className='block text-sm font-medium mb-2'>
-              Last Name
-            </Label>
-            <Input
-              id='last-name'
-              placeholder='Your last name'
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-            />
-          </div>
-        </div>
-        <div>
-          <Label htmlFor='phone-number' className='block text-sm font-medium mb-2'>
-            Phone Number
-          </Label>
+        <div className='grid grid-cols-1 gap-4'>
+          <Input
+            id='first-name'
+            placeholder='First Name'
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+          <Input
+            id='last-name'
+            placeholder='Last Name'
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
           <Input
             id='phone-number'
-            placeholder='Your phone number'
+            placeholder='Phone Number'
             value={phoneNumber}
             onChange={handlePhoneNumberChange}
             required
           />
-        </div>
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-          <div>
-            <Label htmlFor='dob' className='block text-sm font-medium mb-2'>
-              DOB
-            </Label>
-            <Input id='dob' placeholder='DD/MM/YYYY' value={dob} onChange={(e) => setDob(e.target.value)} required />
-          </div>
-        </div>
-        <div>
-          <Label htmlFor='occupation' className='block text-sm font-medium mb-2'>
-            Occupation
-          </Label>
+          <Input
+            id='dob'
+            placeholder='Date of Birth'
+            value={dob}
+            onChange={(e) => setDob(e.target.value)}
+            required
+            type='text'
+          />
           <Input
             id='occupation'
-            placeholder='Your occupation'
+            placeholder='Occupation'
             value={occupation}
             onChange={(e) => setOccupation(e.target.value)}
             required
           />
         </div>
+        {/* Progress bar above the button */}
+        <SignupStepper totalSteps={4} currentStep={3} />
         <div className='pt-4'>
-          <Button type='submit' className='w-full rounded-full' disabled={isSigningUp}>
-            {isSigningUp ? 'Creating Account...' : 'Next'}
+          <Button
+            type='submit'
+            className='w-full rounded-full'
+            disabled={isSigningUp}
+            style={{ fontSize: 18, fontWeight: 600, height: 48 }}
+          >
+            {isSigningUp ? 'Creating Account...' : 'Continue'}
           </Button>
         </div>
       </form>

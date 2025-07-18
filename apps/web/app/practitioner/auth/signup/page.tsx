@@ -18,6 +18,7 @@ import { Input } from '@repo/ui/components/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input-otp';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
 import { SignupStepper } from '@/components/SignupStepper';
+import { Card, CardContent } from '@repo/ui/components/card';
 
 const signUpSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Please enter a valid email address.'),
@@ -52,6 +53,7 @@ export default function PractitionerSignUpPage() {
   const { status } = useSession();
   const [profileImage, setProfileImage] = React.useState<File | null>(null);
   const timerCleanupRef = React.useRef<(() => void) | null>(null);
+  const [showLegalModal, setShowLegalModal] = React.useState<null | 'terms' | 'privacy'>(null);
 
   React.useEffect(() => {
     if (status === 'authenticated') {
@@ -232,6 +234,28 @@ export default function PractitionerSignUpPage() {
     }
   };
 
+  const renderLegalModal = () => {
+    if (!showLegalModal) return null;
+    return (
+      <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40'>
+        <Card className='w-full max-w-sm'>
+          <CardContent className='flex flex-col items-center justify-center space-y-4 p-6'>
+            <h2 className='text-xl font-semibold mb-2'>
+              {showLegalModal === 'terms' ? 'Terms of Service' : 'Privacy Policy'}
+            </h2>
+            <p className='text-muted-foreground text-center'>
+              Coming soon. The {showLegalModal === 'terms' ? 'Terms of Service' : 'Privacy Policy'} will be available
+              here soon.
+            </p>
+            <Button className='mt-4 w-full' onClick={() => setShowLegalModal(null)}>
+              Close
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -250,6 +274,8 @@ export default function PractitionerSignUpPage() {
                 </FormItem>
               )}
             />
+            {/* Progress bar above the button */}
+            <SignupStepper totalSteps={4} currentStep={step} />
             <Button type='submit' className='w-full' disabled={isSendingOTP}>
               {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
               Next
@@ -308,6 +334,8 @@ export default function PractitionerSignUpPage() {
                 </Button>
               )}
             </div>
+            {/* Progress bar above the button */}
+            <SignupStepper totalSteps={4} currentStep={step} />
             <Button type='submit' className='w-full'>
               Next
             </Button>
@@ -397,6 +425,8 @@ export default function PractitionerSignUpPage() {
                 </FormItem>
               )}
             />
+            {/* Progress bar above the button */}
+            <SignupStepper totalSteps={4} currentStep={step} />
             <Button type='submit' className='w-full'>
               Next
             </Button>
@@ -441,19 +471,31 @@ export default function PractitionerSignUpPage() {
                   <div className='space-y-1 leading-none'>
                     <FormLabel className='text-sm font-normal'>
                       I agree to Continuum's{' '}
-                      <Link href='/terms' className='text-primary hover:underline'>
+                      <button
+                        type='button'
+                        className='text-primary hover:underline bg-transparent border-0 p-0 m-0 inline'
+                        style={{ background: 'none' }}
+                        onClick={() => setShowLegalModal('terms')}
+                      >
                         Terms of Service
-                      </Link>{' '}
+                      </button>{' '}
                       and{' '}
-                      <Link href='/privacy' className='text-primary hover:underline'>
+                      <button
+                        type='button'
+                        className='text-primary hover:underline bg-transparent border-0 p-0 m-0 inline'
+                        style={{ background: 'none' }}
+                        onClick={() => setShowLegalModal('privacy')}
+                      >
                         Privacy Policy
-                      </Link>
+                      </button>
                     </FormLabel>
                     <FormMessage />
                   </div>
                 </FormItem>
               )}
             />
+            {/* Progress bar above the button */}
+            <SignupStepper totalSteps={4} currentStep={step} />
             <Button type='submit' className='w-full' disabled={isSigningUp}>
               Create Account
             </Button>
@@ -474,7 +516,7 @@ export default function PractitionerSignUpPage() {
 
   return (
     <>
-      <SignupStepper totalSteps={4} currentStep={step} />
+      {/* Remove SignupStepper from here, as it is now inside each step */}
       <div className='flex flex-col space-y-2 text-center'>
         <h1 className='text-2xl font-bold tracking-tight'>Create Practitioner Account</h1>
         <p className='text-muted-foreground'>Join our platform to help clients on their journey.</p>
@@ -490,6 +532,7 @@ export default function PractitionerSignUpPage() {
           Sign in
         </Link>
       </div>
+      {renderLegalModal()}
     </>
   );
 }

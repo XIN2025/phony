@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input-otp';
 import { useSendOtp, useVerifyInvitationOtp, useVerifyOtp } from '@/lib/hooks/use-api';
 import { useSignUpContext } from '@/context/signup-context';
-import { AuthHeader } from '@repo/ui/components/auth-layout';
+import { AuthHeader } from '@/components/PageHeader';
 import { signIn } from 'next-auth/react';
 import { SignupStepper } from '@/components/SignupStepper';
 
@@ -174,56 +174,75 @@ export default function ClientOtpPage() {
   }
 
   return (
-    <>
-      <SignupStepper totalSteps={4} currentStep={2} />
-      <AuthHeader title='Enter OTP' />
-      <div className='flex justify-center w-full'>
-        <form className='space-y-6 w-full max-w-full p-4 sm:p-6' onSubmit={handleVerifyOtp}>
-          <div className='text-center'>
-            <p className='text-sm text-muted-foreground mb-4'>We've sent you an OTP at "{email}"</p>
-            <div className='flex justify-center mb-6'>
+    <div className='w-full flex flex-col'>
+      {/* Top bar for mobile - fixed at the top */}
+      <div className='block sm:hidden fixed top-0 left-0 right-0 z-20 bg-transparent px-4 pt-4 pb-2 w-full'>
+        <AuthHeader />
+      </div>
+      {/* Centered card for desktop, content for mobile */}
+      <div className='flex-1 flex flex-col items-center justify-center w-full sm:min-h-screen'>
+        {/* Add top margin for mobile to avoid overlap with fixed header */}
+        <div className='block sm:hidden' style={{ marginTop: '64px' }}></div>
+        <div className='w-full max-w-md mx-auto flex flex-col items-center justify-center rounded-xl py-8 px-4 sm:px-8 sm:mt-0 mt-4'>
+          {/* Top bar for desktop */}
+          <div className='hidden sm:flex w-full mb-6'>
+            <AuthHeader />
+          </div>
+          <h2
+            className='text-xl font-semibold mb-1 w-full text-left'
+            style={{ color: '#7A6E5A', fontFamily: 'Playfair Display, serif' }}
+          >
+            Confirm your email
+          </h2>
+          <p className='text-sm text-muted-foreground mb-8 w-full text-left'>
+            Please enter the code we sent to
+            <br />
+            <span className='break-all'>{email}</span>
+          </p>
+          <form className='flex flex-col items-center w-full' onSubmit={handleVerifyOtp} autoComplete='off'>
+            <div className='w-full flex justify-center pb-2'>
               <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-                <InputOTPGroup className='gap-2 sm:gap-2 gap-1'>
+                <InputOTPGroup className='flex gap-1 sm:gap-2 w-full'>
                   {Array.from({ length: 6 }, (_, i) => (
                     <InputOTPSlot
                       key={i}
                       index={i}
-                      className='w-10 h-10 sm:w-12 sm:h-12 text-base sm:text-lg font-semibold'
+                      className='flex-1 min-w-0 h-12 sm:h-14 text-lg sm:text-xl font-semibold bg-white border border-gray-200 rounded-md shadow-sm text-center'
                     />
                   ))}
                 </InputOTPGroup>
               </InputOTP>
             </div>
-            <div className='flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-6'>
-              <button type='button' onClick={handleChangeEmail} className='text-sm text-primary hover:underline'>
-                Change Email
-              </button>
+            <div className='w-full flex justify-end mb-2'>
               {resendTimer > 0 ? (
-                <span className='text-sm text-muted-foreground'>Resend OTP in {resendTimer}s</span>
+                <span className='text-xs text-muted-foreground'>Resend OTP in {resendTimer}s</span>
               ) : (
                 <button
                   type='button'
                   onClick={handleResendOtp}
                   disabled={isResending}
-                  className='text-sm text-primary hover:underline disabled:opacity-50'
+                  className='text-xs text-primary hover:underline disabled:opacity-50 px-2 py-1 rounded focus:outline-none'
+                  style={{ minWidth: 80 }}
                 >
                   {isResending ? 'Sending...' : 'Resend OTP'}
                 </button>
               )}
             </div>
-          </div>
-          <Button
-            type='submit'
-            className='w-full rounded-full'
-            disabled={(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) || otp.length !== 6}
-          >
-            {(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) && (
-              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-            )}
-            {isInvitationFlow ? 'Next' : 'Sign In'}
-          </Button>
-        </form>
+            {/* Stepper below OTP input and above Continue button */}
+            <SignupStepper totalSteps={4} currentStep={2} />
+            <Button
+              type='submit'
+              className='w-full rounded-full text-base font-semibold h-12 '
+              disabled={(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) || otp.length !== 6}
+            >
+              {(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) && (
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+              )}
+              Continue
+            </Button>
+          </form>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

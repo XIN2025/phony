@@ -1,7 +1,7 @@
 'use client';
 
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
-import { useGetCurrentUser, useUpdateProfile } from '@/lib/hooks/use-api';
+import { useGetCurrentUser, useUpdateProfile, useDeleteAccount } from '@/lib/hooks/use-api';
 import { getAvatarUrl, getInitials, getUserDisplayName } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Button } from '@repo/ui/components/button';
@@ -13,15 +13,27 @@ import { signOut, getSession } from 'next-auth/react';
 import React, { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@repo/ui/components/alert-dialog';
 
 const validatePhoneNumber = (value: string): string => {
   return value.replace(/[^0-9+\-()\s]/g, '');
 };
 
 export default function ClientSettingsPage() {
-  const { data: user, isLoading } = useGetCurrentUser();
+  const { data: currentUser } = useGetCurrentUser();
   const updateProfileMutation = useUpdateProfile();
   const queryClient = useQueryClient();
+  const deleteAccountMutation = useDeleteAccount();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -29,22 +41,23 @@ export default function ClientSettingsPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState('profile');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   React.useEffect(() => {
-    if (user) {
-      setFullName(getUserDisplayName(user));
-      setEmail(user.email || '');
-      setPhone(user.phoneNumber || '');
+    if (currentUser) {
+      setFullName(getUserDisplayName(currentUser));
+      setEmail(currentUser.email || '');
+      setPhone(currentUser.phoneNumber || '');
     }
-  }, [user]);
+  }, [currentUser]);
 
   // Medical History and Notifications from user data
-  const [allergies, setAllergies] = useState<string[]>(user?.allergies || []);
+  const [allergies, setAllergies] = useState<string[]>(currentUser?.allergies || []);
   const [notificationSettings, setNotificationSettings] = useState({
-    emailReminders: user?.notificationSettings?.emailReminders ?? true,
-    practitionerMessages: user?.notificationSettings?.practitionerMessages ?? true,
-    engagementPrompts: user?.notificationSettings?.engagementPrompts ?? false,
-    marketingEmails: user?.notificationSettings?.marketingEmails ?? false,
+    emailReminders: currentUser?.notificationSettings?.emailReminders ?? true,
+    practitionerMessages: currentUser?.notificationSettings?.practitionerMessages ?? true,
+    engagementPrompts: currentUser?.notificationSettings?.engagementPrompts ?? false,
+    marketingEmails: currentUser?.notificationSettings?.marketingEmails ?? false,
   });
 
   const handleNotificationChange = (key: keyof typeof notificationSettings) => {
@@ -91,7 +104,7 @@ export default function ClientSettingsPage() {
   };
 
   const handleSaveChanges = async () => {
-    if (!user) return;
+    if (!currentUser) return;
 
     const formData = new FormData();
 
@@ -120,17 +133,51 @@ export default function ClientSettingsPage() {
     });
   };
 
+  const handleDeleteAccount = async () => {
+    deleteAccountMutation.mutate(undefined, {
+      onSuccess: () => {
+        toast.success('Account deleted successfully');
+        setDeleteDialogOpen(false);
+        signOut({ callbackUrl: '/' });
+      },
+      onError: (error: any) => {
+        toast.error(error?.response?.data?.error || 'Failed to delete account');
+      },
+    });
+  };
+
   return (
-    <div className='py-8 sm:py-12 px-4 sm:px-8 w-full'>
+    <div className='py-0 sm:py-12 px-4 sm:px-8 w-full'>
+      {/* Mobile header - only on small screens */}
+      <div className='flex items-center justify-between px-4 pt-2 pb-2 mb-2 w-full sm:hidden'>
+        <div className='flex items-center'>
+          <SidebarToggleButton />
+          <span
+            className='ml-3 text-xl font-bold text-primary'
+            style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}
+          >
+            Continuum
+          </span>
+        </div>
+        <Avatar className='h-10 w-10 ml-2'>
+          <AvatarImage
+            src={getAvatarUrl(currentUser?.avatarUrl, currentUser)}
+            alt={getUserDisplayName(currentUser) || 'User'}
+          />
+          <AvatarFallback>{getInitials(currentUser || 'U')}</AvatarFallback>
+        </Avatar>
+      </div>
       <div className='flex items-center justify-between mb-6'>
         <div className='flex items-center gap-4'>
-          <SidebarToggleButton />
-          <h1 className='text-3xl font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+          <h1
+            className='text-xl sm:text-3xl font-semibold pl-4 sm:pl-0'
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
             Profile Settings
           </h1>
         </div>
         <Button
-          className='rounded-full px-6 py-2 text-base font-medium bg-black text-white hover:bg-gray-900 shadow-none'
+          className='rounded-full text-sm px-4 py-2 sm:text-base sm:px-6 sm:py-2 font-medium bg-black text-white hover:bg-gray-900 shadow-none'
           onClick={handleSaveChanges}
           disabled={updateProfileMutation.isPending}
         >
@@ -145,15 +192,15 @@ export default function ClientSettingsPage() {
         </Button>
       </div>
       <div className='mb-8 w-full'>
-        <div className='inline-flex bg-[#F6F6F6] border border-[#D9D9D9] rounded-full p-1'>
+        <div className='inline-flex sm:w-auto w-full justify-between bg-[#F6F6F6] border border-[#D9D9D9] rounded-full p-1'>
           <button
-            className={`px-4 py-1 rounded-full text-sm font-medium transition-all ${activeTab === 'profile' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
+            className={`w-full flex-1 sm:w-auto sm:flex-none text-center px-4 py-1 rounded-full text-sm font-medium transition-all ${activeTab === 'profile' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
             onClick={() => setActiveTab('profile')}
           >
             Profile
           </button>
           <button
-            className={`px-4 py-1 rounded-full text-sm font-medium transition-all ${activeTab === 'notifications' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
+            className={`w-full flex-1 sm:w-auto sm:flex-none text-center px-4 py-1 rounded-full text-sm font-medium transition-all ${activeTab === 'notifications' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
             onClick={() => setActiveTab('notifications')}
           >
             Notifications
@@ -181,9 +228,9 @@ export default function ClientSettingsPage() {
                     style={{ boxShadow: '0 0 0 0 transparent' }}
                   >
                     <Avatar className='h-20 w-20 border-2 border-gray-300'>
-                      <AvatarImage src={avatarPreview || getAvatarUrl(user?.avatarUrl, user)} />
+                      <AvatarImage src={avatarPreview || getAvatarUrl(currentUser?.avatarUrl, currentUser)} />
                       <AvatarFallback className='text-2xl'>
-                        {getInitials({ firstName: user?.firstName, lastName: user?.lastName })}
+                        {getInitials({ firstName: currentUser?.firstName, lastName: currentUser?.lastName })}
                       </AvatarFallback>
                     </Avatar>
                     <input
@@ -200,7 +247,7 @@ export default function ClientSettingsPage() {
                 </div>
                 <div className='flex flex-col items-start gap-1'>
                   <h3 className='text-lg font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
-                    {getUserDisplayName(user)}
+                    {getUserDisplayName(currentUser)}
                   </h3>
                 </div>
               </div>
@@ -240,15 +287,51 @@ export default function ClientSettingsPage() {
               </div>
             </div>
           </div>
-          <div className='flex mb-4'>
-            <Button
-              variant='destructive'
-              className='rounded-full px-6 py-2 text-base font-medium bg-[#FFE5E5] text-[#E54848] hover:bg-[#FFD6D6] ml-0'
-              style={{ minWidth: '0', boxShadow: 'none' }}
-            >
-              Delete Account
-            </Button>
-          </div>
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant='destructive'
+                className='rounded-full px-6 py-2 text-base font-medium bg-[#FFE5E5] text-[#E54848] hover:bg-[#FFD6D6] ml-0'
+                style={{ minWidth: '0', boxShadow: 'none' }}
+                disabled={deleteAccountMutation.isPending}
+              >
+                {deleteAccountMutation.isPending ? (
+                  <>
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Account'
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Account</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete your account? This action cannot be undone and all your data will be
+                  permanently removed.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleteAccountMutation.isPending}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className='bg-destructive text-white hover:bg-destructive/10'
+                  onClick={handleDeleteAccount}
+                  disabled={deleteAccountMutation.isPending}
+                >
+                  {deleteAccountMutation.isPending ? (
+                    <>
+                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Account'
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       )}
       {activeTab === 'notifications' && (

@@ -265,16 +265,16 @@ export function IntakeFormBuilder({
         {fields.map((field, index) => (
           <div key={field.id} className='bg-white rounded-2xl shadow p-4 sm:p-8 flex flex-col gap-4'>
             <div className='flex flex-col md:flex-row gap-4'>
-              <div className='flex-1'>
-                <Label>Question</Label>
+              <div className='flex-1 '>
+                <Label className='mb-1'>Question</Label>
                 <Input
                   {...form.register(`questions.${index}.title`)}
                   className='rounded-lg shadow-sm w-full'
                   placeholder='Type your question here'
                 />
               </div>
-              <div className='flex-1'>
-                <Label>Type of question</Label>
+              <div className='flex-1 '>
+                <Label className='mb-1'>Type of question</Label>
                 <Controller
                   control={form.control}
                   name={`questions.${index}.type`}

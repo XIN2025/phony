@@ -41,16 +41,21 @@ export default function ClientAuthEmailPage() {
 
   return (
     <>
-      <div className='text-center mb-6 sm:mb-8'>
-        <h1 className='text-xl sm:text-2xl font-bold mb-2'>Welcome to Continuum</h1>
-        <p className='text-sm sm:text-base text-muted-foreground'>
-          Bridging care and connection, one session at a time.
-        </p>
+      {/* Branding header */}
+      <div className='mb-6 sm:mb-8 flex flex-col items-start'>
+        <div className='flex items-center mb-4'>
+          <span className='text-2xl font-bold' style={{ fontFamily: 'Playfair Display, serif' }}>
+            Continuum
+          </span>
+        </div>
+        <div className='text-left'>
+          <span className='text-lg sm:text-xl font-tighter '>
+            <span className='text-muted-foreground font-semibold'>Where</span> Therapy & Coaching{' '}
+            <span className='text-muted-foreground font-semibold'>Becomes</span> Action & Accountability
+          </span>
+        </div>
       </div>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4 sm:space-y-6'>
-        <div className='text-center'>
-          <h2 className='text-base sm:text-lg font-semibold mb-4 sm:mb-6'>Sign In</h2>
-        </div>
         <div>
           <label htmlFor='email' className='block text-sm font-medium mb-1'>
             Email ID
@@ -72,9 +77,18 @@ export default function ClientAuthEmailPage() {
           {isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
           Send OTP
         </Button>
+        {/* Legal text below button */}
         <div className='text-center'>
-          <p className='text-xs sm:text-sm text-muted-foreground'>
-            New client? You should have received an invitation link from your practitioner.
+          <p className='text-xs sm:text-sm text-muted-foreground mt-4'>
+            By continuing, you agree to Continuum’s{' '}
+            <a href='#' className='underline'>
+              Consumer Terms and Usage Policy
+            </a>
+            , and acknowledge their{' '}
+            <a href='#' className='underline'>
+              Privacy Policy
+            </a>
+            .
           </p>
         </div>
       </form>

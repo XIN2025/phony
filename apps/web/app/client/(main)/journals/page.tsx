@@ -1,6 +1,6 @@
 'use client';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
-import { JournalEntry, useDeleteJournalEntry, useGetJournalEntries } from '@/lib/hooks/use-api';
+import { JournalEntry, useDeleteJournalEntry, useGetJournalEntries, useGetCurrentUser } from '@/lib/hooks/use-api';
 import { Button } from '@repo/ui/components/button';
 import { Card } from '@repo/ui/components/card';
 import { Input } from '@repo/ui/components/input';
@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/avatar';
+import { getAvatarUrl, getUserDisplayName, getInitials } from '@/lib/utils';
 
 export default function JournalsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,6 +20,7 @@ export default function JournalsPage() {
   const { data: journalEntries = [], isLoading } = useGetJournalEntries();
   const deleteJournalMutation = useDeleteJournalEntry();
   const router = useRouter();
+  const { data: currentUser } = useGetCurrentUser();
 
   const filteredEntries = journalEntries.filter(
     (entry) =>
@@ -79,25 +82,44 @@ export default function JournalsPage() {
   };
 
   return (
-    <div className='flex flex-col w-full max-w-full overflow-x-hidden pt-2 sm:pt-4 md:pt-6 px-3 sm:px-4 md:px-6 lg:px-8 min-w-0'>
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 md:mb-8 w-full gap-3'>
-        <div className='flex items-center gap-2 min-w-0'>
+    <div className='flex flex-col w-full max-w-full overflow-x-hidden pt-0 sm:pt-4 md:pt-6 px-0 sm:px-4 md:px-6 lg:px-8 min-w-0'>
+      {/* Mobile header - only on small screens */}
+      <div className='flex items-center justify-between px-4 pt-2 pb-2 mb-2 w-full sm:px-0 sm:hidden'>
+        <div className='flex items-center'>
           <SidebarToggleButton />
+          <span
+            className='ml-3 text-xl font-bold text-primary'
+            style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}
+          >
+            Continuum
+          </span>
+        </div>
+        <Avatar className='h-10 w-10 ml-2'>
+          <AvatarImage
+            src={getAvatarUrl(currentUser?.avatarUrl, currentUser)}
+            alt={getUserDisplayName(currentUser) || 'User'}
+          />
+          <AvatarFallback>{getInitials(currentUser || 'U')}</AvatarFallback>
+        </Avatar>
+      </div>
+
+      <div className='flex flex-row items-center justify-between mb-4 sm:mb-6 md:mb-8 w-full gap-3 px-4 sm:px-0'>
+        <div className='flex items-center gap-2 min-w-0'>
           <h1
-            className='text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-0 truncate'
+            className='text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-0 truncate pl-0 sm:pl-4'
             style={{ fontFamily: "'Playfair Display', serif" }}
           >
             Journal Entries
           </h1>
         </div>
-        <Link href='/client/journals/new' className='w-full sm:w-auto'>
-          <Button className='rounded-full px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-medium bg-black text-white hover:bg-gray-800 shadow-sm w-full'>
+        <Link href='/client/journals/new' className='w-auto'>
+          <Button className='rounded-full px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-medium bg-black text-white hover:bg-gray-800 shadow-sm'>
             <Plus className='mr-2 h-4 w-4 sm:h-5 sm:w-5' /> New Entry
           </Button>
         </Link>
       </div>
 
-      <div className='mb-4 sm:mb-6 md:mb-8'>
+      <div className='mb-4 sm:mb-6 md:mb-8 px-4 sm:px-0'>
         <div className='relative w-full max-w-md'>
           <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 sm:pl-4'>
             <Search className='h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground' />

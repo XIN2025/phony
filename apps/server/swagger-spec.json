@@ -368,6 +368,19 @@
         "tags": ["users"]
       }
     },
+    "/api/users/me": {
+      "delete": {
+        "operationId": "UsersController_deleteCurrentUser",
+        "parameters": [],
+        "responses": {
+          "200": { "description": "User account deleted successfully." },
+          "404": { "description": "User not found." }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Delete current user account",
+        "tags": ["users"]
+      }
+    },
     "/api/sessions": {
       "post": {
         "operationId": "SessionController_createSession",

@@ -1098,3 +1098,9 @@ export function useUploadJournalImage() {
     },
   });
 }
+
+export function useDeleteAccount() {
+  return useMutation({
+    mutationFn: async () => ApiClient.delete<{ message: string }>('/api/users/me'),
+  });
+}

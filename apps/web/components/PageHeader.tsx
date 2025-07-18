@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@repo/ui/components/button';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,13 @@ interface PageHeaderProps {
   rightElement?: React.ReactNode;
   titleClassName?: string;
   subtitleClassName?: string;
+}
+
+interface AuthHeaderProps {
+  showBackButton?: boolean;
+  onBack?: () => void;
+  className?: string;
+  children?: React.ReactNode;
 }
 
 export function PageHeader({
@@ -84,6 +92,48 @@ export function PageHeader({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+export function AuthHeader({ showBackButton = true, onBack, className = '', children }: AuthHeaderProps) {
+  const router = useRouter();
+  const handleBack = () => {
+    if (onBack) onBack();
+    else router.back();
+  };
+  return (
+    <div className={`flex items-center w-full ${className}`.trim()} style={{ minHeight: 40, padding: 0 }}>
+      {showBackButton && (
+        <button
+          type='button'
+          onClick={handleBack}
+          aria-label='Back'
+          className='flex items-center justify-center mr-2 focus:outline-none'
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', height: 28, width: 28 }}
+        >
+          <span
+            style={{
+              color: '#807171',
+              fontSize: 28,
+              fontWeight: 400,
+              lineHeight: 1,
+              display: 'inline-block',
+              fontFamily: 'inherit',
+              verticalAlign: 'middle',
+            }}
+          >
+            {'<'}
+          </span>
+        </button>
+      )}
+      <span
+        className='font-bold'
+        style={{ fontFamily: 'Playfair Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
+      >
+        Continuum
+      </span>
+      {children && <div className='ml-4 flex-1'>{children}</div>}
     </div>
   );
 }

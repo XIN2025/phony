@@ -11,7 +11,6 @@ import { Loader2, AlertTriangle, LogOut } from 'lucide-react';
 import { clearAllAuthData } from '@/lib/auth-utils';
 import { useGetInvitationByToken, useSendOtp } from '@/lib/hooks/use-api';
 import { useSignUpContext } from '@/context/signup-context';
-import { AuthHeader } from '@repo/ui/components/auth-layout';
 import { SignupStepper } from '@/components/SignupStepper';
 
 export default function ClientSignUpPage() {
@@ -166,8 +165,11 @@ export default function ClientSignUpPage() {
 
   return (
     <>
-      <SignupStepper totalSteps={4} currentStep={1} />
-      <AuthHeader title='Create Account' />
+      <div className='mb-8 mt-4 sm:mt-8 px-2 sm:px-0'>
+        <span className='text-3xl font-bold' style={{ fontFamily: 'Playfair Display, serif' }}>
+          Continuum
+        </span>
+      </div>
       <form onSubmit={handleNext} className='space-y-6'>
         <div>
           <Label htmlFor='email' className='block text-sm font-medium mb-1'>
@@ -185,10 +187,33 @@ export default function ClientSignUpPage() {
             required
           />
         </div>
+        {/* Progress bar above the button */}
+        <SignupStepper totalSteps={4} currentStep={1} />
         <Button type='submit' className='w-full rounded-full' disabled={isSendingOtp}>
           {isSendingOtp && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
           Next
         </Button>
+        <div className=' text-xs sm:text-sm text-muted-foreground' style={{ lineHeight: 1.6 }}>
+          By continuing, you agree to Continuum's{' '}
+          <a
+            href='/terms'
+            className='font-semibold text-black hover:underline'
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            Consumer Terms and Usage Policy
+          </a>
+          , and acknowledge their{' '}
+          <a
+            href='/privacy'
+            className='font-semibold text-black hover:underline'
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            Privacy Policy
+          </a>
+          .
+        </div>
       </form>
     </>
   );

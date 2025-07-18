@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserRole } from '@repo/db';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -73,7 +74,8 @@ export class UsersService {
   async deleteUser(id: string) {
     // First, get the user to retrieve their email
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new Error('User not found');
+    console.log('[Delete User] Prisma found user:', user);
+    if (!user) throw new NotFoundException('User not found');
     const deletedUser = await this.prisma.user.delete({ where: { id } });
     // After deleting the user, reset invitations for this email
     await this.prisma.invitation.updateMany({

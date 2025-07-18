@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGetClientIntakeForm, useSubmitIntakeForm } from '@/lib/hooks/use-api';
-import { AuthLayout, AuthHeader } from '@repo/ui/components/auth-layout';
+import { AuthLayout } from '@repo/ui/components/auth-layout';
+import { AuthHeader } from '@/components/PageHeader';
 
 interface Question {
   id: string;
@@ -571,34 +572,54 @@ export default function IntakePage() {
 
   return (
     <AuthLayout>
-      <AuthHeader title={form?.title || 'Intake Survey'} />
-      <form className='space-y-6' onSubmit={handleSubmit}>
-        {isFormLoading ? (
-          <div className='flex justify-center items-center h-48'>
-            <Loader2 className='h-8 w-8 animate-spin' />
+      {/* Top bar for mobile - absolutely at the top */}
+      <div className='block sm:hidden fixed top-0 left-0 right-0 z-20 bg-transparent px-4 pt-4 pb-2 w-full'>
+        <AuthHeader />
+      </div>
+      {/* Add top margin for mobile to avoid overlap with fixed header */}
+      <div className='block sm:hidden' style={{ marginTop: '64px' }}></div>
+      {/* Centered card for desktop, full width for mobile */}
+      <div className='flex-1 flex flex-col items-center justify-center w-full'>
+        <div className='w-full max-w-md mx-auto flex flex-col items-center justify-center rounded-xl py-8 px-4 sm:px-8 sm:mt-0 mt-4'>
+          {/* Top bar for desktop */}
+          <div className='hidden sm:flex w-full mb-6'>
+            <AuthHeader />
           </div>
-        ) : error ? (
-          <div className='text-destructive text-center p-4'>
-            <p>There was an error loading the intake form.</p>
-            <p className='text-sm text-muted-foreground'>{error.message}</p>
-          </div>
-        ) : (
-          <>
-            {form?.description && (
-              <div className='text-center mb-6'>
-                <p className='text-muted-foreground'>{form.description}</p>
-              </div>
-            )}
-            <div className='space-y-8'>{form?.questions.sort((a, b) => a.order - b.order).map(renderQuestion)}</div>
-            <div className='pt-6'>
-              <Button type='submit' disabled={isSubmitting || hasSubmitted} className='w-full rounded-full'>
+          {/* Intake Survey heading (always below header) */}
+          <h2
+            className='text-xl font-semibold mb-4 w-full text-left'
+            style={{ color: '#7A6E5A', fontFamily: 'Playfair Display, serif' }}
+          >
+            {form?.title || 'Intake Survey'}
+          </h2>
+          {form?.description && (
+            <div className='mb-4 w-full text-left'>
+              <p className='text-muted-foreground'>{form.description}</p>
+            </div>
+          )}
+          <form className='flex flex-col items-center w-full' onSubmit={handleSubmit}>
+            <div className='w-full'>
+              {form?.questions
+                .sort((a, b) => a.order - b.order)
+                .map((question) => (
+                  <div key={question.id} className='bg-white rounded-xl shadow-sm p-4 mb-4'>
+                    {renderQuestion(question)}
+                  </div>
+                ))}
+            </div>
+            <div className='w-full mt-4'>
+              <Button
+                type='submit'
+                disabled={isSubmitting || hasSubmitted}
+                className='w-full rounded-full h-12 text-base font-semibold'
+              >
                 {isSubmitting || hasSubmitted ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
-                {hasSubmitted ? 'Submitting...' : 'Submit'}
+                {hasSubmitted ? 'Submitting...' : 'Continue'}
               </Button>
             </div>
-          </>
-        )}
-      </form>
+          </form>
+        </div>
+      </div>
     </AuthLayout>
   );
 }
