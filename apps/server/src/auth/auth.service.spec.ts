@@ -127,6 +127,9 @@ describe('AuthService', () => {
       isEmailVerified: false,
       avatarUrl: null,
       profession: 'Doctor',
+      dob: null,
+      practitionerId: null,
+      idProofUrl: null,
     };
 
     const mockOtpRecord = {
@@ -253,6 +256,9 @@ describe('AuthService', () => {
       profession: 'Psychologist',
       isEmailVerified: false,
       avatarUrl: null,
+      dob: null,
+      practitionerId: null,
+      idProofUrl: null,
     };
 
     it('should successfully create new practitioner account', async () => {
@@ -284,6 +290,7 @@ describe('AuthService', () => {
       const clientUser = {
         ...mockPractitioner,
         role: UserRole.CLIENT,
+        clientStatus: 'ACTIVE',
       };
       mockPrismaService.otp.findUnique.mockResolvedValue(mockOtpRecord as never);
       mockPrismaService.user.findUnique.mockResolvedValue(clientUser as never);
@@ -317,6 +324,9 @@ describe('AuthService', () => {
       isEmailVerified: true,
       avatarUrl: null,
       profession: null,
+      dob: null,
+      practitionerId: null,
+      idProofUrl: null,
     };
 
     it('should successfully create client account', async () => {
