@@ -75,7 +75,11 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
             )}
           </span>
         }
-        subtitle={plan.session?.title || plan.sessionTitle || ''}
+        subtitle={
+          plan.session?.title || plan.sessionTitle
+            ? `${plan.session?.title || plan.sessionTitle} | ${formatDate(plan.session?.createdAt || plan.createdAt)} | ${formatTime(plan.session?.createdAt || plan.createdAt)}`
+            : ''
+        }
         showBackButton={true}
         onBack={() => router.back()}
         className='bg-transparent'
@@ -84,7 +88,9 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
         {/* Mandatory Tasks Card */}
         <div className='flex-1 flex flex-col gap-0 bg-transparent'>
           <div className='bg-white rounded-2xl shadow-md p-6 flex flex-col gap-0'>
-            <div className='font-bold text-lg mb-4 text-[#222]'>Mandatory tasks for the week</div>
+            <div className='font-bold text-lg mb-4 text-[#222] ' style={{ fontFamily: "'Playfair Display', serif" }}>
+              Mandatory tasks for the week
+            </div>
             {plan.actionItems?.filter((t: any) => t.isMandatory).length === 0 && (
               <div className='text-muted-foreground text-sm mb-4'>No mandatory tasks.</div>
             )}
@@ -132,7 +138,9 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
         {/* Daily Tasks Card */}
         <div className='flex-1 flex flex-col gap-0 bg-transparent'>
           <div className='bg-white rounded-2xl shadow-md p-6 flex flex-col gap-0'>
-            <div className='font-bold text-lg mb-4 text-[#222]'>Daily Tasks</div>
+            <div className='font-bold text-lg mb-4 text-[#222]' style={{ fontFamily: "'Playfair Display', serif" }}>
+              Daily Tasks
+            </div>
             {plan.actionItems?.filter((t: any) => !t.isMandatory).length === 0 && (
               <div className='text-muted-foreground text-sm mb-4'>No daily tasks.</div>
             )}

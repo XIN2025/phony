@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User, Invitation, UserRole } from '@repo/db';
-import { User as UserDto } from '@repo/shared-types';
+import { UserDto } from './dto/auth.dto';
 import { generateOtp } from '../common/utils/auth.utils';
 import {
   decodeInvitationToken,
@@ -23,11 +23,8 @@ interface ProfileUpdateData {
   lastName?: string;
   avatarUrl?: string;
   profession?: string;
+  dob?: string;
   phoneNumber?: string;
-  allergies?: string[];
-  medicalHistory?: string[];
-  symptoms?: string[];
-  medications?: string[];
   notificationSettings?: object | null;
 }
 
@@ -48,17 +45,18 @@ export class AuthService {
       role: user.role,
       avatarUrl: user.avatarUrl ?? null,
       profession: user.profession ?? null,
+      dob: user.dob ?? null,
       clientStatus: user.clientStatus ?? undefined,
       practitionerId: user.practitionerId ?? null,
       isEmailVerified: user.isEmailVerified,
       idProofUrl: user.idProofUrl ?? null,
       phoneNumber: user.phoneNumber ?? null,
-      allergies: user.allergies ?? null,
-      medicalHistory: user.medicalHistory ?? null,
-      symptoms: user.symptoms ?? null,
-      medications: user.medications ?? null,
-      notificationSettings: user.notificationSettings ?? null,
-    } as UserDto;
+      notificationSettings: user.notificationSettings
+        ? typeof user.notificationSettings === 'string'
+          ? JSON.parse(user.notificationSettings)
+          : user.notificationSettings
+        : null,
+    };
   }
 
   async sendOtp(email: string): Promise<{ success: boolean }> {
@@ -119,7 +117,25 @@ export class AuthService {
 
     const user = await this.prismaService.user.findUnique({
       where: { email: normalizedEmail },
-      include: { clients: true },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        avatarUrl: true,
+        profession: true,
+        dob: true,
+        clientStatus: true,
+        practitionerId: true,
+        isEmailVerified: true,
+        idProofUrl: true,
+        phoneNumber: true,
+        notificationSettings: true,
+        createdAt: true,
+        updatedAt: true,
+        isActive: true,
+      },
     });
 
     if (!user) {
@@ -204,7 +220,28 @@ export class AuthService {
     const normalizedLastName = lastName?.trim() ?? '';
     const normalizedProfession = profession.trim();
 
-    const existingUser = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
+    const existingUser = await this.prismaService.user.findUnique({
+      where: { email: normalizedEmail },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        avatarUrl: true,
+        profession: true,
+        dob: true,
+        clientStatus: true,
+        practitionerId: true,
+        isEmailVerified: true,
+        idProofUrl: true,
+        phoneNumber: true,
+        notificationSettings: true,
+        createdAt: true,
+        updatedAt: true,
+        isActive: true,
+      },
+    });
     if (existingUser) throwAuthError('An account with this email already exists', 'conflict');
 
     let avatarUrl: string | undefined = undefined;
@@ -238,6 +275,7 @@ export class AuthService {
         avatarUrl,
         idProofUrl,
         profession: normalizedProfession,
+        dob: null,
       },
       include: { clients: true },
     });
@@ -280,20 +318,7 @@ export class AuthService {
   }
 
   async handleClientSignUp(data: ClientSignUpDto, file?: Express.Multer.File): Promise<LoginResponseDto> {
-    const {
-      email,
-      firstName,
-      lastName,
-      invitationToken,
-      dob,
-      profession,
-      phoneNumber,
-      allergies,
-      medicalHistory,
-      symptoms,
-      medications,
-      notificationSettings,
-    } = data;
+    const { email, firstName, lastName, invitationToken, dob, profession, phoneNumber, notificationSettings } = data;
 
     validateRequiredFields({ email, firstName, invitationToken }, ['email', 'firstName', 'invitationToken']);
 
@@ -307,7 +332,28 @@ export class AuthService {
     if (invitation.clientEmail.toLowerCase() !== normalizedEmail)
       throwAuthError('Email does not match the invitation', 'unauthorized');
 
-    let user = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
+    let user = await this.prismaService.user.findUnique({
+      where: { email: normalizedEmail },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        avatarUrl: true,
+        profession: true,
+        dob: true,
+        clientStatus: true,
+        practitionerId: true,
+        isEmailVerified: true,
+        idProofUrl: true,
+        phoneNumber: true,
+        notificationSettings: true,
+        createdAt: true,
+        updatedAt: true,
+        isActive: true,
+      },
+    });
 
     if (user) throwAuthError('An account with this email already exists', 'conflict');
     const clientStatus = determineClientStatus(invitation.intakeFormId || undefined);
@@ -331,40 +377,9 @@ export class AuthService {
       avatarUrl,
       clientStatus,
       practitionerId: invitation.practitionerId,
-      dob: dob || '',
-      profession: profession || '',
-      phoneNumber: phoneNumber || '',
-      allergies: allergies || [],
-      medicalHistory:
-        typeof medicalHistory === 'string'
-          ? (() => {
-              try {
-                return JSON.parse(medicalHistory);
-              } catch {
-                return [];
-              }
-            })()
-          : medicalHistory || [],
-      symptoms:
-        typeof symptoms === 'string'
-          ? (() => {
-              try {
-                return JSON.parse(symptoms);
-              } catch {
-                return [];
-              }
-            })()
-          : symptoms || [],
-      medications:
-        typeof medications === 'string'
-          ? (() => {
-              try {
-                return JSON.parse(medications);
-              } catch {
-                return [];
-              }
-            })()
-          : medications || [],
+      dob: dob ?? null,
+      profession: profession ?? undefined,
+      phoneNumber: phoneNumber ?? undefined,
       notificationSettings: notificationSettings || null,
     };
 
@@ -416,15 +431,34 @@ export class AuthService {
       avatarUrl = savedFilename;
     }
 
-    const updateData: Record<string, string> = {};
+    const updateData: Record<string, unknown> = {};
     if (data.firstName?.trim()) updateData.firstName = data.firstName.trim();
     if (data.lastName?.trim()) updateData.lastName = data.lastName.trim();
     if (avatarUrl) updateData.avatarUrl = avatarUrl;
+    updateData.dob = undefined;
 
     const user = await this.prismaService.user.update({
       where: { id: userId },
       data: updateData,
-      include: { clients: true },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        avatarUrl: true,
+        profession: true,
+        dob: true,
+        clientStatus: true,
+        practitionerId: true,
+        isEmailVerified: true,
+        idProofUrl: true,
+        phoneNumber: true,
+        notificationSettings: true,
+        createdAt: true,
+        updatedAt: true,
+        isActive: true,
+      },
     });
 
     return this.toUserDto(user);
@@ -433,44 +467,16 @@ export class AuthService {
   async updateProfile(
     userId: string,
     body: ProfileUpdateBody,
-    file?: Express.Multer.File
+    profileImageFile?: Express.Multer.File,
+    idProofFile?: Express.Multer.File
   ): Promise<LoginResponseDto['user']> {
     const dataToUpdate: ProfileUpdateData = {};
     if (body.firstName) dataToUpdate.firstName = body.firstName;
     if (body.lastName || body.lastName === '') dataToUpdate.lastName = body.lastName;
-    if (body.profession) dataToUpdate.profession = body.profession;
+    if ('profession' in body) dataToUpdate.profession = body.profession ?? undefined;
+    if ('dob' in body) dataToUpdate.dob = body.dob ?? undefined;
     if (body.phoneNumber !== undefined) dataToUpdate.phoneNumber = body.phoneNumber;
 
-    if (body.allergies) {
-      try {
-        dataToUpdate.allergies = typeof body.allergies === 'string' ? JSON.parse(body.allergies) : body.allergies;
-      } catch {
-        dataToUpdate.allergies = [];
-      }
-    }
-    if (body.medicalHistory) {
-      try {
-        dataToUpdate.medicalHistory =
-          typeof body.medicalHistory === 'string' ? JSON.parse(body.medicalHistory) : body.medicalHistory;
-      } catch {
-        dataToUpdate.medicalHistory = [];
-      }
-    }
-    if (body.symptoms) {
-      try {
-        dataToUpdate.symptoms = typeof body.symptoms === 'string' ? JSON.parse(body.symptoms) : body.symptoms;
-      } catch {
-        dataToUpdate.symptoms = [];
-      }
-    }
-    if (body.medications) {
-      try {
-        dataToUpdate.medications =
-          typeof body.medications === 'string' ? JSON.parse(body.medications) : body.medications;
-      } catch {
-        dataToUpdate.medications = [];
-      }
-    }
     if (body.notificationSettings) {
       try {
         const notificationSettings =
@@ -483,20 +489,48 @@ export class AuthService {
       }
     }
 
-    if (file && file.buffer) {
-      const validation = validateFileUpload(file);
+    if (profileImageFile && profileImageFile.buffer) {
+      const validation = validateFileUpload(profileImageFile);
       if (!validation.isValid) {
         throwAuthError(validation.error || 'Invalid file', 'badRequest');
       }
-      const filename = generateUniqueFilename(file.originalname);
-      const savedFilename = await saveFileToUploads(file, filename);
+      const filename = generateUniqueFilename(profileImageFile.originalname);
+      const savedFilename = await saveFileToUploads(profileImageFile, filename);
       dataToUpdate.avatarUrl = savedFilename;
+    }
+
+    if (idProofFile && idProofFile.buffer) {
+      const validation = validateFileUpload(idProofFile);
+      if (!validation.isValid) {
+        throwAuthError(validation.error || 'Invalid file', 'badRequest');
+      }
+      const filename = generateUniqueFilename(idProofFile.originalname);
+      const savedFilename = await saveFileToUploads(idProofFile, filename);
+      (dataToUpdate as Record<string, unknown>).idProofUrl = savedFilename;
     }
 
     const user = await this.prismaService.user.update({
       where: { id: userId },
       data: dataToUpdate,
-      include: { clients: true },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        avatarUrl: true,
+        profession: true,
+        dob: true,
+        clientStatus: true,
+        practitionerId: true,
+        isEmailVerified: true,
+        idProofUrl: true,
+        phoneNumber: true,
+        notificationSettings: true,
+        createdAt: true,
+        updatedAt: true,
+        isActive: true,
+      },
     });
 
     return this.toUserDto(user);
@@ -505,6 +539,25 @@ export class AuthService {
   async getCurrentUser(userId: string): Promise<LoginResponseDto['user']> {
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        avatarUrl: true,
+        profession: true,
+        dob: true,
+        clientStatus: true,
+        practitionerId: true,
+        isEmailVerified: true,
+        idProofUrl: true,
+        phoneNumber: true,
+        notificationSettings: true,
+        createdAt: true,
+        updatedAt: true,
+        isActive: true,
+      },
     });
 
     if (!user) {

@@ -10,11 +10,15 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { IntakeFormService } from './intake-form.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CreateIntakeFormDto } from '@repo/shared-types';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { saveFileToUploads, validateFileUpload, generateUniqueFilename } from '../common/utils/user.utils';
 
 @ApiTags('intake-forms')
 @Controller('intake-forms')
@@ -29,6 +33,24 @@ export class IntakeFormController {
   create(@Request() req, @Body() createIntakeFormDto: CreateIntakeFormDto) {
     const practitionerId = req.user.id;
     return this.intakeFormService.createIntakeForm(practitionerId, createIntakeFormDto);
+  }
+
+  @Post('upload-file')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload a file for an intake form answer' })
+  @ApiResponse({ status: 201, description: 'File uploaded successfully.' })
+  async uploadIntakeFormFile(@Request() req, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new Error('No file provided');
+    }
+    const { isValid, error } = validateFileUpload(file);
+    if (!isValid) {
+      throw new Error(error || 'Invalid file upload');
+    }
+    const filename = generateUniqueFilename(file.originalname);
+    const url = await saveFileToUploads(file, filename, 'uploads');
+    return { url, title: file.originalname };
   }
 
   @Get()

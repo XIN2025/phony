@@ -21,6 +21,8 @@ import {
   Meh,
   Frown,
   CheckCircle,
+  Plus,
+  ClipboardList,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSidebar } from '@/context/SidebarContext';
@@ -41,7 +43,7 @@ import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { createPortal } from 'react-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/avatar';
-import { getAvatarUrl, getInitials, getUserDisplayName } from '@/lib/utils';
+import { getAvatarUrl, getInitials, getUserDisplayName, getRatingEmoji } from '@/lib/utils';
 
 interface ActionItem {
   id: string;
@@ -55,6 +57,7 @@ interface ActionItem {
   toolsToHelp?: string;
   category?: string;
   isCompleted: boolean;
+  duration?: string;
   completions?: Array<{
     id: string;
     completedAt: string;
@@ -88,6 +91,7 @@ const ClientPage = () => {
   const queryClient = useQueryClient();
   const { setSidebarOpen } = useSidebar();
   const [selectedTask, setSelectedTask] = useState<ActionItem | null>(null);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [completionData, setCompletionData] = useState<CompletionData>({
     rating: 0,
     journalEntry: '',
@@ -102,10 +106,8 @@ const ClientPage = () => {
   });
   const selectedDate = dateRange.startDate;
 
-  // Format selectedDate as YYYY-MM-DD
   const selectedDateString = selectedDate.toISOString().slice(0, 10);
 
-  // Fetch the active plan for the selected date
   const {
     data: activePlan,
     isLoading: planLoading,
@@ -113,9 +115,8 @@ const ClientPage = () => {
     refetch: refetchActivePlan,
   } = useGetActivePlanForDate(session?.user?.id || '', selectedDateString);
 
-  // Use the actionItems from the active plan
   const actionItems =
-    activePlan?.actionItems?.map((item: any) => {
+    activePlan?.actionItems?.map((item: ActionItem) => {
       const isCompleted = item.completions && item.completions.length > 0;
       return {
         ...item,
@@ -202,32 +203,24 @@ const ClientPage = () => {
     const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
     const selectedDayShort = dayMap[dayOfWeek];
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    today.setHours(0, 0, 0, 0);
     const selectedDate = new Date(date);
-    selectedDate.setHours(0, 0, 0, 0); // Reset time to start of day
+    selectedDate.setHours(0, 0, 0, 0);
+
+    if (task.isCompleted && selectedDate.toDateString() === today.toDateString()) {
+      return true;
+    }
 
     if (task.isMandatory) {
-      if (task.isCompleted) {
-        // If task is completed, only show on its configured days
-        if (task.daysOfWeek && task.daysOfWeek.length > 0) {
-          return task.daysOfWeek.some((day) => day === selectedDayShort);
-        }
-        return true;
-      } else {
-        // If task is NOT completed, show on ALL future dates until completed
-        // This makes mandatory tasks persist until they're done
-        if (selectedDate >= today) {
-          return true;
-        }
-
-        // For past dates, only show if it was scheduled for that day
-        if (task.daysOfWeek && task.daysOfWeek.length > 0) {
-          return task.daysOfWeek.some((day) => day === selectedDayShort);
-        }
+      if (selectedDate >= today) {
         return true;
       }
+
+      if (task.daysOfWeek && task.daysOfWeek.length > 0) {
+        return task.daysOfWeek.some((day) => day === selectedDayShort);
+      }
+      return true;
     } else {
-      // For non-mandatory tasks, only show on their configured days
       if (task.daysOfWeek && task.daysOfWeek.length > 0) {
         return task.daysOfWeek.some((day) => day === selectedDayShort);
       }
@@ -247,156 +240,181 @@ const ClientPage = () => {
   const completeTaskMutation = useCompleteActionItem();
   const undoTaskCompletionMutation = useUndoTaskCompletion();
 
-  // Track which task is being updated
   const [loadingTaskId, setLoadingTaskId] = useState<string | null>(null);
 
-  const handleTaskToggle = async (task: ActionItem) => {
-    if (loadingTaskId) return; // Prevent double clicks
-    setLoadingTaskId(task.id);
-    if (task.isCompleted) {
-      return;
-    }
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [selectedFeedback, setSelectedFeedback] = useState<'happy' | 'neutral' | 'sad' | null>(null);
+  const [taskForFeedback, setTaskForFeedback] = useState<ActionItem | null>(null);
 
+  const { data: currentUser, isLoading: userLoading } = useGetCurrentUser();
+
+  const tasksPending = filteredTasks.filter((task: ActionItem) => !task.isCompleted).length;
+
+  const handleTaskToggle = async (task: ActionItem) => {
+    if (loadingTaskId) return;
+
+    setLoadingTaskId(task.id);
     try {
-      await completeTaskMutation.mutateAsync({
-        taskId: task.id,
-        completionData: {
+      if (task.isCompleted) {
+        await undoTaskCompletionMutation.mutateAsync({
+          taskId: task.id,
           clientId: session?.user?.id || '',
-          rating: 5,
-          journalEntry: '',
-          achievedValue: '',
-        },
-      });
-      toast.success('Task marked as completed!');
+        });
+        toast.success('Task marked as incomplete');
+      } else {
+        await completeTaskMutation.mutateAsync({
+          taskId: task.id,
+          completionData: {
+            clientId: session?.user?.id || '',
+            rating: 0,
+            journalEntry: '',
+            achievedValue: '',
+          },
+        });
+        toast.success('Task completed!');
+      }
+      refetchActivePlan();
     } catch (error) {
-      toast.error('Failed to complete task. Please try again.');
+      console.error('Error toggling task:', error);
+      toast.error('Failed to update task');
     } finally {
       setLoadingTaskId(null);
     }
   };
 
   const handleCompleteTask = () => {
-    if (!selectedTask) return;
+    if (!selectedTask || !selectedFeedback) return;
+
+    const ratingMap = {
+      happy: 5,
+      neutral: 3,
+      sad: 1,
+    };
 
     completeTaskMutation.mutate(
       {
         taskId: selectedTask.id,
         completionData: {
-          clientId: session?.user?.id,
-          rating: completionData.rating,
+          clientId: session?.user?.id || '',
+          rating: ratingMap[selectedFeedback],
           journalEntry: completionData.journalEntry,
           achievedValue: completionData.achievedValue,
         },
       },
       {
         onSuccess: () => {
+          toast.success('Task completed successfully!');
+          setFeedbackOpen(false);
+          setSelectedFeedback(null);
           setSelectedTask(null);
           setCompletionData({ rating: 0, journalEntry: '', achievedValue: '' });
+          refetchActivePlan();
         },
-        onError: (error: any) => {},
+        onError: () => {
+          toast.error('Failed to complete task');
+        },
       },
     );
   };
 
-  useEffect(() => {}, [status, session]);
-
-  useEffect(() => {}, [session, status]);
-
-  // All hooks and variables must be defined before any return
-  const { data: currentUser, isLoading: userLoading } = useGetCurrentUser();
-  const completedTasks = filteredTasks.filter((task: ActionItem) => task.isCompleted);
-  const avgCompletion = filteredTasks.length > 0 ? Math.round((completedTasks.length / filteredTasks.length) * 100) : 0;
-  const tasksPending = filteredTasks.filter((task: ActionItem) => !task.isCompleted).length;
-  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
-  const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<ActionItem | null>(null);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [selectedFeedback, setSelectedFeedback] = useState<'happy' | 'neutral' | 'sad' | null>(null);
-  const [taskForFeedback, setTaskForFeedback] = useState<ActionItem | null>(null);
-
   const handleTaskDetailClick = (task: ActionItem) => {
-    setSelectedTaskForDetail(task);
-    setIsTaskDetailOpen(true);
+    setSelectedTask(task);
+    setIsTaskModalOpen(true);
   };
 
-  // Restore correct handleTaskToggleWithFeedback
+  const mapTaskToEditorDialog = (task: ActionItem) => ({
+    description: task.description,
+    duration: task.duration || '',
+    isMandatory: task.isMandatory || false,
+    daysOfWeek: task.daysOfWeek || [],
+    whyImportant: task.whyImportant || '',
+    recommendedActions: task.recommendedActions || '',
+    toolsToHelp: task.toolsToHelp || [],
+    resources: task.resources || [],
+  });
+
   const handleTaskToggleWithFeedback = async (task: ActionItem) => {
-    if (loadingTaskId) return; // Prevent double clicks
-    setLoadingTaskId(task.id);
     if (task.isCompleted) {
-      try {
-        await undoTaskCompletionMutation.mutateAsync({
-          taskId: task.id,
-          clientId: session?.user?.id || '',
-        });
-        toast.success('Task marked as incomplete!');
-        refetchActivePlan();
-      } catch (error) {
-        toast.error('Failed to undo task completion. Please try again.');
-      } finally {
-        setLoadingTaskId(null);
-      }
-      return;
+      await handleTaskToggle(task);
+    } else {
+      setSelectedTask(task);
+      setFeedbackOpen(true);
+      setSelectedFeedback(null);
     }
-    setTaskForFeedback(task);
-    setFeedbackOpen(true);
-    setSelectedFeedback(null);
-    setLoadingTaskId(null);
   };
 
-  // Restore handleFeedbackSelect for feedback modal
   const handleFeedbackSelect = (type: 'happy' | 'neutral' | 'sad') => {
     setSelectedFeedback(type);
   };
 
-  // Fix handleFeedbackSubmit to only use completeTaskMutation
   const handleFeedbackSubmit = async () => {
-    if (!taskForFeedback || !selectedFeedback || loadingTaskId) return;
-    setLoadingTaskId(taskForFeedback.id);
+    if (!selectedTask || !selectedFeedback) return;
+
+    const ratingMap = {
+      happy: 5,
+      neutral: 3,
+      sad: 1,
+    };
+
+    setLoadingTaskId(selectedTask.id);
     try {
       await completeTaskMutation.mutateAsync({
-        taskId: taskForFeedback.id,
+        taskId: selectedTask.id,
         completionData: {
           clientId: session?.user?.id || '',
-          rating: selectedFeedback === 'happy' ? 5 : selectedFeedback === 'neutral' ? 3 : 1,
-          journalEntry: '',
-          achievedValue: '',
+          rating: ratingMap[selectedFeedback],
+          journalEntry: completionData.journalEntry,
+          achievedValue: completionData.achievedValue,
         },
       });
-      toast.success('Task marked as completed!');
+      toast.success('Task completed successfully!');
       setFeedbackOpen(false);
       setSelectedFeedback(null);
-      setTaskForFeedback(null);
+      setSelectedTask(null);
+      setCompletionData({ rating: 0, journalEntry: '', achievedValue: '' });
       refetchActivePlan();
     } catch (error) {
-      toast.error('Failed to complete task. Please try again.');
+      console.error('Error completing task:', error);
+      toast.error('Failed to complete task');
     } finally {
       setLoadingTaskId(null);
     }
   };
 
-  return (
-    <div className='flex flex-col w-full min-h-screen'>
-      {/* Loading state for tasks */}
-      {planLoading && (
-        <div className='flex items-center justify-center min-h-screen p-4 fixed inset-0 bg-white/80 z-50'>
-          <div className='text-center'>
-            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto'></div>
-            <p className='mt-4 text-blue-700'>Loading your tasks...</p>
-          </div>
+  if (status === 'loading') {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900'></div>
+      </div>
+    );
+  }
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='text-center'>
+          <h1 className='text-2xl font-bold mb-4'>Please sign in to continue</h1>
+          <Link href='/auth' className='text-blue-600 hover:text-blue-800'>
+            Sign In
+          </Link>
         </div>
-      )}
-      {/* Header Section */}
-      <div className='px-4 py-4 sm:px-6 lg:px-8'>
+      </div>
+    );
+  }
+
+  const mandatoryTasks = filteredTasks.filter((task: ActionItem) => task.isMandatory);
+  const dailyTasks = filteredTasks.filter((task: ActionItem) => !task.isMandatory);
+
+  return (
+    <div className='min-h-screen bg-gradient-to-b from-white to-pink-50/30'>
+      {/* Header */}
+      <div className='px-4 sm:px-6 lg:px-8 pt-6 pb-4'>
         <div className='flex items-center justify-between'>
-          <div className='flex items-center'>
+          <div className='flex items-center gap-3'>
             <SidebarToggleButton />
-            {/* Show 'Continuum' only on small screens, next to the sidebar toggle */}
-            <span
-              className='ml-3 text-xl font-bold text-primary sm:hidden'
-              style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}
-            >
+            <h1 className='text-2xl font-bold text-gray-900' style={{ fontFamily: "'Playfair Display', serif" }}>
               Continuum
-            </span>
+            </h1>
           </div>
           <Avatar className='h-10 w-10 block sm:hidden ml-2'>
             <AvatarImage
@@ -490,11 +508,11 @@ const ClientPage = () => {
           <span className='text-xs text-gray-600 mt-1'>Tasks Pending</span>
         </Card>
         <Card
-          className='bg-white rounded-xl shadow-md p-4 flex flex-col items-center justify-center cursor-pointer'
+          className='bg-white rounded-xl shadow-md p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition'
           onClick={() => (window.location.href = '/client/journals/new')}
         >
           <span className='text-2xl'>
-            <Calendar className='inline w-6 h-6 text-blue-500' />
+            <Plus className='inline w-6 h-6 text-blue-500' />
           </span>
           <span className='text-xs text-gray-600 mt-1'>Add new journal entry</span>
         </Card>
@@ -503,150 +521,144 @@ const ClientPage = () => {
       {/* Task Lists */}
       <div className='px-4 sm:px-6 lg:px-8 flex flex-col gap-6'>
         {/* Mandatory Tasks Card */}
-        <Card className='bg-white rounded-xl shadow-md p-4 mb-2'>
-          <CardHeader className='p-0 mb-2'>
-            <CardTitle
-              className='text-base sm:text-lg font-bold text-gray-900'
-              style={{ fontFamily: "'Playfair Display', serif" }}
-            >
-              Mandatory Tasks
-            </CardTitle>
-          </CardHeader>
-          <CardContent className='p-0'>
-            {filteredTasks.filter((task: ActionItem) => task.isMandatory).length === 0 ? (
-              <div className='text-center text-gray-400 text-sm py-4'>No mandatory tasks</div>
+        <div className='bg-white rounded-2xl shadow-md p-8'>
+          <div
+            className='text-xl font-bold mb-4 cursor-pointer hover:text-gray-700 transition-colors'
+            style={{ fontFamily: "'Playfair Display', serif" }}
+            onClick={() => mandatoryTasks.length > 0 && handleTaskDetailClick(mandatoryTasks[0])}
+          >
+            Mandatory Tasks
+          </div>
+          <div className='flex flex-col gap-0'>
+            {mandatoryTasks.length === 0 ? (
+              <div className='text-muted-foreground text-sm mb-4 px-6 py-6'>No mandatory tasks for this date.</div>
             ) : (
-              <div className='space-y-3'>
-                {filteredTasks
-                  .filter((task: ActionItem) => task.isMandatory)
-                  .map((task: ActionItem) => (
-                    <div key={task.id} className='flex items-center gap-3'>
-                      <Checkbox
-                        checked={task.isCompleted}
-                        onCheckedChange={() => handleTaskToggleWithFeedback(task)}
-                        className='flex-shrink-0'
-                        data-checkbox='true'
-                        disabled={loadingTaskId === task.id}
-                      />
-                      <span
-                        className={`font-semibold text-sm ${task.isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}
+              mandatoryTasks.map((task: ActionItem, idx: number) => {
+                const isCompleted = task.isCompleted;
+                const latestCompletion = isCompleted ? task.completions?.[task.completions.length - 1] : null;
+                const rating = latestCompletion?.rating;
+                const ratingEmoji = getRatingEmoji(rating);
+                return (
+                  <div
+                    key={task.id}
+                    className={`flex items-center gap-3 py-4 ${idx !== mandatoryTasks.length - 1 ? 'border-b border-[#ececec]' : ''} hover:bg-gray-50 rounded-lg transition-colors`}
+                  >
+                    <div
+                      className='flex items-center justify-center w-5 h-5 mt-0.5 cursor-pointer'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isCompleted) {
+                          handleTaskToggleWithFeedback(task);
+                        } else {
+                          handleTaskToggle(task);
+                        }
+                      }}
+                    >
+                      {isCompleted ? (
+                        <div className='w-4 h-4 bg-green-500 rounded-full flex items-center justify-center'>
+                          <span className='text-white text-xs'>✓</span>
+                        </div>
+                      ) : (
+                        <div className='w-4 h-4 border-2 border-gray-300 rounded-full hover:bg-gray-100'></div>
+                      )}
+                    </div>
+                    <div className='flex-1 cursor-pointer' onClick={() => handleTaskDetailClick(task)}>
+                      <div
+                        className={`font-medium text-base flex items-center gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
                       >
                         {task.description}
-                      </span>
-                      <button className='ml-auto' tabIndex={-1}>
-                        <Info className='w-4 h-4 text-gray-400' />
-                      </button>
-                      <div className='flex items-center gap-1'>
-                        <button
-                          onClick={() => {
-                            setTaskForFeedback(task);
-                            setFeedbackOpen(true);
-                            setSelectedFeedback(null);
-                          }}
-                          className='rounded-full p-1 hover:bg-gray-100'
-                        >
-                          <Smile className='w-4 h-4 text-green-500' />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setTaskForFeedback(task);
-                            setFeedbackOpen(true);
-                            setSelectedFeedback(null);
-                          }}
-                          className='rounded-full p-1 hover:bg-gray-100'
-                        >
-                          <Meh className='w-4 h-4 text-yellow-500' />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setTaskForFeedback(task);
-                            setFeedbackOpen(true);
-                            setSelectedFeedback(null);
-                          }}
-                          className='rounded-full p-1 hover:bg-gray-100'
-                        >
-                          <Frown className='w-4 h-4 text-red-500' />
-                        </button>
+                        <span className='ml-1 text-gray-400 text-xs' title='Info'>
+                          ⓘ
+                        </span>
+                      </div>
+                      <div className='text-xs text-muted-foreground mt-1 flex items-center gap-2'>
+                        <span role='img' aria-label='timer'>
+                          ⏱
+                        </span>{' '}
+                        {task.duration || 'No duration set'}
                       </div>
                     </div>
-                  ))}
-              </div>
+                    {isCompleted && (
+                      <span className='ml-2 text-2xl' role='img' aria-label='rating'>
+                        {ratingEmoji}
+                      </span>
+                    )}
+                  </div>
+                );
+              })
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Daily Tasks Card */}
-        <Card className='bg-white rounded-xl shadow-md p-4 mb-2'>
-          <CardHeader className='p-0 mb-2'>
-            <CardTitle
-              className='text-base sm:text-lg font-bold text-gray-900'
-              style={{ fontFamily: "'Playfair Display', serif" }}
-            >
-              Daily Tasks
-            </CardTitle>
-          </CardHeader>
-          <CardContent className='p-0'>
-            {filteredTasks.filter((task: ActionItem) => !task.isMandatory).length === 0 ? (
-              <div className='text-center text-gray-400 text-sm py-4'>No daily tasks</div>
+        <div className='bg-white rounded-2xl shadow-md p-8'>
+          <div
+            className='text-xl font-bold mb-4 cursor-pointer hover:text-gray-700 transition-colors'
+            style={{ fontFamily: "'Playfair Display', serif" }}
+            onClick={() => dailyTasks.length > 0 && handleTaskDetailClick(dailyTasks[0])}
+          >
+            Daily Tasks
+          </div>
+          <div className='flex flex-col gap-0'>
+            {dailyTasks.length === 0 ? (
+              <div className='text-muted-foreground text-sm mb-4 px-6 py-6'>No daily tasks for this date.</div>
             ) : (
-              <div className='space-y-3'>
-                {filteredTasks
-                  .filter((task: ActionItem) => !task.isMandatory)
-                  .map((task: ActionItem) => (
-                    <div key={task.id} className='flex items-center gap-3'>
-                      <Checkbox
-                        checked={task.isCompleted}
-                        onCheckedChange={() => handleTaskToggleWithFeedback(task)}
-                        className='flex-shrink-0'
-                        data-checkbox='true'
-                        disabled={loadingTaskId === task.id}
-                      />
-                      <span
-                        className={`font-semibold text-sm ${task.isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}
+              dailyTasks.map((task: ActionItem, idx: number) => {
+                const isCompleted = task.isCompleted;
+                const latestCompletion = isCompleted ? task.completions?.[task.completions.length - 1] : null;
+                const rating = latestCompletion?.rating;
+                const ratingEmoji = getRatingEmoji(rating);
+                return (
+                  <div
+                    key={task.id}
+                    className={`flex items-center gap-3 py-4 ${idx !== dailyTasks.length - 1 ? 'border-b border-[#ececec]' : ''} hover:bg-gray-50 rounded-lg transition-colors`}
+                  >
+                    <div
+                      className='flex items-center justify-center w-5 h-5 mt-0.5 cursor-pointer'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isCompleted) {
+                          handleTaskToggleWithFeedback(task);
+                        } else {
+                          handleTaskToggle(task);
+                        }
+                      }}
+                    >
+                      {isCompleted ? (
+                        <div className='w-4 h-4 bg-green-500 rounded-full flex items-center justify-center'>
+                          <span className='text-white text-xs'>✓</span>
+                        </div>
+                      ) : (
+                        <div className='w-4 h-4 border-2 border-gray-300 rounded-full hover:bg-gray-100'></div>
+                      )}
+                    </div>
+                    <div className='flex-1 cursor-pointer' onClick={() => handleTaskDetailClick(task)}>
+                      <div
+                        className={`font-medium text-base flex items-center gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
                       >
                         {task.description}
-                      </span>
-                      <button className='ml-auto' tabIndex={-1}>
-                        <Info className='w-4 h-4 text-gray-400' />
-                      </button>
-                      <div className='flex items-center gap-1'>
-                        <button
-                          onClick={() => {
-                            setTaskForFeedback(task);
-                            setFeedbackOpen(true);
-                            setSelectedFeedback(null);
-                          }}
-                          className='rounded-full p-1 hover:bg-gray-100'
-                        >
-                          <Smile className='w-4 h-4 text-green-500' />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setTaskForFeedback(task);
-                            setFeedbackOpen(true);
-                            setSelectedFeedback(null);
-                          }}
-                          className='rounded-full p-1 hover:bg-gray-100'
-                        >
-                          <Meh className='w-4 h-4 text-yellow-500' />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setTaskForFeedback(task);
-                            setFeedbackOpen(true);
-                            setSelectedFeedback(null);
-                          }}
-                          className='rounded-full p-1 hover:bg-gray-100'
-                        >
-                          <Frown className='w-4 h-4 text-red-500' />
-                        </button>
+                        <span className='ml-1 text-gray-400 text-xs' title='Info'>
+                          ⓘ
+                        </span>
+                      </div>
+                      <div className='text-xs text-muted-foreground mt-1 flex items-center gap-2'>
+                        <span role='img' aria-label='timer'>
+                          ⏱
+                        </span>{' '}
+                        {task.duration || 'No duration set'}
                       </div>
                     </div>
-                  ))}
-              </div>
+                    {isCompleted && (
+                      <span className='ml-2 text-2xl' role='img' aria-label='rating'>
+                        {ratingEmoji}
+                      </span>
+                    )}
+                  </div>
+                );
+              })
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Feedback Modal */}
@@ -660,9 +672,8 @@ const ClientPage = () => {
               className='text-lg sm:text-xl font-bold text-gray-900 mb-2'
               style={{ fontFamily: "'Playfair Display', serif" }}
             >
-              How was this task?
+              Was this task helpful?
             </div>
-            <p className='text-sm text-gray-600'>Your feedback helps us improve your experience</p>
           </div>
           <div className='flex flex-row items-center justify-center gap-4 sm:gap-6 mb-4 sm:mb-6 w-full'>
             <button
@@ -693,18 +704,29 @@ const ClientPage = () => {
           <Button
             onClick={handleFeedbackSubmit}
             disabled={!!loadingTaskId || !selectedFeedback}
-            className='w-full mt-4'
+            className='w-full mt-4 bg-gray-800 hover:bg-gray-700 text-white'
           >
             {loadingTaskId ? (
               <span className='flex items-center justify-center gap-2'>
-                <span className='animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500'></span> Submitting...
+                <span className='animate-spin rounded-full h-4 w-4 border-b-2 border-white'></span> Submitting...
               </span>
             ) : (
-              'Submit Feedback'
+              'Submit'
             )}
           </Button>
         </DialogContent>
       </Dialog>
+
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <TaskEditorDialog
+          open={isTaskModalOpen}
+          onClose={() => setIsTaskModalOpen(false)}
+          onSave={() => {}}
+          initialValues={mapTaskToEditorDialog(selectedTask)}
+          readOnly={true}
+        />
+      )}
     </div>
   );
 };

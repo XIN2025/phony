@@ -42,7 +42,7 @@ import {
   DialogTitle,
 } from '@repo/ui/components/dialog';
 
-import { isSameDay } from '@/lib/utils';
+import { isSameDay, getFileUrl } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { DateRange } from 'react-date-range';
 import { createPortal } from 'react-dom';
@@ -563,18 +563,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   };
 
   const journalBadge = (journal: string) => {
-    if (journal === 'Yes') {
-      return (
-        <span className='inline-flex items-center rounded-full px-4 py-1 text-sm font-semibold bg-[#C7D7F8] text-black'>
-          Yes
-        </span>
-      );
-    }
-    return (
-      <span className='inline-flex items-center rounded-full px-4 py-1 text-sm font-semibold bg-[#D1CDCB] text-black'>
-        No
-      </span>
-    );
+    return journal;
   };
 
   const renderPlansTab = () => (
@@ -1118,10 +1107,13 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                   <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
                 </button>
               </div>
-              <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2'>
-                <div>
-                  <h1 className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'>Edit Action Plan</h1>
-                </div>
+              <div className='flex flex-row items-center justify-between gap-2 mt-2'>
+                <h1
+                  className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  Edit Action Plan
+                </h1>
                 {planStatus === 'DRAFT' &&
                   editingPlan &&
                   (editingPlan as any).actionItems &&
@@ -1129,7 +1121,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                     <Button
                       onClick={handlePublishPlan}
                       disabled={isPublishingPlan || publishPlanMutation.isPending}
-                      className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'
+                      className='bg-black text-white rounded-full px-4 sm:px-6 py-2 text-sm sm:text-base font-semibold shadow-md hover:bg-neutral-800 transition-all whitespace-nowrap'
                     >
                       {isPublishingPlan || publishPlanMutation.isPending ? 'Publishing...' : 'Publish Plan'}
                     </Button>
@@ -1142,6 +1134,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               clientId={clientId}
               onPublishClick={handlePublishPlan}
               isPublishing={isPublishingPlan || publishPlanMutation.isPending}
+              showHeader={false}
             />
           </div>
         </div>
@@ -1352,28 +1345,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                             <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col gap-4 min-h-[260px]'>
                               <div className='font-semibold text-xl mb-4'>Client Information</div>
                               <div className='grid grid-cols-1 gap-2 text-base'>
-                                <div>
-                                  <span className='font-semibold'>Relevant Medical History:</span>{' '}
-                                  <span className='font-normal'>
-                                    {client.medicalHistory && client.medicalHistory.length > 0
-                                      ? client.medicalHistory.join(', ')
-                                      : 'Nil'}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className='font-semibold'>Current Symptoms:</span>{' '}
-                                  <span className='font-normal'>
-                                    {client.symptoms && client.symptoms.length > 0 ? client.symptoms.join(', ') : '-'}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className='font-semibold'>Current Medications:</span>{' '}
-                                  <span className='font-normal'>
-                                    {client.medications && client.medications.length > 0
-                                      ? client.medications.join(', ')
-                                      : '-'}
-                                  </span>
-                                </div>
+                                {/* Removed medicalHistory, symptoms, medications UI blocks */}
                               </div>
                             </div>
                           </div>
@@ -1433,11 +1405,85 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                                         if (typeof answerValue === 'object' && answerValue !== null) {
                                           answerValue = JSON.stringify(answerValue);
                                         }
+
+                                        // Handle file uploads - show actual file content
+                                        const renderAnswerValue = () => {
+                                          if (
+                                            question.type === 'FILE_UPLOAD' &&
+                                            typeof answerValue === 'string' &&
+                                            answerValue.startsWith('/uploads/')
+                                          ) {
+                                            const fileUrl = getFileUrl(answerValue);
+                                            const fileExtension = answerValue.split('.').pop()?.toLowerCase();
+
+                                            // Show image preview for image files
+                                            if (
+                                              ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(fileExtension || '')
+                                            ) {
+                                              return (
+                                                <div className='space-y-2'>
+                                                  <img
+                                                    src={fileUrl}
+                                                    alt='Uploaded file'
+                                                    className='max-w-full max-h-48 rounded-md border'
+                                                    onError={(e) => {
+                                                      e.currentTarget.style.display = 'none';
+                                                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                    }}
+                                                  />
+                                                  <a
+                                                    href={fileUrl}
+                                                    target='_blank'
+                                                    rel='noopener noreferrer'
+                                                    className='text-blue-600 hover:text-blue-800 underline text-sm hidden'
+                                                  >
+                                                    View full size
+                                                  </a>
+                                                </div>
+                                              );
+                                            }
+
+                                            // Show PDF preview or download link for PDFs
+                                            if (fileExtension === 'pdf') {
+                                              return (
+                                                <div className='space-y-2'>
+                                                  <iframe
+                                                    src={fileUrl}
+                                                    className='w-full h-48 border rounded-md'
+                                                    title='PDF Preview'
+                                                  />
+                                                  <a
+                                                    href={fileUrl}
+                                                    target='_blank'
+                                                    rel='noopener noreferrer'
+                                                    className='text-blue-600 hover:text-blue-800 underline text-sm'
+                                                  >
+                                                    Download PDF
+                                                  </a>
+                                                </div>
+                                              );
+                                            }
+
+                                            // For other file types, show download link
+                                            return (
+                                              <a
+                                                href={fileUrl}
+                                                target='_blank'
+                                                rel='noopener noreferrer'
+                                                className='text-blue-600 hover:text-blue-800 underline'
+                                              >
+                                                Download file
+                                              </a>
+                                            );
+                                          }
+                                          return answerValue || <span className='text-gray-400'>No answer</span>;
+                                        };
+
                                         return (
                                           <div key={question.id} className='mb-2'>
                                             <div className='text-sm font-medium mb-1'>{question.text}</div>
                                             <div className='bg-[#f6f5f4] rounded-md px-4 py-2 text-base'>
-                                              {answerValue || <span className='text-gray-400'>No answer</span>}
+                                              {renderAnswerValue()}
                                             </div>
                                           </div>
                                         );

@@ -32,7 +32,6 @@ export function getAvatarUrl(
   avatarUrl?: string | null,
   user?: User | { firstName?: string; lastName?: string | null },
 ): string {
-  // If no avatar URL provided, generate a placeholder avatar
   if (!avatarUrl || avatarUrl === '') {
     let name = 'U';
     if (user?.firstName || user?.lastName) {
@@ -41,24 +40,20 @@ export function getAvatarUrl(
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=ffffff&size=128&bold=true`;
   }
 
-  // Handle full URLs
   if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
     return avatarUrl;
   }
 
-  // Handle absolute paths
   if (avatarUrl.startsWith('/')) {
     return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${avatarUrl}`;
   }
 
-  // Handle relative paths
   return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/uploads/${avatarUrl}`;
 }
 
 export function getInitials(
   input: string | { firstName?: string; lastName?: string | null; user?: User } | User | object,
 ): string {
-  // Helper function to extract initials from first and last name
   const extractInitials = (firstName?: string, lastName?: string | null): string => {
     if (firstName && lastName) {
       return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -98,22 +93,18 @@ export function getInitials(
   return 'U';
 }
 
-// Returns true if two dates are the same day (ignoring time)
 export function isSameDay(date1: Date | string | null | undefined, date2: Date | string | null | undefined): boolean {
-  // Handle null/undefined dates
   if (!date1 || !date2) return false;
 
   const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
   const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
 
-  // Check if dates are valid
   if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return false;
 
   return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
 }
 
-// Returns a string representing engagement level based on completion ratio
-export function getEngagementForDay(tasks: any[]): string {
+export function getEngagementForDay(tasks: Array<{ completions?: Array<unknown> }>): string {
   if (!tasks || tasks.length === 0) return 'Nil';
   const completed = tasks.filter((t) => t.completions && t.completions.length > 0).length;
   const ratio = completed / tasks.length;
@@ -123,11 +114,21 @@ export function getEngagementForDay(tasks: any[]): string {
   return 'Nil';
 }
 
-// Maps individual task rating to emoji
 export function getRatingEmoji(rating: number | null | undefined): string {
-  if (rating === null || rating === undefined) return '😊'; // Default for completed tasks without rating
+  if (rating === null || rating === undefined) return '😊';
 
-  if (rating >= 4) return '😊'; // Happy
-  if (rating >= 2.5) return '😐'; // Neutral
-  return '🙁'; // Sad
+  if (rating >= 4) return '😊';
+  if (rating >= 2.5) return '😐';
+  return '🙁';
+}
+
+export function getFileUrl(fileUrl?: string | null): string {
+  if (!fileUrl) return '';
+  if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+    return fileUrl;
+  }
+  if (fileUrl.startsWith('/')) {
+    return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${fileUrl}`;
+  }
+  return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/uploads/${fileUrl}`;
 }

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ClientStatus, UserRole } from '@repo/db';
-import { LoginResponse, SendOtpRequest, User, VerifyOtpRequest } from '@repo/shared-types';
+import { LoginResponse, SendOtpRequest, VerifyOtpRequest } from '@repo/shared-types';
 import { IsEmail, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class OtpAuthDto implements SendOtpRequest {
@@ -89,22 +89,6 @@ export class ClientSignUpDto {
   @IsOptional()
   phoneNumber?: string;
 
-  @ApiProperty({ required: false, type: [String] })
-  @IsOptional()
-  allergies?: string[];
-
-  @ApiProperty({ required: false, type: [String] })
-  @IsOptional()
-  medicalHistory?: string[];
-
-  @ApiProperty({ required: false, type: [String] })
-  @IsOptional()
-  symptoms?: string[];
-
-  @ApiProperty({ required: false, type: [String] })
-  @IsOptional()
-  medications?: string[];
-
   @ApiProperty({ required: false })
   @IsOptional()
   notificationSettings?: {
@@ -115,7 +99,7 @@ export class ClientSignUpDto {
   };
 }
 
-export class UserDto implements User {
+export class UserDto {
   @ApiProperty()
   @IsString()
   id: string;
@@ -153,38 +137,6 @@ export class UserDto implements User {
   phoneNumber?: string | null;
 
   @ApiProperty({
-    type: 'array',
-    items: { type: 'string' },
-    nullable: true,
-  })
-  @IsOptional()
-  allergies?: string[] | null;
-
-  @ApiProperty({
-    type: 'array',
-    items: { type: 'string' },
-    nullable: true,
-  })
-  @IsOptional()
-  medicalHistory?: string[] | null;
-
-  @ApiProperty({
-    type: 'array',
-    items: { type: 'string' },
-    nullable: true,
-  })
-  @IsOptional()
-  symptoms?: string[] | null;
-
-  @ApiProperty({
-    type: 'array',
-    items: { type: 'string' },
-    nullable: true,
-  })
-  @IsOptional()
-  medications?: string[] | null;
-
-  @ApiProperty({
     type: 'object',
     nullable: true,
     additionalProperties: false,
@@ -220,12 +172,11 @@ export class UserDto implements User {
 
   @ApiProperty({
     type: 'string',
-    enum: ClientStatus,
     nullable: true,
   })
-  @IsEnum(ClientStatus)
+  @IsString()
   @IsOptional()
-  clientStatus?: (typeof ClientStatus)[keyof typeof ClientStatus];
+  dob: string | null;
 
   @ApiProperty({
     type: 'string',
@@ -247,6 +198,33 @@ export class UserDto implements User {
   @IsString()
   @IsOptional()
   idProofUrl: string | null;
+
+  @ApiProperty({
+    type: 'string',
+    enum: ClientStatus,
+    required: false,
+  })
+  @IsEnum(ClientStatus)
+  @IsOptional()
+  clientStatus?: (typeof ClientStatus)[keyof typeof ClientStatus];
+
+  @ApiProperty({
+    type: 'string',
+    nullable: true,
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  createdAt?: Date;
+
+  @ApiProperty({
+    type: 'string',
+    nullable: true,
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  updatedAt?: Date;
 }
 
 export class LoginResponseDto implements LoginResponse {
@@ -262,11 +240,8 @@ export interface ProfileUpdateBody {
   firstName?: string;
   lastName?: string;
   profession?: string;
+  dob?: string;
   phoneNumber?: string;
-  allergies?: string[];
-  medicalHistory?: string[];
-  symptoms?: string[];
-  medications?: string[];
   notificationSettings?: {
     emailReminders?: boolean;
     practitionerMessages?: boolean;

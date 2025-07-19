@@ -44,6 +44,7 @@ export default function PractitionerDashboard() {
 
   const { data: invitations = [], isLoading: isInvitationsLoading } = useGetInvitations();
   const { data: clients = [] } = useGetClients();
+
   const { mutate: deleteInvitation, isPending: isDeleting } = useDeleteInvitation();
   const resendInvitationMutation = useResendInvitation();
   const { mutate: cleanupExpiredInvitations, isPending: isCleaningUp } = useCleanupExpiredInvitations();
@@ -85,15 +86,25 @@ export default function PractitionerDashboard() {
   const totalClients = invitations.length;
 
   const getPlanEngagement = (client: any) => {
-    const idx = joinedClients.findIndex((c) => c.id === client.id);
-    const options = ['High', 'Medium', 'Low'];
-    return options[idx % options.length];
+    if (!client.clientStatus || client.clientStatus === 'NEEDS_INTAKE') {
+      return 'Invitation Pending';
+    }
+
+    if (!client.hasCompletedIntake) {
+      return 'Low';
+    }
+
+    return 'Low';
   };
   const getPlanBadgeColor = (level: string) => {
-    if (level === 'High') return 'bg-green-100 text-green-700';
-    if (level === 'Medium') return 'bg-blue-100 text-blue-700';
-    if (level === 'Low') return 'bg-red-100 text-red-700';
-    return 'bg-gray-100 text-gray-700';
+    switch (level) {
+      case 'Low':
+        return 'bg-[#F8D7D7] text-black';
+      case 'Invitation Pending':
+        return 'bg-gray-100 text-gray-700';
+      default:
+        return 'bg-[#E5D6D0] text-black';
+    }
   };
   const getLastSession = (client: any) => 'May 10, 2025';
   const getLastActive = (client: any) => 'May 10, 2025';

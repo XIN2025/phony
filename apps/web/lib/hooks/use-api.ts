@@ -1099,6 +1099,20 @@ export function useUploadJournalImage() {
   });
 }
 
+export function useUploadIntakeFormFile() {
+  return useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return ApiClient.post<{ url: string; title: string }>('/api/intake-forms/upload-file', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    },
+  });
+}
+
 export function useDeleteAccount() {
   return useMutation({
     mutationFn: async () => ApiClient.delete<{ message: string }>('/api/users/me'),

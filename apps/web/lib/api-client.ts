@@ -24,7 +24,13 @@ export class ApiClient {
       const isPublicEndpoint = PUBLIC_ENDPOINTS.some((endpoint) => config.url?.includes(endpoint));
 
       const isOtpRequest = config.url?.includes('/auth/otp');
-      let timeout = isOtpRequest ? 30000 : 50000;
+      const isAIRequest =
+        config.url?.includes('/sessions') ||
+        config.url?.includes('/plans/generate') ||
+        config.url?.includes('/plans/generate-more-tasks') ||
+        config.url?.includes('/comprehensive-summary');
+
+      let timeout = isOtpRequest ? 30000 : isAIRequest ? 600000 : 50000;
       if (config.timeout && config.timeout > timeout) {
         timeout = config.timeout;
       }

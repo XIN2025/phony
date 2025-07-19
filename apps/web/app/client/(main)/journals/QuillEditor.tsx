@@ -46,6 +46,7 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
   const uploadJournalImage = useUploadJournalImage();
   const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   const [fontSize, setFontSize] = useState<number>(14);
+  const [isSmScreen, setIsSmScreen] = useState(true);
 
   useImperativeHandle(
     ref,
@@ -79,6 +80,13 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
     }),
     [],
   );
+
+  useEffect(() => {
+    const checkScreen = () => setIsSmScreen(window.innerWidth >= 640);
+    checkScreen();
+    window.addEventListener('resize', checkScreen);
+    return () => window.removeEventListener('resize', checkScreen);
+  }, []);
 
   useLayoutEffect(() => {
     if (!editorRef.current || !toolbarRef.current) return;
@@ -121,7 +129,6 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
           setFontSize(currentSize);
         }
       });
-      // Removed addHandler('image', ...) to prevent double file picker
     } catch (err) {
       console.error('[QuillEditor] Error creating Quill instance:', err);
     }
@@ -134,14 +141,12 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
     };
   }, []);
 
-  // Update readOnly state if isActive changes
   useEffect(() => {
     if (quillRef.current) {
       quillRef.current.enable(isActive);
     }
   }, [isActive]);
 
-  // Update value if prop changes
   useEffect(() => {
     if (quillRef.current && value !== lastValueRef.current) {
       const quill = quillRef.current;
@@ -152,7 +157,6 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
     }
   }, [value]);
 
-  // File input for image upload
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log('[QuillEditor] onFileChange called');
 
@@ -164,14 +168,12 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
 
     if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
       toast.error('Only JPG, PNG, GIF, and WEBP images are allowed.');
-      // Reset input after showing error
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Image size must be less than 5MB.');
-      // Reset input after showing error
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -182,20 +184,17 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
         const quill = quillRef.current;
         if (quill) {
           const range = quill.getSelection(true);
-          // Always use backend base URL for /uploads
           const imageUrl = result.url.startsWith('http') ? result.url : `${backendUrl}${result.url}`;
           quill.insertEmbed(range ? range.index : 0, 'image', imageUrl, 'user');
           console.log('[QuillEditor] Image inserted at', range ? range.index : 0, imageUrl);
         }
       }
-      // Reset input after successful upload
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
       toast.error(
         'Failed to upload image. Make sure your backend is running and accessible at the correct port (default: 3001).',
       );
       console.error('[QuillEditor] Image upload error', err);
-      // Reset input after error
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -204,14 +203,14 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
     <>
       <div
         ref={toolbarRef}
-        className='flex flex-wrap items-center gap-1 bg-gray-100 rounded-lg p-2 shadow-sm mb-4 w-full overflow-x-auto'
+        className='flex flex-wrap items-center gap-1 bg-gray-100 rounded-lg p-2 shadow-sm mb-4 w-full max-w-full min-w-0'
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {/* Always visible controls (mobile & up) */}
-        <div className='flex items-center gap-1 flex-shrink-0'>
+        <div className='flex items-center gap-1'>
           <button
             type='button'
-            className='ql-undo h-8 w-8'
+            className='ql-undo h-8 w-8 flex-shrink-0'
             aria-label='Undo'
             onClick={() => {
               if (quillRef.current) {
@@ -232,7 +231,7 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
           </button>
           <button
             type='button'
-            className='ql-redo h-8 w-8'
+            className='ql-redo h-8 w-8 flex-shrink-0'
             aria-label='Redo'
             onClick={() => {
               if (quillRef.current) {
@@ -252,10 +251,10 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
             </svg>
           </button>
         </div>
-        <div className='flex items-center gap-1 flex-shrink-0'>
+        <div className='flex items-center gap-1'>
           <button
             type='button'
-            className='ql-decreaseFont h-8 w-8'
+            className='ql-decreaseFont h-8 w-8 flex-shrink-0'
             aria-label='Decrease font size'
             onClick={() => {
               if (quillRef.current) {
@@ -280,7 +279,7 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
             type='number'
             min={8}
             max={100}
-            className='w-12 text-center rounded border border-gray-300 bg-white px-1 py-1 text-xs mx-1 h-8'
+            className='w-12 min-w-0 text-center rounded border border-gray-300 bg-white px-1 py-1 text-xs mx-1 h-8 flex-shrink-0'
             style={{ appearance: 'textfield' }}
             value={fontSize}
             onChange={(e) => {
@@ -312,7 +311,7 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
           />
           <button
             type='button'
-            className='ql-increaseFont h-8 w-8'
+            className='ql-increaseFont h-8 w-8 flex-shrink-0'
             aria-label='Increase font size'
             onClick={() => {
               if (quillRef.current) {
@@ -335,10 +334,10 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
             </svg>
           </button>
         </div>
-        <div className='flex items-center gap-1 flex-shrink-0'>
+        <div className='flex items-center gap-1'>
           <button
             type='button'
-            className='custom-image-btn h-8 w-8'
+            className='custom-image-btn h-8 w-8 flex-shrink-0'
             aria-label='Insert image'
             onClick={() => {
               if (fileInputRef.current) fileInputRef.current.value = '';
@@ -353,16 +352,17 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
             </svg>
           </button>
         </div>
-        <div className='flex items-center gap-1 flex-shrink-0'>
-          <button type='button' className='ql-bold h-8 w-8' aria-label='Bold'></button>
-          <button type='button' className='ql-italic h-8 w-8' aria-label='Italic'></button>
-          <button type='button' className='ql-underline h-8 w-8' aria-label='Underline'></button>
+        <div className='flex items-center gap-1'>
+          <button type='button' className='ql-bold h-8 w-8 flex-shrink-0' aria-label='Bold'></button>
+          {isSmScreen && (
+            <button type='button' className='ql-italic h-8 w-8 flex-shrink-0' aria-label='Italic'></button>
+          )}
         </div>
 
-        {/* All other controls: hidden on small screens, visible on md+ */}
-        <div className='flex items-center flex-shrink-0 hidden md:flex'>
+        {/* All other controls: hidden on small screens, visible on sm+ */}
+        <div className='flex items-center gap-1 hidden sm:flex'>
           <select
-            className='ql-font h-8 min-w-[80px] max-w-[100px] text-xs'
+            className='ql-font h-8 min-w-[80px] max-w-[100px] text-xs flex-shrink-0'
             onChange={(e) => {
               if (quillRef.current) {
                 const range = quillRef.current.getSelection();
@@ -378,21 +378,8 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
             <option value='monospace'>Monospace</option>
           </select>
         </div>
-        <div className='flex items-center gap-1 flex-shrink-0 hidden md:flex'>
-          <button type='button' className='ql-link h-8 w-8' aria-label='Insert link'></button>
-        </div>
-        <div className='flex items-center gap-1 flex-shrink-0 hidden md:flex'>
-          <select className='ql-color mx-1 h-8 w-12 rounded border border-gray-300 bg-white text-xs'></select>
-        </div>
-        <div className='flex items-center gap-1 flex-shrink-0 hidden md:flex'>
-          <button type='button' className='ql-align h-8 w-8' value='' aria-label='Align left'></button>
-          <button type='button' className='ql-align h-8 w-8' value='center' aria-label='Align center'></button>
-          <button type='button' className='ql-align h-8 w-8' value='right' aria-label='Align right'></button>
-          <button type='button' className='ql-align h-8 w-8' value='justify' aria-label='Align justify'></button>
-        </div>
-        <div className='flex items-center gap-1 flex-shrink-0 hidden md:flex'>
-          <button type='button' className='ql-list h-8 w-8' value='ordered' aria-label='Ordered list'></button>
-          <button type='button' className='ql-list h-8 w-8' value='bullet' aria-label='Bullet list'></button>
+        <div className='flex items-center gap-1 hidden sm:flex'>
+          <button type='button' className='ql-link h-8 w-8 flex-shrink-0' aria-label='Insert link'></button>
         </div>
       </div>
       <input
@@ -404,9 +391,9 @@ const QuillEditor = forwardRef<QuillEditorHandles, QuillEditorProps>(({ value, o
       />
       <div
         ref={editorRef}
+        className='w-full min-w-0 max-w-full rounded-lg border border-gray-200 bg-white shadow-sm'
         style={{
           minHeight: 100,
-          background: 'white',
           wordBreak: 'break-word',
           overflowWrap: 'anywhere',
           whiteSpace: 'pre-wrap',

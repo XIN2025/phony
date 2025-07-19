@@ -75,7 +75,7 @@ export default function ClientAuthEmailPage() {
         </div>
         <Button type='submit' className='w-full rounded-full py-2 sm:py-3 text-sm sm:text-base' disabled={isPending}>
           {isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-          Send OTP
+          Sign In
         </Button>
         {/* Legal text below button */}
         <div className='text-center'>

@@ -4,7 +4,6 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { Public } from '../auth/decorators/public.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserRole } from '@repo/db';
-import { NotFoundException } from '@nestjs/common';
 
 @ApiTags('users')
 @Controller('users')

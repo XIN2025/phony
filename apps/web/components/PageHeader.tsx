@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@repo/ui/components/button';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface PageHeaderProps {
   title: React.ReactNode;
@@ -131,7 +132,9 @@ export function AuthHeader({ showBackButton = true, onBack, className = '', chil
         className='font-bold'
         style={{ fontFamily: 'Playfair Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
       >
-        Continuum
+        <Link href='/' className='hover:underline focus:outline-none'>
+          Continuum
+        </Link>
       </span>
       {children && <div className='ml-4 flex-1'>{children}</div>}
     </div>

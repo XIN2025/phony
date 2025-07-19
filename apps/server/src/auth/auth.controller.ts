@@ -94,12 +94,22 @@ export class AuthController {
   @Post('profile')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
-    FileInterceptor('profileImage', {
-      storage: memoryStorage(),
-    })
+    FileFieldsInterceptor(
+      [
+        { name: 'profileImage', maxCount: 1 },
+        { name: 'idProof', maxCount: 1 },
+      ],
+      { storage: memoryStorage() }
+    )
   )
-  async updateProfile(@Request() req, @Body() body: ProfileUpdateBody, @UploadedFile() file: Express.Multer.File) {
-    return await this.authService.updateProfile(req.user.id, body, file);
+  async updateProfile(
+    @Request() req,
+    @Body() body: ProfileUpdateBody,
+    @UploadedFiles() files?: { profileImage?: Express.Multer.File[]; idProof?: Express.Multer.File[] }
+  ) {
+    const profileImage = files?.profileImage?.[0];
+    const idProof = files?.idProof?.[0];
+    return await this.authService.updateProfile(req.user.id, body, profileImage, idProof);
   }
 
   @Get('me')

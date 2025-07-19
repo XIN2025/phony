@@ -66,13 +66,11 @@ export class PractitionerService {
       });
     }
 
-    let intakeFormTitle: string | undefined;
     if (intakeFormId) {
       const form = await this.prismaService.intakeForm.findUnique({
         where: { id: intakeFormId },
         select: { title: true },
       });
-      intakeFormTitle = form ? getIntakeFormTitle(form) : undefined;
     }
 
     await this.sendInvitationEmail(invitation, practitioner, normalizedEmail, normalizedFirstName, normalizedLastName);
@@ -117,13 +115,11 @@ export class PractitionerService {
       },
     });
 
-    let intakeFormTitle: string | undefined;
     if (intakeFormId) {
       const form = await this.prismaService.intakeForm.findUnique({
         where: { id: intakeFormId },
         select: { title: true },
       });
-      intakeFormTitle = form ? getIntakeFormTitle(form) : undefined;
     }
 
     try {
@@ -266,10 +262,6 @@ export class PractitionerService {
       updatedAt: client.updatedAt,
       dob: client.dob || '',
       profession: client.profession || '',
-      allergies: client.allergies || [],
-      medicalHistory: client.medicalHistory || [],
-      symptoms: client.symptoms || [],
-      medications: client.medications || [],
       notificationSettings,
       hasCompletedIntake: submissionCount > 0,
       intakeFormSubmission: latestSubmission,

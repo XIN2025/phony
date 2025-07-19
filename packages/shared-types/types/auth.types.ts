@@ -7,10 +7,6 @@ export type User = {
   lastName: string | null;
   avatarUrl: string | null;
   phoneNumber?: string | null;
-  allergies?: string[] | null;
-  medicalHistory?: string[] | null;
-  symptoms?: string[] | null;
-  medications?: string[] | null;
   notificationSettings?: {
     emailReminders?: boolean;
     practitionerMessages?: boolean;
@@ -19,6 +15,7 @@ export type User = {
   } | null;
   role: (typeof UserRole)[keyof typeof UserRole];
   profession: string | null;
+  dob: string | null;
   clientStatus?: (typeof ClientStatus)[keyof typeof ClientStatus];
   isEmailVerified: boolean;
   practitionerId: string | null;

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 export function useCachedSession() {
   const { data: session, status } = useSession();
-  const cachedSession = useMemo(() => session, [session?.user?.id, session?.expires]);
+  const cachedSession = useMemo(() => session, [session]);
   return {
     data: cachedSession,
     status,

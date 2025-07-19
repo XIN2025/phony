@@ -36,9 +36,6 @@ import { getAvatarUrl, getUserDisplayName, getInitials } from '@/lib/utils';
 
 const QuillEditor = dynamic(() => import('../QuillEditor'), { ssr: false });
 
-// REMOVE all top-level Quill usage (Font, Size, etc.)
-// Only use Quill inside useEffect as already done below
-
 const DEFAULT_FONT_SIZE = 14;
 
 const NUM_NOTES = 3;
@@ -89,7 +86,6 @@ const JournalEditors = () => {
     return () => {};
   }, []);
 
-  // Add session loading and redirect logic
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/client/auth');
@@ -200,8 +196,6 @@ const JournalEditors = () => {
 
   const toolbarId = 'quill-toolbar-main';
 
-  // Mobile header - only on small screens
-  // Place above all content
   const mobileHeader = (
     <div className='flex items-center justify-between px-4 pt-2 pb-2 mb-2 w-full sm:hidden'>
       <div className='flex items-center'>
@@ -224,9 +218,9 @@ const JournalEditors = () => {
   );
 
   return (
-    <div className='flex flex-col w-full pt-0 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0 max-w-full'>
+    <div className='flex flex-col w-full pt-0 sm:pt-6 px-2 sm:px-4 lg:px-6 xl:px-8 min-w-0 max-w-full'>
       {mobileHeader}
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
+      <div className='flex flex-row items-center justify-between mb-4 sm:mb-8 w-full gap-2 sm:gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <Link
             href='/client/journals'
@@ -235,14 +229,14 @@ const JournalEditors = () => {
           >
             <ArrowLeft size={22} />
           </Link>
-          <h1 className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'>
+          <h1 className='text-lg sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'>
             {getTodayDateString()}
           </h1>
         </div>
         <Button
           onClick={handleSaveJournal}
           disabled={createJournalMutation.isPending}
-          className='bg-black text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium shadow-sm hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 w-full sm:w-auto'
+          className='bg-black text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium shadow-sm hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 w-auto flex items-center justify-center ml-2'
         >
           {createJournalMutation.isPending ? (
             <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
@@ -269,13 +263,13 @@ const JournalEditors = () => {
         />
       </div>
 
-      <div className='flex flex-col md:flex-row gap-6 w-full items-start'>
+      <div className='flex flex-col md:flex-row gap-4 md:gap-6 w-full items-stretch justify-center'>
         {[...Array(NUM_NOTES)].map((_, i) => (
           <div
             key={i}
             className={
-              `relative bg-transparent rounded-2xl shadow-lg border border-white/50 p-4 pt-8 flex flex-col transition-all duration-150 min-h-[260px] ` +
-              (activeIndex === i ? 'w-auto min-w-fit ' + 'ring-2 ring-blue-500' : 'w-96')
+              `group relative bg-white rounded-2xl shadow-lg border border-white/50 flex flex-col transition-all duration-150 w-full md:w-1/3 max-w-full mx-auto p-0 overflow-hidden max-h-[500px] overflow-y-auto ` +
+              (activeIndex === i ? 'ring-2 ring-blue-500' : '')
             }
             style={{ outline: 'none', cursor: 'pointer' }}
             onClick={() => {
@@ -303,10 +297,11 @@ const JournalEditors = () => {
                 <polyline points='0,0 32,0 32,32' fill='none' stroke='#d1d5db' strokeWidth='2' />
               </svg>
             </div>
-            <div className='font-medium text-sm text-gray-700 mb-2 select-none'>{NOTE_TITLES[i]}</div>
+            <div className='font-medium text-sm text-gray-700 mb-2 select-none px-4 pt-6'>{NOTE_TITLES[i]}</div>
             {activeIndex === i ? (
-              <>
-                <div className='flex-1 min-w-0'>
+              <div className='flex-1 min-w-0 px-4 pb-4 overflow-x-hidden'>
+                <div className='w-full break-words'>
+                  <style>{`.ql-editor img { max-width: 100%; height: auto; }`}</style>
                   <QuillEditor
                     ref={quillEditorRef}
                     value={notes[i]?.content ?? ''}
@@ -325,10 +320,10 @@ const JournalEditors = () => {
                     isActive={true}
                   />
                 </div>
-              </>
+              </div>
             ) : (
               <div
-                className='ql-editor flex-1'
+                className='ql-editor flex-1 text-sm sm:text-base px-4 pb-4 overflow-x-hidden break-words'
                 style={{
                   cursor: 'pointer',
                   padding: 0,
@@ -337,9 +332,10 @@ const JournalEditors = () => {
                   wordBreak: 'break-word',
                   overflowWrap: 'anywhere',
                   whiteSpace: 'pre-wrap',
-                  minHeight: 120,
                 }}
-                dangerouslySetInnerHTML={{ __html: typeof notes[i]?.content === 'string' ? notes[i]?.content : '' }}
+                dangerouslySetInnerHTML={{
+                  __html: `<style>.ql-editor img { max-width: 100%; height: auto; }</style>${typeof notes[i]?.content === 'string' ? notes[i]?.content : ''}`,
+                }}
               />
             )}
           </div>

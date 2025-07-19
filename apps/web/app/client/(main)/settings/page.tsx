@@ -24,6 +24,9 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@repo/ui/components/alert-dialog';
+import { Calendar } from '@repo/ui/components/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/popover';
+import Link from 'next/link';
 
 const validatePhoneNumber = (value: string): string => {
   return value.replace(/[^0-9+\-()\s]/g, '');
@@ -39,20 +42,23 @@ export default function ClientSettingsPage() {
   const [phone, setPhone] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [dob, setDob] = useState(currentUser && 'dob' in currentUser && currentUser.dob ? currentUser.dob : '');
+  const [profession, setProfession] = useState(currentUser?.profession || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   React.useEffect(() => {
     if (currentUser) {
       setFullName(getUserDisplayName(currentUser));
       setEmail(currentUser.email || '');
       setPhone(currentUser.phoneNumber || '');
+      setDob(currentUser.dob || '');
+      setProfession(currentUser.profession || '');
     }
   }, [currentUser]);
 
-  // Medical History and Notifications from user data
-  const [allergies, setAllergies] = useState<string[]>(currentUser?.allergies || []);
   const [notificationSettings, setNotificationSettings] = useState({
     emailReminders: currentUser?.notificationSettings?.emailReminders ?? true,
     practitionerMessages: currentUser?.notificationSettings?.practitionerMessages ?? true,
@@ -62,24 +68,6 @@ export default function ClientSettingsPage() {
 
   const handleNotificationChange = (key: keyof typeof notificationSettings) => {
     setNotificationSettings((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const addMedicalItem = (type: 'allergies', value: string) => {
-    if (!value.trim()) return;
-
-    switch (type) {
-      case 'allergies':
-        setAllergies((prev) => [...prev, value.trim()]);
-        break;
-    }
-  };
-
-  const removeMedicalItem = (type: 'allergies', index: number) => {
-    switch (type) {
-      case 'allergies':
-        setAllergies((prev) => prev.filter((_, i) => i !== index));
-        break;
-    }
   };
 
   const handleAvatarClick = () => {
@@ -115,8 +103,11 @@ export default function ClientSettingsPage() {
     formData.append('firstName', firstName);
     formData.append('lastName', lastName);
     formData.append('phoneNumber', phone);
-    formData.append('allergies', JSON.stringify(allergies));
     formData.append('notificationSettings', JSON.stringify(notificationSettings));
+    if (currentUser?.role === 'CLIENT') {
+      formData.append('dob', String(dob || ''));
+      formData.append('profession', String(profession || ''));
+    }
 
     if (avatarFile) {
       formData.append('profileImage', avatarFile);
@@ -156,7 +147,9 @@ export default function ClientSettingsPage() {
             className='ml-3 text-xl font-bold text-primary'
             style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}
           >
-            Continuum
+            <Link href='/' className='hover:underline focus:outline-none'>
+              Continuum
+            </Link>
           </span>
         </div>
         <Avatar className='h-10 w-10 ml-2'>
@@ -213,12 +206,12 @@ export default function ClientSettingsPage() {
             className='w-full rounded-xl border border-[#BDBDBD] bg-white mb-4'
             style={{ boxShadow: '0 0 0 0 transparent' }}
           >
-            <div className='p-10'>
+            <div className='p-4 sm:p-10'>
               <h2 className='text-xl font-semibold mb-1' style={{ fontFamily: "'Playfair Display', serif" }}>
                 Profile Information
               </h2>
               <p className='text-gray-500 text-base mb-6'>Update your profile details</p>
-              <div className='flex flex-row items-center gap-4 mb-8'>
+              <div className='flex flex-col sm:flex-row items-center gap-4 mb-8'>
                 <div className='relative group'>
                   <button
                     type='button'
@@ -245,8 +238,11 @@ export default function ClientSettingsPage() {
                     </span>
                   </button>
                 </div>
-                <div className='flex flex-col items-start gap-1'>
-                  <h3 className='text-lg font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+                <div className='flex flex-col items-start gap-1 mt-2 sm:mt-0'>
+                  <h3
+                    className='text-base sm:text-lg font-semibold'
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
                     {getUserDisplayName(currentUser)}
                   </h3>
                 </div>
@@ -275,6 +271,51 @@ export default function ClientSettingsPage() {
                   </Label>
                   <Input id='phone' value={phone} onChange={handlePhoneChange} className='mt-2' />
                 </div>
+                {currentUser?.role === 'CLIENT' && (
+                  <>
+                    <div>
+                      <Label htmlFor='dob' className='text-base font-medium'>
+                        Date of Birth
+                      </Label>
+                      <Popover open={showCalendar} onOpenChange={setShowCalendar}>
+                        <PopoverTrigger asChild>
+                          <Input
+                            id='dob'
+                            placeholder='Date of Birth'
+                            value={dob}
+                            readOnly
+                            onClick={() => setShowCalendar(true)}
+                            className='mt-2 text-left pl-3 pr-10'
+                            style={{ textAlign: 'left' }}
+                          />
+                        </PopoverTrigger>
+                        <PopoverContent align='start' className='w-auto p-0'>
+                          <Calendar
+                            mode='single'
+                            selected={dob ? new Date(dob) : undefined}
+                            onSelect={(date) => {
+                              setDob(date ? date.toISOString().slice(0, 10) : '');
+                              setShowCalendar(false);
+                            }}
+                            captionLayout='dropdown'
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <Label htmlFor='profession' className='text-base font-medium'>
+                        Occupation
+                      </Label>
+                      <Input
+                        id='profession'
+                        value={String(profession || '')}
+                        onChange={(e) => setProfession(e.target.value)}
+                        className='mt-2'
+                      />
+                    </div>
+                  </>
+                )}
               </div>
               <div className='flex justify-end mt-8'>
                 <Button

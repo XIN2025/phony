@@ -13,7 +13,8 @@ import { Slider } from '@repo/ui/components/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useGetClientIntakeForm, useSubmitIntakeForm } from '@/lib/hooks/use-api';
+import { useGetClientIntakeForm, useSubmitIntakeForm, useUploadIntakeFormFile } from '@/lib/hooks/use-api';
+import { getFileUrl } from '@/lib/utils';
 import { AuthLayout } from '@repo/ui/components/auth-layout';
 import { AuthHeader } from '@/components/PageHeader';
 
@@ -39,11 +40,13 @@ export default function IntakePage() {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const shouldFetchForm = !hasSubmitted && !isRedirecting;
 
   const { data: form, isLoading, error } = useGetClientIntakeForm(shouldFetchForm);
   const { mutate: submitForm, isPending: isSubmitting } = useSubmitIntakeForm();
+  const uploadFileMutation = useUploadIntakeFormFile();
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -105,6 +108,16 @@ export default function IntakePage() {
         processingTimeoutRef.current = null;
       }
     };
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const processingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -228,18 +241,15 @@ export default function IntakePage() {
             processingTimeoutRef.current = null;
           }
 
-          // Set redirecting state immediately to prevent form from re-rendering
           setIsRedirecting(true);
           toast.success('Intake form submitted successfully!');
 
-          // Update session to reflect the new INTAKE_COMPLETED status
           try {
             await update();
           } catch (error) {
             console.warn('Failed to update session after intake submission:', error);
           }
 
-          // Redirect to response sent page
           router.replace(`/client/response-sent?token=${token}`);
         },
         onError: (error: any) => {
@@ -471,21 +481,31 @@ export default function IntakePage() {
             <Input
               id={id}
               type='file'
-              onChange={(e) => {
+              onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  handleAnswerChange(id, file.name);
+                  try {
+                    const result = await uploadFileMutation.mutateAsync(file);
+                    handleAnswerChange(id, result.url);
+                  } catch (err) {
+                    toast.error('File upload failed');
+                  }
                 }
               }}
               required={isRequired}
               className='w-full'
             />
-            {value && <div className='text-sm text-muted-foreground'>Selected: {value as string}</div>}
+            {value && typeof value === 'string' && value.startsWith('/uploads/') && (
+              <div className='text-sm text-muted-foreground'>
+                <a href={getFileUrl(value)} target='_blank' rel='noopener noreferrer' className='underline'>
+                  View uploaded file
+                </a>
+              </div>
+            )}
           </div>
         );
 
       case 'MULTIPLE_CHOICE_GRID':
-        // For now, treat as multiple choice until we implement grid UI
         return (
           <fieldset key={id} className='space-y-3'>
             <legend className='block text-sm font-medium mb-2'>
@@ -518,7 +538,6 @@ export default function IntakePage() {
         );
 
       case 'TICK_BOX_GRID':
-        // For now, treat as checkboxes until we implement grid UI
         const gridCheckedValues = (Array.isArray(value) ? value : []) as string[];
         return (
           <fieldset key={id} className='space-y-3'>
@@ -572,42 +591,46 @@ export default function IntakePage() {
 
   return (
     <AuthLayout>
-      {/* Top bar for mobile - absolutely at the top */}
-      <div className='block sm:hidden fixed top-0 left-0 right-0 z-20 bg-transparent px-4 pt-4 pb-2 w-full'>
+      {/* Top bar for mobile - fixed with conditional blur background */}
+      <div
+        className={`block sm:hidden fixed top-0 left-0 right-0 z-50 px-4 pt-4 pb-2 w-full transition-all duration-300 ${
+          isScrolled ? 'backdrop-blur-md bg-black/5' : ''
+        }`}
+      >
         <AuthHeader />
       </div>
-      {/* Add top margin for mobile to avoid overlap with fixed header */}
-      <div className='block sm:hidden' style={{ marginTop: '64px' }}></div>
+      {/* Add proper top margin for mobile to avoid overlap with fixed header */}
+      <div className='block sm:hidden' style={{ marginTop: '80px' }}></div>
       {/* Centered card for desktop, full width for mobile */}
-      <div className='flex-1 flex flex-col items-center justify-center w-full'>
-        <div className='w-full max-w-md mx-auto flex flex-col items-center justify-center rounded-xl py-8 px-4 sm:px-8 sm:mt-0 mt-4'>
+      <div className='flex-1 flex flex-col items-center justify-center w-full relative'>
+        <div className='w-full max-w-md mx-auto flex flex-col items-center justify-center rounded-xl py-4 px-4 sm:px-8 sm:mt-0 mt-2 relative z-10'>
           {/* Top bar for desktop */}
-          <div className='hidden sm:flex w-full mb-6'>
+          <div className='hidden sm:flex w-full mb-4'>
             <AuthHeader />
           </div>
           {/* Intake Survey heading (always below header) */}
           <h2
-            className='text-xl font-semibold mb-4 w-full text-left'
+            className='text-xl font-semibold mb-3 w-full text-left relative z-10'
             style={{ color: '#7A6E5A', fontFamily: 'Playfair Display, serif' }}
           >
             {form?.title || 'Intake Survey'}
           </h2>
           {form?.description && (
-            <div className='mb-4 w-full text-left'>
+            <div className='mb-3 w-full text-left relative z-10'>
               <p className='text-muted-foreground'>{form.description}</p>
             </div>
           )}
-          <form className='flex flex-col items-center w-full' onSubmit={handleSubmit}>
+          <form className='flex flex-col items-center w-full relative z-10' onSubmit={handleSubmit}>
             <div className='w-full'>
               {form?.questions
                 .sort((a, b) => a.order - b.order)
                 .map((question) => (
-                  <div key={question.id} className='bg-white rounded-xl shadow-sm p-4 mb-4'>
+                  <div key={question.id} className='bg-white rounded-xl shadow-sm p-4 mb-3 relative z-10'>
                     {renderQuestion(question)}
                   </div>
                 ))}
             </div>
-            <div className='w-full mt-4'>
+            <div className='w-full mt-3'>
               <Button
                 type='submit'
                 disabled={isSubmitting || hasSubmitted}

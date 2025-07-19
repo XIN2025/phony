@@ -1,23 +1,21 @@
 'use client';
 
+import { PageHeader } from '@/components/PageHeader';
+import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
+import { useGetCurrentUser, useUpdateProfile } from '@/lib/hooks/use-api';
+import { getAvatarUrl, getFileUrl, getInitials, getUserDisplayName } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Button } from '@repo/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
+import { Card, CardContent } from '@repo/ui/components/card';
 import { Input } from '@repo/ui/components/input';
 import { Label } from '@repo/ui/components/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/tabs';
-import { CheckCircle, Edit, Upload, Loader2, LogOut, Trash2 } from 'lucide-react';
-import { useGetCurrentUser, useUpdateProfile } from '@/lib/hooks/use-api';
-import { getInitials, getAvatarUrl, getUserDisplayName } from '@/lib/utils';
 import { Skeleton } from '@repo/ui/components/skeleton';
-import { signOut } from 'next-auth/react';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
-import React, { useEffect, useRef, useState } from 'react';
 import { Switch } from '@repo/ui/components/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/tabs';
 import { useQueryClient } from '@tanstack/react-query';
+import { CheckCircle, Edit, Loader2, Trash2, Upload } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { User } from '@repo/shared-types';
-import { PageHeader } from '@/components/PageHeader';
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -28,8 +26,11 @@ export default function SettingsPage() {
   const [profession, setProfession] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [idProofFile, setIdProofFile] = useState<File | null>(null);
+  const [idProofFileName, setIdProofFileName] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const idProofInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -64,6 +65,18 @@ export default function SettingsPage() {
     }
   };
 
+  const handleIdProofClick = () => {
+    idProofInputRef.current?.click();
+  };
+
+  const handleIdProofChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setIdProofFile(file);
+      setIdProofFileName(file.name);
+    }
+  };
+
   const handleSaveChanges = () => {
     const [firstName, ...lastNameParts] = fullName.split(' ');
     const lastName = lastNameParts.join(' ');
@@ -74,6 +87,9 @@ export default function SettingsPage() {
     formData.append('profession', profession || '');
     if (avatarFile) {
       formData.append('profileImage', avatarFile);
+    }
+    if (idProofFile) {
+      formData.append('idProof', idProofFile);
     }
 
     updateProfile(formData, {
@@ -203,6 +219,37 @@ export default function SettingsPage() {
                             <Label htmlFor='email'>Email ID</Label>
                             <Input id='email' type='email' defaultValue={user.email} disabled />
                           </div>
+                        </div>
+                      </div>
+                      <div className='space-y-6 mt-8'>
+                        <div className='space-y-2'>
+                          <Label>ID Proof</Label>
+                          {user.idProofUrl && (
+                            <div className='mb-2'>
+                              <a
+                                href={getFileUrl(user.idProofUrl)}
+                                target='_blank'
+                                rel='noopener noreferrer'
+                                className='underline text-blue-600'
+                              >
+                                View current ID Proof
+                              </a>
+                            </div>
+                          )}
+                          <input
+                            type='file'
+                            ref={idProofInputRef}
+                            onChange={handleIdProofChange}
+                            className='hidden'
+                            accept='.pdf,image/*'
+                          />
+                          <Button variant='outline' type='button' onClick={handleIdProofClick}>
+                            <Upload className='h-4 w-4 mr-2' />
+                            {idProofFileName ? 'Change File' : 'Upload ID Proof'}
+                          </Button>
+                          {idProofFileName && (
+                            <span className='text-xs text-green-600 mt-2'>Selected: {idProofFileName}</span>
+                          )}
                         </div>
                       </div>
                     </>

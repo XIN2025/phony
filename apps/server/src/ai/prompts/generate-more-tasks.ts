@@ -30,15 +30,13 @@ Return a JSON object with the following structure:
       "isMandatory": "boolean indicating if this is critical",
       "whyImportant": "explanation of why this task benefits the client",
       "recommendedActions": "specific steps to complete this task",
-      "associatedEmotions": ["optional, e.g. 'Fear - Courage', 'Loneliness - Connection'"],
       "toolsToHelp": [
         {
           "name": "Name of the tool, app, book, or resource",
           "whatItEnables": "Short description of what this tool/resource helps with",
           "link": "URL if available"
         }
-      ],
-      "furtherInformation": "optional citations, references, or extra context"
+      ]
     }
   ]
 }
@@ -52,13 +50,15 @@ Return a JSON object with the following structure:
 - Focus on new therapeutic approaches or techniques not already covered
 - Consider different aspects of the client's goals that haven't been addressed
 
-### **Description Requirements:**
+### **Description Requirements (SHORT HEADING):**
+- Keep task descriptions SHORT and CONCISE (max 6-8 words)
 - Start with an action verb (Practice, Complete, Track, Implement, etc.)
-- Be specific enough that the client knows exactly what to do
+- Be clear and specific but brief
+- Focus on the core action, not all the details
 - Be realistic and achievable based on the client's current state
 - Build upon existing tasks rather than contradicting them
 
-### **Good Examples of Additional Tasks:**
+### **Good Examples of Additional Tasks (SHORT and CONCISE):**
 - If existing tasks focus on anxiety management, suggest social skills or relationship building tasks
 - If existing tasks are individual-focused, suggest group or community-based activities
 - If existing tasks are cognitive, suggest behavioral or physical interventions
@@ -67,29 +67,29 @@ Return a JSON object with the following structure:
 ### **Enhanced Task Examples by Category:**
 
 #### **Personal Development & Growth:**
-- "Get out of your comfort zone by starting a small conversation with someone you don't know, such as a barista or shopkeeper"
-- "Sign up for a one-time workshop in a subject you know nothing about, like pottery, coding, or a new language"
-- "Intentionally take a different route on your daily commute or visit a cafe in a neighborhood you've never been to before"
+- "Get out of comfort zone"
+- "Sign up for workshop"
+- "Take different route"
 
 #### **Creative & Expressive Activities:**
-- "Try 'Freewriting' by setting a timer for 10 minutes and writing continuously about whatever comes to mind without stopping"
-- "Go on a 'Photo Walk' by taking your phone and walking for 30 minutes to capture five interesting patterns, textures, or colors"
-- "Create a 'mood playlist' by spending 20 minutes curating songs that capture a specific feeling you want to cultivate"
+- "Try freewriting exercise"
+- "Go on photo walk"
+- "Create mood playlist"
 
 #### **Learning & Skill Development:**
-- "Dedicate a 'Curiosity Hour' each week to explore a topic you're curious about through documentaries, articles, or tutorials"
-- "Try the '5-page rule' by committing to read just five pages of a book, and if you're not interested after five pages, you can stop without guilt"
-- "Learn a new practical skill like a specific cooking technique, basic coding concept, or new exercise using online videos"
+- "Dedicate curiosity hour"
+- "Try 5-page reading rule"
+- "Learn new practical skill"
 
 #### **Goal Setting & Planning:**
-- "Set SMART Goals by taking a vague goal and making it Specific, Measurable, Achievable, Relevant, and Time-bound"
-- "Create a Physical Vision Board by dedicating an hour to cutting out pictures and words that represent your goals"
-- "Practice 'Process Visualization' by spending 10 minutes visualizing the specific steps to complete a big task successfully"
+- "Set SMART goals"
+- "Create vision board"
+- "Practice process visualization"
 
 #### **Hobbies & Achievement Activities:**
-- "Take on a multi-day cooking project like baking a layered cake or preparing a traditional dish from start to finish"
-- "Build or assemble something with a clear end result, such as flat-pack furniture, a model kit, or a large jigsaw puzzle"
-- "Complete a DIY home improvement project like repotting plants, building a simple shelf, or repainting furniture"
+- "Take on cooking project"
+- "Build something complex"
+- "Complete DIY project"
 
 ### **Category Guidelines:**
 Choose from these common categories when applicable:
@@ -123,6 +123,7 @@ Choose from these common categories when applicable:
 - Keep it concise but meaningful
 - Explain how this complements existing work
 - Include psychological principles when relevant (e.g., "This aligns with the Yerkes-Dodson Law of optimal anxiety for growth")
+- Include associated emotions this task addresses (e.g., "This helps transform Fear to Courage, Loneliness to Connection")
 
 ### **Recommended Actions Guidelines:**
 - Provide step-by-step instructions
@@ -130,6 +131,7 @@ Choose from these common categories when applicable:
 - Include specific techniques or methods
 - Break complex tasks into manageable steps
 - Give specific timeframes and durations when appropriate
+- Include scientific citations, references, or extra context if relevant (e.g., "Research shows...", "According to studies...")
 
 ### **Tools to Help Guidelines:**
 - Suggest relevant apps, websites, books, or resources
@@ -141,15 +143,7 @@ Choose from these common categories when applicable:
 - Examples: meditation apps, mood tracking tools, educational videos, books, online platforms
 - Include specific platforms like Coursera, Skillshare, Goodreads, Notion, Asana, etc.
 
-### **Associated Emotions Guidelines:**
-- List key emotions or emotional shifts this task may address (e.g., "Fear - Courage", "Loneliness - Connection")
-- Use pairs or single words as appropriate
-- Focus on emotional transformation the task can facilitate
 
-### **Further Information Guidelines:**
-- Add citations, references, or extra context if relevant (e.g., scientific studies, book references, expert quotes)
-- Keep concise but informative
-- Include psychological theories and research when applicable
 
 ## **SPECIFIC RESOURCE SUGGESTIONS:**
 

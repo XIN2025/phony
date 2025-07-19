@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsEmail, IsDateString, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEmail, IsDateString } from 'class-validator';
 
 export class CreateClientDto {
   @ApiProperty()
@@ -36,22 +36,4 @@ export class CreateClientDto {
   @IsString()
   @IsNotEmpty()
   occupation: string;
-
-  @ApiProperty({ type: [String] })
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  medicalHistory?: string[];
-
-  @ApiProperty({ type: [String] })
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  symptoms?: string[];
-
-  @ApiProperty({ type: [String] })
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  medications?: string[];
 }

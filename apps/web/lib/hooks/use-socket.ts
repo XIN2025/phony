@@ -10,7 +10,7 @@ export function useSocket(event: string, handler: EventHandler): Socket | null {
   const { data: session } = useSession();
   const handlerRef = useRef<EventHandler>(handler);
   const socketRef = useRef<Socket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [, setIsConnected] = useState(false);
 
   handlerRef.current = handler;
 
@@ -39,15 +39,15 @@ export function useSocket(event: string, handler: EventHandler): Socket | null {
         }, 500);
       });
 
-      socketRef.current.on('disconnect', (reason) => {
+      socketRef.current.on('disconnect', () => {
         setIsConnected(false);
       });
 
-      socketRef.current.on('connect_error', (error) => {
+      socketRef.current.on('connect_error', () => {
         setIsConnected(false);
       });
 
-      socketRef.current.on('error', (error) => {
+      socketRef.current.on('error', () => {
         // Handle socket errors silently in production
       });
     }
@@ -65,7 +65,7 @@ export function useSocket(event: string, handler: EventHandler): Socket | null {
     return () => {
       socket.off(event, eventListener);
     };
-  }, [event, session?.user?.token]);
+  }, [event, session?.user?.token, session?.user?.id]);
 
   useEffect(() => {
     return () => {

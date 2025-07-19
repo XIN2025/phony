@@ -27,25 +27,21 @@ const getActivityBadgeVariant = (clientStatus: string | undefined) => {
   }
 };
 
-const getActivityLabel = (clientStatus: string | undefined, hasCompletedIntake: boolean) => {
-  if (!clientStatus) return 'Invitation Pending';
-
-  switch (clientStatus) {
-    case 'ACTIVE':
-      return 'High';
-    case 'INTAKE_COMPLETED':
-      return hasCompletedIntake ? 'Medium' : 'Low';
-    case 'NEEDS_INTAKE':
-      return 'Invitation Pending';
-    default:
-      return 'Low';
-  }
-};
-
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
   const { data: clients = [], isLoading, error } = useGetClients();
+
+  const getActivityLabel = (client: any) => {
+    if (!client.clientStatus) return 'Invitation Pending';
+    if (client.clientStatus === 'NEEDS_INTAKE') return 'Invitation Pending';
+
+    if (!client.hasCompletedIntake) {
+      return 'Low';
+    }
+
+    return 'Low';
+  };
 
   const filteredClients = clients.filter((client) => {
     const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
@@ -217,11 +213,17 @@ export default function ClientsPage() {
                             </TableCell>
                             <TableCell className='py-3 sm:py-4 px-2 sm:px-4'>
                               {(() => {
-                                const label = getActivityLabel(client.clientStatus, client.hasCompletedIntake);
-                                let badgeColor = 'bg-[#E5D6D0] text-black';
-                                if (label === 'High') badgeColor = 'bg-[#C7E8D4] text-black';
-                                if (label === 'Medium') badgeColor = 'bg-[#C7D7F8] text-black';
-                                if (label === 'Low') badgeColor = 'bg-[#F8D7D7] text-black';
+                                const label = getActivityLabel(client);
+                                const badgeColor = (() => {
+                                  switch (label) {
+                                    case 'Low':
+                                      return 'bg-[#F8D7D7] text-black';
+                                    case 'Invitation Pending':
+                                      return 'bg-gray-100 text-gray-700';
+                                    default:
+                                      return 'bg-[#E5D6D0] text-black';
+                                  }
+                                })();
                                 return (
                                   <span
                                     className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold ${badgeColor}`}

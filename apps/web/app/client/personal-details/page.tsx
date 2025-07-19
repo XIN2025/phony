@@ -14,6 +14,8 @@ import { AuthLayout } from '@repo/ui/components/auth-layout';
 import { AuthHeader } from '@/components/PageHeader';
 import { useCheckInvitationIntakeForm, useClientSignup } from '@/lib/hooks/use-api';
 import { SignupStepper } from '@/components/SignupStepper';
+import { Calendar } from '@repo/ui/components/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/popover';
 
 const validatePhoneNumber = (value: string): string => {
   return value.replace(/[^0-9+\-()\s]/g, '');
@@ -34,6 +36,7 @@ export default function PersonalDetailsPage() {
   const [occupation, setOccupation] = useState(signUpData.occupation || '');
   const [profileImage, setProfileImage] = useState<File | null>(signUpData.profileImage || null);
   const [profileImagePreview, setProfileImagePreview] = useState<string>('');
+  const [showCalendar, setShowCalendar] = useState(false);
 
   React.useEffect(() => {
     if (!token) {
@@ -92,7 +95,6 @@ export default function PersonalDetailsPage() {
       return;
     }
 
-    // Create FormData for API call
     const formData = new FormData();
     formData.append('email', email);
     formData.append('firstName', firstName.trim());
@@ -105,7 +107,7 @@ export default function PersonalDetailsPage() {
 
     try {
       await signupClient(formData);
-      // After account creation, check for intake form and route accordingly
+
       checkIntakeForm(
         { invitationToken },
         {
@@ -183,14 +185,35 @@ export default function PersonalDetailsPage() {
             onChange={handlePhoneNumberChange}
             required
           />
-          <Input
-            id='dob'
-            placeholder='Date of Birth'
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
-            required
-            type='text'
-          />
+          {/* Date of Birth with calendar popover */}
+          <div>
+            <Popover open={showCalendar} onOpenChange={setShowCalendar}>
+              <PopoverTrigger asChild>
+                <Input
+                  id='dob'
+                  placeholder='Date of Birth'
+                  value={dob}
+                  readOnly
+                  onClick={() => setShowCalendar(true)}
+                  required
+                  className='text-left pl-3 pr-10'
+                  style={{ textAlign: 'left' }}
+                />
+              </PopoverTrigger>
+              <PopoverContent align='start' className='w-auto p-0'>
+                <Calendar
+                  mode='single'
+                  selected={dob ? new Date(dob) : undefined}
+                  onSelect={(date) => {
+                    setDob(date ? date.toISOString().slice(0, 10) : '');
+                    setShowCalendar(false);
+                  }}
+                  captionLayout='dropdown'
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
           <Input
             id='occupation'
             placeholder='Occupation'

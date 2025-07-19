@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { useGetClient, useGetClientIntakeForm } from '@/lib/hooks/use-api';
-import { getAvatarUrl, getInitials } from '@/lib/utils';
+import { getAvatarUrl, getInitials, getFileUrl } from '@/lib/utils';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
@@ -104,14 +104,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
           {/* Client Information */}
           <div className='bg-white rounded-2xl shadow-md p-8  flex flex-col gap-4 min-h-[260px]'>
             <div className='font-semibold text-xl mb-4'>Client Information</div>
-            <div className='grid grid-cols-1 gap-2 text-base'>
-              <div>
-                <span className='font-semibold'>Current Medications:</span>{' '}
-                <span className='font-normal'>
-                  {client.medications && client.medications.length > 0 ? client.medications.join(', ') : '-'}
-                </span>
-              </div>
-            </div>
+            <div className='grid grid-cols-1 gap-2 text-base'>{/* Removed medications UI block */}</div>
           </div>
         </div>
         {/* Intake Survey Responses */}
@@ -135,10 +128,79 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                     {client.intakeFormSubmission.form.questions.map((q: any) => {
                       const answer = client.intakeFormSubmission.answers.find((a: any) => a.questionId === q.id);
+                      const answerValue = answer?.value;
+
+                      // Handle file uploads - show actual file content
+                      const renderAnswerValue = () => {
+                        if (
+                          q.type === 'FILE_UPLOAD' &&
+                          typeof answerValue === 'string' &&
+                          answerValue.startsWith('/uploads/')
+                        ) {
+                          const fileUrl = getFileUrl(answerValue);
+                          const fileExtension = answerValue.split('.').pop()?.toLowerCase();
+
+                          // Show image preview for image files
+                          if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(fileExtension || '')) {
+                            return (
+                              <div className='space-y-2'>
+                                <img
+                                  src={fileUrl}
+                                  alt='Uploaded file'
+                                  className='max-w-full max-h-48 rounded-md border'
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                                <a
+                                  href={fileUrl}
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='text-blue-600 hover:text-blue-800 underline text-sm hidden'
+                                >
+                                  View full size
+                                </a>
+                              </div>
+                            );
+                          }
+
+                          // Show PDF preview or download link for PDFs
+                          if (fileExtension === 'pdf') {
+                            return (
+                              <div className='space-y-2'>
+                                <iframe src={fileUrl} className='w-full h-48 border rounded-md' title='PDF Preview' />
+                                <a
+                                  href={fileUrl}
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='text-blue-600 hover:text-blue-800 underline text-sm'
+                                >
+                                  Download PDF
+                                </a>
+                              </div>
+                            );
+                          }
+
+                          // For other file types, show download link
+                          return (
+                            <a
+                              href={fileUrl}
+                              target='_blank'
+                              rel='noopener noreferrer'
+                              className='text-blue-600 hover:text-blue-800 underline'
+                            >
+                              Download file
+                            </a>
+                          );
+                        }
+                        return answerValue || '-';
+                      };
+
                       return (
                         <div key={q.id} className='mb-2'>
                           <div className='font-medium text-base mb-1'>{q.text}</div>
-                          <div className='bg-[#F6F6F6] rounded-xl px-4 py-3 text-base'>{answer?.value || '-'}</div>
+                          <div className='bg-[#F6F6F6] rounded-xl px-4 py-3 text-base'>{renderAnswerValue()}</div>
                         </div>
                       );
                     })}

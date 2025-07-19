@@ -128,7 +128,7 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
               </label>
             </div>
           )}
-          <div className='flex gap-4 w-full sm:w-auto justify-end'>
+          <div className='flex gap-4 w-full sm:w-auto sm:ml-auto'>
             <Button type='button' variant='outline' onClick={onBack} className='rounded-full px-8'>
               Back
             </Button>

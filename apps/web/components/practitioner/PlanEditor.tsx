@@ -275,7 +275,6 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
 
   const handleTaskDialogSave = (values: any) => {
     if (isEditingTask && editingTaskId) {
-      // Remove 'id' from values before sending to backend
       const { id, ...rest } = values;
       saveTaskMutation.mutate(
         { planId, itemId: editingTaskId, data: rest },
@@ -404,15 +403,22 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
   return (
     <div className='space-y-8 w-full max-w-full md:max-w-[1350px] mx-auto px-2 sm:px-6 md:px-10'>
       {/* Responsive header and publish button */}
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4'>
-        {showHeader && <h2 className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'>Edit Action Plan</h2>}
-        {onPublishClick && (
-          <PublishPlanButton onClick={onPublishClick} disabled={!!isPublishing} isPublishing={!!isPublishing} />
-        )}
-      </div>
+      {showHeader && (
+        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4'>
+          <h2
+            className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            Edit Action Plan
+          </h2>
+          {onPublishClick && (
+            <PublishPlanButton onClick={onPublishClick} disabled={!!isPublishing} isPublishing={!!isPublishing} />
+          )}
+        </div>
+      )}
       <div className='rounded-3xl shadow-2xl bg-white p-4 sm:p-10 w-full mx-0' style={{ borderColor: '#B0B3B8' }}>
         <div className='flex items-center justify-between mb-2 sm:mb-4 border-b pb-2'>
-          <div className='font-bold text-lg sm:text-xl text-gray-900 text-left underline underline-offset-4'>
+          <div className='font-bold text-lg sm:text-xl text-gray-900 text-left underline tracking-tighter underline-offset-4'>
             Tasks mentioned during session
           </div>
           <Button size='sm' variant='ghost' className='text-primary font-semibold' onClick={handleAddTaskClick}>
@@ -477,7 +483,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                           ),
                         };
                       });
-                      // Remove 'id' from item before sending
+
                       const { id, ...rest } = item;
                       saveTaskMutation.mutate(
                         {
@@ -508,7 +514,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
       </div>
       <div className='rounded-3xl shadow-2xl bg-white p-4 sm:p-10 w-full mx-0 mt-8' style={{ borderColor: '#B0B3B8' }}>
         <div className='flex items-center justify-between mb-2 sm:mb-4 border-b pb-2'>
-          <div className='font-bold text-lg sm:text-xl flex items-center gap-2 text-gray-900 text-left underline underline-offset-4'>
+          <div className='font-bold text-lg sm:text-xl flex items-center gap-2 text-gray-900 text-left underline underline-offset-4 tracking-tghter'>
             <span>✧</span> Complementary Tasks
           </div>
           <Button

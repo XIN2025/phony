@@ -21,15 +21,13 @@ Return a JSON object with the following structure:
       "isMandatory": "boolean indicating if this is critical",
       "whyImportant": "explanation of why this task benefits the client",
       "recommendedActions": "specific steps to complete this task",
-      "associatedEmotions": ["optional, e.g. 'Fear - Courage', 'Loneliness - Connection'"],
       "toolsToHelp": [
         {
           "name": "Name of the tool, app, book, or resource",
           "whatItEnables": "Short description of what this tool/resource helps with",
           "link": "URL if available"
         }
-      ],
-      "furtherInformation": "optional citations, references, or extra context"
+      ]
     }
   ],
   "complementaryTasks": [
@@ -42,15 +40,13 @@ Return a JSON object with the following structure:
       "isMandatory": "boolean indicating if this is critical",
       "whyImportant": "explanation of why this task benefits the client",
       "recommendedActions": "specific steps to complete this task",
-      "associatedEmotions": ["optional, e.g. 'Fear - Courage', 'Loneliness - Connection'"],
       "toolsToHelp": [
         {
           "name": "Name of the tool, app, book, or resource",
           "whatItEnables": "Short description of what this tool/resource helps with",
           "link": "URL if available"
         }
-      ],
-      "furtherInformation": "optional citations, references, or extra context"
+      ]
     }
   ]
 }
@@ -58,23 +54,21 @@ Return a JSON object with the following structure:
 
 ## **QUALITY STANDARDS FOR ACTION ITEMS:**
 
-### **Description Requirements:**
+### **Description Requirements (SHORT HEADING):**
 
+- Keep task descriptions SHORT and CONCISE (max 6-8 words)
 - Start with an action verb (Practice, Complete, Track, Implement, etc.)
-- Be specific enough that the client knows exactly what to do
-- Include context or details mentioned by the practitioner (for sessionTasks)
+- Be clear and specific but brief
+- Focus on the core action, not all the details
 - Be realistic and achievable based on the client's current state
 
-### **Good Examples:**
+### **Good Examples (SHORT HEADINGS):**
 
-- "Practice the 4-7-8 breathing technique for 5 minutes each morning"
-- "Complete a daily mood journal rating anxiety levels 1-10"
-- "Implement the grounding technique when experiencing panic symptoms"
-- "Set boundaries with family by using the script we discussed"
-- "Track sleep patterns for one week using the provided template"
-- "Start a small, friendly conversation with someone you don't know, such as a barista or shopkeeper"
-- "Create a Physical Vision Board by cutting out pictures and words from magazines that represent your goals"
-- "Take on a multi-day cooking project like baking a layered cake or preparing a traditional dish"
+- "Start friendly conversations"
+- "Sign up for workshop"
+- "Try freewriting exercise"
+- "Go on photo walk"
+- "Create vision board"
 
 ### **Poor Examples (Avoid):**
 
@@ -119,6 +113,7 @@ Choose from these common categories when applicable:
 - Use encouraging, motivating language
 - Keep it concise but meaningful
 - Include psychological principles when relevant (e.g., "This practice aligns with the Yerkes-Dodson Law of optimal anxiety for growth")
+- Include associated emotions this task addresses (e.g., "This helps transform Fear to Courage, Loneliness to Connection")
 
 ### **Recommended Actions Guidelines:**
 
@@ -127,6 +122,7 @@ Choose from these common categories when applicable:
 - Include specific techniques or methods mentioned
 - Break complex tasks into manageable steps
 - Give specific timeframes and durations when appropriate
+- Include scientific citations, references, or extra context if relevant (e.g., "Research shows...", "According to studies...")
 
 ### **Tools to Help Guidelines:**
 
@@ -139,17 +135,7 @@ Choose from these common categories when applicable:
 - Examples: meditation apps, mood tracking tools, educational videos, books, online platforms
 - Include specific platforms like Coursera, Skillshare, Goodreads, Notion, etc.
 
-### **Associated Emotions Guidelines:**
 
-- List key emotions or emotional shifts this task may address (e.g., "Fear - Courage", "Loneliness - Connection")
-- Use pairs or single words as appropriate
-- Focus on emotional transformation the task can facilitate
-
-### **Further Information Guidelines:**
-
-- Add citations, references, or extra context if relevant (e.g., scientific studies, book references, expert quotes)
-- Keep concise but informative
-- Include psychological theories and research when applicable
 
 ### **Target & Frequency:**
 
@@ -160,34 +146,34 @@ Choose from these common categories when applicable:
 ## **ENHANCED TASK EXAMPLES BY CATEGORY:**
 
 ### **Mindfulness & Relaxation:**
-- "Practice the 4-7-8 breathing technique for 5 minutes each morning before starting your day"
-- "Create a 'Calm Scene' by spending 5-10 minutes vividly imagining a peaceful place like a quiet beach at sunset"
-- "Try 'Freewriting' by setting a timer for 10 minutes and writing continuously about whatever comes to mind"
+- "Practice 4-7-8 breathing"
+- "Create calm scene visualization"
+- "Try freewriting exercise"
 
 ### **Social & Interpersonal:**
-- "Start a small, friendly conversation with someone you don't know, such as a barista, shopkeeper, or someone at a local event"
-- "Attend a social or professional networking event by yourself with the goal of introducing yourself to at least one new person"
-- "Practice 'Active Listening' during conversations by focusing entirely on the speaker without planning your response"
+- "Start friendly conversations"
+- "Attend networking event"
+- "Practice active listening"
 
 ### **Creative & Expressive:**
-- "Go on a 'Photo Walk' by taking your phone and walking for 30 minutes to capture five interesting patterns, textures, or colors"
-- "Create a 'mood playlist' by spending 20 minutes curating songs that capture a specific feeling you want to cultivate"
-- "Engage in a simple craft like coloring in an adult coloring book, trying origami, or arranging flowers for 30 minutes"
+- "Go on photo walk"
+- "Create mood playlist"
+- "Engage in simple craft"
 
 ### **Learning & Development:**
-- "Dedicate a 'Curiosity Hour' each week to explore a topic you're curious about through documentaries, articles, or tutorials"
-- "Try the '5-page rule' by committing to read just five pages of a book, and if you're not interested after five pages, you can stop without guilt"
-- "Learn a new practical skill like a specific cooking technique, basic coding concept, or new exercise using online videos"
+- "Dedicate curiosity hour"
+- "Try 5-page reading rule"
+- "Learn new practical skill"
 
 ### **Goal Setting & Planning:**
-- "Set SMART Goals by taking a vague goal and making it Specific, Measurable, Achievable, Relevant, and Time-bound"
-- "Create a Physical Vision Board by dedicating an hour to cutting out pictures and words that represent your goals"
-- "Practice 'Process Visualization' by spending 10 minutes visualizing the specific steps to complete a big task successfully"
+- "Set SMART goals"
+- "Create vision board"
+- "Practice process visualization"
 
 ### **Physical & Lifestyle:**
-- "Try a new physical activity that feels challenging, such as a taster session for rock climbing, martial arts, or dance"
-- "Take a different route on your daily commute or visit a cafe in a neighborhood you've never been to before, alone"
-- "Track your fitness progress by dedicating exercise time to a measurable goal like training for a 5k or increasing weight capacity"
+- "Try new physical activity"
+- "Take different commute route"
+- "Track fitness progress"
 
 ## **ANALYSIS APPROACH:**
 

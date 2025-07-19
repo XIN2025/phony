@@ -9,6 +9,14 @@
         "tags": ["App"]
       }
     },
+    "/api/health": {
+      "get": {
+        "operationId": "AppController_getHealth",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["App"]
+      }
+    },
     "/api/auth/otp/verify": {
       "post": {
         "operationId": "AuthController_verifyOtp",
@@ -233,6 +241,16 @@
         "responses": { "200": { "description": "List of intake forms." } },
         "security": [{ "bearer": [] }],
         "summary": "Get all intake forms for the logged-in practitioner",
+        "tags": ["intake-forms"]
+      }
+    },
+    "/api/intake-forms/upload-file": {
+      "post": {
+        "operationId": "IntakeFormController_uploadIntakeFormFile",
+        "parameters": [],
+        "responses": { "201": { "description": "File uploaded successfully." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Upload a file for an intake form answer",
         "tags": ["intake-forms"]
       }
     },
@@ -971,10 +989,6 @@
           "lastName": { "type": "string", "nullable": true },
           "avatarUrl": { "type": "string", "nullable": true },
           "phoneNumber": { "type": "string", "nullable": true },
-          "allergies": { "type": "array", "items": { "type": "string" }, "nullable": true },
-          "medicalHistory": { "type": "array", "items": { "type": "string" }, "nullable": true },
-          "symptoms": { "type": "array", "items": { "type": "string" }, "nullable": true },
-          "medications": { "type": "array", "items": { "type": "string" }, "nullable": true },
           "notificationSettings": {
             "type": "object",
             "nullable": true,
@@ -988,14 +1002,13 @@
           },
           "role": { "type": "string", "enum": ["PRACTITIONER", "CLIENT"] },
           "profession": { "type": "string", "nullable": true },
-          "clientStatus": {
-            "type": "string",
-            "enum": ["ACTIVE", "NEEDS_INTAKE", "INTAKE_COMPLETED"],
-            "nullable": true
-          },
+          "dob": { "type": "string", "nullable": true },
           "practitionerId": { "type": "string", "nullable": true },
           "isEmailVerified": { "type": "boolean" },
-          "idProofUrl": { "type": "string", "nullable": true }
+          "idProofUrl": { "type": "string", "nullable": true },
+          "clientStatus": { "type": "string", "enum": ["ACTIVE", "NEEDS_INTAKE", "INTAKE_COMPLETED"] },
+          "createdAt": { "type": "string", "nullable": true },
+          "updatedAt": { "type": "string", "nullable": true }
         },
         "required": [
           "id",
@@ -1004,14 +1017,10 @@
           "lastName",
           "avatarUrl",
           "phoneNumber",
-          "allergies",
-          "medicalHistory",
-          "symptoms",
-          "medications",
           "notificationSettings",
           "role",
           "profession",
-          "clientStatus",
+          "dob",
           "practitionerId",
           "isEmailVerified",
           "idProofUrl"
@@ -1045,10 +1054,6 @@
           "dob": { "type": "string" },
           "profession": { "type": "string" },
           "phoneNumber": { "type": "string" },
-          "allergies": { "type": "array", "items": { "type": "string" } },
-          "medicalHistory": { "type": "array", "items": { "type": "string" } },
-          "symptoms": { "type": "array", "items": { "type": "string" } },
-          "medications": { "type": "array", "items": { "type": "string" } },
           "notificationSettings": { "type": "object" }
         },
         "required": ["email", "firstName", "invitationToken"]

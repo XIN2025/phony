@@ -20,10 +20,6 @@ model User {
   profession      String?
   avatarUrl       String?  @map("avatar_url")
   phoneNumber     String?
-  allergies       String[]
-  medicalHistory  String[]
-  symptoms        String[]
-  medications     String[]
   notificationSettings Json?
   role            UserRole
   isEmailVerified Boolean  @default(false) @map("is_email_verified")
