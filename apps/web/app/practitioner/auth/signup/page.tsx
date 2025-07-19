@@ -463,7 +463,7 @@ export default function PractitionerSignUpPage() {
                       <Input
                         placeholder='Your first name'
                         {...field}
-                        className='h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        className='h-10 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                       />
                     </FormControl>
                     <FormMessage />
@@ -480,7 +480,7 @@ export default function PractitionerSignUpPage() {
                       <Input
                         placeholder='Your last name'
                         {...field}
-                        className='h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        className='h-10 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                       />
                     </FormControl>
                     <FormMessage />
@@ -543,12 +543,12 @@ export default function PractitionerSignUpPage() {
               control={form.control}
               name='terms'
               render={({ field }) => (
-                <FormItem className='flex flex-row items-start space-x-3 space-y-0'>
+                <FormItem className='flex flex-row items-start space-x-1 space-y-0'>
                   <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} className='mt-0.5' />
                   </FormControl>
                   <div className='space-y-1 leading-none flex-1'>
-                    <FormLabel className='text-xs sm:text-sm font-normal leading-relaxed'>
+                    <FormLabel className='text-xs sm:text-sm font-normal leading-relaxed cursor-pointer'>
                       <span className='whitespace-normal'>
                         I agree to Continuum's{' '}
                         <button
@@ -591,7 +591,12 @@ export default function PractitionerSignUpPage() {
   }
 
   return (
-    <div className='min-h-screen flex flex-col lg:flex-row'>
+    <div
+      className='min-h-screen flex flex-col lg:flex-row'
+      style={{
+        background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
+      }}
+    >
       {/* Left side - Image section */}
       <div className='hidden lg:flex lg:w-3/5 relative overflow-hidden'>
         <div
@@ -609,9 +614,19 @@ export default function PractitionerSignUpPage() {
       </div>
 
       {/* Right side - Form section */}
-      <div className='flex-1 lg:w-2/5 flex flex-col min-h-screen '>
+      <div
+        className='flex-1 lg:w-2/5 flex flex-col min-h-screen'
+        style={{
+          background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
+        }}
+      >
         {/* Main content area */}
-        <div className='flex-1 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 lg:pt-16 pb-8 sm:pb-16 lg:pb-24'>
+        <div
+          className='flex-1 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 lg:pt-16 pb-8 sm:pb-16 lg:pb-24'
+          style={{
+            background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
+          }}
+        >
           <div className={`w-full max-w-md ${step === 2 ? 'space-y-4 sm:space-y-6' : 'space-y-6 sm:space-y-8'}`}>
             {/* Header content */}
             <div className='text-center space-y-3 sm:space-y-4'>

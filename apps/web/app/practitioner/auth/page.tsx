@@ -240,7 +240,12 @@ export default function PractitionerAuthPage() {
   }
 
   return (
-    <div className='min-h-screen flex flex-col lg:flex-row'>
+    <div
+      className='min-h-screen flex flex-col lg:flex-row'
+      style={{
+        background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
+      }}
+    >
       {/* Left side - Image section */}
       <div className='hidden lg:flex lg:w-3/5 relative overflow-hidden'>
         <div
@@ -258,9 +263,19 @@ export default function PractitionerAuthPage() {
       </div>
 
       {/* Right side - Form section */}
-      <div className='flex-1 lg:w-2/5 flex flex-col min-h-screen'>
+      <div
+        className='flex-1 lg:w-2/5 flex flex-col min-h-screen'
+        style={{
+          background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
+        }}
+      >
         {/* Main content area */}
-        <div className='flex-1 flex flex-col justify-start items-center px-4 pt-16 pb-32'>
+        <div
+          className='flex-1 flex flex-col justify-start items-center px-4 pt-16 pb-32'
+          style={{
+            background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
+          }}
+        >
           <div className='w-full max-w-md space-y-8'>
             {/* Header content */}
             <div className='text-center space-y-4'>

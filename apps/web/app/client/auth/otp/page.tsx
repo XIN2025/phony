@@ -10,7 +10,6 @@ import { useSendOtp, useVerifyInvitationOtp, useVerifyOtp } from '@/lib/hooks/us
 import { useSignUpContext } from '@/context/signup-context';
 import { AuthHeader } from '@/components/PageHeader';
 import { signIn } from 'next-auth/react';
-import { SignupStepper } from '@/components/SignupStepper';
 
 export default function ClientOtpPage() {
   const router = useRouter();
@@ -176,17 +175,74 @@ export default function ClientOtpPage() {
   return (
     <div className='w-full flex flex-col'>
       {/* Top bar for mobile - fixed at the top */}
-      <div className='block sm:hidden fixed top-0 left-0 right-0 z-20 bg-transparent px-4 pt-4 pb-2 w-full'>
-        <AuthHeader />
+      <div className='block sm:hidden fixed top-0 left-0 right-0 z-20 px-4 pt-4 pb-2 w-full'>
+        <div className='flex items-center w-full' style={{ minHeight: 40, padding: 0 }}>
+          <button
+            type='button'
+            onClick={() => router.push('/client/auth')}
+            aria-label='Back'
+            className='flex items-center justify-center mr-2 focus:outline-none'
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', height: 28, width: 28 }}
+          >
+            <span
+              style={{
+                color: '#807171',
+                fontSize: 28,
+                fontWeight: 400,
+                lineHeight: 1,
+                display: 'inline-block',
+                fontFamily: 'inherit',
+                verticalAlign: 'middle',
+              }}
+            >
+              {'<'}
+            </span>
+          </button>
+          <span
+            className='font-bold'
+            style={{ fontFamily: 'Playfair Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
+          >
+            Continuum
+          </span>
+        </div>
       </div>
+
       {/* Centered card for desktop, content for mobile */}
-      <div className='flex-1 flex flex-col items-center justify-center w-full sm:min-h-screen'>
+      <div className='flex-1 flex flex-col items-center justify-center w-full'>
         {/* Add top margin for mobile to avoid overlap with fixed header */}
         <div className='block sm:hidden' style={{ marginTop: '64px' }}></div>
-        <div className='w-full max-w-md mx-auto flex flex-col items-center justify-center rounded-xl py-8 px-4 sm:px-8 sm:mt-0 mt-4'>
+        <div className='w-full max-w-md mx-auto flex flex-col items-center justify-center rounded-xl py-6 px-4 sm:px-8 sm:mt-0 mt-4'>
           {/* Top bar for desktop */}
-          <div className='hidden sm:flex w-full mb-6'>
-            <AuthHeader />
+          <div className='hidden sm:flex w-full mb-4'>
+            <div className='flex items-center w-full' style={{ minHeight: 40, padding: 0 }}>
+              <button
+                type='button'
+                onClick={() => router.push('/client/auth')}
+                aria-label='Back'
+                className='flex items-center justify-center mr-2 focus:outline-none'
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', height: 28, width: 28 }}
+              >
+                <span
+                  style={{
+                    color: '#807171',
+                    fontSize: 28,
+                    fontWeight: 400,
+                    lineHeight: 1,
+                    display: 'inline-block',
+                    fontFamily: 'inherit',
+                    verticalAlign: 'middle',
+                  }}
+                >
+                  {'<'}
+                </span>
+              </button>
+              <span
+                className='font-bold'
+                style={{ fontFamily: 'Playfair Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
+              >
+                Continuum
+              </span>
+            </div>
           </div>
           <h2
             className='text-xl font-semibold mb-1 w-full text-left'
@@ -228,8 +284,6 @@ export default function ClientOtpPage() {
                 </button>
               )}
             </div>
-            {/* Stepper below OTP input and above Continue button */}
-            <SignupStepper totalSteps={4} currentStep={2} />
             <Button
               type='submit'
               className='w-full rounded-full text-base font-semibold h-12 '

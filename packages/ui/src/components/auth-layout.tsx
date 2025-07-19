@@ -8,23 +8,17 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <div className='flex min-h-screen w-screen overflow-hidden'>
+    <div
+      className='fixed inset-0 flex min-h-screen w-screen overflow-hidden'
+      style={{
+        background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
+      }}
+    >
       {/* Left side with image */}
       <div className='relative hidden h-full min-h-screen w-1/2 lg:block'>
         <img src='/auth.jpg' alt='Background' className='absolute inset-0 h-full w-full object-cover' />
         {/* Overlay for better contrast */}
         <div className='absolute inset-0 bg-black/20' />
-
-        {/* Content overlay on left side */}
-        <div className='relative z-10 flex h-full w-full items-center justify-center'>
-          <div className='text-center text-white'>
-            <div className='mx-auto mb-4 flex h-32 w-32 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm'>
-              <User className='h-16 w-16 text-white' />
-            </div>
-            <p className='text-lg font-medium'>Welcome to Continuum</p>
-            <p className='mt-2 text-sm opacity-90'>Professional therapy platform</p>
-          </div>
-        </div>
 
         {/* Logo in bottom left */}
         <div className='absolute bottom-6 left-6'>
@@ -35,10 +29,20 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       </div>
 
       {/* Right side with content */}
-      <div className='flex min-h-screen w-full flex-col lg:w-1/2'>
+      <div
+        className='flex min-h-screen w-full flex-col lg:w-1/2'
+        style={{
+          background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
+        }}
+      >
         {/* Main content area */}
-        <div className='flex flex-1 flex-col items-center justify-start px-4 pt-16 pb-32'>
-          <div className='w-full max-w-md space-y-8'>{children}</div>
+        <div
+          className='flex flex-1 flex-col items-center justify-center px-3 py-8 sm:px-4 sm:py-16'
+          style={{
+            background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
+          }}
+        >
+          <div className='w-full max-w-sm space-y-6 sm:max-w-md sm:space-y-8'>{children}</div>
         </div>
       </div>
     </div>
@@ -48,14 +52,19 @@ export function AuthLayout({ children }: AuthLayoutProps) {
 export function AuthHeader({ title }: { title: string }) {
   return (
     <>
-      <div className='mb-8 text-center'>
-        <h1 className='mb-2 text-2xl font-bold' style={{ fontFamily: "'Playfair Display', serif" }}>
+      <div className='mb-6 text-center sm:mb-8'>
+        <h1 className='mb-2 text-xl font-bold sm:text-2xl' style={{ fontFamily: "'Playfair Display', serif" }}>
           Welcome to Continuum
         </h1>
-        <p className='text-muted-foreground'>Bridging care and connection, one session at a time.</p>
+        <p className='text-muted-foreground text-sm sm:text-base'>
+          Bridging care and connection, one session at a time.
+        </p>
       </div>
       <div className='text-center'>
-        <h2 className='mb-6 text-lg font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+        <h2
+          className='mb-4 text-base font-semibold sm:mb-6 sm:text-lg'
+          style={{ fontFamily: "'Playfair Display', serif" }}
+        >
           {title}
         </h2>
       </div>
