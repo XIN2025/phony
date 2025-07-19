@@ -45,6 +45,7 @@ describe('Auth hooks', () => {
         isEmailVerified: true,
         practitionerId: null,
         idProofUrl: null,
+        dob: null,
       },
     };
 
@@ -140,6 +141,7 @@ describe('Auth hooks', () => {
         isEmailVerified: true,
         practitionerId: null,
         idProofUrl: null,
+        dob: null,
       },
     };
 
@@ -197,6 +199,7 @@ describe('Auth hooks', () => {
         isEmailVerified: true,
         practitionerId: null,
         idProofUrl: null,
+        dob: null,
       },
     };
 
@@ -261,6 +264,7 @@ describe('Auth hooks', () => {
           isEmailVerified: true,
           practitionerId: null,
           idProofUrl: null,
+          dob: null,
         },
       };
 
