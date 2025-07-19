@@ -406,13 +406,16 @@ const ClientPage = () => {
   const dailyTasks = filteredTasks.filter((task: ActionItem) => !task.isMandatory);
 
   return (
-    <div className='min-h-screen bg-gradient-to-b from-white to-pink-50/30'>
+    <div className='min-h-screen '>
       {/* Header */}
       <div className='px-4 sm:px-6 lg:px-8 pt-6 pb-4'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-3'>
             <SidebarToggleButton />
-            <h1 className='text-2xl font-bold text-gray-900' style={{ fontFamily: "'Playfair Display', serif" }}>
+            <h1
+              className='text-2xl font-bold text-gray-900 lg:hidden'
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
               Continuum
             </h1>
           </div>
@@ -426,7 +429,7 @@ const ClientPage = () => {
         </div>
         <div className='mt-4'>
           <h1 className='text-2xl font-bold text-gray-900' style={{ fontFamily: "'Playfair Display', serif" }}>
-            {userLoading ? 'Loading...' : `Good morning ${currentUser?.firstName || 'User'}`}
+            {userLoading ? 'Loading...' : `Welcome back  ${currentUser?.firstName || 'User'}`}
           </h1>
           <p className='text-sm text-gray-600'>Let's have a great day today</p>
         </div>
