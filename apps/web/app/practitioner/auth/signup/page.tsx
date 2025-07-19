@@ -35,6 +35,57 @@ type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 const professions = ['Therapist', 'Counselor', 'Psychologist', 'Social Worker'];
 
+// Component for the bottom section with stepper and button
+function SignupBottomSection({
+  step,
+  isSendingOTP,
+  isSigningUp,
+  onSubmit,
+  onBack,
+}: {
+  step: number;
+  isSendingOTP: boolean;
+  isSigningUp: boolean;
+  onSubmit: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className='bg-gradient-to-t from-pink-50 to-transparent px-4 py-6 border-t border-pink-100'>
+      <div className='w-full space-y-4'>
+        {/* Stepper - spans full width */}
+        <SignupStepper totalSteps={4} currentStep={step} />
+
+        {/* Buttons - small and positioned at corners */}
+        <div className='flex justify-between'>
+          {/* Back button - only show if not on first step */}
+          {step > 1 ? (
+            <Button
+              type='button'
+              className='h-12 px-8 text-base font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-white shadow-lg transition-colors duration-200'
+              onClick={onBack}
+            >
+              Back
+            </Button>
+          ) : (
+            <div></div>
+          )}
+
+          <Button
+            type='submit'
+            className='h-12 px-8 text-base font-medium rounded-lg bg-gray-800 hover:bg-gray-900 text-white shadow-lg'
+            disabled={isSendingOTP || isSigningUp}
+            onClick={onSubmit}
+          >
+            {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+            {isSigningUp && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+            {step === 4 ? 'Create Account' : 'Next'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PractitionerSignUpPage() {
   const [step, setStep] = React.useState(1);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -234,6 +285,42 @@ export default function PractitionerSignUpPage() {
     }
   };
 
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1);
+    }
+  };
+
+  const getStepText = () => {
+    switch (step) {
+      case 1:
+        return {
+          title: 'Create Account',
+          description: "We'll send you a code on this email to verify your account.",
+        };
+      case 2:
+        return {
+          title: 'Enter OTP',
+          description: `Please enter the code we sent to ${form.getValues('email')}`,
+        };
+      case 3:
+        return {
+          title: 'Your Profile',
+          description: 'Profile Creation',
+        };
+      case 4:
+        return {
+          title: '',
+          description: '',
+        };
+      default:
+        return {
+          title: 'Create Account',
+          description: 'Your Profile',
+        };
+    }
+  };
+
   const renderLegalModal = () => {
     if (!showLegalModal) return null;
     return (
@@ -265,26 +352,24 @@ export default function PractitionerSignUpPage() {
               control={form.control}
               name='email'
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email ID</FormLabel>
+                <FormItem className='space-y-3'>
+                  <FormLabel className='text-sm font-medium text-gray-700'>Email ID</FormLabel>
                   <FormControl>
-                    <Input placeholder='Your Email ID' {...field} />
+                    <Input
+                      placeholder='Your Email ID'
+                      {...field}
+                      className='w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {/* Progress bar above the button */}
-            <SignupStepper totalSteps={4} currentStep={step} />
-            <Button type='submit' className='w-full' disabled={isSendingOTP}>
-              {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-              Next
-            </Button>
           </motion.div>
         );
       case 2:
         return (
-          <motion.div key='step2' className='space-y-6'>
+          <motion.div key='step2' className='space-y-4'>
             <FormField
               control={form.control}
               name='otp'
@@ -292,9 +377,9 @@ export default function PractitionerSignUpPage() {
                 <FormItem>
                   <FormControl>
                     <InputOTP {...field} maxLength={6}>
-                      <InputOTPGroup className='w-full justify-center gap-2'>
+                      <InputOTPGroup className='w-full justify-center gap-1 sm:gap-2'>
                         {[...Array(6)].map((_, i) => (
-                          <InputOTPSlot key={i} index={i} />
+                          <InputOTPSlot key={i} index={i} className='h-12 w-10 sm:w-12 text-lg' />
                         ))}
                       </InputOTPGroup>
                     </InputOTP>
@@ -303,7 +388,7 @@ export default function PractitionerSignUpPage() {
                 </FormItem>
               )}
             />
-            <div className='flex justify-between text-sm'>
+            <div className='flex justify-between text-sm pt-2'>
               <Button type='button' variant='link' className='p-0' onClick={() => setStep(1)}>
                 Change Email
               </Button>
@@ -334,18 +419,12 @@ export default function PractitionerSignUpPage() {
                 </Button>
               )}
             </div>
-            {/* Progress bar above the button */}
-            <SignupStepper totalSteps={4} currentStep={step} />
-            <Button type='submit' className='w-full'>
-              Next
-            </Button>
           </motion.div>
         );
       case 3:
         return (
           <motion.div key='step3' className='space-y-6'>
             <div className='text-center'>
-              <h2 className='text-xl font-semibold mb-2'>Welcome</h2>
               <div className='flex flex-col items-center justify-center mb-4'>
                 <label htmlFor='profile-photo-upload' className='cursor-pointer'>
                   {profileImagePreview ? (
@@ -373,15 +452,19 @@ export default function PractitionerSignUpPage() {
                 </label>
               </div>
             </div>
-            <div className='grid grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
               <FormField
                 control={form.control}
                 name='firstName'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel className='text-sm font-medium text-gray-700'>First Name</FormLabel>
                     <FormControl>
-                      <Input placeholder='Your first name' {...field} />
+                      <Input
+                        placeholder='Your first name'
+                        {...field}
+                        className='h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -392,9 +475,13 @@ export default function PractitionerSignUpPage() {
                 name='lastName'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel className='text-sm font-medium text-gray-700'>Last Name</FormLabel>
                     <FormControl>
-                      <Input placeholder='Your last name' {...field} />
+                      <Input
+                        placeholder='Your last name'
+                        {...field}
+                        className='h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -405,11 +492,11 @@ export default function PractitionerSignUpPage() {
               control={form.control}
               name='profession'
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Profession</FormLabel>
+                <FormItem className='w-full'>
+                  <FormLabel className='text-sm font-medium text-gray-700'>Profession</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className='h-12 text-base w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'>
                         <SelectValue placeholder='Select your profession' />
                       </SelectTrigger>
                     </FormControl>
@@ -425,19 +512,11 @@ export default function PractitionerSignUpPage() {
                 </FormItem>
               )}
             />
-            {/* Progress bar above the button */}
-            <SignupStepper totalSteps={4} currentStep={step} />
-            <Button type='submit' className='w-full'>
-              Next
-            </Button>
           </motion.div>
         );
       case 4:
         return (
           <motion.div key='step4' className='space-y-6'>
-            <div className='text-center'>
-              <h2 className='text-xl font-semibold mb-2'>Welcome</h2>
-            </div>
             <div className='mb-4'>
               <label htmlFor='id-proof-upload' className='block text-sm font-medium mb-2'>
                 Licensing/Identification Document
@@ -468,37 +547,34 @@ export default function PractitionerSignUpPage() {
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
-                  <div className='space-y-1 leading-none'>
-                    <FormLabel className='text-sm font-normal'>
-                      I agree to Continuum's{' '}
-                      <button
-                        type='button'
-                        className='text-primary hover:underline bg-transparent border-0 p-0 m-0 inline'
-                        style={{ background: 'none' }}
-                        onClick={() => setShowLegalModal('terms')}
-                      >
-                        Terms of Service
-                      </button>{' '}
-                      and{' '}
-                      <button
-                        type='button'
-                        className='text-primary hover:underline bg-transparent border-0 p-0 m-0 inline'
-                        style={{ background: 'none' }}
-                        onClick={() => setShowLegalModal('privacy')}
-                      >
-                        Privacy Policy
-                      </button>
+                  <div className='space-y-1 leading-none flex-1'>
+                    <FormLabel className='text-xs sm:text-sm font-normal leading-relaxed'>
+                      <span className='whitespace-normal'>
+                        I agree to Continuum's{' '}
+                        <button
+                          type='button'
+                          className='text-primary hover:underline bg-transparent border-0 p-0 m-0 inline text-xs sm:text-sm'
+                          style={{ background: 'none' }}
+                          onClick={() => setShowLegalModal('terms')}
+                        >
+                          Terms of Service
+                        </button>{' '}
+                        and{' '}
+                        <button
+                          type='button'
+                          className='text-primary hover:underline bg-transparent border-0 p-0 m-0 inline text-xs sm:text-sm'
+                          style={{ background: 'none' }}
+                          onClick={() => setShowLegalModal('privacy')}
+                        >
+                          Privacy Policy
+                        </button>
+                      </span>
                     </FormLabel>
                     <FormMessage />
                   </div>
                 </FormItem>
               )}
             />
-            {/* Progress bar above the button */}
-            <SignupStepper totalSteps={4} currentStep={step} />
-            <Button type='submit' className='w-full' disabled={isSigningUp}>
-              Create Account
-            </Button>
           </motion.div>
         );
       default:
@@ -515,24 +591,73 @@ export default function PractitionerSignUpPage() {
   }
 
   return (
-    <>
-      {/* Remove SignupStepper from here, as it is now inside each step */}
-      <div className='flex flex-col space-y-2 text-center'>
-        <h1 className='text-2xl font-bold tracking-tight'>Create Practitioner Account</h1>
-        <p className='text-muted-foreground'>Join our platform to help clients on their journey.</p>
+    <div className='min-h-screen flex flex-col lg:flex-row'>
+      {/* Left side - Image section */}
+      <div className='hidden lg:flex lg:w-3/5 relative overflow-hidden'>
+        <div
+          className='absolute inset-0 bg-cover bg-center bg-no-repeat'
+          style={{ backgroundImage: 'url(/auth.jpg)' }}
+        ></div>
+        <div className='absolute inset-0 bg-black/20'></div>
+
+        {/* Logo in bottom left */}
+        <div className='absolute bottom-6 left-6'>
+          <div className='w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center'>
+            <span className='text-white text-sm font-bold'>N</span>
+          </div>
+        </div>
       </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleStepSubmit)} className='w-full'>
-          <AnimatePresence mode='wait'>{renderStep()}</AnimatePresence>
-        </form>
-      </Form>
-      <div className='text-center text-sm'>
-        Already have an account?{' '}
-        <Link href='/practitioner/auth' className='font-medium text-primary hover:underline'>
-          Sign in
-        </Link>
+
+      {/* Right side - Form section */}
+      <div className='flex-1 lg:w-2/5 flex flex-col min-h-screen '>
+        {/* Main content area */}
+        <div className='flex-1 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 lg:pt-16 pb-8 sm:pb-16 lg:pb-24'>
+          <div className={`w-full max-w-md ${step === 2 ? 'space-y-4 sm:space-y-6' : 'space-y-6 sm:space-y-8'}`}>
+            {/* Header content */}
+            <div className='text-center space-y-3 sm:space-y-4'>
+              <h1
+                className='text-2xl sm:text-3xl font-bold tracking-tight text-[#8d8080]'
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                Welcome to Continuum
+              </h1>
+              <p className='text-sm sm:text-base text-gray-700 leading-relaxed px-2'>
+                Make the time between sessions count — along with the sessions themselves
+              </p>
+              <div className='mt-6 sm:mt-8'>
+                <h2 className='text-xl sm:text-2xl tracking-tighter text-gray-800 mb-2'>{getStepText().title}</h2>
+                <p className='text-xs sm:text-sm text-gray-600'>{getStepText().description}</p>
+              </div>
+            </div>
+
+            {/* Form Section */}
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleStepSubmit)} className='w-full space-y-4 sm:space-y-6'>
+                <AnimatePresence mode='wait'>{renderStep()}</AnimatePresence>
+              </form>
+            </Form>
+
+            {/* Sign in link */}
+            <div className='text-center text-xs sm:text-sm pt-4'>
+              Already have an account?{' '}
+              <Link href='/practitioner/auth' className='font-medium text-primary hover:underline'>
+                Sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom section with stepper and button - contained within right panel */}
+        <SignupBottomSection
+          step={step}
+          isSendingOTP={isSendingOTP}
+          isSigningUp={isSigningUp}
+          onSubmit={form.handleSubmit(handleStepSubmit)}
+          onBack={handleBack}
+        />
       </div>
+
       {renderLegalModal()}
-    </>
+    </div>
   );
 }

@@ -165,10 +165,13 @@ export default function ClientSignUpPage() {
 
   return (
     <>
-      <div className='mb-8 mt-4 sm:mt-8 px-2 sm:px-0'>
-        <span className='text-3xl font-bold' style={{ fontFamily: 'Playfair Display, serif' }}>
-          Continuum
-        </span>
+      <div className='flex flex-col space-y-2 text-center'>
+        <h1 className='text-2xl font-bold tracking-tight'>Welcome to Continuum</h1>
+        <p className='text-muted-foreground'>
+          Make the time between sessions count — along with the sessions themselves
+        </p>
+        <h2 className='text-xl font-semibold mt-4'>Create Account</h2>
+        <p className='text-sm text-muted-foreground'>We'll send you a code to this email to verify your sign in.</p>
       </div>
       <form onSubmit={handleNext} className='space-y-6'>
         <div>

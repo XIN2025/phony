@@ -196,21 +196,26 @@ export default function PractitionerAuthPage() {
       );
     }
     return (
-      <motion.div key='email' className='space-y-4 sm:space-y-6'>
+      <motion.div key='email' className='space-y-6'>
         <FormField
           control={form.control}
           name='email'
           render={({ field }) => (
-            <FormItem>
-              <FormLabel className='text-sm sm:text-base'>Email</FormLabel>
+            <FormItem className='space-y-3'>
+              <FormLabel className='text-sm font-medium text-gray-700'>Email</FormLabel>
               <FormControl>
-                <Input {...field} type='email' placeholder='Enter your email' className='text-sm sm:text-base' />
+                <Input
+                  {...field}
+                  type='email'
+                  placeholder='Enter your email'
+                  className='w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type='submit' className='w-full py-2 sm:py-3 text-sm sm:text-base' disabled={isSendingOTP}>
+        <Button type='submit' className='w-full h-12 text-base font-medium' disabled={isSendingOTP}>
           {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
           Send Verification Code
         </Button>
@@ -235,24 +240,66 @@ export default function PractitionerAuthPage() {
   }
 
   return (
-    <>
-      <div className='flex flex-col space-y-2 text-center'>
-        <h1 className='text-2xl font-bold tracking-tight'>{showOTP ? 'Check your email' : 'Practitioner Login'}</h1>
-        <p className='text-muted-foreground'>
-          {showOTP ? `We've sent a code to ${email}` : 'Welcome back! Please sign in to your account.'}
-        </p>
+    <div className='min-h-screen flex flex-col lg:flex-row'>
+      {/* Left side - Image section */}
+      <div className='hidden lg:flex lg:w-3/5 relative overflow-hidden'>
+        <div
+          className='absolute inset-0 bg-cover bg-center bg-no-repeat'
+          style={{ backgroundImage: 'url(/auth.jpg)' }}
+        ></div>
+        <div className='absolute inset-0 bg-black/20'></div>
+
+        {/* Logo in bottom left */}
+        <div className='absolute bottom-6 left-6'>
+          <div className='w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center'>
+            <span className='text-white text-sm font-bold'>N</span>
+          </div>
+        </div>
       </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='w-full'>
-          <AnimatePresence mode='wait'>{renderContent()}</AnimatePresence>
-        </form>
-      </Form>
-      <div className='text-center text-sm'>
-        Don't have an account?{' '}
-        <Link href='/practitioner/auth/signup' className='font-medium text-primary hover:underline'>
-          Sign up
-        </Link>
+
+      {/* Right side - Form section */}
+      <div className='flex-1 lg:w-2/5 flex flex-col min-h-screen'>
+        {/* Main content area */}
+        <div className='flex-1 flex flex-col justify-start items-center px-4 pt-16 pb-32'>
+          <div className='w-full max-w-md space-y-8'>
+            {/* Header content */}
+            <div className='text-center space-y-4'>
+              <h1
+                className='text-3xl font-bold tracking-tight text-[#8d8080]'
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                Welcome to Continuum
+              </h1>
+              <p className='text-base text-gray-700 leading-relaxed'>
+                Make the time between sessions count — along with the sessions themselves
+              </p>
+              <div className='mt-8'>
+                <h2 className='text-2xl tracking-tighter text-gray-800 mb-2'>Sign In</h2>
+                <p className='text-sm text-gray-600'>
+                  {showOTP
+                    ? `Please enter the code we sent to ${email}`
+                    : "We'll send you a code to this email to verify your sign in"}
+                </p>
+              </div>
+            </div>
+
+            {/* Form Section */}
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className='w-full'>
+                <AnimatePresence mode='wait'>{renderContent()}</AnimatePresence>
+              </form>
+            </Form>
+
+            {/* Sign up link */}
+            <div className='text-center text-sm'>
+              Don't have an account?{' '}
+              <Link href='/practitioner/auth/signup' className='font-medium text-primary hover:underline'>
+                Sign up
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

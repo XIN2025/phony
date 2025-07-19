@@ -41,19 +41,13 @@ export default function ClientAuthEmailPage() {
 
   return (
     <>
-      {/* Branding header */}
-      <div className='mb-6 sm:mb-8 flex flex-col items-start'>
-        <div className='flex items-center mb-4'>
-          <span className='text-2xl font-bold' style={{ fontFamily: 'Playfair Display, serif' }}>
-            Continuum
-          </span>
-        </div>
-        <div className='text-left'>
-          <span className='text-lg sm:text-xl font-tighter '>
-            <span className='text-muted-foreground font-semibold'>Where</span> Therapy & Coaching{' '}
-            <span className='text-muted-foreground font-semibold'>Becomes</span> Action & Accountability
-          </span>
-        </div>
+      <div className='flex flex-col space-y-2 text-center'>
+        <h1 className='text-2xl font-bold tracking-tight'>Welcome to Continuum</h1>
+        <p className='text-muted-foreground'>
+          Make the time between sessions count — along with the sessions themselves
+        </p>
+        <h2 className='text-xl font-semibold mt-4'>Sign In</h2>
+        <p className='text-sm text-muted-foreground'>We'll send you a code to this email to verify your sign in.</p>
       </div>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4 sm:space-y-6'>
         <div>
