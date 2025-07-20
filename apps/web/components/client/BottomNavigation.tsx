@@ -6,18 +6,23 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { HomeIcon, MessagesIcon, JournalsIcon } from '@/components/practitioner/Sidebar';
 
-const navLinks = [
-  { href: '/client', icon: HomeIcon, label: 'Home' },
-  { href: '/client/messages', icon: MessagesIcon, label: 'Messages' },
-  { href: '/client/journals', icon: JournalsIcon, label: 'Journals' },
-];
+interface NavLink {
+  href: string;
+  icon: React.ComponentType<{ className?: string; isActive?: boolean }>;
+  label: string;
+}
 
-export function BottomNavigation() {
+interface BottomNavigationProps {
+  navLinks: NavLink[];
+  className?: string;
+}
+
+export function BottomNavigation({ navLinks, className }: BottomNavigationProps) {
   const pathname = usePathname();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   return (
-    <div className='fixed bottom-0 left-0 right-0 z-50 bg-[#f8efef] lg:hidden'>
+    <div className={cn('fixed bottom-0 left-0 right-0 z-50 bg-[#f8efef] lg:hidden', className)}>
       <div className='flex items-center justify-around px-4 py-2'>
         {navLinks.map((link, index) => {
           const isActive = pathname === link.href;
@@ -53,4 +58,15 @@ export function BottomNavigation() {
       </div>
     </div>
   );
+}
+
+// Client-specific bottom navigation
+export function ClientBottomNavigation() {
+  const navLinks = [
+    { href: '/client', icon: HomeIcon, label: 'Home' },
+    { href: '/client/messages', icon: MessagesIcon, label: 'Messages' },
+    { href: '/client/journals', icon: JournalsIcon, label: 'Journals' },
+  ];
+
+  return <BottomNavigation navLinks={navLinks} />;
 }

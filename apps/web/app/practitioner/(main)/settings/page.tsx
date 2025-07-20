@@ -1,7 +1,6 @@
 'use client';
 
 import { PageHeader } from '@/components/PageHeader';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { useGetCurrentUser, useUpdateProfile } from '@/lib/hooks/use-api';
 import { getAvatarUrl, getFileUrl, getInitials, getUserDisplayName } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
@@ -138,11 +137,7 @@ export default function SettingsPage() {
       <PageHeader
         title='Profile Settings'
         showBackButton={false}
-        leftElement={
-          <div className='sm:hidden'>
-            <SidebarToggleButton />
-          </div>
-        }
+        leftElement={<div className='sm:hidden'>{/* Removed SidebarToggleButton */}</div>}
         rightElement={
           <Button
             className='bg-foreground text-background hover:bg-foreground/90 rounded-md'

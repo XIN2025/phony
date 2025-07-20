@@ -12,12 +12,12 @@ const ClientFormsPage = () => {
   const { data: currentUser } = useGetCurrentUser();
 
   return (
-    <div className='flex flex-col w-full max-w-full overflow-x-hidden pt-4 sm:pt-6 px-4 sm:px-6 md:px-8 min-w-0'>
+    <div className='flex flex-col w-full max-w-full overflow-x-hidden pt-6 sm:pt-8 lg:pt-10 px-4 sm:px-6 md:px-8 min-w-0'>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <h1
-            className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate pl-4 sm:pl-0'
-            style={{ fontFamily: "'M Serif Display', serif" }}
+            className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-semibold mb-2 sm:mb-0 truncate pl-4 sm:pl-0'
+            style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Forms
           </h1>
@@ -30,7 +30,7 @@ const ClientFormsPage = () => {
           <CardHeader className='pb-3 sm:pb-4'>
             <CardTitle
               className='flex items-center gap-2 text-base sm:text-lg lg:text-xl text-gray-800'
-              style={{ fontFamily: "'M Serif Display', serif" }}
+              style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               <FileText className='h-4 w-4 sm:h-5 sm:w-5' />
               Forms Center
@@ -47,7 +47,7 @@ const ClientFormsPage = () => {
                   <div className='min-w-0 flex-1'>
                     <h3
                       className='font-semibold text-sm sm:text-base truncate text-gray-800'
-                      style={{ fontFamily: "'M Serif Display', serif" }}
+                      style={{ fontFamily: "'DM Serif Display', serif" }}
                     >
                       Intake Form
                     </h3>

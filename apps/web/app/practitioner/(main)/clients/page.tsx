@@ -10,7 +10,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/
 import { getInitials, getAvatarUrl } from '@/lib/utils';
 import { useState } from 'react';
 import Link from 'next/link';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { useRouter } from 'next/navigation';
 import { useGetClients } from '@/lib/hooks/use-api';
 
@@ -59,7 +58,6 @@ export default function ClientsPage() {
       <>
         <header className='flex flex-col gap-4 border-b bg-transparent p-6 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex items-center gap-2'>
-            <SidebarToggleButton />
             <h1 className='text-2xl font-bold tracking-tight' style={{ fontFamily: "'DM Serif Display', serif" }}>
               Clients
             </h1>
@@ -84,8 +82,10 @@ export default function ClientsPage() {
       <>
         <header className='flex flex-col gap-4 border-b bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6'>
           <div className='flex items-center gap-2'>
-            <SidebarToggleButton />
-            <h1 className='text-xl font-bold tracking-tight  ' style={{ fontSize: '39px' }}>
+            <h1
+              className='text-xl font-bold tracking-tight text-2xl sm:text-3xl lg:text-4xl '
+              style={{ fontFamily: "'DM Serif Display', serif" }}
+            >
               Clients
             </h1>
           </div>
@@ -108,8 +108,10 @@ export default function ClientsPage() {
     <>
       <header className='flex flex-row items-center justify-between gap-3 sm:gap-4 border-b bg-transparent p-4 sm:p-6 min-w-0'>
         <div className='flex items-center gap-2 min-w-0'>
-          <SidebarToggleButton />
-          <h1 className='text-xl   font-bold tracking-tight truncate' style={{ fontSize: '32px' }}>
+          <h1
+            className='text-xl font-bold tracking-tight truncate text-2xl sm:text-3xl lg:text-4xl '
+            style={{ fontFamily: "'DM Serif Display', serif" }}
+          >
             Clients
           </h1>
         </div>
@@ -141,8 +143,8 @@ export default function ClientsPage() {
           <Card className='w-full bg-white rounded-xl sm:rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] sm:shadow-[0_15px_35px_-5px_rgba(0,0,0,0.15)] lg:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] border-0 p-0 overflow-hidden min-w-0'>
             <div className='p-4 sm:p-6 lg:p-8'>
               <h2
-                className='text-base font-semibold mb-4 sm:mb-6 lg:mb-8'
-                style={{ fontFamily: "'DM Serif Display', serif", fontSize: '26px' }}
+                className='text-base font-semibold mb-4 sm:mb-6 lg:mb-8 text-lg sm:text-xl lg:text-2xl xl:text-3xl'
+                style={{ fontFamily: "'DM Serif Display', serif" }}
               >
                 Last Active Clients
               </h2>

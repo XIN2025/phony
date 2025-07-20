@@ -5,7 +5,6 @@ import { Card, CardContent } from '@repo/ui/components/card';
 import { ArrowLeft } from 'lucide-react';
 import { useGetJournalEntry } from '@/lib/hooks/use-api';
 import React from 'react';
-import { PageHeader } from '@/components/PageHeader';
 
 export default function JournalEntryViewPage({ params }: { params: Promise<{ entryId: string }> }) {
   const router = useRouter();
@@ -39,15 +38,27 @@ export default function JournalEntryViewPage({ params }: { params: Promise<{ ent
     });
   };
   return (
-    <div className='flex flex-col w-full min-h-screen max-w-full overflow-x-hidden'>
-      <PageHeader
-        title={entry.title || 'Untitled Journal'}
-        subtitle={formatDate(entry.updatedAt || entry.createdAt)}
-        onBack={() => router.back()}
-        showBackButton
-        className='mb-4 border-b-0 px-4 sm:px-8 pt-6'
-      />
-      <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 px-2 sm:px-8 max-w-full'>
+    <div className='flex flex-col w-full pt-6 sm:pt-8 lg:pt-10 px-4 sm:px-6 lg:px-8 min-h-screen max-w-full overflow-x-hidden'>
+      {/* Page header with back button and title */}
+      <div className='flex flex-row items-center justify-between mb-6 sm:mb-8 lg:mb-10 w-full gap-2 sm:gap-3'>
+        <div className='flex items-center gap-2 min-w-0'>
+          <button
+            onClick={() => router.back()}
+            className='rounded-full p-2 hover:bg-gray-100 text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors'
+            aria-label='Back'
+          >
+            <ArrowLeft size={22} />
+          </button>
+          <h1
+            className='text-lg sm:text-2xl lg:text-3xl font-semibold mb-0 truncate'
+            style={{ fontFamily: "'DM Serif Display', serif" }}
+          >
+            {entry.title || 'Untitled Journal'}
+          </h1>
+        </div>
+        <div className='text-sm text-gray-500'>{formatDate(entry.updatedAt || entry.createdAt)}</div>
+      </div>
+      <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-full'>
         {sections.length > 0 ? (
           sections.map((section, index) => (
             <Card key={index} className='bg-white border border-gray-200 shadow-none rounded-xl'>

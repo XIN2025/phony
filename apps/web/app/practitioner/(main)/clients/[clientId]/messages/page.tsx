@@ -6,7 +6,6 @@ import { Button } from '@repo/ui/components/button';
 import { ChatContainer } from '@/components/chat';
 import { useGetClients } from '@/lib/hooks/use-api';
 import { PageHeader } from '@/components/PageHeader';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 
 export default function ClientMessagesPage({ params }: { params: Promise<{ clientId: string }> }) {
   const { data: session, status } = useSession();
@@ -61,7 +60,6 @@ export default function ClientMessagesPage({ params }: { params: Promise<{ clien
         subtitle='Direct messaging with your client'
         onBack={() => router.push('/practitioner/clients')}
         className='bg-muted/5'
-        leftElement={<SidebarToggleButton />}
       />
 
       <div className='flex-1 min-h-0 px-2 sm:px-6 md:px-14 overflow-hidden p-1'>

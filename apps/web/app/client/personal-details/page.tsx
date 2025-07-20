@@ -148,12 +148,12 @@ export default function PersonalDetailsPage() {
 
           <form onSubmit={handleNext} className='space-y-4 px-4 sm:px-8 max-w-md mx-auto w-full'>
             <div className='text-left'>
-              <h2
-                className='font-semibold mb-2'
-                style={{ color: '#7A6E5A', fontFamily: 'DM Serif Display, serif', fontSize: '26px' }}
+              <h1
+                className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
+                style={{ color: '#7A6E5A', fontFamily: 'DM Serif Display, serif' }}
               >
-                Your Profile
-              </h2>
+                Personal Details
+              </h1>
             </div>
             <div className='flex justify-center mb-6'>
               <label htmlFor='profile-photo-upload' className='cursor-pointer flex flex-col items-center'>

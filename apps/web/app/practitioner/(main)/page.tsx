@@ -13,14 +13,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar'
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
-import { Eye, Loader2, MessageSquare, Users, BookText, MailMinus, BookOpen, Repeat, Trash2 } from 'lucide-react';
+import { Eye, Loader2, MessageSquare, Users, BookText, Repeat, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/tooltip';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useGetCurrentUser } from '@/lib/hooks/use-api';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { useUnreadJournalCount } from '@/lib/hooks/use-unread-journals';
 import { toast } from 'sonner';
 
@@ -143,10 +143,9 @@ export default function PractitionerDashboard() {
     <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0'>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
-          <SidebarToggleButton />
           <h1
-            className='font-semibold mb-2 sm:mb-0 truncate'
-            style={{ fontFamily: "'DM Serif Display', serif", fontSize: '35px' }}
+            className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
+            style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Welcome Back{user?.firstName ? ` Dr. ${user.firstName}` : ''}
           </h1>
@@ -166,13 +165,13 @@ export default function PractitionerDashboard() {
               '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           }}
         >
-          <div className='flex flex-col min-w-0 relative z-10'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 mb-1 sm:mb-2'>Total Clients</span>
-            <span className='text-2xl sm:text-3xl font-bold text-gray-900'>{totalClients}</span>
-            <span className='text-xs text-gray-500 mt-1'>+2 from last month</span>
+          <div className='flex flex-col min-w-0 pl-3 relative z-10'>
+            <span className='text-2xl font-medium  mb-1 sm:mb-2'>Total Clients</span>
+            <span className='text-3xl md:text-5xl  font-bold text-gray-900'>{totalClients}</span>
+            <span className='text-xs  mt-1'>+2 from last month</span>
           </div>
-          <div className='absolute -bottom-2 sm:-bottom-4 top-2 sm:top-5 -right-2 sm:-right-4 opacity-20'>
-            <Users className='h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 text-gray-700 stroke-[0.5]' />
+          <div className='absolute -bottom-2 sm:-bottom-4 top-2 sm:top-5 -right-2 sm:-right-4 opacity-40'>
+            <Users className='h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 text-[#807171] stroke-[0.5]' />
           </div>
         </Card>
         <Card
@@ -182,9 +181,9 @@ export default function PractitionerDashboard() {
               '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           }}
         >
-          <div className='flex flex-col min-w-0 relative z-10'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 mb-1 sm:mb-2'>Unread Messages</span>
-            <span className='text-2xl sm:text-3xl font-bold text-gray-900'>
+          <div className='flex flex-col min-w-0 pl-3 relative z-10'>
+            <span className='text-2xl  font-medium  mb-1 sm:mb-2'>Unread Messages</span>
+            <span className='text-2xl md:text-5xl font-bold text-gray-900'>
               {isUnreadLoading ? (
                 <Loader2 className='inline h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground' />
               ) : (
@@ -193,8 +192,14 @@ export default function PractitionerDashboard() {
             </span>
             <span className='text-xs text-gray-700 mt-1'>&nbsp;</span>
           </div>
-          <div className='absolute top-2 sm:top-5 -bottom-2 sm:-bottom-4 -right-2 sm:-right-4 opacity-20'>
-            <MailMinus className='h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 text-gray-600 stroke-[0.5]' />
+          <div className='absolute top-2 sm:top-5 -bottom-2 sm:-bottom-4 -right-2 sm:-right-4 opacity-40'>
+            <Image
+              src='/home/sms-tracking.svg'
+              alt='SMS Tracking'
+              width={160}
+              height={133}
+              className='h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40'
+            />
           </div>
         </Card>
         <Card
@@ -204,9 +209,9 @@ export default function PractitionerDashboard() {
               '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           }}
         >
-          <div className='flex flex-col min-w-0 relative z-10'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 mb-1 sm:mb-2'>Unread Journals</span>
-            <span className='text-2xl sm:text-3xl font-bold text-gray-900'>
+          <div className='flex flex-col min-w-0 pl-3 relative z-10'>
+            <span className='text-2xl font-medium  mb-1 sm:mb-2'>Unread Journals</span>
+            <span className='text-2xl md:text-5xl font-bold text-gray-900'>
               {isUnreadJournalsLoading ? (
                 <Loader2 className='inline h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground' />
               ) : (
@@ -215,8 +220,14 @@ export default function PractitionerDashboard() {
             </span>
             <span className='text-xs text-gray-500 mt-1'>&nbsp;</span>
           </div>
-          <div className='absolute -bottom-2 sm:-bottom-4 -right-3 sm:-right-6 top-2 sm:top-5 opacity-20'>
-            <BookOpen className='h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 text-gray-700 stroke-[0.5]' />
+          <div className='absolute -bottom-2 sm:-bottom-4 -right-3 sm:-right-6 top-2 sm:top-5 opacity-40'>
+            <Image
+              src='/home/book.svg'
+              alt='Book'
+              width={84}
+              height={80}
+              className='h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40'
+            />
           </div>
         </Card>
       </div>
@@ -229,8 +240,8 @@ export default function PractitionerDashboard() {
       >
         <CardContent className='p-4 sm:p-6 lg:p-8'>
           <h2
-            className='text-base   font-semibold mb-4 sm:mb-6 lg:mb-8'
-            style={{ fontFamily: "'DM Serif Display', serif", fontSize: '26px' }}
+            className='text-base font-semibold mb-4 sm:mb-6 lg:mb-8 text-lg sm:text-xl lg:text-2xl xl:text-3xl'
+            style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Last Active Clients
           </h2>

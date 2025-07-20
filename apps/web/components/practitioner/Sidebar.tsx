@@ -121,11 +121,13 @@ export const SidebarContent = ({
   pathname,
   signOutCallbackUrl = '/practitioner/auth',
   settingsPath = '/practitioner/settings',
+  homePath = '/',
 }: {
   navLinks: Array<{ href: string; icon: React.ElementType; label: string }>;
   pathname: string;
   signOutCallbackUrl?: string;
   settingsPath?: string;
+  homePath?: string;
 }) => {
   const { setSidebarOpen } = useSidebar();
   const { data: user, isLoading } = useGetCurrentUser();
@@ -173,7 +175,7 @@ export const SidebarContent = ({
     <div className='flex h-full flex-col font-sans bg-white lg:bg-transparent shadow-lg sm:shadow-none border-r sm:border-none min-w-0 rounded-bl-2xl'>
       <div className='flex h-[56px] sm:h-[64px] lg:h-[68px] items-center px-6 sm:px-8 lg:px-8 xl:px-10 mb-4 sm:mb-6 lg:mb-8'>
         <Link
-          href='/'
+          href={homePath}
           className='flex items-center justify-start text-xl sm:text-2xl font-logo font-semibold text-black min-w-0'
         >
           <ContinuumIcon />

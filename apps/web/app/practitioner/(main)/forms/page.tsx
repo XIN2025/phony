@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import { useGetIntakeForms, useDeleteIntakeForm } from '@/lib/hooks/use-api';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 
 export default function FormsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -34,7 +33,6 @@ export default function FormsPage() {
       <div className='flex flex-col gap-0 border-b px-3 sm:px-4 lg:px-6 xl:px-8 pt-3 sm:pt-4 lg:pt-6 pb-2 sm:pb-3 lg:pb-4'>
         <div className='flex flex-col sm:flex-row sm:items-center bg-transparent sm:justify-between gap-3 sm:gap-4'>
           <div className='flex items-center gap-2 min-w-0'>
-            <SidebarToggleButton />
             <h1
               className='text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight truncate'
               style={{ fontFamily: "'DM Serif Display', serif" }}

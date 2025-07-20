@@ -9,7 +9,6 @@ import { Button } from '@repo/ui/components/button';
 import { Edit2, FileText, ArrowLeft } from 'lucide-react';
 import { TaskEditorDialog } from '@/components/practitioner/TaskEditorDialog';
 import { PageHeader } from '@/components/PageHeader';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 
 export default function ActionPlanSummaryPage({ params }: { params: Promise<{ clientId: string; planId: string }> }) {
   const { clientId, planId } = use(params);

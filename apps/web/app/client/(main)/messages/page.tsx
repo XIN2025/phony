@@ -34,7 +34,7 @@ const ClientMessagesPage = () => {
   }, []);
 
   return (
-    <div className='flex flex-col w-full lg:pt-10 h-full lg:justify-center lg:items-center overflow-hidden'>
+    <div className='flex flex-col w-full pt-6 sm:pt-8 lg:pt-10 px-4 sm:px-6 lg:px-8 h-full overflow-hidden'>
       {/* Chat container that takes calculated available space */}
       <div className='flex-1 min-h-0 w-full lg:w-full lg:max-h-[80vh] overflow-hidden'>
         <ChatContainer height={chatHeight} className='w-full h-full lg:h-auto lg:max-h-[80vh] overflow-hidden' />

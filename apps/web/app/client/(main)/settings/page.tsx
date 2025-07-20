@@ -136,7 +136,7 @@ export default function ClientSettingsPage() {
   };
 
   return (
-    <div className='py-0 sm:py-12 px-4 sm:px-8 w-full'>
+    <div className='pt-6 sm:pt-8 lg:pt-10 px-4 sm:px-8 w-full'>
       <div className='flex items-center justify-between mb-6'>
         <div className='flex items-center gap-4'>
           <h1

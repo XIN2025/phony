@@ -6,7 +6,6 @@ import { useGetClient, useGetClientIntakeForm } from '@/lib/hooks/use-api';
 import { getAvatarUrl, getInitials, getFileUrl } from '@/lib/utils';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 
 export default function ClientProfilePage({ params }: { params: Promise<{ clientId: string }> }) {
   const [clientId, setClientId] = React.useState<string>('');
@@ -52,12 +51,12 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
         </div>
         {/* Heading row */}
         <div className='flex items-center mb-6'>
-          <h1 className='  tracking-tight' style={{ fontFamily: "'DM Serif Display', serif", fontSize: '32px' }}>
+          <h1
+            className='tracking-tight text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
+            style={{ fontFamily: "'DM Serif Display', serif" }}
+          >
             Client Profile
           </h1>
-          <div className='ml-auto'>
-            <SidebarToggleButton />
-          </div>
         </div>
         {/* Top section: Two-column grid */}
         <div className='grid grid-cols-1 md:grid-cols-2 px-2 md:px-8 gap-6 max-w-full'>

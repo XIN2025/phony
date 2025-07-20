@@ -3,7 +3,7 @@ import { SidebarContent, HomeIcon, MessagesIcon, JournalsIcon } from '@/componen
 import { SidebarProvider } from '@/context/SidebarContext';
 import { useClientAuth } from '@/lib/hooks/use-client-auth';
 import { usePathname } from 'next/navigation';
-import { BottomNavigation } from '@/components/client/BottomNavigation';
+import { ClientBottomNavigation } from '@/components/client/BottomNavigation';
 import { ClientHeader } from '@/components/client/ClientHeader';
 
 const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
@@ -46,13 +46,14 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
       {/* Gradient background - matching practitioner style */}
       <div className='absolute inset-0 z-0 bg-gradient-to-r from-red-50 via-orange-30 to-blue-50' />
 
-      <div className='relative z-20 grid h-screen w-full lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr]'>
-        <div className='hidden bg-transparent lg:block'>
+      <div className='relative z-20 grid h-screen w-full lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] 2xl:grid-cols-[360px_1fr]'>
+        <div className='hidden lg:block h-full'>
           <SidebarContent
             navLinks={navLinks}
             pathname={pathname}
             signOutCallbackUrl='/'
             settingsPath='/client/settings'
+            homePath='/client'
           />
         </div>
         <div className='flex flex-1 flex-col min-w-0 h-screen'>
@@ -64,7 +65,7 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
           <main className='flex-1 flex justify-center items-start  bg-transparent min-w-0 pb-16 lg:pb-0 overflow-y-auto'>
             <div className='w-full min-w-0'>{children}</div>
           </main>
-          <BottomNavigation />
+          <ClientBottomNavigation />
         </div>
       </div>
     </div>

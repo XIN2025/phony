@@ -404,7 +404,7 @@ const ClientPage = () => {
   return (
     <div className='w-full'>
       {/* Welcome Section */}
-      <div className='px-4 sm:px-6 lg:px-8 pt-6 pb-4'>
+      <div className='px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 pb-4'>
         <div className='mt-2'>
           <h1
             className='font-bold text-gray-900 text-2xl lg:text-4xl'

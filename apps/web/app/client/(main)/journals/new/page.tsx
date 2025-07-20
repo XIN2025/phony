@@ -194,7 +194,7 @@ const JournalEditors = () => {
   const toolbarId = 'quill-toolbar-main';
 
   return (
-    <div className='flex flex-col w-full pt-0 sm:pt-6 px-2 sm:px-4 lg:px-6 xl:px-8 min-w-0 max-w-full'>
+    <div className='flex flex-col w-full pt-6 sm:pt-8 lg:pt-10 px-2 sm:px-4 lg:px-6 xl:px-8 min-w-0 max-w-full'>
       <div className='flex flex-row items-center justify-between mb-4 sm:mb-8 w-full gap-2 sm:gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <Link

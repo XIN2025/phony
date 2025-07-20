@@ -192,12 +192,12 @@ export default function ClientOtpPage() {
               <img src='/Continuum.svg' alt='Continuum' style={{ height: 32, width: 'auto' }} />
             </div>
           </div>
-          <h2
-            className='font-semibold mb-1 w-full text-left'
-            style={{ color: '#7A6E5A', fontFamily: 'DM Serif Display, serif', fontSize: '24px' }}
+          <h1
+            className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
+            style={{ color: '#7A6E5A', fontFamily: 'DM Serif Display, serif' }}
           >
-            Confirm your email
-          </h2>
+            Verify Your Email
+          </h1>
           <p className='text-sm text-muted-foreground mb-8 w-full text-left'>
             Please enter the code we sent to
             <br />

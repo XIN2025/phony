@@ -82,7 +82,10 @@ export default function JournalsPage() {
     <div className='flex flex-col w-full max-w-full overflow-x-hidden px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 min-w-0'>
       <div className='flex flex-row items-center justify-between mb-6 sm:mb-8 lg:mb-10 w-full gap-4 sm:gap-6'>
         <div className='flex items-center gap-2 min-w-0'>
-          <h1 className='text-2xl font-semibold mb-0 truncate' style={{ fontFamily: "'M Serif Display', serif" }}>
+          <h1
+            className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-semibold mb-0 truncate'
+            style={{ fontFamily: "'DM Serif Display', serif" }}
+          >
             Journal
           </h1>
         </div>

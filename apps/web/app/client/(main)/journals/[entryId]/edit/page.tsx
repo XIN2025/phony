@@ -24,7 +24,6 @@ import {
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { useGetJournalEntry, useUpdateJournalEntry, useGetCurrentUser } from '@/lib/hooks/use-api';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -252,7 +251,10 @@ const JournalEditor = ({ entryId }: { entryId: string }) => {
           >
             <ArrowLeft size={22} />
           </Link>
-          <h1 className='text-2xl font-semibold mb-0 truncate' style={{ fontFamily: "'DM Serif Display', serif" }}>
+          <h1
+            className='text-lg sm:text-2xl lg:text-3xl font-semibold mb-0 truncate'
+            style={{ fontFamily: "'DM Serif Display', serif" }}
+          >
             Journals
           </h1>
         </div>
