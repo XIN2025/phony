@@ -2,14 +2,14 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Home, MessageCircle, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { HomeIcon, MessagesIcon, JournalsIcon } from '@/components/practitioner/Sidebar';
 
 const navLinks = [
-  { href: '/client', icon: Home, label: 'Home' },
-  { href: '/client/messages', icon: MessageCircle, label: 'Messages' },
-  { href: '/client/journals', icon: FileText, label: 'Journals' },
+  { href: '/client', icon: HomeIcon, label: 'Home' },
+  { href: '/client/messages', icon: MessagesIcon, label: 'Messages' },
+  { href: '/client/journals', icon: JournalsIcon, label: 'Journals' },
 ];
 
 export function BottomNavigation() {
@@ -32,14 +32,17 @@ export function BottomNavigation() {
               onMouseLeave={() => setHoveredIndex(null)}
               className={cn(
                 'flex items-center justify-center py-2 px-3 rounded-lg',
-                isActive ? 'bg-[#807171] text-white gap-2' : 'text-gray-600 hover:text-gray-900 gap-0',
+                isActive ? 'bg-[#807171] text-[#FDF9F5] gap-2' : 'text-gray-600 hover:text-gray-900 gap-0',
               )}
             >
-              <IconComponent className={cn('h-5 w-5', isActive ? 'text-white' : 'text-gray-600')} />
+              <IconComponent
+                className={cn('h-5 w-5', isActive ? 'text-[#FDF9F5]' : 'text-gray-600')}
+                isActive={isActive}
+              />
               <span
                 className={cn(
                   'text-xs font-medium whitespace-nowrap',
-                  isActive ? 'text-white opacity-100 w-auto' : 'text-gray-600 opacity-0 w-0',
+                  isActive ? 'text-[#FDF9F5] opacity-100 w-auto' : 'text-gray-600 opacity-0 w-0',
                 )}
               >
                 {link.label}
