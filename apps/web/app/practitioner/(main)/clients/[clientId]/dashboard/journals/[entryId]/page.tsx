@@ -61,7 +61,7 @@ export default function PractitionerJournalEntryViewPage({
               <CardContent className='p-4 min-h-[80px] sm:min-h-[120px] flex flex-col items-start'>
                 <h3
                   className='text-sm font-semibold text-gray-900 mb-2'
-                  style={{ fontFamily: "'Playfair Display', serif" }}
+                  style={{ fontFamily: "'DM Serif Display', serif" }}
                 >
                   {section.title}
                 </h3>

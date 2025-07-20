@@ -54,6 +54,28 @@ export default function ResponseSentPage() {
     }
   };
 
+  // Add a more reliable auto-redirect mechanism
+  React.useEffect(() => {
+    if (status === 'authenticated' && session?.user && !isRedirecting) {
+      const timer = setTimeout(async () => {
+        try {
+          const updatedSession = await update();
+          if (updatedSession?.user?.clientStatus === 'INTAKE_COMPLETED') {
+            router.replace('/client');
+          } else {
+            // Fallback to hard navigation
+            window.location.href = '/client';
+          }
+        } catch (error) {
+          console.warn('Auto-redirect failed:', error);
+          window.location.href = '/client';
+        }
+      }, 3000); // Increased to 3 seconds for better reliability
+
+      return () => clearTimeout(timer);
+    }
+  }, [status, session, isRedirecting, update, router]);
+
   return (
     <AuthLayout>
       <AuthHeader title='Response Sent' />

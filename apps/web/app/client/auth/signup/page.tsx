@@ -170,7 +170,7 @@ export default function ClientSignUpPage() {
         <div className='flex items-center w-full' style={{ minHeight: 40, padding: 0 }}>
           <span
             className='font-bold'
-            style={{ fontFamily: 'Playfair Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
+            style={{ fontFamily: 'DM Serif Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
           >
             Continuum
           </span>
@@ -187,7 +187,7 @@ export default function ClientSignUpPage() {
             <div className='flex items-center w-full' style={{ minHeight: 40, padding: 0 }}>
               <span
                 className='font-bold'
-                style={{ fontFamily: 'Playfair Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
+                style={{ fontFamily: 'DM Serif Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
               >
                 Continuum
               </span>
@@ -196,7 +196,7 @@ export default function ClientSignUpPage() {
 
           <form onSubmit={handleNext} className='space-y-6 w-full'>
             <div>
-              <Label htmlFor='email' className='block text-sm font-medium mb-1'>
+              <Label htmlFor='email' className='block text-sm font-medium mb-1' style={{ color: '#8C8B8B' }}>
                 Email ID
               </Label>
               <Input
@@ -206,7 +206,7 @@ export default function ClientSignUpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={!!invitationData || isSendingOtp}
-                className='mt-1'
+                className='mt-1 bg-zinc-50 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
                 autoComplete='email'
                 required
               />

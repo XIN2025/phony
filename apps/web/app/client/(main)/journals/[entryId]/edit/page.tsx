@@ -240,34 +240,10 @@ const JournalEditor = ({ entryId }: { entryId: string }) => {
     );
   }
 
-  // Mobile header - only on small screens
-  const mobileHeader = (
-    <div className='flex items-center justify-between px-4 pt-2 pb-2 mb-2 w-full sm:hidden'>
-      <div className='flex items-center'>
-        <SidebarToggleButton />
-        <Link
-          href='/client'
-          className='ml-3 text-xl font-bold text-primary focus:outline-none'
-          style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}
-        >
-          Continuum
-        </Link>
-      </div>
-      <Avatar className='h-10 w-10 ml-2'>
-        <AvatarImage
-          src={getAvatarUrl(currentUser?.avatarUrl, currentUser)}
-          alt={getUserDisplayName(currentUser) || 'User'}
-        />
-        <AvatarFallback>{getInitials(currentUser || 'U')}</AvatarFallback>
-      </Avatar>
-    </div>
-  );
-
   return (
-    <div className='flex flex-col w-full pt-0 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0 max-w-full'>
-      {mobileHeader}
+    <div className='flex flex-col w-full pt-6 sm:pt-8 lg:pt-10 px-4 sm:px-6 lg:px-8 min-w-0 max-w-full'>
       {/* Page header with back button and title */}
-      <div className='flex flex-row items-center justify-between mb-4 sm:mb-8 w-full gap-2 sm:gap-3'>
+      <div className='flex flex-row items-center justify-between mb-6 sm:mb-8 lg:mb-10 w-full gap-2 sm:gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <Link
             href='/client/journals'
@@ -276,15 +252,14 @@ const JournalEditor = ({ entryId }: { entryId: string }) => {
           >
             <ArrowLeft size={22} />
           </Link>
-          <h1 className='text-lg sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate'>
-            <span className='block sm:hidden'>Edit Entry</span>
-            <span className='hidden sm:inline'>Edit Journal Entry</span>
+          <h1 className='text-2xl font-semibold mb-0 truncate' style={{ fontFamily: "'DM Serif Display', serif" }}>
+            Journals
           </h1>
         </div>
         <Button
           onClick={handleSaveJournal}
           disabled={updateJournalMutation.isPending}
-          className='bg-black text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium shadow-sm hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 w-auto flex items-center justify-center ml-2'
+          className='bg-black text-white rounded-full px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-medium shadow-sm hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 w-auto flex items-center justify-center'
         >
           {updateJournalMutation.isPending ? (
             <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
@@ -346,7 +321,12 @@ const JournalEditor = ({ entryId }: { entryId: string }) => {
                 <polyline points='0,0 32,0 32,32' fill='none' stroke='#d1d5db' strokeWidth='2' />
               </svg>
             </div>
-            <div className='font-medium text-sm text-gray-700 mb-2 select-none'>{NOTE_TITLES[i]}</div>
+            <div
+              className='font-medium text-sm text-gray-700 mb-2 select-none'
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            >
+              {NOTE_TITLES[i]}
+            </div>
             {activeIndex === i ? (
               <>
                 <div className='flex-1 min-w-0'>

@@ -15,8 +15,8 @@ export const SignupStepper: React.FC<SignupStepperProps> = ({ totalSteps, curren
         return (
           <div
             key={idx}
-            className={`h-0.5 rounded-full transition-all duration-300 flex-1 ${
-              isActive || isCompleted ? 'bg-gray-700' : 'bg-gray-300'
+            className={`h-1 rounded-full transition-all duration-300 flex-1 ${
+              isActive || isCompleted ? 'bg-[#807171]' : 'bg-gray-300'
             }`}
             style={{
               marginRight: idx < totalSteps - 1 ? '8px' : '0',

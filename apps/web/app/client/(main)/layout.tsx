@@ -1,21 +1,23 @@
 'use client';
-import { SidebarContent } from '@/components/practitioner/Sidebar';
-import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
+import { SidebarContent, HomeIcon, MessagesIcon, JournalsIcon } from '@/components/practitioner/Sidebar';
+import { SidebarProvider } from '@/context/SidebarContext';
 import { useClientAuth } from '@/lib/hooks/use-client-auth';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/sheet';
-import { Book, Home, MessageSquare } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { BottomNavigation } from '@/components/client/BottomNavigation';
+import { ClientHeader } from '@/components/client/ClientHeader';
 
 const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
-  const { sidebarOpen, setSidebarOpen } = useSidebar();
   const pathname = usePathname();
   const { isLoading, isAuthenticated } = useClientAuth();
 
   const navLinks = [
-    { href: '/client', icon: Home, label: 'Home' },
-    { href: '/client/messages', icon: MessageSquare, label: 'Messages' },
-    { href: '/client/journals', icon: Book, label: 'Journals' },
+    { href: '/client', icon: HomeIcon, label: 'Home' },
+    { href: '/client/messages', icon: MessagesIcon, label: 'Messages' },
+    { href: '/client/journals', icon: JournalsIcon, label: 'Journals' },
   ];
+
+  // Check if we're on the messages page
+  const isMessagesPage = pathname === '/client/messages';
 
   if (isLoading) {
     return (
@@ -40,11 +42,11 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className='relative min-h-screen w-full max-w-full overflow-x-hidden'>
+    <div className={`relative h-screen w-full max-w-full ${isMessagesPage ? 'overflow-hidden' : 'overflow-x-hidden'}`}>
       {/* Gradient background - matching practitioner style */}
       <div className='absolute inset-0 z-0 bg-gradient-to-r from-red-50 via-orange-30 to-blue-50' />
 
-      <div className='relative z-20 grid min-h-screen w-full lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr]'>
+      <div className='relative z-20 grid h-screen w-full lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr]'>
         <div className='hidden bg-transparent lg:block'>
           <SidebarContent
             navLinks={navLinks}
@@ -53,26 +55,16 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
             settingsPath='/client/settings'
           />
         </div>
-        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent
-            side='left'
-            className='w-[70vw] max-w-xs sm:w-[280px] sm:max-w-sm md:w-[320px] p-0 bg-transparent'
-          >
-            <SheetHeader className='sr-only'>
-              <SheetTitle>Navigation Menu</SheetTitle>
-            </SheetHeader>
-            <SidebarContent
-              navLinks={navLinks}
-              pathname={pathname}
-              signOutCallbackUrl='/'
-              settingsPath='/client/settings'
-            />
-          </SheetContent>
-        </Sheet>
-        <div className='flex flex-1 flex-col min-w-0'>
-          <main className='flex-1 flex justify-center items-start bg-transparent min-w-0'>
+        <div className='flex flex-1 flex-col min-w-0 h-screen'>
+          {/* Fixed header for mobile only */}
+          <div className='lg:hidden'>
+            <ClientHeader />
+          </div>
+
+          <main className='flex-1 flex justify-center items-start  bg-transparent min-w-0 pb-16 lg:pb-0 overflow-y-auto'>
             <div className='w-full min-w-0'>{children}</div>
           </main>
+          <BottomNavigation />
         </div>
       </div>
     </div>

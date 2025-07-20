@@ -4,15 +4,13 @@ import { User } from 'lucide-react';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
+  variant?: 'practitioner' | 'client';
 }
 
-export function AuthLayout({ children }: AuthLayoutProps) {
+export function AuthLayout({ children, variant = 'practitioner' }: AuthLayoutProps) {
   return (
     <div
-      className='fixed inset-0 flex min-h-screen w-screen overflow-hidden'
-      style={{
-        background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
-      }}
+      className={`fixed inset-0 flex min-h-screen w-screen overflow-hidden ${variant === 'client' ? 'client-auth-gradient' : 'auth-gradient'}`}
     >
       {/* Left side with image */}
       <div className='relative hidden h-full min-h-screen w-1/2 lg:block'>
@@ -30,17 +28,11 @@ export function AuthLayout({ children }: AuthLayoutProps) {
 
       {/* Right side with content */}
       <div
-        className='flex min-h-screen w-full flex-col lg:w-1/2'
-        style={{
-          background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
-        }}
+        className={`flex min-h-screen w-full flex-col lg:w-1/2 ${variant === 'client' ? 'client-auth-gradient' : 'auth-gradient'}`}
       >
         {/* Main content area */}
         <div
-          className='flex flex-1 flex-col items-center justify-center px-3 py-8 sm:px-4 sm:py-16'
-          style={{
-            background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
-          }}
+          className={`flex flex-1 flex-col items-center justify-start px-3 py-8 sm:justify-center sm:px-4 sm:py-16 ${variant === 'client' ? 'client-auth-gradient' : 'auth-gradient'}`}
         >
           <div className='w-full max-w-sm space-y-6 sm:max-w-md sm:space-y-8'>{children}</div>
         </div>
@@ -53,7 +45,7 @@ export function AuthHeader({ title }: { title: string }) {
   return (
     <>
       <div className='mb-6 text-center sm:mb-8'>
-        <h1 className='mb-2 text-xl font-bold sm:text-2xl' style={{ fontFamily: "'Playfair Display', serif" }}>
+        <h1 className='mb-2 text-xl font-bold sm:text-2xl' style={{ fontFamily: "'DM Serif Display', serif" }}>
           Welcome to Continuum
         </h1>
         <p className='text-muted-foreground text-sm sm:text-base'>
@@ -63,7 +55,7 @@ export function AuthHeader({ title }: { title: string }) {
       <div className='text-center'>
         <h2
           className='mb-4 text-base font-semibold sm:mb-6 sm:text-lg'
-          style={{ fontFamily: "'Playfair Display', serif" }}
+          style={{ fontFamily: "'DM Serif Display', serif" }}
         >
           {title}
         </h2>

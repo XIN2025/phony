@@ -250,7 +250,10 @@ export default function IntakePage() {
             console.warn('Failed to update session after intake submission:', error);
           }
 
-          router.replace(`/client/response-sent?token=${token}`);
+          // Use a small delay to ensure session is properly updated before redirect
+          setTimeout(() => {
+            router.replace(`/client/response-sent?token=${token}`);
+          }, 500);
         },
         onError: (error: any) => {
           if (processingTimeoutRef.current) {
@@ -611,7 +614,7 @@ export default function IntakePage() {
           {/* Intake Survey heading (always below header) */}
           <h2
             className='text-xl font-semibold mb-3 w-full text-left relative z-10'
-            style={{ color: '#7A6E5A', fontFamily: 'Playfair Display, serif' }}
+            style={{ color: '#7A6E5A', fontFamily: 'DM Serif Display, serif' }}
           >
             {form?.title || 'Intake Survey'}
           </h2>

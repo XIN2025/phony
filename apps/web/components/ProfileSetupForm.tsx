@@ -128,9 +128,9 @@ export function ProfileSetupForm({ onSuccess, stepper }: ProfileSetupFormProps) 
         <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
           <div className='flex flex-col items-center space-y-4'>
             <div className='relative'>
-              <Avatar className='h-24 w-24'>
+              <Avatar className='h-32 w-32'>
                 <AvatarImage src={previewUrl || getAvatarUrl(session.user.avatarUrl)} />
-                <AvatarFallback className='text-lg'>{currentInitials}</AvatarFallback>
+                <AvatarFallback className='text-2xl'>{currentInitials}</AvatarFallback>
               </Avatar>
               <Button
                 type='button'

@@ -3,5 +3,5 @@
 import { AuthLayout } from '@repo/ui/components/auth-layout';
 
 export default function ClientAuthLayout({ children }: { children: React.ReactNode }) {
-  return <AuthLayout>{children}</AuthLayout>;
+  return <AuthLayout variant='client'>{children}</AuthLayout>;
 }

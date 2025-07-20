@@ -201,14 +201,16 @@ export default function PractitionerAuthPage() {
           control={form.control}
           name='email'
           render={({ field }) => (
-            <FormItem className='space-y-3'>
-              <FormLabel className='text-sm font-medium text-gray-700'>Email</FormLabel>
+            <FormItem>
+              <FormLabel className='text-sm font-medium text-gray-700' style={{ color: '#8C8B8B' }}>
+                Email ID
+              </FormLabel>
               <FormControl>
                 <Input
                   {...field}
                   type='email'
                   placeholder='Enter your email'
-                  className='w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                  className='w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent  bg-zinc-50'
                 />
               </FormControl>
               <FormMessage />
@@ -225,27 +227,50 @@ export default function PractitionerAuthPage() {
 
   if (status === 'loading') {
     return (
-      <div className='flex items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin' />
+      <div className='min-h-screen flex flex-col lg:flex-row auth-gradient'>
+        {/* Left side - Image section */}
+        <div className='hidden lg:flex lg:w-3/5 relative overflow-hidden'>
+          <div
+            className='absolute inset-0 bg-cover bg-center bg-no-repeat'
+            style={{ backgroundImage: 'url(/auth.jpg)' }}
+          ></div>
+          <div className='absolute inset-0 bg-black/20'></div>
+        </div>
+
+        {/* Right side - Loading section */}
+        <div className='flex-1 lg:w-2/5 flex flex-col min-h-screen auth-gradient'>
+          <div className='flex-1 flex flex-col justify-center items-center px-4'>
+            <Loader2 className='h-8 w-8 animate-spin' />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (status === 'authenticated') {
     return (
-      <div className='flex items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin' />
+      <div className='min-h-screen flex flex-col lg:flex-row auth-gradient'>
+        {/* Left side - Image section */}
+        <div className='hidden lg:flex lg:w-3/5 relative overflow-hidden'>
+          <div
+            className='absolute inset-0 bg-cover bg-center bg-no-repeat'
+            style={{ backgroundImage: 'url(/auth.jpg)' }}
+          ></div>
+          <div className='absolute inset-0 bg-black/20'></div>
+        </div>
+
+        {/* Right side - Loading section */}
+        <div className='flex-1 lg:w-2/5 flex flex-col min-h-screen auth-gradient'>
+          <div className='flex-1 flex flex-col justify-center items-center px-4'>
+            <Loader2 className='h-8 w-8 animate-spin' />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div
-      className='min-h-screen flex flex-col lg:flex-row'
-      style={{
-        background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
-      }}
-    >
+    <div className='min-h-screen flex flex-col lg:flex-row auth-gradient'>
       {/* Left side - Image section */}
       <div className='hidden lg:flex lg:w-3/5 relative overflow-hidden'>
         <div
@@ -263,34 +288,37 @@ export default function PractitionerAuthPage() {
       </div>
 
       {/* Right side - Form section */}
-      <div
-        className='flex-1 lg:w-2/5 flex flex-col min-h-screen'
-        style={{
-          background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
-        }}
-      >
+      <div className='flex-1 lg:w-2/5 flex flex-col min-h-screen auth-gradient'>
         {/* Main content area */}
-        <div
-          className='flex-1 flex flex-col justify-start items-center px-4 pt-16 pb-32'
-          style={{
-            background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
-          }}
-        >
+        <div className='flex-1 flex flex-col justify-start items-center px-4 pt-16 pb-32 auth-gradient'>
           <div className='w-full max-w-md space-y-8'>
             {/* Header content */}
-            <div className='text-center space-y-4'>
-              <h1
-                className='text-3xl font-bold tracking-tight text-[#8d8080]'
-                style={{ fontFamily: "'Playfair Display', serif" }}
-              >
-                Welcome to Continuum
-              </h1>
-              <p className='text-base text-gray-700 leading-relaxed'>
-                Make the time between sessions count — along with the sessions themselves
-              </p>
-              <div className='mt-8'>
-                <h2 className='text-2xl tracking-tighter text-gray-800 mb-2'>Sign In</h2>
-                <p className='text-sm text-gray-600'>
+            <div className='w-full text-center space-y-6 auth-header'>
+              {/* Welcome section - single div for alignment */}
+              <div className='w-full text-center mt-4  '>
+                <h1
+                  className='font-bold tracking-tight text-[#8d8080] text-center'
+                  style={{ fontFamily: "'DM Serif Display', serif", fontSize: '40px', textAlign: 'center' }}
+                >
+                  Welcome to Continuum
+                </h1>
+                <p
+                  className='text-gray-700 px-7 leading-relaxed text-center'
+                  style={{ fontSize: '20px', textAlign: 'center' }}
+                >
+                  Make the time between sessions count — along with the sessions themselves
+                </p>
+              </div>
+
+              {/* Content section - single div for all content below */}
+              <div className='w-full text-center space-y-2'>
+                <h2
+                  className='tracking-tighter text-gray-800 text-center'
+                  style={{ fontSize: '28px', textAlign: 'center' }}
+                >
+                  Sign In
+                </h2>
+                <p className='text-sm text-gray-600 text-center' style={{ textAlign: 'center' }}>
                   {showOTP
                     ? `Please enter the code we sent to ${email}`
                     : "We'll send you a code to this email to verify your sign in"}

@@ -18,7 +18,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
           h1: ({ children }) => (
             <h1
               className='text-lg font-bold text-gray-900 mb-4 mt-6 first:mt-0'
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               {children}
             </h1>
@@ -26,7 +26,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
           h2: ({ children }) => (
             <h2
               className='text-base font-semibold text-gray-800 mb-3 mt-5 first:mt-0'
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               {children}
             </h2>
@@ -34,7 +34,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
           h3: ({ children }) => (
             <h3
               className='text-sm font-medium text-gray-700 mb-2 mt-4 first:mt-0'
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               {children}
             </h3>
@@ -42,7 +42,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
           h4: ({ children }) => (
             <h4
               className='text-xs font-medium text-gray-700 mb-2 mt-3 first:mt-0'
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               {children}
             </h4>

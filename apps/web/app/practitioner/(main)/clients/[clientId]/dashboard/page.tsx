@@ -570,7 +570,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     <TabsContent value='plans' className='mt-0'>
       <div className='flex flex-col gap-6'>
         <div className='flex justify-between items-center mb-2'>
-          <h2 className='text-lg sm:text-xl font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+          <h2 className='text-lg sm:text-xl font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
             Plans
           </h2>
           <input
@@ -766,7 +766,10 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-full'>
             <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-6 flex flex-col items-start gap-2'>
               <div className='flex items-center justify-between w-full'>
-                <div className='text-[2rem] font-extrabold' style={{ fontFamily: "'Playfair Display', serif" }}>
+                <div
+                  className='text-[2rem] font-extrabold'
+                  style={{ fontFamily: "'DM Serif Display', serif", color: '#807171' }}
+                >
                   {completion}%
                 </div>
                 <ClipboardList className='h-10 w-10 text-[#807171]' />
@@ -775,7 +778,10 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
             </div>
             <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-6 flex flex-col items-start gap-2'>
               <div className='flex items-center justify-between w-full'>
-                <div className='text-[2rem] font-extrabold' style={{ fontFamily: "'Playfair Display', serif" }}>
+                <div
+                  className='text-[2rem] font-extrabold'
+                  style={{ fontFamily: "'DM Serif Display', serif", color: '#807171' }}
+                >
                   {filteredJournals.length}
                 </div>
                 <BookText className='h-10 w-10 text-[#807171]' />
@@ -786,7 +792,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-full'>
             <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-0 flex-1 min-w-0'>
               <div className='p-6 pb-2'>
-                <div className='text-2xl font-bold mb-4' style={{ fontFamily: "'Playfair Display', serif" }}>
+                <div className='text-2xl font-bold mb-4' style={{ fontFamily: "'DM Serif Display', serif" }}>
                   Last Week's Overview
                 </div>
               </div>
@@ -873,7 +879,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2'>
                 <div
                   className='text-2xl font-bold flex items-center'
-                  style={{ fontFamily: "'Playfair Display', serif" }}
+                  style={{ fontFamily: "'DM Serif Display', serif" }}
                 >
                   Snapshot
                   {isSummaryCached && (
@@ -940,7 +946,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     <TabsContent value='sessions' className='mt-0'>
       <div className='flex flex-col gap-6'>
         <div className='flex justify-between items-center mb-2'>
-          <h2 className='text-lg sm:text-xl font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+          <h2 className='text-lg sm:text-xl font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
             Past Sessions
           </h2>
         </div>
@@ -1110,7 +1116,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               <div className='flex flex-row items-center justify-between gap-2 mt-2'>
                 <h1
                   className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'
-                  style={{ fontFamily: "'Playfair Display', serif" }}
+                  style={{ fontFamily: "'DM Serif Display', serif" }}
                 >
                   Edit Action Plan
                 </h1>
@@ -1232,7 +1238,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                 <div className='flex flex-col'>
                   <h1
                     className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'DM Serif Display', serif" }}
                   >
                     {client.firstName} {client.lastName}
                   </h1>

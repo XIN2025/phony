@@ -101,7 +101,7 @@ export default function LandingPage() {
         <div className='max-w-7xl mx-auto text-center'>
           <motion.h1
             className='text-3xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight break-words'
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "'DM Serif Display', serif" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
@@ -241,7 +241,7 @@ export default function LandingPage() {
                     </div>
                     <CardTitle
                       className='text-xl font-semibold text-foreground'
-                      style={{ fontFamily: "'Playfair Display', serif" }}
+                      style={{ fontFamily: "'DM Serif Display', serif" }}
                     >
                       {feature.title}
                     </CardTitle>
@@ -288,7 +288,7 @@ export default function LandingPage() {
                 <CardHeader>
                   <CardTitle
                     className='text-2xl font-bold text-foreground flex items-center gap-3'
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'DM Serif Display', serif" }}
                   >
                     <Lock className='w-6 h-6 text-foreground' />
                     Complete Control
@@ -321,7 +321,7 @@ export default function LandingPage() {
                 <CardHeader>
                   <CardTitle
                     className='text-2xl font-bold text-foreground flex items-center gap-3'
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'DM Serif Display', serif" }}
                   >
                     <Heart className='w-6 h-6 text-foreground' />
                     Ethical AI Design

@@ -37,7 +37,7 @@ export default function FormsPage() {
             <SidebarToggleButton />
             <h1
               className='text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight truncate'
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               My Forms
             </h1>
@@ -67,23 +67,31 @@ export default function FormsPage() {
                 placeholder='Search Forms'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-10 rounded-full border border-[#e5e7eb] bg-white shadow-sm focus:ring-2 focus:ring-black/10 text-sm sm:text-base h-10 sm:h-12'
+                className='pl-10 rounded-full border border-[#e5e7eb] bg-white/80 shadow-sm focus:ring-2 focus:ring-black/10 text-sm sm:text-base h-10 sm:h-12'
               />
             </div>
             <div className='flex items-center gap-2'>
               <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                variant='outline'
                 size='sm'
                 onClick={() => setViewMode('grid')}
-                className='rounded-lg bg-white border border-[#e5e7eb] shadow-sm h-8 w-8 sm:h-10 sm:w-10 p-0'
+                className={`rounded-lg border shadow-sm h-8 w-8 sm:h-10 sm:w-10 p-0 transition-all ${
+                  viewMode === 'grid'
+                    ? 'bg-black text-white border-black hover:bg-neutral-800'
+                    : 'bg-white border-[#e5e7eb] text-gray-600 hover:bg-gray-50'
+                }`}
               >
                 <Grid className='h-4 w-4' />
               </Button>
               <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
+                variant='outline'
                 size='sm'
                 onClick={() => setViewMode('list')}
-                className='rounded-lg bg-white border border-[#e5e7eb] shadow-sm h-8 w-8 sm:h-10 sm:w-10 p-0'
+                className={`rounded-lg border shadow-sm h-8 w-8 sm:h-10 sm:w-10 p-0 transition-all ${
+                  viewMode === 'list'
+                    ? 'bg-black text-white border-black hover:bg-neutral-800'
+                    : 'bg-white border-[#e5e7eb] text-gray-600 hover:bg-gray-50'
+                }`}
               >
                 <List className='h-4 w-4' />
               </Button>

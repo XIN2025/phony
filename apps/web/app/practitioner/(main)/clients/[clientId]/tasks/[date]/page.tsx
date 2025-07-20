@@ -171,7 +171,7 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
 
       <div className='w-full flex flex-col gap-8 px-2 pr-4'>
         <div className='flex flex-col md:flex-row md:items-center md:justify-between w-full gap-3 md:gap-0 mb-2'>
-          <h1 className='text-2xl font-bold   ' style={{ fontFamily: "'Playfair Display', serif" }}>
+          <h1 className='text-2xl font-bold   ' style={{ fontFamily: "'DM Serif Display', serif" }}>
             Tasks
           </h1>
           <div className='flex items-center gap-2'>
@@ -235,7 +235,10 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
           <div className='flex-1'>
             <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col items-start'>
               <div className='flex items-center justify-between w-full'>
-                <div className='text-4xl font-extrabold' style={{ fontFamily: "'Playfair Display', serif" }}>
+                <div
+                  className='text-4xl font-extrabold'
+                  style={{ fontFamily: "'DM Serif Display', serif", color: '#807171' }}
+                >
                   {pending}
                 </div>
                 <ClipboardList className='h-10 w-10 text-[#807171]' />
@@ -246,7 +249,10 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
           <div className='flex-1'>
             <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col items-start'>
               <div className='flex items-center justify-between w-full'>
-                <div className='text-3xl font-bold' style={{ fontFamily: "'Playfair Display', serif" }}>
+                <div
+                  className='text-3xl font-bold'
+                  style={{ fontFamily: "'DM Serif Display', serif", color: '#807171' }}
+                >
                   {engagement}
                 </div>
                 <Sparkles className='h-10 w-10 text-[#807171]' />
@@ -267,7 +273,7 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
           <div className='flex flex-row gap-8 w-full'>
             <div className='flex-1'>
               <div className='bg-white rounded-2xl shadow-md p-8'>
-                <div className='text-xl font-bold mb-4' style={{ fontFamily: "'Playfair Display', serif" }}>
+                <div className='text-xl font-bold mb-4' style={{ fontFamily: "'DM Serif Display', serif" }}>
                   Mandatory tasks for the week
                 </div>
                 <div className='flex flex-col gap-0'>
@@ -327,7 +333,7 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
 
             <div className='flex-1'>
               <div className='bg-white rounded-2xl shadow-md p-8'>
-                <div className='text-xl font-bold mb-4' style={{ fontFamily: "'Playfair Display', serif" }}>
+                <div className='text-xl font-bold mb-4' style={{ fontFamily: "'DM Serif Display', serif" }}>
                   Daily Tasks
                 </div>
                 <div className='flex flex-col gap-0'>

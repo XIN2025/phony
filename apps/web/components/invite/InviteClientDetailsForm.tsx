@@ -1,4 +1,5 @@
 ﻿'use client';
+import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,47 +22,74 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
     handleSubmit,
     control,
     formState: { errors, isValid },
+    reset,
   } = useForm<FormValues>({
     resolver: zodResolver(inviteClientSchema),
     defaultValues: {
       clientFirstName: inviteData.clientFirstName || '',
       clientLastName: inviteData.clientLastName || '',
       clientEmail: inviteData.clientEmail || '',
-      intakeFormId: inviteData.intakeFormId || undefined,
+      intakeFormId: undefined, // Always start with undefined to allow unchecking
     },
     mode: 'onChange',
   });
 
+  // Reset form when component mounts to ensure checkbox can be unchecked
+  React.useEffect(() => {
+    reset({
+      clientFirstName: inviteData.clientFirstName || '',
+      clientLastName: inviteData.clientLastName || '',
+      clientEmail: inviteData.clientEmail || '',
+      intakeFormId: undefined, // Always reset to undefined
+    });
+  }, [inviteData, reset]);
+
   return (
     <form onSubmit={handleSubmit(onNext)} className='w-full max-w-[1450px] mx-auto p-8 space-y-6'>
       <div className='space-y-2'>
-        <Label htmlFor='clientFirstName' className='text-sm font-medium'>
+        <Label htmlFor='clientFirstName' className='text-sm font-medium' style={{ color: '#8C8B8B' }}>
           First Name
         </Label>
         <Controller
           name='clientFirstName'
           control={control}
           render={({ field }) => (
-            <Input id='clientFirstName' placeholder="Client's first name" {...field} className='rounded-lg shadow-sm' />
+            <Input
+              id='clientFirstName'
+              placeholder="Client's first name"
+              {...field}
+              className='rounded-lg bg-white border border-gray-200'
+              style={{
+                boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              }}
+            />
           )}
         />
         {errors.clientFirstName && <p className='text-sm text-destructive'>{errors.clientFirstName.message}</p>}
       </div>
       <div className='space-y-2'>
-        <Label htmlFor='clientLastName' className='text-sm font-medium'>
+        <Label htmlFor='clientLastName' className='text-sm font-medium' style={{ color: '#8C8B8B' }}>
           Last Name
         </Label>
         <Controller
           name='clientLastName'
           control={control}
           render={({ field }) => (
-            <Input id='clientLastName' placeholder="Client's last name" {...field} className='rounded-lg shadow-sm' />
+            <Input
+              id='clientLastName'
+              placeholder="Client's last name"
+              {...field}
+              className='rounded-lg bg-white border border-gray-200'
+              style={{
+                boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              }}
+            />
           )}
         />
         {errors.clientLastName && <p className='text-sm text-destructive'>{errors.clientLastName.message}</p>}
       </div>
       <div className='space-y-2'>
-        <Label htmlFor='clientEmail' className='text-sm font-medium'>
+        <Label htmlFor='clientEmail' className='text-sm font-medium' style={{ color: '#8C8B8B' }}>
           Email
         </Label>
         <Controller
@@ -73,7 +101,10 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
               type='email'
               placeholder='Enter Email ID'
               {...field}
-              className='rounded-lg shadow-sm'
+              className='rounded-lg bg-white border border-gray-200'
+              style={{
+                boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              }}
             />
           )}
         />

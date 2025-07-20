@@ -41,7 +41,7 @@ function QuestionOptions({ questionIndex, control, register, form }: QuestionOpt
 
   return (
     <div className='space-y-2 pt-4'>
-      <Label>Choices</Label>
+      <Label style={{ color: '#8C8B8B' }}>Choices</Label>
       {fields.map((field, optionIndex) => (
         <div key={field.id} className='flex items-center gap-2'>
           <Controller
@@ -60,6 +60,7 @@ function QuestionOptions({ questionIndex, control, register, form }: QuestionOpt
                   const newValue = e.target.value;
                   form.setValue(`questions.${questionIndex}.options.${optionIndex}.value`, newValue);
                 }}
+                className='bg-white/80 border border-gray-200'
               />
             )}
           />
@@ -224,19 +225,28 @@ export function IntakeFormBuilder({
       className='w-full max-w-full min-w-0 overflow-x-hidden px-2 sm:px-4 md:px-8 flex flex-col gap-8'
     >
       {/* Form Title & Description Card */}
-      <div className='bg-white rounded-2xl shadow p-4 sm:p-8 flex flex-col gap-6'>
+      <div
+        className='bg-white rounded-2xl p-4 sm:p-8 flex flex-col gap-6'
+        style={{
+          boxShadow:
+            '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+        }}
+      >
         <div className='flex flex-col gap-2'>
           <Label
             htmlFor='title'
             className='text-base font-semibold'
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "'DM Serif Display', serif", color: '#8C8B8B' }}
           >
             Form Title
           </Label>
           <Input
             id='title'
             {...form.register('title')}
-            className='rounded-lg shadow-sm w-full'
+            className='rounded-lg w-full bg-white/80 border border-gray-200'
+            style={{
+              boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+            }}
             placeholder='Add Form Title Here'
           />
         </div>
@@ -244,7 +254,7 @@ export function IntakeFormBuilder({
           <Label
             htmlFor='form-description'
             className='text-base font-semibold'
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "'DM Serif Display', serif", color: '#8C8B8B' }}
           >
             Form Description
           </Label>
@@ -252,7 +262,10 @@ export function IntakeFormBuilder({
             id='form-description'
             placeholder='Enter a description for this form (optional)'
             {...form.register('description')}
-            className='rounded-lg shadow-sm w-full'
+            className='rounded-lg w-full bg-white/80 border border-gray-200'
+            style={{
+              boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+            }}
             rows={3}
           />
           {form.formState.errors.description && (
@@ -263,18 +276,29 @@ export function IntakeFormBuilder({
       {/* Question Cards */}
       <div className='flex flex-col gap-6'>
         {fields.map((field, index) => (
-          <div key={field.id} className='bg-white rounded-2xl shadow p-4 sm:p-8 flex flex-col gap-4'>
+          <div
+            key={field.id}
+            className='bg-white rounded-2xl p-4 sm:p-8 flex flex-col gap-4'
+            style={{
+              boxShadow:
+                '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+            }}
+          >
             <div className='flex flex-col md:flex-row gap-4'>
               <div className='flex-1 '>
-                <Label className='mb-1'>Question</Label>
+                <Label className='mb-1' style={{ color: '#8C8B8B' }}>
+                  Question
+                </Label>
                 <Input
                   {...form.register(`questions.${index}.title`)}
-                  className='rounded-lg shadow-sm w-full'
+                  className='rounded-lg w-full bg-white/80 border border-gray-200'
                   placeholder='Type your question here'
                 />
               </div>
               <div className='flex-1 '>
-                <Label className='mb-1'>Type of question</Label>
+                <Label className='mb-1' style={{ color: '#8C8B8B' }}>
+                  Type of question
+                </Label>
                 <Controller
                   control={form.control}
                   name={`questions.${index}.type`}
@@ -297,7 +321,7 @@ export function IntakeFormBuilder({
                         }
                       }}
                     >
-                      <SelectTrigger className='rounded-lg shadow-sm w-full'>
+                      <SelectTrigger className='rounded-lg w-full bg-white/80 border border-gray-200'>
                         <SelectValue placeholder='-- select --' />
                       </SelectTrigger>
                       <SelectContent>

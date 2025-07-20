@@ -407,7 +407,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4'>
           <h2
             className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Edit Action Plan
           </h2>

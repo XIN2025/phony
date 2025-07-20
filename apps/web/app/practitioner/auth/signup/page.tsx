@@ -33,7 +33,16 @@ const signUpSchema = z.object({
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 
-const professions = ['Therapist', 'Counselor', 'Psychologist', 'Social Worker'];
+const professions = [
+  'Therapist',
+  'Counselor',
+  'Psychologist',
+  'Social Worker',
+  'Psychotherapist',
+  'Counsellor',
+  'Health Coach',
+  'Life Coach',
+];
 
 // Component for the bottom section with stepper and button
 function SignupBottomSection({
@@ -50,19 +59,18 @@ function SignupBottomSection({
   onBack: () => void;
 }) {
   return (
-    <div className='bg-gradient-to-t from-pink-50 to-transparent px-4 py-6 border-t border-pink-100'>
+    <div className='px-4 pt-0 pb-6'>
       <div className='w-full space-y-4'>
         {/* Stepper - spans full width */}
         <SignupStepper totalSteps={4} currentStep={step} />
 
-        {/* Buttons - small and positioned at corners */}
         <div className='flex justify-between'>
-          {/* Back button - only show if not on first step */}
           {step > 1 ? (
             <Button
               type='button'
-              className='h-12 px-8 text-base font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-white shadow-lg transition-colors duration-200'
+              className='h-12 px-8 text-base font-medium rounded-lg text-white shadow-lg transition-colors duration-200'
               onClick={onBack}
+              style={{ backgroundColor: 'black' }}
             >
               Back
             </Button>
@@ -72,9 +80,10 @@ function SignupBottomSection({
 
           <Button
             type='submit'
-            className='h-12 px-8 text-base font-medium rounded-lg bg-gray-800 hover:bg-gray-900 text-white shadow-lg'
+            className='h-12 px-8 text-base font-medium rounded-lg text-white shadow-lg'
             disabled={isSendingOTP || isSigningUp}
             onClick={onSubmit}
+            style={{ backgroundColor: 'black' }}
           >
             {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             {isSigningUp && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
@@ -306,7 +315,7 @@ export default function PractitionerSignUpPage() {
       case 3:
         return {
           title: 'Your Profile',
-          description: 'Profile Creation',
+          description: '',
         };
       case 4:
         return {
@@ -316,7 +325,7 @@ export default function PractitionerSignUpPage() {
       default:
         return {
           title: 'Create Account',
-          description: 'Your Profile',
+          description: '',
         };
     }
   };
@@ -352,13 +361,15 @@ export default function PractitionerSignUpPage() {
               control={form.control}
               name='email'
               render={({ field }) => (
-                <FormItem className='space-y-3'>
-                  <FormLabel className='text-sm font-medium text-gray-700'>Email ID</FormLabel>
+                <FormItem className=''>
+                  <FormLabel className='text-sm font-medium text-gray-700' style={{ color: '#8C8B8B' }}>
+                    Email ID
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder='Your Email ID'
                       {...field}
-                      className='w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                      className='w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-zinc-50'
                     />
                   </FormControl>
                   <FormMessage />
@@ -428,14 +439,14 @@ export default function PractitionerSignUpPage() {
               <div className='flex flex-col items-center justify-center mb-4'>
                 <label htmlFor='profile-photo-upload' className='cursor-pointer'>
                   {profileImagePreview ? (
-                    <Avatar className='h-20 w-20'>
+                    <Avatar className='h-32 w-32'>
                       <AvatarImage src={profileImagePreview} alt='Profile Photo' />
                       <AvatarFallback>
                         <User />
                       </AvatarFallback>
                     </Avatar>
                   ) : (
-                    <Avatar className='h-20 w-20 border border-dashed'>
+                    <Avatar className='h-32 w-32 border border-dashed'>
                       <AvatarFallback>
                         <User />
                       </AvatarFallback>
@@ -458,12 +469,14 @@ export default function PractitionerSignUpPage() {
                 name='firstName'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-sm font-medium text-gray-700'>First Name</FormLabel>
+                    <FormLabel className='text-sm font-medium text-gray-700' style={{ color: '#8C8B8B' }}>
+                      First Name
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder='Your first name'
                         {...field}
-                        className='h-10 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        className='h-10 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-zinc-50'
                       />
                     </FormControl>
                     <FormMessage />
@@ -475,12 +488,14 @@ export default function PractitionerSignUpPage() {
                 name='lastName'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-sm font-medium text-gray-700'>Last Name</FormLabel>
+                    <FormLabel className='text-sm font-medium text-gray-700' style={{ color: '#8C8B8B' }}>
+                      Last Name
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder='Your last name'
                         {...field}
-                        className='h-10 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        className='h-10 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-zinc-50'
                       />
                     </FormControl>
                     <FormMessage />
@@ -493,10 +508,12 @@ export default function PractitionerSignUpPage() {
               name='profession'
               render={({ field }) => (
                 <FormItem className='w-full'>
-                  <FormLabel className='text-sm font-medium text-gray-700'>Profession</FormLabel>
+                  <FormLabel className='text-sm font-medium text-gray-700' style={{ color: '#8C8B8B' }}>
+                    Profession
+                  </FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className='h-12 text-base w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'>
+                      <SelectTrigger className='h-12 text-base w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-zinc-50'>
                         <SelectValue placeholder='Select your profession' />
                       </SelectTrigger>
                     </FormControl>
@@ -518,7 +535,7 @@ export default function PractitionerSignUpPage() {
         return (
           <motion.div key='step4' className='space-y-6'>
             <div className='mb-4'>
-              <label htmlFor='id-proof-upload' className='block text-sm font-medium mb-2'>
+              <label htmlFor='id-proof-upload' className='block text-sm font-medium mb-2' style={{ color: '#8C8B8B' }}>
                 Licensing/Identification Document
               </label>
               <div className='flex flex-col items-center justify-center border-2 border-dashed border-muted rounded-lg p-4'>
@@ -545,7 +562,12 @@ export default function PractitionerSignUpPage() {
               render={({ field }) => (
                 <FormItem className='flex flex-row items-start space-x-1 space-y-0'>
                   <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} className='mt-0.5' />
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className='mt-0.5'
+                      style={{ borderColor: 'black' }}
+                    />
                   </FormControl>
                   <div className='space-y-1 leading-none flex-1'>
                     <FormLabel className='text-xs sm:text-sm font-normal leading-relaxed cursor-pointer'>
@@ -591,12 +613,7 @@ export default function PractitionerSignUpPage() {
   }
 
   return (
-    <div
-      className='min-h-screen flex flex-col lg:flex-row'
-      style={{
-        background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
-      }}
-    >
+    <div className='min-h-screen flex flex-col lg:flex-row auth-gradient'>
       {/* Left side - Image section */}
       <div className='hidden lg:flex lg:w-3/5 relative overflow-hidden'>
         <div
@@ -614,34 +631,34 @@ export default function PractitionerSignUpPage() {
       </div>
 
       {/* Right side - Form section */}
-      <div
-        className='flex-1 lg:w-2/5 flex flex-col min-h-screen'
-        style={{
-          background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
-        }}
-      >
+      <div className='flex-1 lg:w-2/5 flex flex-col min-h-screen auth-gradient'>
         {/* Main content area */}
-        <div
-          className='flex-1 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 lg:pt-16 pb-8 sm:pb-16 lg:pb-24'
-          style={{
-            background: 'linear-gradient(135deg, #fecaca 0%, #ffffff 50%, #dbeafe 100%)',
-          }}
-        >
+        <div className='flex-1 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 lg:pt-16 pb-0 auth-gradient'>
           <div className={`w-full max-w-md ${step === 2 ? 'space-y-4 sm:space-y-6' : 'space-y-6 sm:space-y-8'}`}>
             {/* Header content */}
-            <div className='text-center space-y-3 sm:space-y-4'>
+            <div className='w-full flex flex-col items-center mt-4 justify-center text-center   '>
               <h1
-                className='text-2xl sm:text-3xl font-bold tracking-tight text-[#8d8080]'
-                style={{ fontFamily: "'Playfair Display', serif" }}
+                className='font-bold tracking-tight text-[#8d8080] w-full text-center'
+                style={{ fontFamily: "'DM Serif Display', serif", fontSize: '40px', textAlign: 'center' }}
               >
                 Welcome to Continuum
               </h1>
-              <p className='text-sm sm:text-base text-gray-700 leading-relaxed px-2'>
+              <p
+                className='text-gray-700 leading-relaxed px-7 w-full text-center'
+                style={{ fontSize: '20px', textAlign: 'center' }}
+              >
                 Make the time between sessions count — along with the sessions themselves
               </p>
-              <div className='mt-6 sm:mt-8'>
-                <h2 className='text-xl sm:text-2xl tracking-tighter text-gray-800 mb-2'>{getStepText().title}</h2>
-                <p className='text-xs sm:text-sm text-gray-600'>{getStepText().description}</p>
+              <div className='mt-6 sm:mt-8 w-full flex flex-col items-center'>
+                <h2
+                  className='tracking-tighter text-gray-800 mb-2 w-full text-center'
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '28px', textAlign: 'center' }}
+                >
+                  {getStepText().title}
+                </h2>
+                <p className='text-xs sm:text-sm text-gray-600 w-full text-center' style={{ textAlign: 'center' }}>
+                  {getStepText().description}
+                </p>
               </div>
             </div>
 

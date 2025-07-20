@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@repo/ui/components/button';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronLeft } from 'lucide-react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui/components/input-otp';
 import { useSendOtp, useVerifyInvitationOtp, useVerifyOtp } from '@/lib/hooks/use-api';
 import { useSignUpContext } from '@/context/signup-context';
@@ -177,33 +177,7 @@ export default function ClientOtpPage() {
       {/* Top bar for mobile - fixed at the top */}
       <div className='block sm:hidden fixed top-0 left-0 right-0 z-20 px-4 pt-4 pb-2 w-full'>
         <div className='flex items-center w-full' style={{ minHeight: 40, padding: 0 }}>
-          <button
-            type='button'
-            onClick={() => router.push('/client/auth')}
-            aria-label='Back'
-            className='flex items-center justify-center mr-2 focus:outline-none'
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', height: 28, width: 28 }}
-          >
-            <span
-              style={{
-                color: '#807171',
-                fontSize: 28,
-                fontWeight: 400,
-                lineHeight: 1,
-                display: 'inline-block',
-                fontFamily: 'inherit',
-                verticalAlign: 'middle',
-              }}
-            >
-              {'<'}
-            </span>
-          </button>
-          <span
-            className='font-bold'
-            style={{ fontFamily: 'Playfair Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
-          >
-            Continuum
-          </span>
+          <img src='/Continuum.png' alt='Continuum' style={{ height: 32, width: 'auto' }} />
         </div>
       </div>
 
@@ -215,38 +189,12 @@ export default function ClientOtpPage() {
           {/* Top bar for desktop */}
           <div className='hidden sm:flex w-full mb-4'>
             <div className='flex items-center w-full' style={{ minHeight: 40, padding: 0 }}>
-              <button
-                type='button'
-                onClick={() => router.push('/client/auth')}
-                aria-label='Back'
-                className='flex items-center justify-center mr-2 focus:outline-none'
-                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', height: 28, width: 28 }}
-              >
-                <span
-                  style={{
-                    color: '#807171',
-                    fontSize: 28,
-                    fontWeight: 400,
-                    lineHeight: 1,
-                    display: 'inline-block',
-                    fontFamily: 'inherit',
-                    verticalAlign: 'middle',
-                  }}
-                >
-                  {'<'}
-                </span>
-              </button>
-              <span
-                className='font-bold'
-                style={{ fontFamily: 'Playfair Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
-              >
-                Continuum
-              </span>
+              <img src='/Continuum.png' alt='Continuum' style={{ height: 32, width: 'auto' }} />
             </div>
           </div>
           <h2
-            className='text-xl font-semibold mb-1 w-full text-left'
-            style={{ color: '#7A6E5A', fontFamily: 'Playfair Display, serif' }}
+            className='font-semibold mb-1 w-full text-left'
+            style={{ color: '#7A6E5A', fontFamily: 'DM Serif Display, serif', fontSize: '24px' }}
           >
             Confirm your email
           </h2>
@@ -269,24 +217,38 @@ export default function ClientOtpPage() {
                 </InputOTPGroup>
               </InputOTP>
             </div>
-            <div className='w-full flex justify-end mb-2'>
-              {resendTimer > 0 ? (
-                <span className='text-xs text-muted-foreground'>Resend OTP in {resendTimer}s</span>
-              ) : (
-                <button
-                  type='button'
-                  onClick={handleResendOtp}
-                  disabled={isResending}
-                  className='text-xs text-primary hover:underline disabled:opacity-50 px-2 py-1 rounded focus:outline-none'
-                  style={{ minWidth: 80 }}
-                >
-                  {isResending ? 'Sending...' : 'Resend OTP'}
-                </button>
-              )}
+            <div className='w-full flex justify-between items-center mb-2'>
+              <div>
+                {!isInvitationFlow && (
+                  <button
+                    type='button'
+                    onClick={handleChangeEmail}
+                    className='text-xs text-primary hover:underline px-2 py-1 rounded focus:outline-none'
+                    style={{ minWidth: 80 }}
+                  >
+                    Change Email
+                  </button>
+                )}
+              </div>
+              <div>
+                {resendTimer > 0 ? (
+                  <span className='text-xs text-muted-foreground'>Resend OTP in {resendTimer}s</span>
+                ) : (
+                  <button
+                    type='button'
+                    onClick={handleResendOtp}
+                    disabled={isResending}
+                    className='text-xs text-primary hover:underline disabled:opacity-50 px-2 py-1 rounded focus:outline-none'
+                    style={{ minWidth: 80 }}
+                  >
+                    {isResending ? 'Sending...' : 'Resend OTP'}
+                  </button>
+                )}
+              </div>
             </div>
             <Button
               type='submit'
-              className='w-full rounded-full text-base font-semibold h-12 '
+              className='w-full rounded-full text-base font-semibold '
               disabled={(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) || otp.length !== 6}
             >
               {(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) && (

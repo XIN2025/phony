@@ -102,12 +102,25 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
     <div className='flex flex-col items-center w-full min-h-[70vh]'>
       <div className='w-full   flex flex-col gap-6'>
         {/* Form Title Card */}
-        <div className='bg-white rounded-2xl shadow p-6 mb-2'>
+        <div
+          className='bg-white rounded-2xl p-6 mb-2'
+          style={{
+            boxShadow:
+              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          }}
+        >
           <h2 className='text-xl font-semibold'>{formData.title}</h2>
         </div>
         {/* Question Cards */}
         {formData.questions.map((q, index) => (
-          <div key={q.id || index} className='bg-white rounded-2xl shadow p-6 flex flex-col gap-3'>
+          <div
+            key={q.id || index}
+            className='bg-white rounded-2xl p-6 flex flex-col gap-3'
+            style={{
+              boxShadow:
+                '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+            }}
+          >
             <Label className='font-semibold text-base'>
               {q.title} {q.required && <span className='text-destructive'>*</span>}
             </Label>

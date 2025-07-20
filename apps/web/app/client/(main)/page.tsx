@@ -25,7 +25,6 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useSidebar } from '@/context/SidebarContext';
 import Link from 'next/link';
 import { Badge } from '@repo/ui/components/badge';
 import {
@@ -35,15 +34,13 @@ import {
   useUndoTaskCompletion,
 } from '@/lib/hooks/use-api';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { TaskEditorDialog } from '@/components/practitioner/TaskEditorDialog';
 import { toast } from 'sonner';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { createPortal } from 'react-dom';
-import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/avatar';
-import { getAvatarUrl, getInitials, getUserDisplayName, getRatingEmoji } from '@/lib/utils';
+import { getRatingEmoji } from '@/lib/utils';
 
 interface ActionItem {
   id: string;
@@ -89,7 +86,6 @@ interface Plan {
 const ClientPage = () => {
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
-  const { setSidebarOpen } = useSidebar();
   const [selectedTask, setSelectedTask] = useState<ActionItem | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [completionData, setCompletionData] = useState<CompletionData>({
@@ -406,43 +402,31 @@ const ClientPage = () => {
   const dailyTasks = filteredTasks.filter((task: ActionItem) => !task.isMandatory);
 
   return (
-    <div className='min-h-screen '>
-      {/* Header */}
+    <div className='w-full'>
+      {/* Welcome Section */}
       <div className='px-4 sm:px-6 lg:px-8 pt-6 pb-4'>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-3'>
-            <SidebarToggleButton />
-            <h1
-              className='text-2xl font-bold text-gray-900 lg:hidden'
-              style={{ fontFamily: "'Playfair Display', serif" }}
-            >
-              Continuum
-            </h1>
-          </div>
-          <Avatar className='h-10 w-10 block sm:hidden ml-2'>
-            <AvatarImage
-              src={getAvatarUrl(currentUser?.avatarUrl, currentUser)}
-              alt={getUserDisplayName(currentUser) || 'User'}
-            />
-            <AvatarFallback>{getInitials(currentUser || 'U')}</AvatarFallback>
-          </Avatar>
-        </div>
-        <div className='mt-4'>
-          <h1 className='text-2xl font-bold text-gray-900' style={{ fontFamily: "'Playfair Display', serif" }}>
+        <div className='mt-2'>
+          <h1
+            className='font-bold text-gray-900 text-2xl lg:text-4xl'
+            style={{ fontFamily: "'DM Serif Display', serif" }}
+          >
             {userLoading ? 'Loading...' : `Welcome back  ${currentUser?.firstName || 'User'}`}
           </h1>
-          <p className='text-sm text-gray-600'>Let's have a great day today</p>
+          <p className='text-xs sm:text-sm md:text-base text-[#998D8D]'>Let's have a great day today</p>
         </div>
       </div>
 
       {/* Tasks Section Header */}
       <div className='px-4 sm:px-6 lg:px-8 flex items-center justify-between mt-2 mb-4'>
-        <h2 className='text-lg sm:text-xl font-bold text-gray-900' style={{ fontFamily: "'Playfair Display', serif" }}>
+        <h2
+          className='text-base text-xl lg:text-2xl font-bold text-gray-900'
+          style={{ fontFamily: "'DM Serif Display', serif" }}
+        >
           Tasks
         </h2>
         <button
           ref={dateButtonRef}
-          className='text-xs px-3 py-2 rounded-full bg-white border border-gray-300 hover:bg-gray-50 transition shadow-sm flex items-center gap-2'
+          className='text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 rounded-full bg-white border border-gray-300 hover:bg-gray-50 transition shadow-sm flex items-center gap-1 sm:gap-2'
           onClick={() => setShowDatePicker((v) => !v)}
           type='button'
         >
@@ -506,35 +490,37 @@ const ClientPage = () => {
 
       {/* Summary Cards */}
       <div className='px-4 sm:px-6 lg:px-8 grid grid-cols-2 gap-4 mb-6'>
-        <Card className='bg-white rounded-xl shadow-md p-4 flex flex-col items-center justify-center'>
-          <span className='text-2xl font-bold text-gray-900'>{tasksPending}</span>
-          <span className='text-xs text-gray-600 mt-1'>Tasks Pending</span>
+        <Card className='bg-white rounded-xl shadow-md p-3 sm:p-4 flex flex-col items-center justify-center'>
+          <span className='text-lg sm:text-xl md:text-2xl font-bold text-[#807171]'>{tasksPending}</span>
+          <span className='text-xs sm:text-sm text-gray-600 mt-1'>Tasks Pending</span>
         </Card>
         <Card
-          className='bg-white rounded-xl shadow-md p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition'
+          className='bg-white rounded-xl shadow-md p-3 sm:p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition'
           onClick={() => (window.location.href = '/client/journals/new')}
         >
-          <span className='text-2xl'>
-            <Plus className='inline w-6 h-6 text-blue-500' />
+          <span className='text-lg sm:text-xl md:text-2xl'>
+            <Plus className='inline w-5 h-5 sm:w-6 sm:h-6 text-blue-500' />
           </span>
-          <span className='text-xs text-gray-600 mt-1'>Add new journal entry</span>
+          <span className='text-xs sm:text-sm text-gray-600 mt-1'>Add new journal entry</span>
         </Card>
       </div>
 
       {/* Task Lists */}
       <div className='px-4 sm:px-6 lg:px-8 flex flex-col gap-6'>
         {/* Mandatory Tasks Card */}
-        <div className='bg-white rounded-2xl shadow-md p-8'>
+        <div className='bg-white rounded-2xl shadow-md p-4 sm:p-6 md:p-8'>
           <div
-            className='text-xl font-bold mb-4 cursor-pointer hover:text-gray-700 transition-colors'
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            className='text-lg sm:text-xl md:text-2xl font-bold mb-4 cursor-pointer hover:text-gray-700 transition-colors'
+            style={{ fontFamily: "'DM Serif Display', serif" }}
             onClick={() => mandatoryTasks.length > 0 && handleTaskDetailClick(mandatoryTasks[0])}
           >
             Mandatory Tasks
           </div>
           <div className='flex flex-col gap-0'>
             {mandatoryTasks.length === 0 ? (
-              <div className='text-muted-foreground text-sm mb-4 px-6 py-6'>No mandatory tasks for this date.</div>
+              <div className='text-muted-foreground text-xs sm:text-sm mb-4 px-4 sm:px-6 py-4 sm:py-6'>
+                No mandatory tasks for this date.
+              </div>
             ) : (
               mandatoryTasks.map((task: ActionItem, idx: number) => {
                 const isCompleted = task.isCompleted;
@@ -567,14 +553,14 @@ const ClientPage = () => {
                     </div>
                     <div className='flex-1 cursor-pointer' onClick={() => handleTaskDetailClick(task)}>
                       <div
-                        className={`font-medium text-base flex items-center gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
+                        className={`font-medium text-sm sm:text-base flex items-center gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
                       >
                         {task.description}
                         <span className='ml-1 text-gray-400 text-xs' title='Info'>
                           ⓘ
                         </span>
                       </div>
-                      <div className='text-xs text-muted-foreground mt-1 flex items-center gap-2'>
+                      <div className='text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-2'>
                         <span role='img' aria-label='timer'>
                           ⏱
                         </span>{' '}
@@ -582,7 +568,7 @@ const ClientPage = () => {
                       </div>
                     </div>
                     {isCompleted && (
-                      <span className='ml-2 text-2xl' role='img' aria-label='rating'>
+                      <span className='ml-2 text-lg sm:text-xl md:text-2xl' role='img' aria-label='rating'>
                         {ratingEmoji}
                       </span>
                     )}
@@ -594,17 +580,19 @@ const ClientPage = () => {
         </div>
 
         {/* Daily Tasks Card */}
-        <div className='bg-white rounded-2xl shadow-md p-8'>
+        <div className='bg-white rounded-2xl shadow-md p-4 sm:p-6 md:p-8'>
           <div
-            className='text-xl font-bold mb-4 cursor-pointer hover:text-gray-700 transition-colors'
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            className='text-lg sm:text-xl md:text-2xl font-bold mb-4 cursor-pointer hover:text-gray-700 transition-colors'
+            style={{ fontFamily: "'DM Serif Display', serif" }}
             onClick={() => dailyTasks.length > 0 && handleTaskDetailClick(dailyTasks[0])}
           >
             Daily Tasks
           </div>
           <div className='flex flex-col gap-0'>
             {dailyTasks.length === 0 ? (
-              <div className='text-muted-foreground text-sm mb-4 px-6 py-6'>No daily tasks for this date.</div>
+              <div className='text-muted-foreground text-xs sm:text-sm mb-4 px-4 sm:px-6 py-4 sm:py-6'>
+                No daily tasks for this date.
+              </div>
             ) : (
               dailyTasks.map((task: ActionItem, idx: number) => {
                 const isCompleted = task.isCompleted;
@@ -637,14 +625,14 @@ const ClientPage = () => {
                     </div>
                     <div className='flex-1 cursor-pointer' onClick={() => handleTaskDetailClick(task)}>
                       <div
-                        className={`font-medium text-base flex items-center gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
+                        className={`font-medium text-sm sm:text-base flex items-center gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
                       >
                         {task.description}
                         <span className='ml-1 text-gray-400 text-xs' title='Info'>
                           ⓘ
                         </span>
                       </div>
-                      <div className='text-xs text-muted-foreground mt-1 flex items-center gap-2'>
+                      <div className='text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-2'>
                         <span role='img' aria-label='timer'>
                           ⏱
                         </span>{' '}
@@ -652,7 +640,7 @@ const ClientPage = () => {
                       </div>
                     </div>
                     {isCompleted && (
-                      <span className='ml-2 text-2xl' role='img' aria-label='rating'>
+                      <span className='ml-2 text-lg sm:text-xl md:text-2xl' role='img' aria-label='rating'>
                         {ratingEmoji}
                       </span>
                     )}
@@ -673,7 +661,7 @@ const ClientPage = () => {
           <div className='text-center w-full mb-4 sm:mb-6'>
             <div
               className='text-lg sm:text-xl font-bold text-gray-900 mb-2'
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
               Was this task helpful?
             </div>

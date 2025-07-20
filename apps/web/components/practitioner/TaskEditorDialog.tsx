@@ -171,7 +171,7 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
           <DialogHeader>
             <DialogTitle
               className='text-xl sm:text-2xl font-bold mb-1'
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               Tasks
             </DialogTitle>

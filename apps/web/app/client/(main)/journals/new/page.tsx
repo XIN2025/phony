@@ -24,15 +24,12 @@ import {
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { useCreateJournalEntry } from '@/lib/hooks/use-api';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStatus } from '@/lib/hooks/use-session';
-import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/avatar';
 import { useGetCurrentUser } from '@/lib/hooks/use-api';
-import { getAvatarUrl, getUserDisplayName, getInitials } from '@/lib/utils';
 
 const QuillEditor = dynamic(() => import('../QuillEditor'), { ssr: false });
 
@@ -196,30 +193,8 @@ const JournalEditors = () => {
 
   const toolbarId = 'quill-toolbar-main';
 
-  const mobileHeader = (
-    <div className='flex items-center justify-between px-4 pt-2 pb-2 mb-2 w-full sm:hidden'>
-      <div className='flex items-center'>
-        <SidebarToggleButton />
-        <span
-          className='ml-3 text-xl font-bold text-primary'
-          style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}
-        >
-          Continuum
-        </span>
-      </div>
-      <Avatar className='h-10 w-10 ml-2'>
-        <AvatarImage
-          src={getAvatarUrl(currentUser?.avatarUrl, currentUser)}
-          alt={getUserDisplayName(currentUser) || 'User'}
-        />
-        <AvatarFallback>{getInitials(currentUser || 'U')}</AvatarFallback>
-      </Avatar>
-    </div>
-  );
-
   return (
     <div className='flex flex-col w-full pt-0 sm:pt-6 px-2 sm:px-4 lg:px-6 xl:px-8 min-w-0 max-w-full'>
-      {mobileHeader}
       <div className='flex flex-row items-center justify-between mb-4 sm:mb-8 w-full gap-2 sm:gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <Link
@@ -297,7 +272,12 @@ const JournalEditors = () => {
                 <polyline points='0,0 32,0 32,32' fill='none' stroke='#d1d5db' strokeWidth='2' />
               </svg>
             </div>
-            <div className='font-medium text-sm text-gray-700 mb-2 select-none px-4 pt-6'>{NOTE_TITLES[i]}</div>
+            <div
+              className='font-medium text-sm text-gray-700 mb-2 select-none px-4 pt-6'
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            >
+              {NOTE_TITLES[i]}
+            </div>
             {activeIndex === i ? (
               <div className='flex-1 min-w-0 px-4 pb-4 overflow-x-hidden'>
                 <div className='w-full break-words'>

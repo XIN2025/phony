@@ -1,6 +1,5 @@
 'use client';
 
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { useGetCurrentUser, useUpdateProfile, useDeleteAccount } from '@/lib/hooks/use-api';
 import { getAvatarUrl, getInitials, getUserDisplayName } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
@@ -26,7 +25,6 @@ import {
 } from '@repo/ui/components/alert-dialog';
 import { Calendar } from '@repo/ui/components/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/popover';
-import Link from 'next/link';
 
 const validatePhoneNumber = (value: string): string => {
   return value.replace(/[^0-9+\-()\s]/g, '');
@@ -139,32 +137,11 @@ export default function ClientSettingsPage() {
 
   return (
     <div className='py-0 sm:py-12 px-4 sm:px-8 w-full'>
-      {/* Mobile header - only on small screens */}
-      <div className='flex items-center justify-between px-4 pt-2 pb-2 mb-2 w-full sm:hidden'>
-        <div className='flex items-center'>
-          <SidebarToggleButton />
-          <span
-            className='ml-3 text-xl font-bold text-primary'
-            style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}
-          >
-            <Link href='/' className='hover:underline focus:outline-none'>
-              Continuum
-            </Link>
-          </span>
-        </div>
-        <Avatar className='h-10 w-10 ml-2'>
-          <AvatarImage
-            src={getAvatarUrl(currentUser?.avatarUrl, currentUser)}
-            alt={getUserDisplayName(currentUser) || 'User'}
-          />
-          <AvatarFallback>{getInitials(currentUser || 'U')}</AvatarFallback>
-        </Avatar>
-      </div>
       <div className='flex items-center justify-between mb-6'>
         <div className='flex items-center gap-4'>
           <h1
             className='text-xl sm:text-3xl font-semibold pl-4 sm:pl-0'
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Profile Settings
           </h1>
@@ -207,7 +184,7 @@ export default function ClientSettingsPage() {
             style={{ boxShadow: '0 0 0 0 transparent' }}
           >
             <div className='p-4 sm:p-10'>
-              <h2 className='text-xl font-semibold mb-1' style={{ fontFamily: "'Playfair Display', serif" }}>
+              <h2 className='text-xl font-semibold mb-1' style={{ fontFamily: "'DM Serif Display', serif" }}>
                 Profile Information
               </h2>
               <p className='text-gray-500 text-base mb-6'>Update your profile details</p>
@@ -241,7 +218,7 @@ export default function ClientSettingsPage() {
                 <div className='flex flex-col items-start gap-1 mt-2 sm:mt-0'>
                   <h3
                     className='text-base sm:text-lg font-semibold'
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'DM Serif Display', serif" }}
                   >
                     {getUserDisplayName(currentUser)}
                   </h3>
@@ -382,7 +359,7 @@ export default function ClientSettingsPage() {
             style={{ boxShadow: '0 0 0 0 transparent' }}
           >
             <div className='p-10'>
-              <h2 className='text-xl font-semibold mb-2' style={{ fontFamily: "'Playfair Display', serif" }}>
+              <h2 className='text-xl font-semibold mb-2' style={{ fontFamily: "'DM Serif Display', serif" }}>
                 Email Notifications
               </h2>
               <p className='text-gray-500 text-base mb-6'>Manage how you receive notifications</p>

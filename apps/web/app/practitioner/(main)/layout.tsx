@@ -1,7 +1,6 @@
 ﻿'use client';
-import { Home, Users, File as FileIcon, MessageSquare, Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { SidebarContent } from '@/components/practitioner/Sidebar';
+import { SidebarContent, HomeIcon, ClientsIcon, MessagesIcon, JournalsIcon } from '@/components/practitioner/Sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/sheet';
 import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
 import { Button } from '@repo/ui/components/button';
@@ -10,21 +9,21 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
   const { sidebarOpen, setSidebarOpen } = useSidebar();
   const pathname = usePathname();
   const navLinks = [
-    { href: '/practitioner', icon: Home, label: 'Dashboard' },
-    { href: '/practitioner/clients', icon: Users, label: 'Clients' },
-    { href: '/practitioner/messages', icon: MessageSquare, label: 'Messages' },
-    { href: '/practitioner/forms', icon: FileIcon, label: 'Intake Forms' },
+    { href: '/practitioner', icon: HomeIcon, label: 'Dashboard' },
+    { href: '/practitioner/clients', icon: ClientsIcon, label: 'Clients' },
+    { href: '/practitioner/messages', icon: MessagesIcon, label: 'Messages' },
+    { href: '/practitioner/forms', icon: JournalsIcon, label: 'Intake Forms' },
   ];
 
   return (
-    <div className='grid min-h-screen w-full lg:grid-cols-[260px_1fr] xl:grid-cols-[300px_1fr]'>
+    <div className='grid min-h-screen w-full lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] 2xl:grid-cols-[360px_1fr]'>
       {/* Sidebar */}
       <div className='hidden lg:block h-full'>
         <SidebarContent navLinks={navLinks} pathname={pathname} signOutCallbackUrl='/' />
       </div>
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side='left' className='w-[260px] sm:w-[300px] p-0 bg-transparent'>
+        <SheetContent side='left' className='w-[260px] sm:w-[280px] lg:w-[320px] p-0 bg-transparent'>
           <SheetHeader className='sr-only'>
             <SheetTitle>Navigation Menu</SheetTitle>
           </SheetHeader>

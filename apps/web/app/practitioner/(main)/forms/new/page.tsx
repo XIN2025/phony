@@ -37,7 +37,7 @@ function IntakeFormPageLayout({
           <div>
             <h1
               className='text-xl sm:text-2xl md:text-3xl font-bold leading-tight'
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               {title}
             </h1>

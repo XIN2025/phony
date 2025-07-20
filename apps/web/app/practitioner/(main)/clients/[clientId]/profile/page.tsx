@@ -52,10 +52,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
         </div>
         {/* Heading row */}
         <div className='flex items-center mb-6'>
-          <h1
-            className='text-xl sm:text-2xl md:text-3xl font-bold tracking-tight'
-            style={{ fontFamily: "'Playfair Display', serif" }}
-          >
+          <h1 className='  tracking-tight' style={{ fontFamily: "'DM Serif Display', serif", fontSize: '32px' }}>
             Client Profile
           </h1>
           <div className='ml-auto'>

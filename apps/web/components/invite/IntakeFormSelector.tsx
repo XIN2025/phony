@@ -41,7 +41,11 @@ export function IntakeFormSelector({ onNext }: Props) {
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className='bg-white rounded-xl shadow p-6 flex flex-col items-start animate-pulse mx-2 w-full max-w-xs'
+              className='bg-white rounded-xl p-6 flex flex-col items-start animate-pulse mx-2 w-full max-w-xs'
+              style={{
+                boxShadow:
+                  '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              }}
             >
               <div className='bg-gray-200 h-20 w-full rounded-md mb-4' />
               <div className='h-4 w-1/2 bg-gray-200 rounded mb-2' />
@@ -56,7 +60,11 @@ export function IntakeFormSelector({ onNext }: Props) {
           {displayedForms?.map((form) => (
             <div
               key={form.id}
-              className='bg-white rounded-xl shadow p-6 flex flex-col cursor-pointer transition hover:shadow-lg relative group mx-2 w-full max-w-xs'
+              className='bg-white rounded-xl p-6 flex flex-col cursor-pointer transition-all relative group mx-2 w-full max-w-xs'
+              style={{
+                boxShadow:
+                  '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              }}
               onClick={() => onNext(form.id)}
               tabIndex={0}
               role='button'
@@ -99,7 +107,11 @@ export function IntakeFormSelector({ onNext }: Props) {
           {displayedForms?.map((form) => (
             <div
               key={form.id}
-              className='bg-white rounded-xl shadow p-6 flex flex-col cursor-pointer transition hover:shadow-lg relative group'
+              className='bg-white rounded-xl p-6 flex flex-col cursor-pointer transition-all relative group'
+              style={{
+                boxShadow:
+                  '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              }}
               onClick={() => onNext(form.id)}
               tabIndex={0}
               role='button'
@@ -142,8 +154,11 @@ export function IntakeFormSelector({ onNext }: Props) {
         <button
           type='button'
           onClick={() => onNext('create-new')}
-          className='w-full max-w-2xl min-h-[120px] flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-white/40 hover:bg-white/70 transition-colors p-8 shadow-none outline-none focus:ring-2 focus:ring-black/10'
-          style={{ boxShadow: '0 2px 16px 0 rgba(0,0,0,0.03)' }}
+          className='w-full max-w-2xl min-h-[120px] flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-white/40 hover:bg-white/70 transition-all p-8 outline-none focus:ring-2 focus:ring-black/10'
+          style={{
+            boxShadow:
+              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          }}
         >
           <span className='text-4xl font-bold text-gray-400 mb-2'>+</span>
           <span className='text-lg font-medium text-gray-700'>Start fresh with a new form</span>

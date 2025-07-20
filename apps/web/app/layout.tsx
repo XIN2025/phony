@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import '@repo/ui/globals.css';
-import { inter, didot } from '@/lib/fonts';
+import { inter, didot, plusJakartaSans } from '@/lib/fonts';
 import Providers from '@/app/providers';
 import { SessionErrorHandler } from '@/components/SessionErrorHandler';
 import ServiceWorkerRegister from './ServiceWorkerRegister';
@@ -29,6 +29,10 @@ export default function RootLayout({
           href='https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap'
           rel='stylesheet'
         />
+        <link
+          href='https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap'
+          rel='stylesheet'
+        />
         {/* PWA meta tags */}
         <link rel='manifest' href='/manifest.json' />
         <meta name='theme-color' content='#e11d48' />
@@ -38,9 +42,7 @@ export default function RootLayout({
         <link rel='apple-touch-icon' sizes='192x192' href='/icons/icon-192x192.png' />
         <link rel='apple-touch-icon' sizes='512x512' href='/icons/icon-512x512.png' />
       </head>
-      <body
-        className={`${inter.variable} ${didot.variable} font-sans antialiased bg-gradient-to-r from-red-30 via-yellow-1 to-blue-50`}
-      >
+      <body className={`${inter.variable} ${didot.variable} ${plusJakartaSans.variable} font-sans antialiased`}>
         <ServiceWorkerRegister />
         <Providers>
           <SessionErrorHandler>{children}</SessionErrorHandler>

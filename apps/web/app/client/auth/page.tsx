@@ -8,7 +8,7 @@ import { Input } from '@repo/ui/components/input';
 import { useRouter } from 'next/navigation';
 import { useSendOtp } from '@/lib/hooks/use-api';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronLeft } from 'lucide-react';
 
 const emailSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -51,26 +51,17 @@ export default function ClientAuthEmailPage() {
             className='flex items-center justify-center mr-2 focus:outline-none'
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', height: 28, width: 28 }}
           >
-            <span
+            <ChevronLeft
               style={{
-                color: '#807171',
-                fontSize: 28,
-                fontWeight: 400,
-                lineHeight: 1,
+                stroke: '#807171',
+                width: 28,
+                height: 28,
                 display: 'inline-block',
-                fontFamily: 'inherit',
                 verticalAlign: 'middle',
               }}
-            >
-              {'<'}
-            </span>
+            />
           </button>
-          <span
-            className='font-bold'
-            style={{ fontFamily: 'Playfair Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
-          >
-            Continuum
-          </span>
+          <img src='/Continuum.png' alt='Continuum' style={{ height: 32, width: 'auto' }} />
         </div>
       </div>
 
@@ -89,26 +80,17 @@ export default function ClientAuthEmailPage() {
                 className='flex items-center justify-center mr-2 focus:outline-none'
                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', height: 28, width: 28 }}
               >
-                <span
+                <ChevronLeft
                   style={{
-                    color: '#807171',
-                    fontSize: 28,
-                    fontWeight: 400,
-                    lineHeight: 1,
+                    stroke: '#807171',
+                    width: 28,
+                    height: 28,
                     display: 'inline-block',
-                    fontFamily: 'inherit',
                     verticalAlign: 'middle',
                   }}
-                >
-                  {'<'}
-                </span>
+                />
               </button>
-              <span
-                className='font-bold'
-                style={{ fontFamily: 'Playfair Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
-              >
-                Continuum
-              </span>
+              <img src='/Continuum.png' alt='Continuum' style={{ height: 32, width: 'auto' }} />
             </div>
           </div>
 
@@ -124,7 +106,7 @@ export default function ClientAuthEmailPage() {
 
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-3 w-full'>
             <div>
-              <label htmlFor='email' className='block text-sm font-medium mb-1'>
+              <label htmlFor='email' className='block text-sm font-medium mb-1 ' style={{ color: '#8C8B8B' }}>
                 Email ID
               </label>
               <Input
@@ -134,7 +116,7 @@ export default function ClientAuthEmailPage() {
                 {...form.register('email')}
                 autoComplete='email'
                 required
-                className='text-sm sm:text-base'
+                className='text-sm sm:text-base bg-zinc-50 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
               />
               {form.formState.errors.email && (
                 <p className='text-xs sm:text-sm text-destructive mt-1'>{form.formState.errors.email.message}</p>

@@ -189,7 +189,7 @@ const SidebarContent = React.memo<SidebarContentProps>(
   ),
 );
 
-export function ChatContainer({ participantId, className, height = 'calc(100vh - 12rem)' }: ChatContainerProps) {
+export function ChatContainer({ participantId, className, height = '100%' }: ChatContainerProps) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -813,7 +813,7 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
         'flex flex-col md:flex-row bg-background border border-gray-700 rounded-lg shadow-sm overflow-hidden w-full',
         className,
       )}
-      style={{ height, maxHeight: height }}
+      style={{ height, maxHeight: height, minHeight: 0 }}
     >
       <div
         className={cn(
@@ -876,7 +876,7 @@ export function ChatContainer({ participantId, className, height = 'calc(100vh -
         )}
 
         {/* Main chat area (always shown for clients, practitioners see as before) */}
-        <div className='flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden max-h-full'>
+        <div className='flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden max-h-full h-full'>
           {selectedConversation ? (
             <>
               <div className='p-2 sm:p-3 md:p-4 border-b border-border/60 bg-muted/5 backdrop-blur-sm flex-shrink-0'>

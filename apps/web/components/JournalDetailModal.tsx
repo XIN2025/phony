@@ -92,7 +92,7 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ open, on
           <Button onClick={onClose} variant='ghost' className='p-2 rounded-full'>
             <ArrowLeft className='w-5 h-5' />
           </Button>
-          <span className='text-lg sm:text-xl font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+          <span className='text-lg sm:text-xl font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
             {journal.title || 'Untitled Journal'}
           </span>
         </div>
@@ -104,7 +104,7 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ open, on
                 <CardContent className='p-4 min-h-[80px] sm:min-h-[120px] flex items-start'>
                   <h3
                     className='text-sm font-semibold text-gray-900 mb-2'
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'DM Serif Display', serif" }}
                   >
                     {section.title}
                   </h3>

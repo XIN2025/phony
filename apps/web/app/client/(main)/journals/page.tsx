@@ -1,5 +1,4 @@
 'use client';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
 import { JournalEntry, useDeleteJournalEntry, useGetJournalEntries, useGetCurrentUser } from '@/lib/hooks/use-api';
 import { Button } from '@repo/ui/components/button';
 import { Card } from '@repo/ui/components/card';
@@ -10,8 +9,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/avatar';
-import { getAvatarUrl, getUserDisplayName, getInitials } from '@/lib/utils';
 
 export default function JournalsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,44 +79,21 @@ export default function JournalsPage() {
   };
 
   return (
-    <div className='flex flex-col w-full max-w-full overflow-x-hidden pt-0 sm:pt-4 md:pt-6 px-0 sm:px-4 md:px-6 lg:px-8 min-w-0'>
-      {/* Mobile header - only on small screens */}
-      <div className='flex items-center justify-between px-4 pt-2 pb-2 mb-2 w-full sm:px-0 sm:hidden'>
-        <div className='flex items-center'>
-          <SidebarToggleButton />
-          <span
-            className='ml-3 text-xl font-bold text-primary'
-            style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}
-          >
-            Continuum
-          </span>
-        </div>
-        <Avatar className='h-10 w-10 ml-2'>
-          <AvatarImage
-            src={getAvatarUrl(currentUser?.avatarUrl, currentUser)}
-            alt={getUserDisplayName(currentUser) || 'User'}
-          />
-          <AvatarFallback>{getInitials(currentUser || 'U')}</AvatarFallback>
-        </Avatar>
-      </div>
-
-      <div className='flex flex-row items-center justify-between mb-4 sm:mb-6 md:mb-8 w-full gap-3 px-4 sm:px-0'>
+    <div className='flex flex-col w-full max-w-full overflow-x-hidden px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 min-w-0'>
+      <div className='flex flex-row items-center justify-between mb-6 sm:mb-8 lg:mb-10 w-full gap-4 sm:gap-6'>
         <div className='flex items-center gap-2 min-w-0'>
-          <h1
-            className='text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-0 truncate pl-0 sm:pl-4'
-            style={{ fontFamily: "'Playfair Display', serif" }}
-          >
-            Journal Entries
+          <h1 className='text-2xl font-semibold mb-0 truncate' style={{ fontFamily: "'M Serif Display', serif" }}>
+            Journal
           </h1>
         </div>
         <Link href='/client/journals/new' className='w-auto'>
-          <Button className='rounded-full px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-medium bg-black text-white hover:bg-gray-800 shadow-sm'>
+          <Button className='w-auto rounded-full px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-medium bg-black text-white hover:bg-gray-800 shadow-sm'>
             <Plus className='mr-2 h-4 w-4 sm:h-5 sm:w-5' /> New Entry
           </Button>
         </Link>
       </div>
 
-      <div className='mb-4 sm:mb-6 md:mb-8 px-4 sm:px-0'>
+      <div className='mb-6 sm:mb-8 lg:mb-10'>
         <div className='relative w-full max-w-md'>
           <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 sm:pl-4'>
             <Search className='h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground' />
@@ -128,7 +102,7 @@ export default function JournalsPage() {
             placeholder='Search Entry'
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className='pl-10 sm:pl-12 w-full rounded-full border border-[#E5D6D0] bg-transparent py-2.5 sm:py-3 text-sm sm:text-base shadow-sm focus:ring-2 focus:ring-[#E5D6D0]'
+            className='pl-10 sm:pl-12 w-full rounded-full border border-[#E5D6D0] bg-white/80 py-3 sm:py-4 text-sm sm:text-base shadow-sm focus:ring-2 focus:ring-[#E5D6D0]'
           />
         </div>
       </div>
@@ -147,7 +121,7 @@ export default function JournalsPage() {
           </Link>
         </div>
       ) : (
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 min-w-0 px-2 '>
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 min-w-0'>
           {filteredEntries.map((entry: JournalEntry) => (
             <Card
               key={entry.id}

@@ -313,7 +313,10 @@ export default function InviteClientPage() {
           >
             <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
           </button>
-          <h1 className='text-3xl font-bold tracking-tight mt-4' style={{ fontFamily: "'Playfair Display', serif" }}>
+          <h1
+            className=' l font-bold tracking-tight mt-4'
+            style={{ fontFamily: "'DM Serif Display', serif", fontSize: '32px' }}
+          >
             {currentStepData?.title}
           </h1>
         </div>

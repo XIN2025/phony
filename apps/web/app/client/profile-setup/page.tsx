@@ -51,7 +51,7 @@ export default function ClientProfileSetupPage() {
           <SignupStepper totalSteps={4} currentStep={4} />
           <div className='text-center'>
             <Logo className='mx-auto h-8 w-8 sm:h-10 sm:w-10 mb-4' />
-            <h2 className='text-lg font-semibold mb-6' style={{ fontFamily: "'Playfair Display', serif" }}>
+            <h2 className='text-lg font-semibold mb-6' style={{ fontFamily: "'DM Serif Display', serif" }}>
               Profile Setup
             </h2>
           </div>

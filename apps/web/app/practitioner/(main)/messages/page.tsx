@@ -47,16 +47,8 @@ export default function PractitionerMessagesPage() {
 
   return (
     <div className='flex flex-col h-screen w-full overflow-hidden min-w-0'>
-      <PageHeader
-        title='Messages'
-        subtitle='Communicate with your clients'
-        showBackButton={false}
-        className='bg-muted/5'
-        leftElement={<SidebarToggleButton />}
-      />
-
-      <div className='flex-1 min-h-0 overflow-hidden px-4 sm:px-8 lg:px-14 p-1 min-w-0'>
-        <ChatContainer height='calc(100vh - 180px)' className='w-full h-full' />
+      <div className='flex-1 min-h-0 overflow-hidden px-4 sm:px-8 lg:px-14 pt-6 sm:pt-8 lg:pt-10 min-w-0'>
+        <ChatContainer height='calc(100vh - 120px)' className='w-full h-full' />
       </div>
     </div>
   );

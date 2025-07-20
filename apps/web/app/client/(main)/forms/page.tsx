@@ -1,13 +1,10 @@
 'use client';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/card';
-import { FileText, CheckCircle, Clock, Menu } from 'lucide-react';
+import { FileText, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '@repo/ui/components/button';
 import { useSidebar } from '@/context/SidebarContext';
-import { SidebarToggleButton } from '@/components/practitioner/SidebarToggleButton';
-import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/avatar';
 import { useGetCurrentUser } from '@/lib/hooks/use-api';
-import { getAvatarUrl, getUserDisplayName, getInitials } from '@/lib/utils';
 
 const ClientFormsPage = () => {
   const { data: session } = useSession();
@@ -16,31 +13,11 @@ const ClientFormsPage = () => {
 
   return (
     <div className='flex flex-col w-full max-w-full overflow-x-hidden pt-4 sm:pt-6 px-4 sm:px-6 md:px-8 min-w-0'>
-      {/* Mobile header - only on small screens */}
-      <div className='flex items-center justify-between px-4 pt-4 pb-2 w-full sm:hidden'>
-        <div className='flex items-center'>
-          <SidebarToggleButton />
-          <span
-            className='ml-3 text-xl font-bold text-primary'
-            style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}
-          >
-            Continuum
-          </span>
-        </div>
-        <Avatar className='h-10 w-10 ml-2'>
-          <AvatarImage
-            src={getAvatarUrl(currentUser?.avatarUrl, currentUser)}
-            alt={getUserDisplayName(currentUser) || 'User'}
-          />
-          <AvatarFallback>{getInitials(currentUser || 'U')}</AvatarFallback>
-        </Avatar>
-      </div>
-
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <h1
             className='text-xl sm:text-2xl lg:text-3xl font-semibold mb-2 sm:mb-0 truncate pl-4 sm:pl-0'
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "'M Serif Display', serif" }}
           >
             Forms
           </h1>
@@ -53,7 +30,7 @@ const ClientFormsPage = () => {
           <CardHeader className='pb-3 sm:pb-4'>
             <CardTitle
               className='flex items-center gap-2 text-base sm:text-lg lg:text-xl text-gray-800'
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "'M Serif Display', serif" }}
             >
               <FileText className='h-4 w-4 sm:h-5 sm:w-5' />
               Forms Center
@@ -70,7 +47,7 @@ const ClientFormsPage = () => {
                   <div className='min-w-0 flex-1'>
                     <h3
                       className='font-semibold text-sm sm:text-base truncate text-gray-800'
-                      style={{ fontFamily: "'Playfair Display', serif" }}
+                      style={{ fontFamily: "'M Serif Display', serif" }}
                     >
                       Intake Form
                     </h3>

@@ -69,7 +69,7 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ open, on
           <DialogTitle className='sr-only'>Journal Entry Details</DialogTitle>
         </DialogHeader>
         <div className='mb-4 px-6 pt-6'>
-          <span className='text-xl sm:text-2xl font-semibold' style={{ fontFamily: "'Playfair Display', serif" }}>
+          <span className='text-xl sm:text-2xl font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
             {journal.title || 'Untitled Journal Entry'}
           </span>
         </div>
@@ -85,7 +85,7 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ open, on
               >
                 <h3
                   className='text-lg sm:text-xl font-semibold text-gray-800 mb-4'
-                  style={{ fontFamily: "'Playfair Display', serif" }}
+                  style={{ fontFamily: "'DM Serif Display', serif" }}
                 >
                   {section.title}
                 </h3>

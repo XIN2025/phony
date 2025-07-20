@@ -16,6 +16,7 @@ import { useCheckInvitationIntakeForm, useClientSignup } from '@/lib/hooks/use-a
 import { SignupStepper } from '@/components/SignupStepper';
 import { Calendar } from '@repo/ui/components/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/popover';
+import Image from 'next/image';
 
 const validatePhoneNumber = (value: string): string => {
   return value.replace(/[^0-9+\-()\s]/g, '');
@@ -129,112 +130,159 @@ export default function PersonalDetailsPage() {
   };
 
   return (
-    <AuthLayout>
-      <div className=' sm:px-8  pb-2'>
+    <AuthLayout variant='client'>
+      {/* Top bar for mobile - fixed at the top */}
+      <div className='block sm:hidden fixed top-0 left-0 right-0 z-20 px-4 pt-4 pb-2 w-full'>
         <AuthHeader />
       </div>
-      <div className='px-4 sm:px-8 pt-2 pb-4'>
-        <h2 className='text-xl font-semibold mb-2' style={{ color: '#7A6E5A', fontFamily: 'Playfair Display, serif' }}>
-          Your Profile
-        </h2>
-      </div>
-      <form onSubmit={handleNext} className='space-y-6 px-4 sm:px-8 max-w-md mx-auto w-full'>
-        <div className='flex justify-center mb-8'>
-          <label htmlFor='profile-photo-upload' className='cursor-pointer flex flex-col items-center'>
-            {profileImagePreview ? (
-              <Avatar className='h-24 w-24 mb-2'>
-                <AvatarImage src={profileImagePreview} alt='Profile Photo' />
-                <AvatarFallback>
-                  <User className='h-12 w-12' />
-                </AvatarFallback>
-              </Avatar>
-            ) : (
-              <div className='h-24 w-24 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center bg-gray-50 mb-2'>
-                <User className='h-12 w-12 text-gray-400' />
-              </div>
-            )}
-            <span className='text-sm text-muted-foreground'>Profile Photo</span>
-            <input
-              id='profile-photo-upload'
-              type='file'
-              accept='image/*'
-              className='hidden'
-              onChange={handleProfileImageChange}
-            />
-          </label>
-        </div>
-        <div className='grid grid-cols-1 gap-4'>
-          <Input
-            id='first-name'
-            placeholder='First Name'
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            required
-          />
-          <Input
-            id='last-name'
-            placeholder='Last Name'
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            required
-          />
-          <Input
-            id='phone-number'
-            placeholder='Phone Number'
-            value={phoneNumber}
-            onChange={handlePhoneNumberChange}
-            required
-          />
-          {/* Date of Birth with calendar popover */}
-          <div>
-            <Popover open={showCalendar} onOpenChange={setShowCalendar}>
-              <PopoverTrigger asChild>
-                <Input
-                  id='dob'
-                  placeholder='Date of Birth'
-                  value={dob}
-                  readOnly
-                  onClick={() => setShowCalendar(true)}
-                  required
-                  className='text-left pl-3 pr-10'
-                  style={{ textAlign: 'left' }}
-                />
-              </PopoverTrigger>
-              <PopoverContent align='start' className='w-auto p-0'>
-                <Calendar
-                  mode='single'
-                  selected={dob ? new Date(dob) : undefined}
-                  onSelect={(date) => {
-                    setDob(date ? date.toISOString().slice(0, 10) : '');
-                    setShowCalendar(false);
-                  }}
-                  captionLayout='dropdown'
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+
+      {/* Content container */}
+      <div className='flex-1 flex flex-col items-center w-full'>
+        {/* Add top margin for mobile to avoid overlap with fixed header */}
+        <div className='block sm:hidden' style={{ marginTop: '40px' }}></div>
+        <div className='w-full max-w-md mx-auto flex flex-col items-center rounded-xl py-2 sm:py-6 sm:px-8 sm:mt-0 mt-0'>
+          {/* Top bar for desktop */}
+          <div className='hidden sm:flex w-full mb-4'>
+            <AuthHeader />
           </div>
-          <Input
-            id='occupation'
-            placeholder='Occupation'
-            value={occupation}
-            onChange={(e) => setOccupation(e.target.value)}
-            required
-          />
+
+          <form onSubmit={handleNext} className='space-y-4 px-4 sm:px-8 max-w-md mx-auto w-full'>
+            <div className='text-left'>
+              <h2
+                className='font-semibold mb-2'
+                style={{ color: '#7A6E5A', fontFamily: 'DM Serif Display, serif', fontSize: '26px' }}
+              >
+                Your Profile
+              </h2>
+            </div>
+            <div className='flex justify-center mb-6'>
+              <label htmlFor='profile-photo-upload' className='cursor-pointer flex flex-col items-center'>
+                {profileImagePreview ? (
+                  <div className='h-24 w-24 rounded-full overflow-hidden mb-2 border-2 border-gray-200'>
+                    <Image
+                      src={profileImagePreview}
+                      alt='Profile Photo'
+                      width={96}
+                      height={96}
+                      className='w-full h-full object-cover'
+                      style={{ minWidth: '96px', minHeight: '96px' }}
+                    />
+                  </div>
+                ) : (
+                  <div className='h-24 w-24 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center bg-gray-50 mb-2'>
+                    <User className='h-12 w-12 text-gray-400' />
+                  </div>
+                )}
+                <span className='text-sm text-muted-foreground'>Profile Photo</span>
+                <input
+                  id='profile-photo-upload'
+                  type='file'
+                  accept='image/*'
+                  className='hidden'
+                  onChange={handleProfileImageChange}
+                />
+              </label>
+            </div>
+            <div className='grid grid-cols-1 gap-4'>
+              <Input
+                id='first-name'
+                placeholder='First Name'
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className='bg-white/80 text-sm'
+                required
+              />
+              <Input
+                id='last-name'
+                placeholder='Last Name'
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className='bg-white/80 text-sm'
+                required
+              />
+              <Input
+                id='phone-number'
+                placeholder='Phone Number'
+                value={phoneNumber}
+                onChange={handlePhoneNumberChange}
+                className='bg-white/80 text-sm'
+                required
+              />
+              {/* Date of Birth with calendar popover */}
+              <Popover open={showCalendar} onOpenChange={setShowCalendar}>
+                <PopoverTrigger>
+                  <Input
+                    id='dob'
+                    placeholder='Date of Birth '
+                    value={dob}
+                    readOnly
+                    onClick={() => setShowCalendar(true)}
+                    required
+                    className='bg-white/80 cursor-pointer text-sm'
+                  />
+                </PopoverTrigger>
+                <PopoverContent align='start' className='w-auto p-0'>
+                  <Calendar
+                    mode='single'
+                    selected={dob ? new Date(dob) : undefined}
+                    onSelect={(date) => {
+                      setDob(date ? date.toISOString().slice(0, 10) : '');
+                      setShowCalendar(false);
+                    }}
+                    captionLayout='dropdown'
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <Input
+                id='occupation'
+                placeholder='Occupation'
+                value={occupation}
+                onChange={(e) => setOccupation(e.target.value)}
+                className='bg-white/80 text-sm'
+                required
+              />
+            </div>
+
+            {/* Desktop stepper and button inside form */}
+            <div className='hidden sm:block'>
+              {/* Progress bar above the button */}
+              <SignupStepper totalSteps={4} currentStep={3} />
+              <div className='pt-4'>
+                <Button
+                  type='submit'
+                  className='w-full rounded-full'
+                  disabled={isSigningUp}
+                  style={{ fontSize: 18, fontWeight: 600, height: 48 }}
+                >
+                  {isSigningUp ? 'Creating Account...' : 'Continue'}
+                </Button>
+              </div>
+            </div>
+          </form>
         </div>
-        {/* Progress bar above the button */}
-        <SignupStepper totalSteps={4} currentStep={3} />
-        <div className='pt-4'>
-          <Button
-            type='submit'
-            className='w-full rounded-full'
-            disabled={isSigningUp}
-            style={{ fontSize: 18, fontWeight: 600, height: 48 }}
-          >
-            {isSigningUp ? 'Creating Account...' : 'Continue'}
-          </Button>
+
+        {/* Mobile-only stepper and button positioned at bottom of screen */}
+        <div className='block sm:hidden fixed bottom-0 left-0 right-0 z-20  pb-6 pt-4 '>
+          {/* Progress bar at top */}
+          <div className='flex justify-center mb-4'>
+            <SignupStepper totalSteps={4} currentStep={3} />
+          </div>
+
+          {/* Continue button positioned below stepper */}
+          <div className='flex justify-center px-4'>
+            <Button
+              type='submit'
+              className='w-full max-w-md rounded-full'
+              disabled={isSigningUp}
+              style={{ fontSize: 18, fontWeight: 600, height: 48 }}
+              onClick={handleNext}
+            >
+              {isSigningUp ? 'Creating Account...' : 'Continue'}
+            </Button>
+          </div>
         </div>
-      </form>
+      </div>
     </AuthLayout>
   );
 }
