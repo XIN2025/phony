@@ -177,7 +177,7 @@ export default function ClientOtpPage() {
       {/* Top bar for mobile - fixed at the top */}
       <div className='block sm:hidden fixed top-0 left-0 right-0 z-20 px-4 pt-4 pb-2 w-full'>
         <div className='flex items-center w-full' style={{ minHeight: 40, padding: 0 }}>
-          <img src='/Continuum.png' alt='Continuum' style={{ height: 32, width: 'auto' }} />
+          <img src='/Continuum.svg' alt='Continuum' style={{ height: 32, width: 'auto' }} />
         </div>
       </div>
 
@@ -189,7 +189,7 @@ export default function ClientOtpPage() {
           {/* Top bar for desktop */}
           <div className='hidden sm:flex w-full mb-4'>
             <div className='flex items-center w-full' style={{ minHeight: 40, padding: 0 }}>
-              <img src='/Continuum.png' alt='Continuum' style={{ height: 32, width: 'auto' }} />
+              <img src='/Continuum.svg' alt='Continuum' style={{ height: 32, width: 'auto' }} />
             </div>
           </div>
           <h2

@@ -13,7 +13,7 @@ export const ClientHeader = () => {
     <div className='sticky top-0 z-30  backdrop-blur-sm lg:hidden  '>
       <div className='flex items-center justify-between px-4 py-3'>
         <div className='flex items-center'>
-          <Image src='/Continuum.png' alt='Continuum' width={120} height={32} className='h-8 w-auto' />
+          <Image src='/Continuum.svg' alt='Continuum' width={120} height={32} className='h-8 w-auto' />
         </div>
         <Link href='/client/settings'>
           <Avatar className='h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity'>

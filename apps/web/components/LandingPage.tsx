@@ -64,8 +64,9 @@ export default function LandingPage() {
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='flex justify-between items-center h-16'>
             <div className='flex items-center space-x-2'>
-              <Image src='/infinity.png' alt='Continuum' width={32} height={32} className='w-10 h-4' />
-              <span className='text-xl font-semibold text-gray-800'>CONTINUUM</span>
+              <Image src='/infinity.svg' alt='Continuum' width={32} height={32} className='w-10 h-4' />
+              <Image src='/Continuum.svg' alt='Continuum' width={32} height={32} className='w-32 h-32' />
+              {/* <span className='text-xl font-semibold text-gray-800'>CONTINUUM</span> */}
             </div>
 
             {/* Desktop Navigation */}
@@ -601,7 +602,7 @@ export default function LandingPage() {
         <div className='max-w-7xl mx-auto'>
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 items-center'>
             <div className='flex items-center space-x-2'>
-              <Image src='/infinity.png' alt='Continuum' width={72} height={32} className='w-80 h-8' />
+              <Image src='/infinity.svg' alt='Continuum' width={72} height={32} className='w-80 h-8' />
               <span className='text-xl font-semibold'>CONTINUUM</span>
             </div>
 

@@ -122,7 +122,7 @@ export function AuthHeader({ showBackButton = true, onBack, className = '', chil
         </button>
       )}
       <Link href='/' className='hover:opacity-80 focus:outline-none transition-opacity'>
-        <Image src='/continuum.png' alt='Continuum' width={120} height={32} className='h-8 w-auto' priority />
+        <Image src='/Continuum.svg' alt='Continuum' width={120} height={32} className='h-8 w-auto' priority />
       </Link>
       {children && <div className='ml-4 flex-1'>{children}</div>}
     </div>

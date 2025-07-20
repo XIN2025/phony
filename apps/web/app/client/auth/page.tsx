@@ -61,7 +61,7 @@ export default function ClientAuthEmailPage() {
               }}
             />
           </button>
-          <img src='/Continuum.png' alt='Continuum' style={{ height: 32, width: 'auto' }} />
+          <img src='/Continuum.svg' alt='Continuum' style={{ height: 32, width: 'auto' }} />
         </div>
       </div>
 
@@ -90,7 +90,7 @@ export default function ClientAuthEmailPage() {
                   }}
                 />
               </button>
-              <img src='/Continuum.png' alt='Continuum' style={{ height: 32, width: 'auto' }} />
+              <img src='/Continuum.svg' alt='Continuum' style={{ height: 32, width: 'auto' }} />
             </div>
           </div>
 
