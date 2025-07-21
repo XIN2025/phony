@@ -6,6 +6,7 @@ import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { AuthLayout, AuthHeader } from '@repo/ui/components/auth-layout';
+import { useEffect } from 'react';
 
 export default function ResponseSentPage() {
   const router = useRouter();
@@ -24,6 +25,13 @@ export default function ResponseSentPage() {
       return () => clearTimeout(timer);
     }
   }, [status, autoRedirect]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.replace('/client');
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [router]);
 
   const handleDashboardClick = async () => {
     if (isRedirecting) return; // Prevent double clicks
@@ -77,23 +85,30 @@ export default function ResponseSentPage() {
   }, [status, session, isRedirecting, update, router]);
 
   return (
-    <AuthLayout>
-      <AuthHeader title='Response Sent' />
-      <div className='text-center space-y-6'>
-        <CheckCircle2 className='h-16 w-16 text-green-500 mx-auto' />
-        <p className='text-muted-foreground'>
-          Thank you for completing the form! Your responses have been sent successfully.
-        </p>
-        {!isRedirecting && !autoRedirect && (
-          <p className='text-sm text-muted-foreground'>
-            You'll be redirected to your dashboard automatically in a moment...
-          </p>
-        )}
-        <Button onClick={handleDashboardClick} className='w-full rounded-full' disabled={isRedirecting}>
-          {isRedirecting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-          {isRedirecting ? 'Redirecting...' : status === 'authenticated' ? 'Go to Dashboard' : 'Go to Login'}
-        </Button>
+    <div className='min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-[#F8F3F1] via-[#F8F3F1] to-[#E6EAEE]'>
+      <div className='flex flex-col items-center justify-center'>
+        <div className='flex items-center justify-center w-32 h-32 rounded-full bg-[#C2B6B0]/30 mb-6'>
+          <div className='flex items-center justify-center w-20 h-20 rounded-full bg-[#807171]'>
+            <svg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'>
+              <circle cx='20' cy='20' r='18' stroke='white' strokeWidth='2' fill='none' />
+              <path
+                d='M13 20L18 25L27 16'
+                stroke='white'
+                strokeWidth='2.5'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+              />
+            </svg>
+          </div>
+        </div>
+        <div className='text-[#807171] text-lg font-medium '>Response Sent</div>
+        <div
+          className='text-2xl sm:text-3xl font-serif font-semibold'
+          style={{ fontFamily: 'DM Serif Display, serif', color: '#807171' }}
+        >
+          Welcome to Continuum!
+        </div>
       </div>
-    </AuthLayout>
+    </div>
   );
 }

@@ -33,7 +33,13 @@ export class AuthController {
   @Public()
   @ApiResponse({ type: LoginResponseDto })
   async verifyOtp(@Body() body: VerifyOtpDto): Promise<LoginResponseDto> {
-    return this.authService.verifyOtp(body.email, body.otp, body.role);
+    console.log('[AuthController] /auth/otp/verify called', { email: body.email, role: body.role });
+    try {
+      return await this.authService.verifyOtp(body.email, body.otp, body.role);
+    } catch (error) {
+      console.error('[AuthController] Error in /auth/otp/verify:', error);
+      throw error;
+    }
   }
 
   @Post('otp/verify-invitation')

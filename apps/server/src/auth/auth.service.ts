@@ -113,6 +113,7 @@ export class AuthService {
   }
 
   async verifyOtp(email: string, otp: string, role: 'CLIENT' | 'PRACTITIONER'): Promise<LoginResponseDto> {
+    console.log('[AuthService] verifyOtp called', { email, role });
     const normalizedEmail = normalizeEmail(email);
 
     const user = await this.prismaService.user.findUnique({
@@ -139,12 +140,20 @@ export class AuthService {
     });
 
     if (!user) {
+      console.warn('[AuthService] No user found for email', normalizedEmail);
       throwAuthError('Account not found. Please sign up first or check your email.', 'unauthorized');
     }
 
-    await this.validateOtp(email, otp, false);
+    try {
+      await this.validateOtp(email, otp, false);
+      console.log('[AuthService] OTP validated for', normalizedEmail);
+    } catch (err) {
+      console.error('[AuthService] OTP validation failed for', normalizedEmail, err);
+      throw err;
+    }
 
     if (user.role !== role) {
+      console.warn('[AuthService] Role mismatch', { expected: role, actual: user.role });
       throwAuthError(`Invalid role. Expected ${role}, got ${user.role}`, 'unauthorized');
     }
 

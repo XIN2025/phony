@@ -140,7 +140,8 @@ export default function ClientSettingsPage() {
       <div className='flex items-center justify-between mb-6'>
         <div className='flex items-center gap-4'>
           <h1
-            className='text-xl sm:text-3xl font-semibold pl-4 sm:pl-0'
+            // className='text-xl sm:text-3xl font-semibold pl-4 sm:pl-0'
+            className='font-semibold mb-2 sm:mb-0 truncate text-2xl lg:text-3xl xl:text-4xl'
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Profile Settings

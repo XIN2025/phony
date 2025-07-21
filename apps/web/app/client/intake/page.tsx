@@ -49,6 +49,7 @@ export default function IntakePage() {
   const uploadFileMutation = useUploadIntakeFormFile();
 
   useEffect(() => {
+    if (hasSubmitted) return; // Prevent redirect logic after submission
     if (status === 'loading') return;
 
     if (status === 'unauthenticated') {
@@ -77,9 +78,10 @@ export default function IntakePage() {
       router.push('/client');
       return;
     }
-  }, [status, session, router, token]);
+  }, [status, session, router, token, hasSubmitted]);
 
   useEffect(() => {
+    if (hasSubmitted) return; // Prevent redirect logic after submission
     if (error && !isRedirecting) {
       const errorMessage = error.message;
       if (errorMessage.includes('Client has already completed intake') || errorMessage.includes('already completed')) {
@@ -95,7 +97,7 @@ export default function IntakePage() {
         toast.error('Failed to load intake form. Please contact your practitioner.');
       }
     }
-  }, [error, router, isRedirecting]);
+  }, [error, router, isRedirecting, hasSubmitted]);
 
   React.useEffect(() => {
     return () => {
@@ -250,10 +252,8 @@ export default function IntakePage() {
             console.warn('Failed to update session after intake submission:', error);
           }
 
-          // Use a small delay to ensure session is properly updated before redirect
-          setTimeout(() => {
-            router.replace(`/client/response-sent?token=${token}`);
-          }, 500);
+          // Immediately redirect to success page
+          router.replace(`/client/response-sent?token=${token}`);
         },
         onError: (error: any) => {
           if (processingTimeoutRef.current) {
@@ -585,6 +585,15 @@ export default function IntakePage() {
   const isFormLoading = isLoading || status === 'loading' || !form;
 
   if (isRedirecting) {
+    return (
+      <div className='min-h-[200px] flex items-center justify-center'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    );
+  }
+
+  if (hasSubmitted) {
+    // Prevent form from rendering after submission
     return (
       <div className='min-h-[200px] flex items-center justify-center'>
         <Loader2 className='h-8 w-8 animate-spin' />

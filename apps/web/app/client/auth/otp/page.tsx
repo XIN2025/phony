@@ -101,6 +101,7 @@ export default function ClientOtpPage() {
             const errorMessage = error?.message || 'Invalid OTP. Please try again.';
             toast.error(errorMessage);
             setOtp('');
+            console.error('[ClientOtpPage] OTP verification error:', error);
           },
         },
       );
@@ -129,6 +130,7 @@ export default function ClientOtpPage() {
             const errorMessage = error?.message || 'Invalid OTP. Please try again.';
             toast.error(errorMessage);
             setOtp('');
+            console.error('[ClientOtpPage] OTP verification error:', error);
           },
         },
       );
@@ -181,11 +183,11 @@ export default function ClientOtpPage() {
         </div>
       </div>
 
-      {/* Centered card for desktop, content for mobile */}
-      <div className='flex-1 flex flex-col items-center justify-center w-full'>
+      {/* Left-aligned card for all screens */}
+      <div className='flex-1 flex flex-col items-start justify-start w-full'>
         {/* Add top margin for mobile to avoid overlap with fixed header */}
         <div className='block sm:hidden' style={{ marginTop: '64px' }}></div>
-        <div className='w-full max-w-md mx-auto flex flex-col items-center justify-center rounded-xl py-6 px-4 sm:px-8 sm:mt-0 mt-4'>
+        <div className='w-full max-w-md mx-auto sm:ml-16 flex flex-col items-start justify-start rounded-xl py-6 px-4 sm:px-8 sm:mt-0 mt-4'>
           {/* Top bar for desktop */}
           <div className='hidden sm:flex w-full mb-4'>
             <div className='flex items-center w-full' style={{ minHeight: 40, padding: 0 }}>
@@ -196,15 +198,15 @@ export default function ClientOtpPage() {
             className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
             style={{ color: '#7A6E5A', fontFamily: 'DM Serif Display, serif' }}
           >
-            Verify Your Email
+            Confirm Your Email
           </h1>
           <p className='text-sm text-muted-foreground mb-8 w-full text-left'>
             Please enter the code we sent to
             <br />
             <span className='break-all'>{email}</span>
           </p>
-          <form className='flex flex-col items-center w-full' onSubmit={handleVerifyOtp} autoComplete='off'>
-            <div className='w-full flex justify-center pb-2'>
+          <form className='flex flex-col w-full' onSubmit={handleVerifyOtp} autoComplete='off'>
+            <div className='w-full flex justify-center sm:justify-start pb-2'>
               <InputOTP maxLength={6} value={otp} onChange={setOtp}>
                 <InputOTPGroup className='flex gap-1 sm:gap-2 w-full'>
                   {Array.from({ length: 6 }, (_, i) => (
@@ -246,16 +248,18 @@ export default function ClientOtpPage() {
                 )}
               </div>
             </div>
-            <Button
-              type='submit'
-              className='w-full rounded-full text-base font-semibold '
-              disabled={(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) || otp.length !== 6}
-            >
-              {(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) && (
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-              )}
-              Continue
-            </Button>
+            <div className='w-full flex justify-center sm:justify-start'>
+              <Button
+                type='submit'
+                className='w-full rounded-full text-base font-semibold'
+                disabled={(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) || otp.length !== 6}
+              >
+                {(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) && (
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                )}
+                Continue
+              </Button>
+            </div>
           </form>
         </div>
       </div>
