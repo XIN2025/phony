@@ -27,10 +27,20 @@ export default function ResponseSentPage() {
   }, [status, autoRedirect]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (typeof window === 'undefined') return;
+    const justSubmitted = localStorage.getItem('intakeJustSubmitted');
+    if (justSubmitted === 'true') {
+      console.log('[ResponseSentPage] Showing success screen for 2 seconds');
+      const timer = setTimeout(() => {
+        localStorage.removeItem('intakeJustSubmitted');
+        console.log('[ResponseSentPage] Redirecting to /client after 2 seconds');
+        router.replace('/client');
+      }, 2000);
+      return () => clearTimeout(timer);
+    } else {
+      console.log('[ResponseSentPage] No intakeJustSubmitted flag, redirecting to /client immediately');
       router.replace('/client');
-    }, 2000);
-    return () => clearTimeout(timer);
+    }
   }, [router]);
 
   const handleDashboardClick = async () => {
@@ -87,7 +97,7 @@ export default function ResponseSentPage() {
   return (
     <div className='min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-[#F8F3F1] via-[#F8F3F1] to-[#E6EAEE]'>
       <div className='flex flex-col items-center justify-center'>
-        <div className='flex items-center justify-center w-32 h-32 rounded-full bg-[#C2B6B0]/30 mb-6'>
+        <div className='flex items-center justify-center w-32 h-32 rounded-full bg-[#C2B6B0]/30 mb-3'>
           <div className='flex items-center justify-center w-20 h-20 rounded-full bg-[#807171]'>
             <svg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'>
               <circle cx='20' cy='20' r='18' stroke='white' strokeWidth='2' fill='none' />

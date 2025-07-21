@@ -5,7 +5,7 @@ import {
   useDeleteInvitation,
   useGetInvitations,
   useResendInvitation,
-  useGetClients,
+  useGetClientsWithLastSession,
   useUnreadMessagesCount,
 } from '@/lib/hooks/use-api';
 import { getAvatarUrl, getInitials } from '@/lib/utils';
@@ -43,7 +43,7 @@ export default function PractitionerDashboard() {
   const router = useRouter();
 
   const { data: invitations = [], isLoading: isInvitationsLoading } = useGetInvitations();
-  const { data: clients = [] } = useGetClients();
+  const { data: clients = [] } = useGetClientsWithLastSession();
 
   const { mutate: deleteInvitation, isPending: isDeleting } = useDeleteInvitation();
   const resendInvitationMutation = useResendInvitation();
@@ -107,8 +107,8 @@ export default function PractitionerDashboard() {
     }
   };
   const getLastSession = (client: any) => {
-    if (client.hasCompletedIntake && client.clientStatus !== 'NEEDS_INTAKE') {
-      return new Date(client.createdAt).toLocaleDateString('en-US', {
+    if (client.lastSession) {
+      return new Date(client.lastSession).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -118,8 +118,8 @@ export default function PractitionerDashboard() {
   };
 
   const getLastActive = (client: any) => {
-    if (client.hasCompletedIntake && client.clientStatus !== 'NEEDS_INTAKE') {
-      return new Date(client.createdAt).toLocaleDateString('en-US', {
+    if (client.lastSession) {
+      return new Date(client.lastSession).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -437,7 +437,6 @@ export default function PractitionerDashboard() {
           </div>
         </CardContent>
       </Card>
-      {}
     </div>
   );
 }

@@ -489,19 +489,41 @@ const ClientPage = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className='px-4 sm:px-6 lg:px-8 grid grid-cols-2 gap-4 mb-6'>
-        <Card className='bg-white rounded-xl shadow-md p-3 sm:p-4 flex flex-col items-center justify-center'>
-          <span className='text-lg sm:text-xl md:text-2xl font-bold text-[#807171]'>{tasksPending}</span>
-          <span className='text-xs sm:text-sm text-gray-600 mt-1'>Tasks Pending</span>
+      <div className='px-2 sm:px-6 lg:px-8 grid grid-cols-2 gap-3 sm:gap-4 mb-6'>
+        {/* Tasks Pending Card */}
+        <Card className='bg-white rounded-2xl shadow-md p-0 flex flex-row items-center h-24 sm:h-28 md:h-32 lg:h-36'>
+          <div className='flex flex-col justify-center flex-1 pl-3 sm:pl-6'>
+            <span
+              className='text-2xl sm:text-3xl md:text-4xl font-serif font-semibold text-[#807171] leading-none'
+              style={{ fontFamily: "'DM Serif Display', serif" }}
+            >
+              {tasksPending}
+            </span>
+            <span className='text-xs sm:text-base md:text-lg font-serif text-[#807171] mt-1 sm:mt-2 whitespace-nowrap truncate'>
+              Tasks Pending
+            </span>
+          </div>
+          <div className='flex items-center justify-center pr-3 sm:pr-6'>
+            <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full  flex items-center justify-center'>
+              <ClipboardList className='w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 ' />
+            </div>
+          </div>
         </Card>
+        {/* Add New Journal Entry Card */}
         <Card
-          className='bg-white rounded-xl shadow-md p-3 sm:p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition'
+          className='bg-white rounded-2xl shadow-md p-0 flex flex-row items-center h-24 sm:h-28 md:h-32 lg:h-36 cursor-pointer hover:bg-gray-50 transition min-w-0'
           onClick={() => (window.location.href = '/client/journals/new')}
         >
-          <span className='text-lg sm:text-xl md:text-2xl'>
-            <Plus className='inline w-5 h-5 sm:w-6 sm:h-6 text-blue-500' />
-          </span>
-          <span className='text-xs sm:text-sm text-gray-600 mt-1'>Add new journal entry</span>
+          <div className='flex flex-col justify-center flex-1 pl-3 sm:pl-6 min-w-0'>
+            <span className='text-sm sm:text-base md:text-lg font-serif text-[#807171] whitespace-normal sm:whitespace-nowrap sm:truncate'>
+              Add new journal entry
+            </span>
+          </div>
+          <div className='flex items-center justify-center pr-2 sm:pr-6'>
+            <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center'>
+              <Plus className='w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7' />
+            </div>
+          </div>
         </Card>
       </div>
 

@@ -87,4 +87,13 @@ export class PractitionerController {
     const practitionerId = req.user.id;
     return this.practitionerService.getClientDetails(practitionerId, clientId);
   }
+
+  @Get('clients-with-last-session')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get all clients of the practitioner with their last session date' })
+  @ApiResponse({ status: 200, description: 'List of clients with last session date retrieved successfully' })
+  async getClientsWithLastSession(@Request() req) {
+    const practitionerId = req.user.id;
+    return this.practitionerService.getClientsWithLastSession(practitionerId);
+  }
 }

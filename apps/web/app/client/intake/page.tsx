@@ -49,35 +49,53 @@ export default function IntakePage() {
   const uploadFileMutation = useUploadIntakeFormFile();
 
   useEffect(() => {
-    if (hasSubmitted) return; // Prevent redirect logic after submission
-    if (status === 'loading') return;
+    console.log('[IntakePage] Session-based redirect effect running');
+    // Prevent session-based redirects if just submitted
+    if (typeof window !== 'undefined' && localStorage.getItem('intakeJustSubmitted') === 'true') {
+      console.log('[IntakePage] Skipping session-based redirects due to intakeJustSubmitted flag');
+      return;
+    }
+    if (hasSubmitted) {
+      console.log('[IntakePage] Skipping redirects: hasSubmitted is true');
+      return;
+    }
+    if (status === 'loading') {
+      console.log('[IntakePage] Skipping redirects: status is loading');
+      return;
+    }
 
     if (status === 'unauthenticated') {
+      console.log('[IntakePage] Redirect: unauthenticated, going to signup');
       toast.error('Please complete account creation first.');
       router.push(`/client/auth/signup?token=${token}`);
       return;
     }
 
     if (!session?.user) {
+      console.log('[IntakePage] Redirect: no user, going to signup');
       toast.error('Please complete account creation first.');
       router.push(`/client/auth/signup?token=${token}`);
       return;
     }
 
     if (session.user.role !== 'CLIENT') {
+      console.log('[IntakePage] Redirect: not a client, going to practitioner');
       router.push('/practitioner');
       return;
     }
 
     if (session.user.clientStatus === 'INTAKE_COMPLETED') {
+      console.log('[IntakePage] Redirect: intake completed, going to /client');
       router.push('/client');
       return;
     }
 
     if (session.user.clientStatus === 'ACTIVE') {
+      console.log('[IntakePage] Redirect: client active, going to /client');
       router.push('/client');
       return;
     }
+    console.log('[IntakePage] No redirect triggered in session-based effect');
   }, [status, session, router, token, hasSubmitted]);
 
   useEffect(() => {
@@ -86,14 +104,17 @@ export default function IntakePage() {
       const errorMessage = error.message;
       if (errorMessage.includes('Client has already completed intake') || errorMessage.includes('already completed')) {
         setIsRedirecting(true);
+        console.log('[IntakePage] Redirect: already completed intake, going to /client');
         toast.info('You have already completed your intake form.');
         router.push('/client');
         return;
       } else if (errorMessage.includes('No invitation found') || errorMessage.includes('No intake form attached')) {
         setIsRedirecting(true);
+        console.log('[IntakePage] Redirect: no intake form found, going to /client');
         toast.error('No intake form found. Please contact your practitioner.');
         router.push('/client');
       } else {
+        console.log('[IntakePage] Error loading intake form:', errorMessage);
         toast.error('Failed to load intake form. Please contact your practitioner.');
       }
     }
@@ -212,23 +233,30 @@ export default function IntakePage() {
     e.preventDefault();
 
     if (hasSubmitted || isSubmitting || isRedirecting || isProcessing) {
+      console.log('[IntakePage] Prevented double submission or redirect');
       return;
     }
 
-    if (!form) return;
+    if (!form) {
+      console.log('[IntakePage] No form loaded, cannot submit');
+      return;
+    }
 
     if (!validateForm()) {
+      console.log('[IntakePage] Form validation failed');
       toast.error('Please complete all required questions before submitting.');
       return;
     }
 
     setIsProcessing(true);
     setHasSubmitted(true);
+    console.log('[IntakePage] Submitting intake form...');
 
     processingTimeoutRef.current = setTimeout(() => {
       setIsProcessing(false);
       setHasSubmitted(false);
       toast.error('Request timed out. Please try again.');
+      console.log('[IntakePage] Submission timed out');
     }, 30000);
 
     submitForm(
@@ -245,11 +273,19 @@ export default function IntakePage() {
 
           setIsRedirecting(true);
           toast.success('Intake form submitted successfully!');
+          console.log(
+            '[IntakePage] Intake form submitted successfully, updating session and redirecting to response-sent',
+          );
 
           try {
             await update();
           } catch (error) {
-            console.warn('Failed to update session after intake submission:', error);
+            console.warn('[IntakePage] Failed to update session after intake submission:', error);
+          }
+
+          // Set localStorage flag before redirect
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('intakeJustSubmitted', 'true');
           }
 
           // Immediately redirect to success page
@@ -266,8 +302,10 @@ export default function IntakePage() {
 
           const errorMessage = error?.message || 'Failed to submit form. Please try again.';
           if (errorMessage.includes('already completed')) {
+            console.log('[IntakePage] Submission error: already completed, redirecting to /client');
             router.push('/client');
           } else {
+            console.log('[IntakePage] Submission error:', errorMessage);
             toast.error(errorMessage);
           }
         },
@@ -584,7 +622,9 @@ export default function IntakePage() {
 
   const isFormLoading = isLoading || status === 'loading' || !form;
 
-  if (isRedirecting) {
+  // Prevent any flash of the intake form after submission
+  if (typeof window !== 'undefined' && localStorage.getItem('intakeJustSubmitted') === 'true') {
+    console.log('[IntakePage] intakeJustSubmitted flag set, showing loader only');
     return (
       <div className='min-h-[200px] flex items-center justify-center'>
         <Loader2 className='h-8 w-8 animate-spin' />
@@ -592,8 +632,8 @@ export default function IntakePage() {
     );
   }
 
-  if (hasSubmitted) {
-    // Prevent form from rendering after submission
+  // If redirecting or hasSubmitted, show loader (but only if intakeJustSubmitted is not set)
+  if (isRedirecting || hasSubmitted) {
     return (
       <div className='min-h-[200px] flex items-center justify-center'>
         <Loader2 className='h-8 w-8 animate-spin' />
@@ -648,7 +688,7 @@ export default function IntakePage() {
                 disabled={isSubmitting || hasSubmitted}
                 className='w-full rounded-full h-12 text-base font-semibold'
               >
-                {isSubmitting || hasSubmitted ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
+                {isSubmitting ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
                 {hasSubmitted ? 'Submitting...' : 'Continue'}
               </Button>
             </div>

@@ -208,6 +208,57 @@ export class PractitionerService {
     }));
   }
 
+  async getClientsWithLastSession(practitionerId: string) {
+    // Get all clients for this practitioner
+    const clients = await this.prismaService.user.findMany({
+      where: {
+        practitionerId: practitionerId,
+        role: UserRole.CLIENT,
+      },
+      include: {
+        _count: {
+          select: { intakeFormSubmissions: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Get all sessions for these clients in one query
+    const clientIds = clients.map((c) => c.id);
+    const sessions = await this.prismaService.session.findMany({
+      where: {
+        clientId: { in: clientIds },
+      },
+      select: {
+        id: true,
+        clientId: true,
+        recordedAt: true,
+      },
+      orderBy: { recordedAt: 'desc' },
+    });
+
+    // Map clientId to latest session date
+    const lastSessionMap = new Map();
+    for (const session of sessions) {
+      if (!lastSessionMap.has(session.clientId)) {
+        lastSessionMap.set(session.clientId, session.recordedAt);
+      }
+    }
+
+    return clients.map((client) => ({
+      id: client.id,
+      email: client.email,
+      firstName: client.firstName,
+      lastName: client.lastName,
+      phoneNumber: client.phoneNumber,
+      clientStatus: client.clientStatus,
+      avatarUrl: client.avatarUrl,
+      createdAt: client.createdAt,
+      hasCompletedIntake: client._count.intakeFormSubmissions > 0,
+      lastSession: lastSessionMap.get(client.id) || null,
+    }));
+  }
+
   async getClientDetails(practitionerId: string, clientId: string) {
     const client = await this.prismaService.user.findFirst({
       where: {

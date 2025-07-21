@@ -226,6 +226,16 @@
         "tags": ["practitioner"]
       }
     },
+    "/api/practitioner/clients-with-last-session": {
+      "get": {
+        "operationId": "PractitionerController_getClientsWithLastSession",
+        "parameters": [],
+        "responses": { "200": { "description": "List of clients with last session date retrieved successfully" } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get all clients of the practitioner with their last session date",
+        "tags": ["practitioner"]
+      }
+    },
     "/api/intake-forms": {
       "post": {
         "operationId": "IntakeFormController_create",

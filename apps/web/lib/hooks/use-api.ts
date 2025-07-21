@@ -158,6 +158,16 @@ export function useGetClients() {
   });
 }
 
+export function useGetClientsWithLastSession() {
+  return useQuery({
+    queryKey: ['clients-with-last-session'],
+    queryFn: () => ApiClient.get<any[]>('/api/practitioner/clients-with-last-session'),
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+  });
+}
+
 export function useGetInvitationByToken(token: string) {
   return useQuery({
     queryKey: ['invitation', token],

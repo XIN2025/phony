@@ -101,7 +101,6 @@ export default function ClientOtpPage() {
             const errorMessage = error?.message || 'Invalid OTP. Please try again.';
             toast.error(errorMessage);
             setOtp('');
-            console.error('[ClientOtpPage] OTP verification error:', error);
           },
         },
       );
@@ -130,7 +129,6 @@ export default function ClientOtpPage() {
             const errorMessage = error?.message || 'Invalid OTP. Please try again.';
             toast.error(errorMessage);
             setOtp('');
-            console.error('[ClientOtpPage] OTP verification error:', error);
           },
         },
       );
