@@ -190,7 +190,7 @@ export const SidebarContent = ({
                 key={link.href}
                 href={link.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 sm:gap-4 lg:gap-5 rounded-full px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-3 transition-all font-medium text-sm sm:text-base lg:text-lg ${
+                className={`flex items-center gap-3 sm:gap-4 lg:gap-5 rounded-full px-4 sm:px-6 lg:px-8 xl:px-12 py-2 transition-all font-medium text-sm sm:text-base lg:text-lg ${
                   isActive
                     ? 'bg-[#807171] text-[#FDF9F5] font-semibold shadow-sm'
                     : 'text-[#807171] hover:text-black hover:bg-[#ede6e3]'

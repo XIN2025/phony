@@ -15,6 +15,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, Edit, Loader2, Trash2, Upload } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { signOut } from 'next-auth/react';
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -137,7 +138,8 @@ export default function SettingsPage() {
       <PageHeader
         title='Profile Settings'
         showBackButton={false}
-        leftElement={<div className='sm:hidden'>{/* Removed SidebarToggleButton */}</div>}
+        titleClassName='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
+        leftElement={<div className='sm:hidden'>{/*  */}</div>}
         rightElement={
           <Button
             className='bg-foreground text-background hover:bg-foreground/90 rounded-md'
@@ -151,8 +153,8 @@ export default function SettingsPage() {
       />
 
       <main className='flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8'>
-        <Tabs defaultValue='profile' className='w-full'>
-          <TabsList className='bg-muted p-1 rounded-lg inline-flex items-center'>
+        <Tabs defaultValue='profile'>
+          <TabsList className='bg-muted p-1 rounded-lg inline-flex items-center w-full max-w-xs mx-auto sm:w-auto  sm:mx-0'>
             <TabsTrigger
               value='profile'
               className='px-4 py-1.5 text-sm font-medium rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm'
@@ -246,6 +248,15 @@ export default function SettingsPage() {
                             <span className='text-xs text-green-600 mt-2'>Selected: {idProofFileName}</span>
                           )}
                         </div>
+                      </div>
+                      {/* Logout button for small screens inside the card */}
+                      <div className=' mt-8'>
+                        <Button
+                          className='bg-foreground text-background hover:bg-foreground/90 rounded-md w-full sm:w-auto'
+                          onClick={() => signOut({ callbackUrl: '/' })}
+                        >
+                          Logout
+                        </Button>
                       </div>
                     </>
                   ) : null}
