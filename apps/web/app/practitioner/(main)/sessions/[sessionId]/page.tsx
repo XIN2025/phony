@@ -10,6 +10,9 @@ import { ArrowLeft, Check, Edit2, Pause, Play, SkipBack, SkipForward, Sparkles, 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import Image from 'next/image';
+import { ClientPageHeader } from '@/components/practitioner/ClientPageHeader';
+import { useGetClient } from '@/lib/hooks/use-api';
 
 type SuggestedActionItem = {
   id: string;
@@ -73,6 +76,7 @@ export default function SessionDetailPage() {
   const [complianceChecked, setComplianceChecked] = useState(false);
 
   const { data: session, isLoading, error, refetch } = useGetSession(sessionId);
+  const { data: client, isLoading: isClientLoading } = useGetClient(session?.client?.id || '');
 
   const updateSessionMutation = useUpdateSession();
   const publishPlanMutation = usePublishPlan();
@@ -350,46 +354,32 @@ export default function SessionDetailPage() {
     );
   }
 
+  const rightActions = session?.plan ? (
+    <Button
+      className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
+      onClick={() => router.push(`/practitioner/clients/${session.client?.id}/plans/${session.plan.id}`)}
+    >
+      View Action Plan
+    </Button>
+  ) : (
+    <Button
+      className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
+      onClick={handleGenerateActionPlan}
+    >
+      Generate Action Plan
+    </Button>
+  );
+
   return (
     <div className='min-h-screen flex flex-col'>
-      <div className='px-8 pt-2 pb-4 border-b'>
-        <button
-          type='button'
-          aria-label='Back'
-          onClick={() => router.back()}
-          className='text-muted-foreground hover:text-foreground focus:outline-none mb-2'
-          style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
-        </button>
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
-          <div className='flex flex-col min-w-0'>
-            <h1 className='text-2xl font-bold truncate'>{session.title || 'Session'}</h1>
-            <p className='text-sm text-muted-foreground truncate'>
-              {session.recordedAt ? new Date(session.recordedAt).toLocaleDateString() : ''}
-              {session.recordedAt ? ' • ' : ''}
-              {session.durationSeconds ? formattedTotal : ''}
-            </p>
-          </div>
-          <div>
-            {session.plan ? (
-              <Button
-                className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
-                onClick={() => router.push(`/practitioner/clients/${session.client?.id}/plans/${session.plan.id}`)}
-              >
-                View Action Plan
-              </Button>
-            ) : (
-              <Button
-                className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
-                onClick={handleGenerateActionPlan}
-              >
-                Generate Action Plan
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+      {!isLoading && client && (
+        <ClientPageHeader
+          client={client}
+          title={session.title || 'Session'}
+          subtitle={session.recordedAt ? new Date(session.recordedAt).toLocaleDateString() : ''}
+          rightActions={rightActions}
+        />
+      )}
 
       <div className='flex flex-col items-center justify-center w-full px-4 mt-6 mb-2'>
         {isSupportedAudio(audioUrl) ? (

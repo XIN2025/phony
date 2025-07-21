@@ -11,10 +11,14 @@ import 'react-date-picker/dist/DatePicker.css';
 import 'react-calendar/dist/Calendar.css';
 import { DateRange } from 'react-date-range';
 import { createPortal } from 'react-dom';
+import Image from 'next/image';
+import { ClientPageHeader } from '@/components/practitioner/ClientPageHeader';
+import { useGetClient } from '@/lib/hooks/use-api';
 
 export default function TaskDetailsPage({ params }: { params: Promise<{ clientId: string; date: string }> }) {
   const router = useRouter();
   const { clientId, date: initialDate } = React.use(params);
+  const { data: client, isLoading: isClientLoading } = useGetClient(clientId);
 
   const [selectedDate, setSelectedDate] = useState(new Date(initialDate));
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -155,82 +159,31 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
     resources: task.resources || [],
   });
 
+  const rightActions = (
+    <button
+      ref={dateButtonRef}
+      className='rounded-full border border-gray-300 px-4 py-2 text-sm bg-white shadow hover:bg-gray-50 transition'
+      onClick={() => setShowDatePicker((v) => !v)}
+      type='button'
+    >
+      <Calendar className='h-4 w-4 inline mr-2' />
+      {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+    </button>
+  );
+
   return (
-    <div className='w-full min-h-screen flex flex-col items-stretch pt-2 px-0'>
-      <div className='w-full mb-2 px-2'>
-        <button
-          type='button'
-          aria-label='Back'
-          onClick={() => router.back()}
-          className='text-muted-foreground hover:text-foreground focus:outline-none'
-          style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
-        </button>
-      </div>
+    <div className='w-full min-h-screen flex flex-col items-stretch px-0'>
+      {!isClientLoading && client && (
+        <ClientPageHeader
+          client={client}
+          title='Tasks'
+          rightActions={rightActions}
+          showMessagesButton={false}
+          showAvatar={false}
+        />
+      )}
 
       <div className='w-full flex flex-col gap-8 px-2 pr-4'>
-        <div className='flex flex-col md:flex-row md:items-center md:justify-between w-full gap-3 md:gap-0 mb-2'>
-          <h1 className='text-2xl font-bold   ' style={{ fontFamily: "'DM Serif Display', serif" }}>
-            Tasks
-          </h1>
-          <div className='flex items-center gap-2'>
-            <button
-              ref={dateButtonRef}
-              className='rounded-full border border-gray-300 px-4 py-2 text-sm bg-white shadow hover:bg-gray-50 transition'
-              onClick={() => setShowDatePicker((v) => !v)}
-              type='button'
-            >
-              <Calendar className='h-4 w-4 inline mr-2' />
-              {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-            </button>
-            {datePickerMounted &&
-              showDatePicker &&
-              createPortal(
-                <div
-                  ref={datePickerRef}
-                  className='absolute z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 max-w-full max-h-[90vh] w-[350px] sm:w-auto overflow-auto flex flex-col items-center animate-fadeIn'
-                  style={{
-                    top: pickerPosition.top,
-                    left: pickerPosition.left,
-                    position: 'absolute',
-                    minWidth: pickerPosition.width,
-                  }}
-                  role='dialog'
-                  aria-modal='true'
-                >
-                  <DateRange
-                    editableDateInputs={true}
-                    onChange={(ranges) => {
-                      const selection = ranges.selection;
-                      if (selection && selection.startDate) {
-                        setDateRange({
-                          startDate: selection.startDate,
-                          endDate: selection.startDate,
-                          key: 'selection',
-                        });
-                        setSelectedDate(selection.startDate);
-
-                        const yyyy = selection.startDate.getFullYear();
-                        const mm = String(selection.startDate.getMonth() + 1).padStart(2, '0');
-                        const dd = String(selection.startDate.getDate()).padStart(2, '0');
-                        const dateStr = `${yyyy}-${mm}-${dd}`;
-                        router.push(`/practitioner/clients/${clientId}/tasks/${dateStr}`);
-                        setShowDatePicker(false);
-                      }
-                    }}
-                    moveRangeOnFirstSelection={false}
-                    ranges={[dateRange]}
-                    maxDate={new Date()}
-                    rangeColors={['#2563eb']}
-                    showDateDisplay={false}
-                  />
-                </div>,
-                document.body,
-              )}
-          </div>
-        </div>
-
         <div className='flex flex-row gap-6 mb-6'>
           <div className='flex-1'>
             <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col items-start'>

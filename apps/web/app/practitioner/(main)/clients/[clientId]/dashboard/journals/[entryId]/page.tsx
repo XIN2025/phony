@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
-import { ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 import { useGetClientJournalEntries } from '@/lib/hooks/use-api';
 import React from 'react';
 import { PageHeader } from '@/components/PageHeader';

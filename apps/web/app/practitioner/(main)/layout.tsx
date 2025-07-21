@@ -24,7 +24,7 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
     <div className={`relative min-h-screen w-full ${isMessagesPage ? 'overflow-hidden' : 'overflow-x-hidden'}`}>
       {/* Gradient background - matching client style */}
       <div className='absolute inset-0 z-0 bg-gradient-to-r from-red-50 via-orange-30 to-blue-50' />
-
+      {/* <div className='absolute inset-0 z-0 cloudy-gradient-background' /> */}
       <div className='relative z-10 grid min-h-screen w-full lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] 2xl:grid-cols-[360px_1fr]'>
         {/* Sidebar */}
         <div className='hidden lg:block h-full'>

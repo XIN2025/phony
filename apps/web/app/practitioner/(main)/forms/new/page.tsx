@@ -7,7 +7,7 @@ import { CreateIntakeFormDto } from '@repo/shared-types';
 import { toast } from 'sonner';
 import { InviteContextProvider } from '@/context/InviteContext';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 
 function IntakeFormPageLayout({
   title,
@@ -30,7 +30,7 @@ function IntakeFormPageLayout({
             className='text-muted-foreground hover:text-foreground focus:outline-none'
             style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
+            <Image src='/arrow-right.svg' alt='Back' width={54} height={54} className='h-14 w-14' />
           </button>
         </div>
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>

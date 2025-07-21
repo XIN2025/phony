@@ -3,7 +3,7 @@ import React from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { InviteClientDetailsForm } from '@/components/invite/InviteClientDetailsForm';
 import { IntakeFormSelector } from '@/components/invite/IntakeFormSelector';
 import { IntakeFormBuilder } from '@/components/invite/IntakeFormBuilder';
@@ -13,6 +13,7 @@ import { CreateIntakeFormDto, QuestionType } from '@repo/shared-types';
 import { useInviteClient, useCreateIntakeForm, useUpdateIntakeForm, useGetIntakeForm } from '@/lib/hooks/use-api';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@repo/ui/components/button';
+import Image from 'next/image';
 
 export default function InviteClientPage() {
   const router = useRouter();
@@ -311,7 +312,7 @@ export default function InviteClientPage() {
             className='text-muted-foreground hover:text-foreground focus:outline-none'
             style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
+            <Image src='/arrow-right.svg' alt='Back' width={36} height={36} className='h-9 w-9' />
           </button>
           <h1
             className=' l font-bold tracking-tight mt-4'

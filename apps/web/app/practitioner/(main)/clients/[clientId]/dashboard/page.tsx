@@ -50,6 +50,8 @@ import { Loader2 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/avatar';
 import { getAvatarUrl, getInitials } from '@/lib/utils';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import Image from 'next/image';
+import { ClientPageHeader } from '@/components/practitioner/ClientPageHeader';
 
 type PopulatedActionItem = ActionItem & { resources: Resource[]; completions: ActionItemCompletion[] };
 type PopulatedPlan = Plan & { actionItems: PopulatedActionItem[] };
@@ -1110,7 +1112,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
                   className='text-muted-foreground hover:text-foreground focus:outline-none'
                   style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
+                  <Image src='/arrow-right.svg' alt='Back' width={54} height={54} className='h-14 w-14' />
                 </button>
               </div>
               <div className='flex flex-row items-center justify-between gap-2 mt-2'>
@@ -1158,7 +1160,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               className='text-muted-foreground hover:text-foreground focus:outline-none'
               style={{ width: 44, height: 44, display: 'flex' }}
             >
-              <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
+              <Image src='/arrow-right.svg' alt='Back' width={54} height={54} className='h-14 w-14' />
             </button>
             <h2 className='text-lg sm:text-xl md:text-2xl font-bold leading-tight mt-2'>New Session</h2>
           </div>
@@ -1212,57 +1214,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     return (
       <>
         <div className='flex flex-col min-h-screen'>
-          <div className='flex flex-col gap-0 border-b px-2  pt-6 sm:pt- pb-3 sm:pb-4'>
-            <div className='w-full flex items-center'>
-              <button
-                type='button'
-                aria-label='Back'
-                onClick={handleBack}
-                className='text-muted-foreground hover:text-foreground focus:outline-none'
-                style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
-              </button>
-            </div>
-            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-2 sm:px-0 mt-2 max-w-full'>
-              <div className='flex flex-row items-center gap-3 w-full sm:w-auto min-w-0'>
-                <Avatar className='h-12 w-12'>
-                  <AvatarImage
-                    src={getAvatarUrl(client?.avatarUrl, client)}
-                    alt={`${client?.firstName || ''} ${client?.lastName || ''}`.trim()}
-                  />
-                  <AvatarFallback>
-                    {getInitials({ firstName: client?.firstName, lastName: client?.lastName })}
-                  </AvatarFallback>
-                </Avatar>
-                <div className='flex flex-col'>
-                  <h1
-                    className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'
-                    style={{ fontFamily: "'DM Serif Display', serif" }}
-                  >
-                    {client.firstName} {client.lastName}
-                  </h1>
-                  <p className='text-xs sm:text-sm text-muted-foreground'>
-                    Client since {new Date(client.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-              <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto min-w-0'>
-                <Link href={`/practitioner/clients/${clientId}/messages`} className='ml-0 sm:ml-0'>
-                  <Button variant='outline' className='rounded-full p-2 border border-border w-full sm:w-auto min-w-0'>
-                    <MessageCircle className='h-4 w-4' />
-                  </Button>
-                </Link>
-                <Button
-                  onClick={handleNewSession}
-                  className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all w-full sm:w-auto min-w-0'
-                >
-                  + New Session
-                </Button>
-              </div>
-            </div>
-          </div>
-
+          {/* Removed duplicate custom header. Only ClientPageHeader is rendered at the top. */}
           <div className='flex-1 w-full flex py-4 sm:py-8'>
             <div className='w-full px-4 sm:px-8 lg:px-16 flex flex-col gap-6 sm:gap-8'>
               <div className='w-full'>
@@ -1618,6 +1570,15 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     );
   };
 
+  const rightActions = (
+    <Button
+      onClick={handleNewSession}
+      className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all w-full sm:w-auto min-w-0'
+    >
+      + New Session
+    </Button>
+  );
+
   return (
     <>
       {isRedirecting && (
@@ -1626,6 +1587,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           <div className='text-lg font-semibold text-black'>Redirecting to review...</div>
         </div>
       )}
+      {!isLoading && client && <ClientPageHeader client={client} rightActions={rightActions} />}
       {renderContent()}
     </>
   );

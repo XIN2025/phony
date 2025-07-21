@@ -20,6 +20,7 @@ interface PageHeaderProps {
   rightElement?: React.ReactNode;
   titleClassName?: string;
   subtitleClassName?: string;
+  largeBackButton?: boolean;
 }
 
 interface AuthHeaderProps {
@@ -41,6 +42,7 @@ export function PageHeader({
   rightElement,
   titleClassName,
   subtitleClassName,
+  largeBackButton = false,
 }: PageHeaderProps) {
   const handleBack = () => {
     if (onBack) {
@@ -66,9 +68,18 @@ export function PageHeader({
             type='button'
             aria-label='Back'
             onClick={handleBack}
-            className='text-muted-foreground hover:text-foreground focus:outline-none mr-2 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center'
+            className={cn(
+              'text-muted-foreground hover:text-foreground focus:outline-none mr-2 flex items-center justify-center',
+              largeBackButton ? 'w-14 h-14' : 'w-9 h-9 sm:w-10 sm:h-10',
+            )}
           >
-            <ArrowLeft className='h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7' />
+            <Image
+              src='/arrow-right.svg'
+              alt='Back'
+              width={largeBackButton ? 54 : 28}
+              height={largeBackButton ? 54 : 28}
+              className={largeBackButton ? 'h-14 w-14' : 'h-7 w-7'}
+            />
           </button>
         )}
         <div className='flex-1 min-w-0'>

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/ca
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { useGetClient, useGetClientIntakeForm } from '@/lib/hooks/use-api';
 import { getAvatarUrl, getInitials, getFileUrl } from '@/lib/utils';
-import { ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 export default function ClientProfilePage({ params }: { params: Promise<{ clientId: string }> }) {
@@ -46,7 +46,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
             onClick={() => router.back()}
             className='text-muted-foreground hover:text-foreground focus:outline-none w-10 h-10 flex items-center justify-center sm:w-11 sm:h-11'
           >
-            <ArrowLeft className='h-6 w-6 sm:h-7 sm:w-7' />
+            <Image src='/arrow-right.svg' alt='Back' width={54} height={54} className='h-14 w-14' />
           </button>
         </div>
         {/* Heading row */}

@@ -9,6 +9,7 @@ import { Button } from '@repo/ui/components/button';
 import { Edit2, FileText, ArrowLeft } from 'lucide-react';
 import { TaskEditorDialog } from '@/components/practitioner/TaskEditorDialog';
 import { PageHeader } from '@/components/PageHeader';
+import Image from 'next/image';
 
 export default function ActionPlanSummaryPage({ params }: { params: Promise<{ clientId: string; planId: string }> }) {
   const { clientId, planId } = use(params);
