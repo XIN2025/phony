@@ -58,7 +58,10 @@ export default function ClientsPage() {
       <>
         <header className='flex flex-col gap-4 border-b bg-transparent p-6 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex items-center gap-2'>
-            <h1 className='text-2xl font-bold tracking-tight' style={{ fontFamily: "'DM Serif Display', serif" }}>
+            <h1
+              className='text-xl font-bold tracking-tight truncate text-2xl sm:text-3xl lg:text-4xl '
+              style={{ fontFamily: "'DM Serif Display', serif" }}
+            >
               Clients
             </h1>
           </div>
@@ -83,7 +86,7 @@ export default function ClientsPage() {
         <header className='flex flex-col gap-4 border-b bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6'>
           <div className='flex items-center gap-2'>
             <h1
-              className='text-xl font-bold tracking-tight text-2xl sm:text-3xl lg:text-4xl '
+              className='text-xl font-bold tracking-tight truncate text-2xl sm:text-3xl lg:text-4xl '
               style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               Clients
@@ -314,6 +317,12 @@ export default function ClientsPage() {
 
             {filteredClients.length === 0 && (
               <div className='text-center py-12 sm:py-16 px-4'>
+                <h1
+                  className='text-xl font-bold tracking-tight truncate text-2xl sm:text-3xl lg:text-4xl mb-4'
+                  style={{ fontFamily: "'DM Serif Display', serif" }}
+                >
+                  Clients
+                </h1>
                 <p className='text-muted-foreground mb-4 sm:mb-6 text-base sm:text-lg'>
                   {searchTerm ? 'No clients found matching your search.' : 'No clients found.'}
                 </p>
