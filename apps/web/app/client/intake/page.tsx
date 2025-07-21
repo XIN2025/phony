@@ -624,6 +624,7 @@ export default function IntakePage() {
 
   // Prevent any flash of the intake form after submission
   if (typeof window !== 'undefined' && localStorage.getItem('intakeJustSubmitted') === 'true') {
+    // Show loader only while waiting for redirect
     console.log('[IntakePage] intakeJustSubmitted flag set, showing loader only');
     return (
       <div className='min-h-[200px] flex items-center justify-center'>
@@ -634,6 +635,7 @@ export default function IntakePage() {
 
   // If redirecting or hasSubmitted, show loader (but only if intakeJustSubmitted is not set)
   if (isRedirecting || hasSubmitted) {
+    // Show loader only until redirect
     return (
       <div className='min-h-[200px] flex items-center justify-center'>
         <Loader2 className='h-8 w-8 animate-spin' />

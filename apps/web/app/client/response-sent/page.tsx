@@ -10,22 +10,7 @@ import { useEffect } from 'react';
 
 export default function ResponseSentPage() {
   const router = useRouter();
-  const { data: session, status, update } = useSession();
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const [autoRedirect, setAutoRedirect] = useState(false);
-
-  // Auto-redirect after 2 seconds if user doesn't click the button
-  React.useEffect(() => {
-    if (status === 'authenticated' && !autoRedirect) {
-      const timer = setTimeout(() => {
-        setAutoRedirect(true);
-        handleDashboardClick();
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [status, autoRedirect]);
-
+  // Only need a single effect for the 2-second success screen and redirect
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const justSubmitted = localStorage.getItem('intakeJustSubmitted');
@@ -38,62 +23,13 @@ export default function ResponseSentPage() {
       }, 2000);
       return () => clearTimeout(timer);
     } else {
+      // If user lands here without submitting intake, redirect immediately
       console.log('[ResponseSentPage] No intakeJustSubmitted flag, redirecting to /client immediately');
       router.replace('/client');
     }
   }, [router]);
 
-  const handleDashboardClick = async () => {
-    if (isRedirecting) return; // Prevent double clicks
-
-    setIsRedirecting(true);
-
-    if (status === 'authenticated' && session?.user) {
-      try {
-        // Refresh session to get latest client status
-        const updatedSession = await update();
-
-        // If session was successfully updated and status is now INTAKE_COMPLETED, redirect
-        if (updatedSession?.user?.clientStatus === 'INTAKE_COMPLETED') {
-          router.replace('/client');
-          return;
-        }
-
-        // If session update failed or status is still wrong, force a hard navigation
-        window.location.href = '/client';
-      } catch (error) {
-        console.warn('Failed to update session before redirect:', error);
-        // Force hard navigation as fallback
-        window.location.href = '/client';
-      }
-    } else {
-      // User is not authenticated, redirect to login
-      router.replace('/client/auth');
-    }
-  };
-
-  // Add a more reliable auto-redirect mechanism
-  React.useEffect(() => {
-    if (status === 'authenticated' && session?.user && !isRedirecting) {
-      const timer = setTimeout(async () => {
-        try {
-          const updatedSession = await update();
-          if (updatedSession?.user?.clientStatus === 'INTAKE_COMPLETED') {
-            router.replace('/client');
-          } else {
-            // Fallback to hard navigation
-            window.location.href = '/client';
-          }
-        } catch (error) {
-          console.warn('Auto-redirect failed:', error);
-          window.location.href = '/client';
-        }
-      }, 3000); // Increased to 3 seconds for better reliability
-
-      return () => clearTimeout(timer);
-    }
-  }, [status, session, isRedirecting, update, router]);
-
+  // Only show the success UI, no buttons or extra logic
   return (
     <div className='min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-[#F8F3F1] via-[#F8F3F1] to-[#E6EAEE]'>
       <div className='flex flex-col items-center justify-center'>

@@ -54,9 +54,13 @@ export default function ClientSignUpPage() {
       await clearAllAuthData();
       await signOut({
         redirect: false,
-        callbackUrl: '/',
+        callbackUrl: token ? `/client/auth/signup?token=${token}` : '/',
       });
-      window.location.href = '/';
+      if (token) {
+        window.location.href = `/client/auth/signup?token=${token}`;
+      } else {
+        window.location.href = '/';
+      }
     } catch {
       setIsLoggingOut(false);
       toast.error('Failed to log out. Please try again.');
@@ -133,8 +137,18 @@ export default function ClientSignUpPage() {
               <LogOut className='mr-2 h-4 w-4' />
               {isLoggingOut ? 'Logging Out...' : 'Log Out'}
             </Button>
-            <Button variant='outline' onClick={() => router.push('/client')} className='w-full rounded-full'>
-              Back to Client Dashboard
+            <Button
+              variant='outline'
+              onClick={() => {
+                if (token) {
+                  router.push(`/client/intake?token=${token}`);
+                } else {
+                  router.push('/client');
+                }
+              }}
+              className='w-full rounded-full'
+            >
+              Back to {token ? 'Intake Form' : 'Client Dashboard'}
             </Button>
           </div>
         </>

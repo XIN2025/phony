@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { useGetCurrentUser } from '@/lib/hooks/use-api';
 
 const ContinuumIcon = () => (
-  <Image src='/Continuum.svg' alt='Continuum Logo' width={120} height={32} className='h-8 w-auto' />
+  <Image src='/Continuum.svg' alt='Continuum Logo' width={120} height={32} className='h-6 w-auto' />
 );
 
 // SVG icon components that use the actual SVG files and can change color
