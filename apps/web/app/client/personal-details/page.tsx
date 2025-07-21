@@ -149,7 +149,7 @@ export default function PersonalDetailsPage() {
           <form onSubmit={handleNext} className='space-y-4 px-4 sm:px-8 max-w-md mx-auto w-full'>
             <div className='text-left'>
               <h1
-                className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
+                className='text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl'
                 style={{ color: '#7A6E5A', fontFamily: 'DM Serif Display, serif' }}
               >
                 Personal Details
@@ -165,7 +165,7 @@ export default function PersonalDetailsPage() {
                       width={96}
                       height={96}
                       className='w-full h-full object-cover'
-                      style={{ minWidth: '96px', minHeight: '96px' }}
+                      style={{ minWidth: '72px', minHeight: '72px', maxWidth: '96px', maxHeight: '96px' }}
                     />
                   </div>
                 ) : (
@@ -189,7 +189,7 @@ export default function PersonalDetailsPage() {
                 placeholder='First Name'
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className='bg-white/80 text-sm'
+                className='bg-white/80 text-sm sm:text-base md:text-sm lg:text-base'
                 required
               />
               <Input
@@ -197,7 +197,7 @@ export default function PersonalDetailsPage() {
                 placeholder='Last Name'
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className='bg-white/80 text-sm'
+                className='bg-white/80 text-sm sm:text-base md:text-sm lg:text-base'
                 required
               />
               <Input
@@ -205,7 +205,7 @@ export default function PersonalDetailsPage() {
                 placeholder='Phone Number'
                 value={phoneNumber}
                 onChange={handlePhoneNumberChange}
-                className='bg-white/80 text-sm'
+                className='bg-white/80 text-sm sm:text-base md:text-sm lg:text-base'
                 required
               />
               {/* Date of Birth with calendar popover */}
@@ -218,7 +218,7 @@ export default function PersonalDetailsPage() {
                     readOnly
                     onClick={() => setShowCalendar(true)}
                     required
-                    className='bg-white/80 cursor-pointer text-sm'
+                    className='bg-white/80 cursor-pointer text-sm sm:text-base md:text-sm lg:text-base'
                   />
                 </PopoverTrigger>
                 <PopoverContent align='start' className='w-auto p-0'>
@@ -239,7 +239,7 @@ export default function PersonalDetailsPage() {
                 placeholder='Occupation'
                 value={occupation}
                 onChange={(e) => setOccupation(e.target.value)}
-                className='bg-white/80 text-sm'
+                className='bg-white/80 text-sm sm:text-base md:text-sm lg:text-base'
                 required
               />
             </div>

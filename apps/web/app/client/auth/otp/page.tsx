@@ -181,11 +181,11 @@ export default function ClientOtpPage() {
         </div>
       </div>
 
-      {/* Left-aligned card for all screens */}
-      <div className='flex-1 flex flex-col items-start justify-start w-full'>
+      {/* Centered card for all screens */}
+      <div className='flex-1 flex flex-col items-center justify-center w-full'>
         {/* Add top margin for mobile to avoid overlap with fixed header */}
         <div className='block sm:hidden' style={{ marginTop: '64px' }}></div>
-        <div className='w-full max-w-md mx-auto sm:ml-16 flex flex-col items-start justify-start rounded-xl py-6 px-4 sm:px-8 sm:mt-0 mt-4'>
+        <div className='w-full max-w-md mx-auto flex flex-col items-center justify-center rounded-xl py-6 px-4 sm:px-8 sm:mt-0 mt-4'>
           {/* Top bar for desktop */}
           <div className='hidden sm:flex w-full mb-4'>
             <div className='flex items-center w-full' style={{ minHeight: 40, padding: 0 }}>
@@ -193,17 +193,17 @@ export default function ClientOtpPage() {
             </div>
           </div>
           <h1
-            className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
+            className='text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl text-start w-full'
             style={{ color: '#7A6E5A', fontFamily: 'DM Serif Display, serif' }}
           >
             Confirm Your Email
           </h1>
-          <p className='text-sm text-muted-foreground mb-8 w-full text-left'>
+          <p className='text-sm sm:text-base md:text-sm lg:text-base text-muted-foreground mb-8 w-full '>
             Please enter the code we sent to
             <br />
             <span className='break-all'>{email}</span>
           </p>
-          <form className='flex flex-col w-full' onSubmit={handleVerifyOtp} autoComplete='off'>
+          <form className='flex flex-col w-full items-center' onSubmit={handleVerifyOtp} autoComplete='off'>
             <div className='w-full flex justify-center sm:justify-start pb-2'>
               <InputOTP maxLength={6} value={otp} onChange={setOtp}>
                 <InputOTPGroup className='flex gap-1 sm:gap-2 w-full'>
@@ -211,7 +211,7 @@ export default function ClientOtpPage() {
                     <InputOTPSlot
                       key={i}
                       index={i}
-                      className='flex-1 min-w-0 h-12 sm:h-14 text-lg sm:text-xl font-semibold bg-white border border-gray-200 rounded-md shadow-sm text-center'
+                      className='flex-1 min-w-0 h-12 sm:h-14 md:h-12 lg:h-14 text-lg sm:text-xl md:text-lg lg:text-xl font-semibold bg-white border border-gray-200 rounded-md shadow-sm text-center'
                     />
                   ))}
                 </InputOTPGroup>
@@ -223,7 +223,7 @@ export default function ClientOtpPage() {
                   <button
                     type='button'
                     onClick={handleChangeEmail}
-                    className='text-xs text-primary hover:underline px-2 py-1 rounded focus:outline-none'
+                    className='text-xs sm:text-sm md:text-xs lg:text-sm text-primary hover:underline px-2 py-1 rounded focus:outline-none'
                     style={{ minWidth: 80 }}
                   >
                     Change Email
@@ -232,13 +232,15 @@ export default function ClientOtpPage() {
               </div>
               <div>
                 {resendTimer > 0 ? (
-                  <span className='text-xs text-muted-foreground'>Resend OTP in {resendTimer}s</span>
+                  <span className='text-xs sm:text-sm md:text-xs lg:text-sm text-muted-foreground'>
+                    Resend OTP in {resendTimer}s
+                  </span>
                 ) : (
                   <button
                     type='button'
                     onClick={handleResendOtp}
                     disabled={isResending}
-                    className='text-xs text-primary hover:underline disabled:opacity-50 px-2 py-1 rounded focus:outline-none'
+                    className='text-xs sm:text-sm md:text-xs lg:text-sm text-primary hover:underline disabled:opacity-50 px-2 py-1 rounded focus:outline-none'
                     style={{ minWidth: 80 }}
                   >
                     {isResending ? 'Sending...' : 'Resend OTP'}
@@ -249,7 +251,7 @@ export default function ClientOtpPage() {
             <div className='w-full flex justify-center sm:justify-start'>
               <Button
                 type='submit'
-                className='w-full rounded-full text-base font-semibold'
+                className='w-full rounded-full text-base sm:text-lg md:text-base lg:text-lg font-semibold'
                 disabled={(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) || otp.length !== 6}
               >
                 {(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) && (

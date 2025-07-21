@@ -182,12 +182,7 @@ export default function ClientSignUpPage() {
       {/* Top bar for mobile - fixed at the top */}
       <div className='block sm:hidden fixed top-0 left-0 right-0 z-20 px-4 pt-4 pb-2 w-full'>
         <div className='flex items-center w-full' style={{ minHeight: 40, padding: 0 }}>
-          <span
-            className='font-bold'
-            style={{ fontFamily: 'DM Serif Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
-          >
-            Continuum
-          </span>
+          <img src='/Continuum.svg' alt='Continuum' style={{ height: 32, width: 'auto' }} />
         </div>
       </div>
 
@@ -199,18 +194,17 @@ export default function ClientSignUpPage() {
           {/* Top bar for desktop */}
           <div className='hidden sm:flex w-full mb-4'>
             <div className='flex items-center w-full' style={{ minHeight: 40, padding: 0 }}>
-              <span
-                className='font-bold'
-                style={{ fontFamily: 'DM Serif Display, serif', fontSize: 32, color: '#18120F', lineHeight: 1 }}
-              >
-                Continuum
-              </span>
+              <img src='/Continuum.svg' alt='Continuum' style={{ height: 32, width: 'auto' }} />
             </div>
           </div>
 
           <form onSubmit={handleNext} className='space-y-6 w-full'>
             <div>
-              <Label htmlFor='email' className='block text-sm font-medium mb-1' style={{ color: '#8C8B8B' }}>
+              <Label
+                htmlFor='email'
+                className='block text-sm sm:text-base md:text-sm lg:text-base font-medium mb-1'
+                style={{ color: '#8C8B8B' }}
+              >
                 Email ID
               </Label>
               <Input
@@ -220,18 +214,22 @@ export default function ClientSignUpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={!!invitationData || isSendingOtp}
-                className='mt-1 bg-zinc-50 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
+                className='mt-1 bg-zinc-50 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base md:text-sm lg:text-base'
                 autoComplete='email'
                 required
               />
             </div>
             {/* Progress bar above the button */}
             <SignupStepper totalSteps={4} currentStep={1} />
-            <Button type='submit' className='w-full rounded-full' disabled={isSendingOtp}>
+            <Button
+              type='submit'
+              className='w-full rounded-full text-sm sm:text-base md:text-sm lg:text-base'
+              disabled={isSendingOtp}
+            >
               {isSendingOtp && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
               Next
             </Button>
-            <div className='text-xs sm:text-sm text-muted-foreground' style={{ lineHeight: 1.6 }}>
+            <div className='text-xs sm:text-sm md:text-xs lg:text-sm text-muted-foreground' style={{ lineHeight: 1.6 }}>
               By continuing, you agree to Continuum's{' '}
               <button
                 type='button'

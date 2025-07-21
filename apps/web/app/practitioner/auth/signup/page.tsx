@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, Upload, User } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-import { useSendOtp, usePractitionerSignup } from '@/lib/hooks/use-api';
+import { useSendOtp, usePractitionerSignup, useVerifyOtp } from '@/lib/hooks/use-api';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Button } from '@repo/ui/components/button';
 import { Checkbox } from '@repo/ui/components/checkbox';
@@ -132,6 +132,7 @@ export default function PractitionerSignUpPage() {
 
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useSendOtp();
   const { mutate: handleSignup, isPending: isSigningUp } = usePractitionerSignup();
+  const { mutateAsync: verifyOtp, isPending: isVerifyingOtp } = useVerifyOtp();
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
@@ -248,7 +249,13 @@ export default function PractitionerSignUpPage() {
           toast.error('Please enter the 6-digit OTP.');
           return;
         }
-        setStep(3);
+        // Verify OTP before proceeding
+        try {
+          await verifyOtp({ email: values.email.trim().toLowerCase(), otp: values.otp.trim(), role: 'PRACTITIONER' });
+          setStep(3);
+        } catch (error: any) {
+          toast.error(error?.message || 'Invalid OTP. Please try again.');
+        }
         break;
       case 3:
         if (!values.firstName?.trim()) {
@@ -444,14 +451,14 @@ export default function PractitionerSignUpPage() {
               <div className='flex flex-col items-center justify-center mb-4'>
                 <label htmlFor='profile-photo-upload' className='cursor-pointer'>
                   {profileImagePreview ? (
-                    <Avatar className='h-24 w-24 sm:h-32 sm:w-32'>
+                    <Avatar className='h-16 w-16 sm:h-20 sm:w-20'>
                       <AvatarImage src={profileImagePreview} alt='Profile Photo' />
                       <AvatarFallback>
                         <User />
                       </AvatarFallback>
                     </Avatar>
                   ) : (
-                    <Avatar className='h-24 w-24 sm:h-32 sm:w-32 border border-dashed'>
+                    <Avatar className='h-16 w-16 sm:h-20 sm:w-20 border border-dashed'>
                       <AvatarFallback>
                         <User />
                       </AvatarFallback>
@@ -518,7 +525,7 @@ export default function PractitionerSignUpPage() {
                   </FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className='h-12 text-base w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-zinc-50'>
+                      <SelectTrigger className='h-11 text-base w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-zinc-50'>
                         <SelectValue placeholder='Select your profession' />
                       </SelectTrigger>
                     </FormControl>
@@ -675,7 +682,7 @@ export default function PractitionerSignUpPage() {
             </Form>
 
             {/* Sign in link */}
-            <div className='text-center text-xs sm:text-sm pt-4 pb-4 sm:pb-0'>
+            <div className='text-center text-xs sm:text-sm md:-mt-3  pb-4 sm:pb-0'>
               Already have an account?{' '}
               <Link href='/practitioner/auth' className='font-medium text-primary hover:underline'>
                 Sign in

@@ -97,7 +97,7 @@ export default function ClientAuthEmailPage() {
           {/* Branding header for all screen sizes */}
           <div className='mb-3 flex flex-col items-start'>
             <div className='text-left'>
-              <span className='text-base font-tighter'>
+              <span className='text-base sm:text-base md:text-sm lg:text-base xl:text-lg font-tighter'>
                 <span className='text-muted-foreground font-semibold'>Where</span> Therapy & Coaching{' '}
                 <span className='text-muted-foreground font-semibold'>Becomes</span> Action & Accountability
               </span>
@@ -106,7 +106,11 @@ export default function ClientAuthEmailPage() {
 
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-3 w-full'>
             <div>
-              <label htmlFor='email' className='block text-sm font-medium mb-1 ' style={{ color: '#8C8B8B' }}>
+              <label
+                htmlFor='email'
+                className='block text-sm sm:text-base md:text-sm lg:text-base font-medium mb-1 '
+                style={{ color: '#8C8B8B' }}
+              >
                 Email ID
               </label>
               <Input
@@ -116,15 +120,17 @@ export default function ClientAuthEmailPage() {
                 {...form.register('email')}
                 autoComplete='email'
                 required
-                className='text-sm sm:text-base bg-zinc-50 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
+                className='text-sm sm:text-base md:text-sm lg:text-base bg-zinc-50 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
               />
               {form.formState.errors.email && (
-                <p className='text-xs sm:text-sm text-destructive mt-1'>{form.formState.errors.email.message}</p>
+                <p className='text-xs sm:text-sm md:text-xs lg:text-sm text-destructive mt-1'>
+                  {form.formState.errors.email.message}
+                </p>
               )}
             </div>
             <Button
               type='submit'
-              className='w-full rounded-full py-2 sm:py-3 text-sm sm:text-base'
+              className='w-full rounded-full py-2 sm:py-3 md:py-2 lg:py-3 text-sm sm:text-base md:text-sm lg:text-base'
               disabled={isPending}
             >
               {isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
@@ -132,7 +138,7 @@ export default function ClientAuthEmailPage() {
             </Button>
             {/* Legal text below button */}
             <div className='text-center'>
-              <p className='text-xs sm:text-sm text-muted-foreground mt-2'>
+              <p className='text-xs sm:text-sm md:text-xs lg:text-sm text-muted-foreground mt-2'>
                 By continuing, you agree to Continuum's{' '}
                 <a href='#' className='underline'>
                   Consumer Terms and Usage Policy
