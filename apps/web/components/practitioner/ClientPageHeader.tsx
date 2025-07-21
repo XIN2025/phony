@@ -34,7 +34,7 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
 }) => {
   const router = useRouter();
   return (
-    <div className='flex flex-col gap-0 border-b px-2 pt-2 pb-3 sm:pb-4'>
+    <div className='flex flex-col gap-0 border-b px-2 lg:px-10 pt-2 pb-3 sm:pb-4'>
       <div className='w-full flex items-center'>
         <button
           type='button'
@@ -59,7 +59,7 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
           )}
           <div className='flex flex-col'>
             <h1
-              className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'
+              className='text-lg sm:text-xl md:text-3xl font-bold leading-tight'
               style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               {title || `${client.firstName} ${client.lastName}`}

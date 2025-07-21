@@ -8,7 +8,8 @@ import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
 import { Edit2, FileText, ArrowLeft } from 'lucide-react';
 import { TaskEditorDialog } from '@/components/practitioner/TaskEditorDialog';
-import { PageHeader } from '@/components/PageHeader';
+import { ClientPageHeader } from '@/components/practitioner/ClientPageHeader';
+import { useGetClient } from '@/lib/hooks/use-api';
 import Image from 'next/image';
 
 export default function ActionPlanSummaryPage({ params }: { params: Promise<{ clientId: string; planId: string }> }) {
@@ -20,6 +21,7 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
   const DAYS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
 
   const { data: plan, isLoading } = useGetPlan(planId);
+  const { data: client } = useGetClient(clientId);
 
   if (isLoading) {
     return <div className='flex justify-center items-center h-96'>Loading...</div>;
@@ -56,39 +58,41 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
     return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   }
 
+  const rightActions =
+    plan.status !== 'DRAFT' ? (
+      <Button
+        variant='ghost'
+        size='sm'
+        aria-label='Edit Plan'
+        onClick={() => router.push(`/practitioner/clients/${clientId}/dashboard?editPlan=${planId}`)}
+        className='ml-2 px-2 py-1 h-8 text-sm font-medium flex items-center gap-1'
+      >
+        <Edit2 className='h-4 w-4 mr-1' /> Edit Plan
+      </Button>
+    ) : null;
+
   return (
     <div className='w-full min-h-screen flex flex-col bg-transparent'>
-      <PageHeader
-        title={
-          <span className='flex justify-between  items-center gap-2'>
-            Action Plan
-            {plan.status !== 'DRAFT' && (
-              <Button
-                variant='ghost'
-                size='sm'
-                aria-label='Edit Plan'
-                onClick={() => router.push(`/practitioner/clients/${clientId}/dashboard?editPlan=${planId}`)}
-                className='ml-2 px-2 py-1 h-8 text-sm font-medium flex items-center gap-1'
-              >
-                <Edit2 className='h-4 w-4 mr-1' /> Edit Plan
-              </Button>
-            )}
-          </span>
-        }
-        subtitle={
-          plan.session?.title || plan.sessionTitle
-            ? `${plan.session?.title || plan.sessionTitle} | ${formatDate(plan.session?.createdAt || plan.createdAt)} | ${formatTime(plan.session?.createdAt || plan.createdAt)}`
-            : ''
-        }
-        showBackButton={true}
-        onBack={() => router.back()}
-        className='bg-transparent'
-      />
+      {client && (
+        <ClientPageHeader
+          client={client}
+          title={'Action Plan'}
+          subtitle={
+            plan.session?.title || plan.sessionTitle
+              ? `${plan.session?.title || plan.sessionTitle} | ${formatDate(plan.session?.createdAt || plan.createdAt)} | ${formatTime(plan.session?.createdAt || plan.createdAt)}`
+              : ''
+          }
+          onBack={() => router.back()}
+          showAvatar={false}
+          showMessagesButton={false}
+          rightActions={rightActions}
+        />
+      )}
       <div className='w-full flex flex-col sm:flex-row gap-8 px-8  mt-6 bg-transparent'>
         {/* Mandatory Tasks Card */}
         <div className='flex-1 flex flex-col gap-0 bg-transparent'>
           <div className='bg-white rounded-2xl shadow-md p-6 flex flex-col gap-0'>
-            <div className='font-bold text-lg mb-4 text-[#222] ' style={{ fontFamily: "'DM Serif Display', serif" }}>
+            <div className='font-bold text-2xl mb-4 text-[#222] ' style={{ fontFamily: "'DM Serif Display', serif" }}>
               Mandatory tasks for the week
             </div>
             {plan.actionItems?.filter((t: any) => t.isMandatory).length === 0 && (
@@ -138,7 +142,7 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
         {/* Daily Tasks Card */}
         <div className='flex-1 flex flex-col gap-0 bg-transparent'>
           <div className='bg-white rounded-2xl shadow-md p-6 flex flex-col gap-0'>
-            <div className='font-bold text-lg mb-4 text-[#222]' style={{ fontFamily: "'DM Serif Display', serif" }}>
+            <div className='font-bold text-2xl mb-4 text-[#222]' style={{ fontFamily: "'DM Serif Display', serif" }}>
               Daily Tasks
             </div>
             {plan.actionItems?.filter((t: any) => !t.isMandatory).length === 0 && (

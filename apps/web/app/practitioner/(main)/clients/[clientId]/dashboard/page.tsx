@@ -1,6 +1,5 @@
 'use client';
 import { JournalDetailModal } from '@/components/practitioner/JournalDetailModal';
-import { ComprehensiveSummaryModal } from '@/components/practitioner/ComprehensiveSummaryModal';
 import { PlanEditor } from '@/components/practitioner/PlanEditor';
 import { TaskDetailModal } from '@/components/practitioner/TaskDetailModal';
 import { AudioRecorder, AudioRecorderHandle } from '@/components/recorder/AudioRecorder';
@@ -8,6 +7,7 @@ import { TabTrigger } from '@/components/TabTrigger';
 import { AudioRecorderProvider } from '@/context/AudioRecorderContext';
 import {
   useCreateSession,
+  useGenerateComprehensiveSummary,
   useGetClient,
   useGetClientActionItemsInRange,
   useGetClientJournalEntries,
@@ -17,16 +17,14 @@ import {
   useGetSessionsByClient,
   usePublishPlan,
   useUploadSessionAudio,
-  useGenerateComprehensiveSummary,
 } from '@/lib/hooks/use-api';
 import { ActionItem, ActionItemCompletion, Plan, Resource, Session } from '@repo/db';
 import { Button } from '@repo/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
+import { Card } from '@repo/ui/components/card';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
 import { Tabs, TabsContent, TabsList } from '@repo/ui/components/tabs';
-import { ArrowLeft, MessageCircle, ClipboardList, BookText } from 'lucide-react';
-import Link from 'next/link';
+import { BookText, ClipboardList } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import 'react-date-range/dist/styles.css';
@@ -42,27 +40,40 @@ import {
   DialogTitle,
 } from '@repo/ui/components/dialog';
 
-import { isSameDay, getFileUrl } from '@/lib/utils';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { ClientPageHeader } from '@/components/practitioner/ClientPageHeader';
+import { getAvatarUrl, getFileUrl, getInitials, isSameDay } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { useQueryClient } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { DateRange } from 'react-date-range';
 import { createPortal } from 'react-dom';
-import { Loader2 } from 'lucide-react';
-import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/avatar';
-import { getAvatarUrl, getInitials } from '@/lib/utils';
-import { MarkdownRenderer } from '@/components/MarkdownRenderer';
-import Image from 'next/image';
-import { ClientPageHeader } from '@/components/practitioner/ClientPageHeader';
+import Link from 'next/link';
+
+import SummaryTab from './summary';
+import SessionsTab from './sessions';
+import PlansTab from './plans';
+import JournalTab from './journal';
+import ProfileTab from './profile';
 
 type PopulatedActionItem = ActionItem & { resources: Resource[]; completions: ActionItemCompletion[] };
 type PopulatedPlan = Plan & { actionItems: PopulatedActionItem[] };
 type PopulatedSession = Session & { plan: PopulatedPlan | null };
+
+const TABS = [
+  { key: 'dashboard', label: 'Summary' },
+  { key: 'sessions', label: 'Sessions' },
+  { key: 'plans', label: 'Plans' },
+  { key: 'journal', label: 'Journal' },
+  { key: 'profile', label: 'Profile' },
+];
 
 const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedTask, setSelectedTask] = useState<PopulatedActionItem | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [showNewSession, setShowNewSession] = useState(false);
   const [showActionPlan, setShowActionPlan] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PopulatedPlan | null>(null);
   const [showJournalDetail, setShowJournalDetail] = useState(false);
@@ -129,8 +140,10 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab');
-    if (tabFromUrl && ['dashboard', 'sessions', 'plans', 'journal'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['dashboard', 'sessions', 'plans', 'journal', 'profile'].includes(tabFromUrl)) {
       setActiveTab(tabFromUrl);
+    } else {
+      setActiveTab('dashboard');
     }
   }, [searchParams]);
 
@@ -353,14 +366,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   };
 
   const handleNewSession = () => {
-    handleTabChange('sessions');
-    setShowNewSession(true);
-
-    setSessionTitle('');
-    setSessionNotes('');
-    setShowErrorModal(false);
-    setErrorMessage('');
-    setProcessingStep('uploading');
+    router.push(`/practitioner/clients/${clientId}/dashboard/new-session`);
   };
 
   const handlePlanClick = (plan: PopulatedPlan) => {
@@ -471,7 +477,15 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
       setShowUnsavedModal(true);
       setPendingNavigation(() => () => router.back());
     } else {
-      router.back();
+      // Always go back to dashboard with correct tab in URL
+      const newUrl = new URL(window.location.href);
+      let targetTab = searchParams.get('tab');
+      // If no tab, default to summary
+      if (!targetTab) {
+        targetTab = 'summary';
+      }
+      newUrl.searchParams.set('tab', targetTab);
+      router.push(newUrl.pathname + newUrl.search);
     }
   };
 
@@ -572,7 +586,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     <TabsContent value='plans' className='mt-0'>
       <div className='flex flex-col gap-6'>
         <div className='flex justify-between items-center mb-2'>
-          <h2 className='text-lg sm:text-xl font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
+          <h2 className='text-lg sm:text-3xl font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
             Plans
           </h2>
           <input
@@ -704,7 +718,10 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
       <TabsContent value='dashboard' className='mt-0'>
         <div className='flex flex-col gap-6 w-full mb-8'>
           {/* Date Picker Button */}
-          <div className='flex justify-end mb-2'>
+          <div className='flex justify-between mb-2'>
+            <h2 className='text-lg sm:text-3xl font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
+              Summary
+            </h2>
             <button
               ref={dateButtonRef}
               className='flex items-center gap-2 px-4 py-2 rounded-full border border-[#ececec] border-gray-700 shadow-sm text-base font-semibold hover:bg-[#f6f5f4] transition-all min-w-[220px]'
@@ -948,7 +965,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
     <TabsContent value='sessions' className='mt-0'>
       <div className='flex flex-col gap-6'>
         <div className='flex justify-between items-center mb-2'>
-          <h2 className='text-lg sm:text-xl font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
+          <h2 className='text-lg sm:text-3xl font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
             Past Sessions
           </h2>
         </div>
@@ -1117,7 +1134,7 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
               </div>
               <div className='flex flex-row items-center justify-between gap-2 mt-2'>
                 <h1
-                  className='text-lg sm:text-xl md:text-2xl font-bold leading-tight'
+                  className='text-lg sm:text-xl md:text-4xl font-bold leading-tight'
                   style={{ fontFamily: "'DM Serif Display', serif" }}
                 >
                   Edit Action Plan
@@ -1149,64 +1166,6 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
       );
     }
 
-    if (showNewSession) {
-      return (
-        <div className='min-h-screen flex flex-col'>
-          <div className='px-2 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b'>
-            <button
-              type='button'
-              aria-label='Back'
-              onClick={handleBack}
-              className='text-muted-foreground hover:text-foreground focus:outline-none'
-              style={{ width: 44, height: 44, display: 'flex' }}
-            >
-              <Image src='/arrow-right.svg' alt='Back' width={54} height={54} className='h-14 w-14' />
-            </button>
-            <h2 className='text-lg sm:text-xl md:text-2xl font-bold leading-tight mt-2'>New Session</h2>
-          </div>
-          <div className='flex flex-col md:flex-row gap-6 p-8 flex-1'>
-            <div className='flex-1 space-y-6'>
-              <div className='bg-white rounded-2xl shadow-lg p-6'>
-                <div className='font-semibold mb-2'>Session Details</div>
-                <div className='mb-2'>
-                  Client:{' '}
-                  <span className='font-bold'>
-                    {client?.firstName} {client?.lastName}
-                  </span>
-                </div>
-                <input
-                  className='border rounded px-2 py-1 w-full mb-2'
-                  placeholder='Session Title'
-                  value={sessionTitle}
-                  onChange={(e) => setSessionTitle(e.target.value)}
-                />
-              </div>
-              <div className='bg-white rounded-2xl shadow-lg p-6'>
-                <div className='font-semibold mb-2'>Session Notes</div>
-                <textarea
-                  className='border rounded px-2 py-1 w-full min-h-[120px]'
-                  placeholder='Start typing your session notes here'
-                  value={sessionNotes}
-                  onChange={(e) => setSessionNotes(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className='flex-1 space-y-6'>
-              <div className='bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center'>
-                <AudioRecorder
-                  ref={audioRecorderRef}
-                  onRequestEndSession={handleRequestEndSession}
-                  clientId={clientId}
-                  sessionTitle={sessionTitle}
-                  sessionNotes={sessionNotes}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
     if (isLoading) {
       return <div className='flex items-center justify-center min-h-screen'>Loading...</div>;
     }
@@ -1218,246 +1177,30 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           <div className='flex-1 w-full flex py-4 sm:py-8'>
             <div className='w-full px-4 sm:px-8 lg:px-16 flex flex-col gap-6 sm:gap-8'>
               <div className='w-full'>
-                <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full'>
-                  <TabsList className='flex flex-row gap-0 bg-[#f6f5f4] border border-[#d1d1d1] rounded-full  shadow-sm w-full sm:w-fit mb-6 overflow-x-auto whitespace-nowrap'>
-                    <TabTrigger
-                      value='dashboard'
-                      className='rounded-full px-7 py-2 text-base font-normal data-[state=active]:bg-[#d1cdcb] data-[state=active]:text-black data-[state=active]: py-3'
+                <div className='flex flex-row gap-0 bg-[#f6f5f4] border border-[#d1d1d1] rounded-full shadow-sm w-full sm:w-fit mb-6 overflow-x-auto whitespace-nowrap'>
+                  {TABS.map((tab) => (
+                    <Link
+                      key={tab.key}
+                      href={
+                        tab.key === 'dashboard'
+                          ? `/practitioner/clients/${clientId}/dashboard?tab=dashboard`
+                          : `/practitioner/clients/${clientId}/dashboard?tab=${tab.key}`
+                      }
+                      className={`rounded-full px-7 py-2 text-base font-normal transition-colors ${activeTab === tab.key ? 'bg-[#d1cdcb] text-black' : ''}`}
+                      scroll={false}
+                      replace
                     >
-                      Summary
-                    </TabTrigger>
-                    <TabTrigger
-                      value='sessions'
-                      className='rounded-full px-7 py-2 text-base font-normal data-[state=active]:bg-[#d1cdcb] data-[state=active]:text-black data-[state=active]: py-3'
-                    >
-                      Sessions
-                    </TabTrigger>
-                    <TabTrigger
-                      value='plans'
-                      className='rounded-full px-7 py-2 text-base font-normal data-[state=active]:bg-[#d1cdcb] data-[state=active]:text-black data-[state=active]: py-3'
-                    >
-                      Plans
-                    </TabTrigger>
-                    <TabTrigger
-                      value='journal'
-                      className='rounded-full px-7 py-2 text-base font-normal data-[state=active]:bg-[#d1cdcb] data-[state=active]:text-black data-[state=active]: py-3'
-                    >
-                      Journal
-                    </TabTrigger>
-                    <TabTrigger
-                      value='profile'
-                      className='rounded-full px-7 py-2 text-base font-normal data-[state=active]:bg-[#d1cdcb] data-[state=active]:text-black data-[state=active]: py-3'
-                    >
-                      Profile
-                    </TabTrigger>
-                  </TabsList>
-                  {renderDashboardTab()}
-                  {renderSessionsTab()}
-                  {renderPlansTab()}
-                  {renderJournalTab()}
-                  <TabsContent value='profile' className='mt-0'>
-                    {/* Inline profile tab content, adapted from profile/page.tsx */}
-                    {client && (
-                      <div className='w-full flex flex-col pt-6 px-2 sm:px-0 min-h-screen'>
-                        <div className='w-full flex flex-col gap-4 mx-auto'>
-                          <div className='grid grid-cols-1 md:grid-cols-2 px-2 md:px-8 gap-6 max-w-full'>
-                            <div className='bg-white rounded-2xl shadow-md p-4 md:p-8 flex flex-col gap-4 min-h-[180px] md:min-h-[260px]'>
-                              <div className='flex items-center gap-4 mb-4'>
-                                <Avatar className='h-16 w-16 border-2 border-gray-200'>
-                                  <AvatarImage src={getAvatarUrl(client.avatarUrl, client)} />
-                                  <AvatarFallback className='text-2xl'>
-                                    {getInitials({ firstName: client.firstName, lastName: client.lastName })}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className='font-semibold text-xl'>
-                                    {client.firstName} {client.lastName}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className='grid grid-cols-1 gap-2 text-base'>
-                                <div>
-                                  <span className='font-semibold'>Email ID:</span>{' '}
-                                  <span className='font-normal'>{client.email}</span>
-                                </div>
-                                <div>
-                                  <span className='font-semibold'>Phone Number:</span>{' '}
-                                  <span className='font-normal'>{client.phoneNumber || '-'}</span>
-                                </div>
-                                <div>
-                                  <span className='font-semibold'>DOB:</span>{' '}
-                                  <span className='font-normal'>{client.dob || '-'}</span>
-                                </div>
-                                <div>
-                                  <span className='font-semibold'>Occupation:</span>{' '}
-                                  <span className='font-normal'>{client.profession || '-'}</span>
-                                </div>
-                                <div>
-                                  <span className='font-semibold'>Client Since:</span>{' '}
-                                  <span className='font-normal'>
-                                    {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : '-'}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col gap-4 min-h-[260px]'>
-                              <div className='font-semibold text-xl mb-4'>Client Information</div>
-                              <div className='grid grid-cols-1 gap-2 text-base'>
-                                {/* Removed medicalHistory, symptoms, medications UI blocks */}
-                              </div>
-                            </div>
-                          </div>
-                          <div className='mb-6 md:px-8'>
-                            <div className='rounded-2xl bg-white/80 shadow p-6 flex flex-col sm:flex-row sm:items-center justify-between mb-2 border border-[#ececec]'>
-                              <div>
-                                <div className='text-lg font-semibold mb-1'>Intake Survey Responses</div>
-                                <div className='text-xs text-muted-foreground'>
-                                  {isClientLoading
-                                    ? 'Loading...'
-                                    : client.intakeFormSubmission && client.intakeFormSubmission.submittedAt
-                                      ? `Submitted on ${new Date(client.intakeFormSubmission.submittedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`
-                                      : 'No submission found.'}
-                                </div>
-                              </div>
-                              <Button
-                                variant='outline'
-                                className='rounded-full px-6 py-2 mt-4 sm:mt-0 flex items-center gap-2 border border-black text-base font-semibold hover:bg-[#f6f5f4] transition-all'
-                                onClick={() => setShowIntakeSurvey((v) => !v)}
-                                disabled={!client.intakeFormSubmission || isClientLoading}
-                              >
-                                {showIntakeSurvey ? (
-                                  <>
-                                    <span>⏶</span> Hide
-                                  </>
-                                ) : (
-                                  <>
-                                    <span>⏷</span> Show
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-                            {showIntakeSurvey && client.intakeFormSubmission && (
-                              <div className='rounded-2xl bg-white/80 shadow p-6 border border-[#ececec] mt-2'>
-                                <div className='text-lg font-semibold mb-4'>Intake Survey Responses</div>
-                                <div className='text-xs text-muted-foreground mb-6'>
-                                  Submitted on{' '}
-                                  {client.intakeFormSubmission.submittedAt
-                                    ? new Date(client.intakeFormSubmission.submittedAt).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric',
-                                      })
-                                    : ''}
-                                </div>
-                                <div className='flex flex-col gap-4'>
-                                  {client.intakeFormSubmission.form &&
-                                  client.intakeFormSubmission.form.questions &&
-                                  client.intakeFormSubmission.answers ? (
-                                    client.intakeFormSubmission.form.questions
-                                      .sort((a: any, b: any) => a.order - b.order)
-                                      .map((question: any, idx: number) => {
-                                        const answerObj = client.intakeFormSubmission.answers.find(
-                                          (ans: any) => ans.questionId === question.id,
-                                        );
-                                        let answerValue = answerObj ? answerObj.value : '';
-                                        if (typeof answerValue === 'object' && answerValue !== null) {
-                                          answerValue = JSON.stringify(answerValue);
-                                        }
-
-                                        // Handle file uploads - show actual file content
-                                        const renderAnswerValue = () => {
-                                          if (
-                                            question.type === 'FILE_UPLOAD' &&
-                                            typeof answerValue === 'string' &&
-                                            answerValue.startsWith('/uploads/')
-                                          ) {
-                                            const fileUrl = getFileUrl(answerValue);
-                                            const fileExtension = answerValue.split('.').pop()?.toLowerCase();
-
-                                            // Show image preview for image files
-                                            if (
-                                              ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(fileExtension || '')
-                                            ) {
-                                              return (
-                                                <div className='space-y-2'>
-                                                  <img
-                                                    src={fileUrl}
-                                                    alt='Uploaded file'
-                                                    className='max-w-full max-h-48 rounded-md border'
-                                                    onError={(e) => {
-                                                      e.currentTarget.style.display = 'none';
-                                                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                                    }}
-                                                  />
-                                                  <a
-                                                    href={fileUrl}
-                                                    target='_blank'
-                                                    rel='noopener noreferrer'
-                                                    className='text-blue-600 hover:text-blue-800 underline text-sm hidden'
-                                                  >
-                                                    View full size
-                                                  </a>
-                                                </div>
-                                              );
-                                            }
-
-                                            // Show PDF preview or download link for PDFs
-                                            if (fileExtension === 'pdf') {
-                                              return (
-                                                <div className='space-y-2'>
-                                                  <iframe
-                                                    src={fileUrl}
-                                                    className='w-full h-48 border rounded-md'
-                                                    title='PDF Preview'
-                                                  />
-                                                  <a
-                                                    href={fileUrl}
-                                                    target='_blank'
-                                                    rel='noopener noreferrer'
-                                                    className='text-blue-600 hover:text-blue-800 underline text-sm'
-                                                  >
-                                                    Download PDF
-                                                  </a>
-                                                </div>
-                                              );
-                                            }
-
-                                            // For other file types, show download link
-                                            return (
-                                              <a
-                                                href={fileUrl}
-                                                target='_blank'
-                                                rel='noopener noreferrer'
-                                                className='text-blue-600 hover:text-blue-800 underline'
-                                              >
-                                                Download file
-                                              </a>
-                                            );
-                                          }
-                                          return answerValue || <span className='text-gray-400'>No answer</span>;
-                                        };
-
-                                        return (
-                                          <div key={question.id} className='mb-2'>
-                                            <div className='text-sm font-medium mb-1'>{question.text}</div>
-                                            <div className='bg-[#f6f5f4] rounded-md px-4 py-2 text-base'>
-                                              {renderAnswerValue()}
-                                            </div>
-                                          </div>
-                                        );
-                                      })
-                                  ) : (
-                                    <div className='text-gray-400'>No questions or answers found.</div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </TabsContent>
-                </Tabs>
+                      {tab.label}
+                    </Link>
+                  ))}
+                </div>
+                {activeTab === 'dashboard' && <SummaryTab clientId={clientId} />}
+                {activeTab === 'sessions' && <SessionsTab clientId={clientId} />}
+                {activeTab === 'plans' && <PlansTab clientId={clientId} />}
+                {activeTab === 'journal' && (
+                  <JournalTab clientId={clientId} dateRange={dateRange} handleJournalClick={handleJournalClick} />
+                )}
+                {activeTab === 'profile' && <ProfileTab clientId={clientId} />}
               </div>
             </div>
           </div>
@@ -1587,7 +1330,9 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
           <div className='text-lg font-semibold text-black'>Redirecting to review...</div>
         </div>
       )}
-      {!isLoading && client && <ClientPageHeader client={client} rightActions={rightActions} />}
+      {/* Only render ClientPageHeader if not editing plan or showing new session */}
+      {!isLoading && client && !editingPlanId && <ClientPageHeader client={client} rightActions={rightActions} />}
+      {/* Render new session screen as a top-level overlay, independent of tab */}
       {renderContent()}
     </>
   );
@@ -1595,12 +1340,25 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
 
 export default function ClientDashboardPage({ params }: { params: Promise<{ clientId: string }> }) {
   const [clientId, setClientId] = useState<string>('');
+  const router = useRouter();
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : undefined;
 
   useEffect(() => {
     params.then((resolvedParams) => {
       setClientId(resolvedParams.clientId);
     });
   }, [params]);
+
+  // Ensure ?tab=summary is always present by default
+  useEffect(() => {
+    if (clientId && typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.get('tab')) {
+        url.searchParams.set('tab', 'summary');
+        router.replace(url.pathname + url.search);
+      }
+    }
+  }, [clientId, router]);
 
   if (!clientId) {
     return <div className='flex items-center justify-center min-h-screen'>Loading...</div>;

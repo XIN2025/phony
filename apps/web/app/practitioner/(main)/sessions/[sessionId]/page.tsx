@@ -378,6 +378,8 @@ export default function SessionDetailPage() {
           title={session.title || 'Session'}
           subtitle={session.recordedAt ? new Date(session.recordedAt).toLocaleDateString() : ''}
           rightActions={rightActions}
+          showAvatar={false}
+          showMessagesButton={false}
         />
       )}
 
