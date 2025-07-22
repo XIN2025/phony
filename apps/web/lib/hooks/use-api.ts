@@ -27,6 +27,13 @@ export function useVerifyOtp() {
   });
 }
 
+export function useVerifyOtpOnly() {
+  return useMutation({
+    mutationFn: (data: { email: string; otp: string }) =>
+      ApiClient.post<{ success: boolean }>('/api/auth/otp/verify-only', data),
+  });
+}
+
 export function useVerifyInvitationOtp() {
   return useMutation({
     mutationFn: (data: { email: string; otp: string; invitationToken: string }) =>

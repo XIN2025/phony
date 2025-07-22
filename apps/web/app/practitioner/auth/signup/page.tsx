@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, Upload, User } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-import { useSendOtp, usePractitionerSignup, useVerifyOtp } from '@/lib/hooks/use-api';
+import { useSendOtp, usePractitionerSignup, useVerifyOtp, useVerifyOtpOnly } from '@/lib/hooks/use-api';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
 import { Button } from '@repo/ui/components/button';
 import { Checkbox } from '@repo/ui/components/checkbox';
@@ -133,6 +133,7 @@ export default function PractitionerSignUpPage() {
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useSendOtp();
   const { mutate: handleSignup, isPending: isSigningUp } = usePractitionerSignup();
   const { mutateAsync: verifyOtp, isPending: isVerifyingOtp } = useVerifyOtp();
+  const { mutateAsync: verifyOtpOnly, isPending: isVerifyingOtpOnly } = useVerifyOtpOnly();
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
@@ -251,7 +252,7 @@ export default function PractitionerSignUpPage() {
         }
         // Verify OTP before proceeding
         try {
-          await verifyOtp({ email: values.email.trim().toLowerCase(), otp: values.otp.trim(), role: 'PRACTITIONER' });
+          await verifyOtpOnly({ email: values.email.trim().toLowerCase(), otp: values.otp.trim() });
           setStep(3);
         } catch (error: any) {
           toast.error(error?.message || 'Invalid OTP. Please try again.');

@@ -112,6 +112,14 @@ export class AuthController {
     return await this.authService.updateProfile(req.user.id, body, profileImage, idProof);
   }
 
+  @Post('otp/verify-only')
+  @Public()
+  @ApiResponse({ type: Boolean, description: 'Whether the OTP is valid' })
+  async verifyOtpOnly(@Body() body: { email: string; otp: string }): Promise<{ success: boolean }> {
+    await this.authService.verifyOtpOnly(body.email, body.otp);
+    return { success: true };
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get current user information' })

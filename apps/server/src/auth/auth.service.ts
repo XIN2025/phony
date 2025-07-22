@@ -166,6 +166,10 @@ export class AuthService {
     };
   }
 
+  async verifyOtpOnly(email: string, otp: string): Promise<void> {
+    await this.validateOtp(email, otp, false);
+  }
+
   async verifyInvitationOtp(
     email: string,
     otp: string,

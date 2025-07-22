@@ -119,6 +119,19 @@
         "tags": ["auth"]
       }
     },
+    "/api/auth/otp/verify-only": {
+      "post": {
+        "operationId": "AuthController_verifyOtpOnly",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Whether the OTP is valid",
+            "content": { "application/json": { "schema": { "type": "boolean" } } }
+          }
+        },
+        "tags": ["auth"]
+      }
+    },
     "/api/auth/me": {
       "get": {
         "operationId": "AuthController_getCurrentUser",
