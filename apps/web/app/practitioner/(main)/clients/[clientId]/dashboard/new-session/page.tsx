@@ -136,28 +136,40 @@ function NewSessionPageContent(): React.ReactElement {
     };
     document.addEventListener('click', clickHandler, true);
 
-    // Patch window.location methods
+    // Patch window.location methods safely
     const origAssign = window.location.assign;
     const origReplace = window.location.replace;
     const origOpen = window.open;
-    window.location.assign = function (url) {
-      if (isBlocking && !allowNavRef.current) {
-        setPendingNavigation(() => () => origAssign.call(window.location, url));
-        setShowNavDialog(true);
-        return;
-      }
-      allowNavRef.current = false;
-      return origAssign.call(window.location, url);
-    };
-    window.location.replace = function (url) {
-      if (isBlocking && !allowNavRef.current) {
-        setPendingNavigation(() => () => origReplace.call(window.location, url));
-        setShowNavDialog(true);
-        return;
-      }
-      allowNavRef.current = false;
-      return origReplace.call(window.location, url);
-    };
+    try {
+      Object.defineProperty(window.location, 'assign', {
+        configurable: true,
+        writable: true,
+        value: function (url: string) {
+          if (isBlocking && !allowNavRef.current) {
+            setPendingNavigation(() => () => origAssign.call(window.location, url));
+            setShowNavDialog(true);
+            return;
+          }
+          allowNavRef.current = false;
+          return origAssign.call(window.location, url);
+        },
+      });
+      Object.defineProperty(window.location, 'replace', {
+        configurable: true,
+        writable: true,
+        value: function (url: string) {
+          if (isBlocking && !allowNavRef.current) {
+            setPendingNavigation(() => () => origReplace.call(window.location, url));
+            setShowNavDialog(true);
+            return;
+          }
+          allowNavRef.current = false;
+          return origReplace.call(window.location, url);
+        },
+      });
+    } catch (e) {
+      // fallback: do nothing if patching fails
+    }
     window.open = function (...args) {
       if (isBlocking && !allowNavRef.current) {
         setPendingNavigation(() => () => origOpen.apply(window, args));
@@ -170,8 +182,12 @@ function NewSessionPageContent(): React.ReactElement {
 
     return () => {
       document.removeEventListener('click', clickHandler, true);
-      window.location.assign = origAssign;
-      window.location.replace = origReplace;
+      try {
+        Object.defineProperty(window.location, 'assign', { value: origAssign });
+        Object.defineProperty(window.location, 'replace', { value: origReplace });
+      } catch (e) {
+        // fallback: do nothing if patching fails
+      }
       window.open = origOpen;
     };
   }, [isBlocking, allowNavRef]);
