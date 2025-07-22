@@ -17,6 +17,8 @@ import { SignupStepper } from '@/components/SignupStepper';
 import { Calendar } from '@repo/ui/components/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/popover';
 import Image from 'next/image';
+import { signIn } from 'next-auth/react';
+import { Loader2 } from 'lucide-react';
 
 const validatePhoneNumber = (value: string): string => {
   return value.replace(/[^0-9+\-()\s]/g, '');
@@ -29,6 +31,7 @@ export default function PersonalDetailsPage() {
   const { signUpData, updateSignUpData } = useSignUpContext();
   const { mutate: checkIntakeForm } = useCheckInvitationIntakeForm();
   const { mutateAsync: signupClient, isPending: isSigningUp } = useClientSignup();
+  const [isLoading, setIsLoading] = useState(false);
 
   const [firstName, setFirstName] = useState(signUpData.firstName || '');
   const [lastName, setLastName] = useState(signUpData.lastName || '');
@@ -107,27 +110,71 @@ export default function PersonalDetailsPage() {
     formData.append('profession', occupation.trim());
 
     try {
-      await signupClient(formData);
-
+      setIsLoading(true);
+      console.log('[PersonalDetails] Submitting signup form for', email);
+      const signupResponse = await signupClient(formData);
+      console.log('[PersonalDetails] Signup response:', signupResponse);
+      const tokenFromResponse = signupResponse?.token;
+      const userFromResponse = signupResponse?.user;
+      if (!tokenFromResponse || !userFromResponse) {
+        console.error('[PersonalDetails] Signup succeeded but no token/user in response:', signupResponse);
+        toast.error('Account created, but failed to retrieve login credentials. Please log in manually.');
+        router.push('/client/auth');
+        setIsLoading(false);
+        return;
+      }
+      // Now sign in
+      console.log('[PersonalDetails] Attempting signIn for', userFromResponse.email);
+      const signInResult = await signIn('credentials', {
+        email: userFromResponse.email,
+        token: tokenFromResponse,
+        role: 'CLIENT',
+        redirect: false,
+      });
+      console.log('[PersonalDetails] signIn result:', signInResult);
+      if (signInResult?.error) {
+        console.error('[PersonalDetails] Account created but login failed:', signInResult.error);
+        toast.error('Account created but login failed. Please log in manually.');
+        router.push('/client/auth');
+        setIsLoading(false);
+        return;
+      }
+      // Now check for intake form and redirect
+      console.log('[PersonalDetails] Checking for intake form for invitationToken:', invitationToken);
       checkIntakeForm(
         { invitationToken },
         {
           onSuccess: (checkResult) => {
+            console.log('[PersonalDetails] Intake form check result:', checkResult);
+            setIsLoading(false);
             if (checkResult.hasIntakeForm) {
               router.push(`/client/intake?token=${token}`);
             } else {
               router.push(`/client`);
             }
           },
-          onError: () => {
+          onError: (err) => {
+            console.error('[PersonalDetails] Intake form check error:', err);
+            setIsLoading(false);
             router.push(`/client`);
           },
         },
       );
     } catch (err) {
+      console.error('[PersonalDetails] Signup or login error:', err);
       toast.error('Failed to create account. Please try again.');
+      setIsLoading(false);
     }
   };
+
+  // Loader: show only one, always centered, during isLoading
+  if (isLoading) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    );
+  }
 
   return (
     <AuthLayout variant='client'>

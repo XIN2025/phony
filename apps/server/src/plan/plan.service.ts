@@ -618,7 +618,9 @@ export class PlanService {
           weeklyRepetitions: s.weeklyRepetitions || 1,
           isMandatory: s.isMandatory || false,
           whyImportant: s.whyImportant,
-          recommendedActions: s.recommendedActions,
+          recommendedActions: Array.isArray(s.recommendedActions)
+            ? s.recommendedActions.join('\n')
+            : s.recommendedActions,
           toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
           status: SuggestedActionItemStatus.PENDING,
         }));

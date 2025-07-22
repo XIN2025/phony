@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { emailSchema, otpSchema } from '@repo/shared-types';
-import { useSendOtp } from '@/lib/hooks/use-api';
+import { useSendOtp, useVerifyOtp } from '@/lib/hooks/use-api';
 import { handleLoginError } from '@/lib/auth-utils';
 
 export default function PractitionerAuthPage() {
@@ -42,6 +42,7 @@ export default function PractitionerAuthPage() {
   }, [status, session?.user?.role, router, isLoading, showOTP]);
 
   const { mutate: handleSendOTP, isPending: isSendingOTP } = useSendOtp();
+  const { mutateAsync: verifyOtp, isPending: isVerifyingOtp } = useVerifyOtp();
 
   const form = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(showOTP ? otpSchema : emailSchema),
@@ -103,33 +104,40 @@ export default function PractitionerAuthPage() {
     }
 
     setIsLoading(true);
-    console.log('[PractitionerAuth] Starting login process...', { email, role: 'PRACTITIONER' });
-
     try {
+      // FIX: Verify OTP via backend before signIn
+      if (!email) {
+        toast.error('Email is required.');
+        setIsLoading(false);
+        return;
+      }
+      if (!values.otp) {
+        toast.error('OTP is required.');
+        setIsLoading(false);
+        return;
+      }
+      const response = await verifyOtp({ email: email, otp: values.otp, role: 'PRACTITIONER' });
+      if (!response || !response.token) {
+        toast.error('OTP verification failed. Please try again.');
+        setIsLoading(false);
+        return;
+      }
       const res = await signIn('credentials', {
-        email: email,
-        otp: values.otp,
+        email: response.user.email,
+        token: response.token,
         role: 'PRACTITIONER',
         redirect: false,
       });
-
-      console.log('[PractitionerAuth] SignIn response:', res);
-
       if (res?.error) {
-        console.error('[PractitionerAuth] SignIn error:', res.error);
         const errorMessage = handleLoginError(res.error, 'PRACTITIONER');
         toast.error(errorMessage);
       } else if (res?.ok) {
-        console.log('[PractitionerAuth] SignIn successful, forcing session update...');
         await update();
-        // The useEffect will handle the redirect once session is updated
       } else {
-        console.warn('[PractitionerAuth] Unexpected signIn response:', res);
         toast.error('Login failed - unexpected response');
       }
-    } catch (error: unknown) {
-      console.error('[PractitionerAuth] SignIn exception:', error);
-      toast.error('An error occurred during sign in');
+    } catch (error: any) {
+      toast.error(error?.message || 'An error occurred during sign in');
     } finally {
       setIsLoading(false);
     }
@@ -188,8 +196,12 @@ export default function PractitionerAuthPage() {
               </Button>
             )}
           </div>
-          <Button type='submit' className='w-full py-2 sm:py-3 text-sm sm:text-base' disabled={isLoading}>
-            {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+          <Button
+            type='submit'
+            className='w-full py-2 sm:py-3 text-sm sm:text-base'
+            disabled={isLoading || isVerifyingOtp}
+          >
+            {(isLoading || isVerifyingOtp) && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             Sign In
           </Button>
         </motion.div>

@@ -174,8 +174,18 @@ div.test-center-modal {
   z-index: 99999 !important;
   margin: 0 !important;
   box-sizing: border-box;
+  width: 100%; /* allow shrinking on mobile */
+  max-width: 28rem !important; /* or whatever your design uses, e.g. 32rem for max width */
+  min-width: 0 !important; /* allow shrinking */
+  max-height: 90vh !important;
+  overflow-y: auto !important;
 }
-
+@media (max-width: 640px) {
+  div.test-center-modal {
+    max-width: 95vw !important; /* on mobile, modal fits screen */
+    padding: 1rem !important; /* reduce padding for small screens */
+  }
+}
 @keyframes fadeIn {
   from {
     opacity: 0;

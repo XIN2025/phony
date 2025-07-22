@@ -1,25 +1,213 @@
 'use client';
+import React from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useCallback, useRef as useReactRef, useState } from 'react';
 import { AudioRecorder, AudioRecorderHandle } from '@/components/recorder/AudioRecorder';
 import { useGetClient, useCreateSession, useUploadSessionAudio } from '@/lib/hooks/use-api';
 import { Button } from '@repo/ui/components/button';
 import Image from 'next/image';
-import { AudioRecorderProvider } from '@/context/AudioRecorderContext';
+import { AudioRecorderProvider, useAudioRecorder } from '@/context/AudioRecorderContext';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@repo/ui/components/alert-dialog';
 
-export default function NewSessionPage() {
+function NewSessionPageContent(): React.ReactElement {
   const router = useRouter();
   const params = useParams();
   const clientId = params.clientId as string;
   const { data: client } = useGetClient(clientId);
   const createSessionMutation = useCreateSession();
   const uploadAudioMutation = useUploadSessionAudio();
-  const audioRecorderRef = useRef<AudioRecorderHandle>(null);
+  const audioRecorderRef = useReactRef<AudioRecorderHandle>(null);
   const [sessionTitle, setSessionTitle] = useState('');
   const [sessionNotes, setSessionNotes] = useState('');
 
+  // Navigation blocking state
+  const audioRecorder = useAudioRecorder();
+  const [pendingNavigation, setPendingNavigation] = useState<null | (() => void)>(null);
+  const [showNavDialog, setShowNavDialog] = useState(false);
+  const allowNavRef = useReactRef(false);
+
+  // Helper: is recording or paused
+  const isBlocking = audioRecorder.status === 'recording' || audioRecorder.status === 'paused';
+
+  // Intercept browser/tab close
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isBlocking) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isBlocking]);
+
+  // Intercept router navigation (push/back)
+  useEffect(() => {
+    // Patch router.push and router.back
+    const origPush = router.push;
+    const origBack = router.back;
+    // @ts-ignore
+    router.push = (href, options) => {
+      if (isBlocking && !allowNavRef.current) {
+        setPendingNavigation(() => () => origPush.call(router, href, options));
+        setShowNavDialog(true);
+        return;
+      }
+      allowNavRef.current = false;
+      return origPush.call(router, href, options);
+    };
+    // @ts-ignore
+    router.back = () => {
+      if (isBlocking && !allowNavRef.current) {
+        setPendingNavigation(() => () => origBack.call(router));
+        setShowNavDialog(true);
+        return;
+      }
+      allowNavRef.current = false;
+      return origBack.call(router);
+    };
+    return () => {
+      router.push = origPush;
+      router.back = origBack;
+    };
+  }, [isBlocking, router]);
+
+  // Intercept sidebar navigation (patch global window for SidebarContent to use)
+  useEffect(() => {
+    (window as any).__CONTINUUM_BLOCK_NAV__ = (navFn: () => void) => {
+      if (isBlocking) {
+        setPendingNavigation(() => navFn);
+        setShowNavDialog(true);
+        return false;
+      }
+      return true;
+    };
+    return () => {
+      delete (window as any).__CONTINUUM_BLOCK_NAV__;
+    };
+  }, [isBlocking]);
+
+  // Global navigation guard: intercept all navigation attempts
+  useEffect(() => {
+    if (!isBlocking) return;
+    const clickHandler = (e: MouseEvent) => {
+      // Only intercept left-clicks
+      if (e.button !== 0) return;
+      let el = e.target as HTMLElement | null;
+      while (el) {
+        // Intercept anchor tags
+        if (el.tagName === 'A' && (el as HTMLAnchorElement).href) {
+          // Allow if href is just a hash or same page
+          const href = (el as HTMLAnchorElement).href;
+          if (href && !href.startsWith(window.location.href + '#')) {
+            e.preventDefault();
+            setPendingNavigation(() => () => {
+              window.location.href = href;
+            });
+            setShowNavDialog(true);
+            return;
+          }
+        }
+        // Intercept buttons with data-nav or role=button
+        if (el.tagName === 'BUTTON' || el.getAttribute('role') === 'button') {
+          // Try to detect navigation intent
+          const navHref = el.getAttribute('data-href');
+          if (navHref) {
+            e.preventDefault();
+            setPendingNavigation(() => () => {
+              window.location.href = navHref;
+            });
+            setShowNavDialog(true);
+            return;
+          }
+        }
+        el = el.parentElement;
+      }
+    };
+    document.addEventListener('click', clickHandler, true);
+
+    // Patch window.location methods
+    const origAssign = window.location.assign;
+    const origReplace = window.location.replace;
+    const origOpen = window.open;
+    window.location.assign = function (url) {
+      if (isBlocking && !allowNavRef.current) {
+        setPendingNavigation(() => () => origAssign.call(window.location, url));
+        setShowNavDialog(true);
+        return;
+      }
+      allowNavRef.current = false;
+      return origAssign.call(window.location, url);
+    };
+    window.location.replace = function (url) {
+      if (isBlocking && !allowNavRef.current) {
+        setPendingNavigation(() => () => origReplace.call(window.location, url));
+        setShowNavDialog(true);
+        return;
+      }
+      allowNavRef.current = false;
+      return origReplace.call(window.location, url);
+    };
+    window.open = function (...args) {
+      if (isBlocking && !allowNavRef.current) {
+        setPendingNavigation(() => () => origOpen.apply(window, args));
+        setShowNavDialog(true);
+        return null;
+      }
+      allowNavRef.current = false;
+      return origOpen.apply(window, args);
+    };
+
+    return () => {
+      document.removeEventListener('click', clickHandler, true);
+      window.location.assign = origAssign;
+      window.location.replace = origReplace;
+      window.open = origOpen;
+    };
+  }, [isBlocking, allowNavRef]);
+
+  // Handle modal confirm/cancel
+  const handleNavConfirm = useCallback(() => {
+    setShowNavDialog(false);
+    allowNavRef.current = true;
+    if (audioRecorder.stopRecording) audioRecorder.stopRecording();
+    if (pendingNavigation) {
+      setTimeout(() => pendingNavigation(), 0);
+      setPendingNavigation(null);
+    }
+  }, [pendingNavigation, audioRecorder]);
+  const handleNavCancel = useCallback(() => {
+    setShowNavDialog(false);
+    setPendingNavigation(null);
+  }, []);
+
   return (
-    <AudioRecorderProvider>
+    <>
+      <AlertDialog open={showNavDialog} onOpenChange={setShowNavDialog}>
+        <AlertDialogContent className='test-center-modal'>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave this page?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are currently recording audio. Leaving this page will stop your audio recording and you may lose
+              unsaved data. Are you sure you want to leave?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleNavCancel}>Stay</AlertDialogCancel>
+            <AlertDialogAction onClick={handleNavConfirm}>Leave & Stop Recording</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className='min-h-screen flex flex-col'>
         <div className='flex flex-col gap-0 border-b px-2 lg:px-10 pt-2 pb-3 sm:pb-4'>
           <button
@@ -77,6 +265,14 @@ export default function NewSessionPage() {
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+export default function NewSessionPage() {
+  return (
+    <AudioRecorderProvider>
+      <NewSessionPageContent />
     </AudioRecorderProvider>
   );
 }

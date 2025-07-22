@@ -95,7 +95,8 @@ export class AiService {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    this.model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    // this.model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    this.model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
   }
 
   private convertToolsToHelpToString(toolsToHelp: unknown): string | undefined {
