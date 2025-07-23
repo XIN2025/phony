@@ -45,7 +45,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
   }, [inviteData, reset]);
 
   return (
-    <form onSubmit={handleSubmit(onNext)} className='w-full max-w-[1450px] mx-auto p-8 space-y-6'>
+    <form onSubmit={handleSubmit(onNext)} className='w-full max-w-[1450px] mx-auto p-4 sm:p-8 space-y-6'>
       <div className='space-y-2'>
         <Label htmlFor='clientFirstName' className='text-sm font-medium' style={{ color: '#8C8B8B' }}>
           First Name
@@ -58,7 +58,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
               id='clientFirstName'
               placeholder="Client's first name"
               {...field}
-              className='rounded-lg bg-white border border-gray-200'
+              className='rounded-lg bg-white border border-gray-200 w-full text-base py-3 px-4 sm:text-base sm:py-2 sm:px-3'
               style={{
                 boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
               }}
@@ -79,7 +79,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
               id='clientLastName'
               placeholder="Client's last name"
               {...field}
-              className='rounded-lg bg-white border border-gray-200'
+              className='rounded-lg bg-white border border-gray-200 w-full text-base py-3 px-4 sm:text-base sm:py-2 sm:px-3'
               style={{
                 boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
               }}
@@ -101,7 +101,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
               type='email'
               placeholder='Enter Email ID'
               {...field}
-              className='rounded-lg bg-white border border-gray-200'
+              className='rounded-lg bg-white border border-gray-200 w-full text-base py-3 px-4 sm:text-base sm:py-2 sm:px-3'
               style={{
                 boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
               }}
@@ -130,12 +130,32 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
           </Label>
         </div>
       </div>
-      <div className='flex flex-col gap-4 pt-8 sm:flex-row sm:justify-between'>
+      {/* Action Buttons */}
+      {/* Fixed bar for small screens only */}
+      <div className='fixed bottom-0 left-0 w-full z-50 flex gap-3 px-2 py-8 block sm:hidden border-gray-200'>
         <Button
           type='button'
           variant='outline'
           onClick={onCancel}
-          className='w-full rounded-full px-8 py-2 border border-black text-black bg-white hover:bg-gray-100 shadow-sm sm:w-auto'
+          className='flex-1 rounded-full px-4  sm:hidden border border-black text-black bg-transparent hover:bg-gray-100 shadow-sm text-base'
+        >
+          Cancel
+        </Button>
+        <Button
+          type='submit'
+          disabled={!isValid || isLoading}
+          className='flex-1 rounded-full px-4 py-3 bg-black sm:hidden text-white shadow-sm hover:bg-gray-900 text-base'
+        >
+          {isLoading ? 'Sending...' : 'Continue'}
+        </Button>
+      </div>
+      {/* Normal row for sm+ only */}
+      <div className='hidden sm:flex flex-row gap-4 pt-8 sm:justify-between'>
+        <Button
+          type='button'
+          variant='outline'
+          onClick={onCancel}
+          className='w-full rounded-full px-8 py-2 border border-black text-black bg-transparent hover:bg-gray-100 shadow-sm sm:w-auto'
         >
           Cancel
         </Button>

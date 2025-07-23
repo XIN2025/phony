@@ -6,7 +6,7 @@ import { IntakeFormBuilder } from '@/components/invite/IntakeFormBuilder';
 import { useGetIntakeForm, useUpdateIntakeForm, useDeleteIntakeForm } from '@/lib/hooks/use-api';
 import { CreateIntakeFormDto, QuestionType } from '@repo/shared-types';
 import { toast } from 'sonner';
-import { InviteContextProvider, InviteData, useInviteContext } from '@/context/InviteContext';
+import { InviteContextProvider } from '@/context/InviteContext';
 import { Button } from '@repo/ui/components/button';
 import { Skeleton } from '@repo/ui/components/skeleton';
 import Image from 'next/image';
@@ -23,16 +23,22 @@ function IntakeFormPageLayout({
   return (
     <div className='flex flex-col min-h-screen'>
       {/* Header */}
-      <div className='flex flex-col gap-0 border-b px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
+      <div className='flex flex-col gap-0  px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
         <div className='w-full flex items-center mb-4'>
           <button
             type='button'
             aria-label='Back'
             onClick={onBack}
-            className='text-muted-foreground hover:text-foreground focus:outline-none'
-            style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className='text-muted-foreground hover:text-foreground focus:outline-none flex items-center justify-center w-8 h-8 sm:w-11 sm:h-11 md:w-14 md:h-14 rounded-full transition-all min-w-0 min-h-0 max-w-full max-h-full p-0'
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <Image src='/arrow-right.svg' alt='Back' width={54} height={54} className='h-14 w-14' />
+            <Image
+              src='/arrow-right.svg'
+              alt='Back'
+              width={30}
+              height={30}
+              className='h-15 w-15 sm:h-7 sm:w-7 md:h-10 md:w-10'
+            />
           </button>
         </div>
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
@@ -62,7 +68,9 @@ export default function EditFormPage({ params }: { params: Promise<{ formId: str
   const { data: form, isLoading: isLoadingForm } = useGetIntakeForm(formId);
   const { mutate: updateForm, isPending: isUpdating } = useUpdateIntakeForm();
   const { mutate: deleteForm } = useDeleteIntakeForm();
-  const { setInviteData } = useInviteContext ? useInviteContext() : { setInviteData: undefined };
+
+  // Ref for IntakeFormBuilder form
+  const formBuilderRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     params.then((resolvedParams) => {
@@ -147,19 +155,67 @@ export default function EditFormPage({ params }: { params: Promise<{ formId: str
     );
   }
 
+  // Header action for small screens
+  const headerAction = (
+    <Button
+      type='button'
+      className='rounded-full px-4 py-2 bg-black text-white shadow-sm hover:bg-gray-900 truncate sm:hidden ml-2'
+      onClick={() => formBuilderRef.current?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))}
+      disabled={isUpdating}
+    >
+      Save Changes
+    </Button>
+  );
+
   return (
     <InviteContextProvider>
-      <IntakeFormPageLayout title='Edit Form' onBack={handleBack}>
-        <IntakeFormBuilder
-          onSubmit={handleSubmit}
-          onBack={handleBack}
-          onDelete={handleDeleteForm}
-          isLoading={isUpdating}
-          isEditMode={true}
-          initialFormData={formData}
-          buttonText='Save Changes'
-        />
-      </IntakeFormPageLayout>
+      <div className='flex flex-col min-h-screen'>
+        {/* Header */}
+        <div className='flex flex-col gap-0  px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4'>
+          <div className='w-full flex items-center mb-4'>
+            <button
+              type='button'
+              aria-label='Back'
+              onClick={handleBack}
+              className='text-muted-foreground hover:text-foreground focus:outline-none flex items-center justify-center w-8 h-8 sm:w-11 sm:h-11 md:w-14 md:h-14 rounded-full transition-all min-w-0 min-h-0 max-w-full max-h-full p-0'
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Image
+                src='/arrow-right.svg'
+                alt='Back'
+                width={30}
+                height={30}
+                className='h-15 w-15 sm:h-7 sm:w-7 md:h-10 md:w-10'
+              />
+            </button>
+          </div>
+          <div className='mb-6 flex items-center justify-between'>
+            <h1
+              className='text-xl sm:text-2xl md:text-3xl font-bold leading-tight'
+              style={{ fontFamily: "'DM Serif Display', serif" }}
+            >
+              Edit Form
+            </h1>
+            <div className='sm:hidden'>{headerAction}</div>
+          </div>
+        </div>
+        {/* Content */}
+        <div className='flex-1 w-full py-4 sm:py-6 lg:py-8'>
+          <div className='w-full px-4 sm:px-6 lg:px-8  mx-auto'>
+            <IntakeFormBuilder
+              ref={formBuilderRef}
+              onSubmit={handleSubmit}
+              onBack={handleBack}
+              onDelete={handleDeleteForm}
+              isLoading={isUpdating}
+              isEditMode={true}
+              initialFormData={formData}
+              buttonText='Save Changes'
+              hideActionButtonOnMobile={true}
+            />
+          </div>
+        </div>
+      </div>
     </InviteContextProvider>
   );
 }

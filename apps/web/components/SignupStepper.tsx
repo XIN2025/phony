@@ -15,10 +15,9 @@ export const SignupStepper: React.FC<SignupStepperProps> = ({ totalSteps, curren
         return (
           <div
             key={idx}
-            className={`h-1 rounded-full transition-all duration-300 flex-1 ${
-              isActive || isCompleted ? 'bg-[#807171]' : 'bg-gray-300'
-            }`}
+            className={`h-1 rounded-full transition-all duration-300 flex-1`}
             style={{
+              backgroundColor: isActive || isCompleted ? '#807171' : '#CCC6C6',
               marginRight: idx < totalSteps - 1 ? '8px' : '0',
             }}
             aria-current={isActive ? 'step' : undefined}

@@ -59,9 +59,22 @@ export class AuthService {
     };
   }
 
-  async sendOtp(email: string): Promise<{ success: boolean }> {
+  async sendOtp(email: string, role?: 'CLIENT' | 'PRACTITIONER'): Promise<{ success: boolean }> {
     validateRequiredFields({ email }, ['email']);
     const normalizedEmail = normalizeEmail(email);
+    const user = await this.prismaService.user.findUnique({ where: { email: normalizedEmail } });
+
+    if (role) {
+      // Sign-in: user must exist and match role
+      if (!user || user.role !== role) {
+        throwAuthError('Account not found. Please sign up first or check your email.', 'unauthorized');
+      }
+    } else {
+      // Sign-up: user must NOT exist
+      if (user) {
+        throwAuthError('An account with this email already exists', 'conflict');
+      }
+    }
 
     const otp = generateOtp();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);

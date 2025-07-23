@@ -16,6 +16,7 @@ import { CheckCircle, Edit, Loader2, Trash2, Upload } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { signOut } from 'next-auth/react';
+import { cn } from '@repo/ui/lib/utils';
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -28,6 +29,7 @@ export default function SettingsPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [idProofFile, setIdProofFile] = useState<File | null>(null);
   const [idProofFileName, setIdProofFileName] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications'>('profile');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const idProofInputRef = useRef<HTMLInputElement>(null);
@@ -136,13 +138,24 @@ export default function SettingsPage() {
   return (
     <div className='flex flex-col bg-transparent text-foreground'>
       <PageHeader
-        title='Profile Settings'
+        title={
+          <>
+            <span className='block sm:hidden ' style={{ fontFamily: "'DM Serif Display', serif" }}>
+              Profile
+              <br />
+              Settings
+            </span>
+            <span className='hidden sm:inline' style={{ fontFamily: "'DM Serif Display', serif" }}>
+              Profile Settings
+            </span>
+          </>
+        }
         showBackButton={false}
-        titleClassName='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
+        titleClassName='mb-2 sm:mb-0 truncate text-2xl lg:text-3xl xl:text-4xl'
         leftElement={<div className='sm:hidden'>{/*  */}</div>}
         rightElement={
           <Button
-            className='bg-foreground text-background hover:bg-foreground/90 rounded-md'
+            className='bg-foreground text-background hover:bg-foreground/90 rounded-full px-6'
             onClick={handleSaveChanges}
             disabled={isUpdatingProfile}
           >
@@ -151,24 +164,33 @@ export default function SettingsPage() {
           </Button>
         }
       />
-
       <main className='flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8'>
-        <Tabs defaultValue='profile'>
-          <TabsList className='bg-muted p-1 rounded-lg inline-flex items-center w-full max-w-xs mx-auto sm:w-auto  sm:mx-0'>
-            <TabsTrigger
-              value='profile'
-              className='px-4 py-1.5 text-sm font-medium rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm'
+        {/* Dashboard-style tab bar */}
+        <div className='flex flex-row gap-0 bg-[#f6f5f4] border border-[#d1d1d1] rounded-full w-full sm:w-fit mb-6 overflow-x-auto whitespace-nowrap max-w-xs mx-auto sm:mx-0'>
+          {[
+            { key: 'profile', label: 'Profile' },
+            { key: 'notifications', label: 'Notifications' },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type='button'
+              onClick={() => setActiveTab(tab.key as 'profile' | 'notifications')}
+              className={cn(
+                'rounded-full px-8 py-3 text-base font-normal transition-colors',
+                activeTab === tab.key
+                  ? 'bg-[#c8c3c3] text-black font-semibold shadow-none'
+                  : 'bg-transparent text-[#b0acae]',
+              )}
+              aria-selected={activeTab === tab.key}
+              tabIndex={0}
             >
-              Profile
-            </TabsTrigger>
-            <TabsTrigger
-              value='notifications'
-              className='px-4 py-1.5 text-sm font-medium rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm'
-            >
-              Notifications
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value='profile' className='mt-6'>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {/* Tab content */}
+        {activeTab === 'profile' && (
+          <>
             <Card className='border border-border rounded-2xl shadow-none'>
               <CardContent className='p-6 sm:p-8'>
                 <div className='max-w-4xl'>
@@ -205,7 +227,6 @@ export default function SettingsPage() {
                           {user.isEmailVerified && <CheckCircle className='h-5 w-5 text-green-500' />}
                         </div>
                       </div>
-
                       <div className='space-y-6'>
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                           <div className='space-y-2'>
@@ -252,7 +273,7 @@ export default function SettingsPage() {
                       {/* Logout button for small screens inside the card */}
                       <div className=' mt-8'>
                         <Button
-                          className='bg-foreground text-background hover:bg-foreground/90 rounded-md w-full sm:w-auto'
+                          className='bg-foreground text-background hover:bg-foreground/90 rounded-full w-full sm:w-auto'
                           onClick={() => signOut({ callbackUrl: '/' })}
                         >
                           Logout
@@ -264,62 +285,62 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
             <div className='mt-6 flex max-w-4xl'>
-              <Button variant='destructive' className='bg-red-500/10 text-red-500 hover:bg-red-500/20'>
+              <Button variant='destructive' className='bg-red-500/10 rounded-full text-red-500 hover:bg-red-500/20'>
                 <Trash2 className='h-4 w-4 mr-2' />
                 Delete Account
               </Button>
             </div>
-          </TabsContent>
-          <TabsContent value='notifications' className='mt-6'>
-            <Card className='border border-border rounded-2xl shadow-none'>
-              <CardContent className='p-6 sm:p-8'>
-                <h2 className='text-lg font-semibold'>Email Notifications</h2>
-                <p className='text-muted-foreground text-sm mt-1 mb-6'>Manage how you receive notifications</p>
-                <div className='space-y-6'>
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <Label htmlFor='emailReminders' className='font-medium'>
-                        Email Reminders
-                      </Label>
-                      <p className='text-sm text-muted-foreground'>When a client accepts the invitation</p>
-                    </div>
-                    <Switch
-                      id='emailReminders'
-                      checked={notificationSettings.emailReminders}
-                      onCheckedChange={() => handleNotificationChange('emailReminders')}
-                    />
+          </>
+        )}
+        {activeTab === 'notifications' && (
+          <Card className='border border-border rounded-2xl shadow-none'>
+            <CardContent className='p-6 sm:p-8'>
+              <h2 className='text-lg font-semibold'>Email Notifications</h2>
+              <p className='text-muted-foreground text-sm mt-1 mb-6'>Manage how you receive notifications</p>
+              <div className='space-y-6'>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <Label htmlFor='emailReminders' className='font-medium'>
+                      Email Reminders
+                    </Label>
+                    <p className='text-sm text-muted-foreground'>When a client accepts the invitation</p>
                   </div>
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <Label htmlFor='clientMessages' className='font-medium'>
-                        Client Messages
-                      </Label>
-                      <p className='text-sm text-muted-foreground'>When a client messages you</p>
-                    </div>
-                    <Switch
-                      id='clientMessages'
-                      checked={notificationSettings.clientMessages}
-                      onCheckedChange={() => handleNotificationChange('clientMessages')}
-                    />
-                  </div>
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <Label htmlFor='marketingEmails' className='font-medium'>
-                        Marketing Emails
-                      </Label>
-                      <p className='text-sm text-muted-foreground'>News and feature updates</p>
-                    </div>
-                    <Switch
-                      id='marketingEmails'
-                      checked={notificationSettings.marketingEmails}
-                      onCheckedChange={() => handleNotificationChange('marketingEmails')}
-                    />
-                  </div>
+                  <Switch
+                    id='emailReminders'
+                    checked={notificationSettings.emailReminders}
+                    onCheckedChange={() => handleNotificationChange('emailReminders')}
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <Label htmlFor='clientMessages' className='font-medium'>
+                      Client Messages
+                    </Label>
+                    <p className='text-sm text-muted-foreground'>When a client messages you</p>
+                  </div>
+                  <Switch
+                    id='clientMessages'
+                    checked={notificationSettings.clientMessages}
+                    onCheckedChange={() => handleNotificationChange('clientMessages')}
+                  />
+                </div>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <Label htmlFor='marketingEmails' className='font-medium'>
+                      Marketing Emails
+                    </Label>
+                    <p className='text-sm text-muted-foreground'>News and feature updates</p>
+                  </div>
+                  <Switch
+                    id='marketingEmails'
+                    checked={notificationSettings.marketingEmails}
+                    onCheckedChange={() => handleNotificationChange('marketingEmails')}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );

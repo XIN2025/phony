@@ -230,10 +230,16 @@ function NewSessionPageContent(): React.ReactElement {
             type='button'
             aria-label='Back'
             onClick={() => router.back()}
-            className='text-muted-foreground hover:text-foreground focus:outline-none'
-            style={{ width: 44, height: 44, display: 'flex' }}
+            className='text-muted-foreground hover:text-foreground focus:outline-none flex items-center justify-center w-8 h-8 sm:w-11 sm:h-11 md:w-14 md:h-14 rounded-full transition-all min-w-0 min-h-0 max-w-full max-h-full p-0'
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <Image src='/arrow-right.svg' alt='Back' width={54} height={54} className='h-14 w-14' />
+            <Image
+              src='/arrow-right.svg'
+              alt='Back'
+              width={30}
+              height={30}
+              className='h-15 w-15 sm:h-7 sm:w-7 md:h-10 md:w-10'
+            />
           </button>
           <h2
             className='text-lg sm:text-xl md:text-3xl font-bold leading-tight mt-2'

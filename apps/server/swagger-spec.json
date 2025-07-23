@@ -1054,7 +1054,18 @@
         "properties": { "token": { "type": "string" }, "user": { "$ref": "#/components/schemas/UserDto" } },
         "required": ["token", "user"]
       },
-      "OtpAuthDto": { "type": "object", "properties": { "email": { "type": "string" } }, "required": ["email"] },
+      "OtpAuthDto": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "role": {
+            "type": "string",
+            "enum": ["PRACTITIONER", "CLIENT"],
+            "description": "Role for sign-in (CLIENT or PRACTITIONER)"
+          }
+        },
+        "required": ["email"]
+      },
       "PractitionerSignUpDto": {
         "type": "object",
         "properties": {

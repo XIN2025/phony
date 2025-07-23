@@ -25,7 +25,23 @@ export function BottomNavigation({ navLinks, className }: BottomNavigationProps)
     <div className={cn('fixed bottom-0 left-0 right-0 z-50 bg-[#f8efef] lg:hidden', className)}>
       <div className='flex items-center justify-around px-4 py-2'>
         {navLinks.map((link, index) => {
-          const isActive = pathname === link.href;
+          // Longest prefix match for active state
+          let activeIndex = -1;
+          let maxLength = -1;
+          navLinks.forEach((l, idx) => {
+            if (
+              pathname === l.href ||
+              (l.href !== '/' && pathname.startsWith(l.href + '/')) ||
+              (l.href === '/client/messages' && pathname.startsWith('/client/messages')) ||
+              (l.href === '/practitioner/messages' && pathname.startsWith('/practitioner/messages'))
+            ) {
+              if (l.href.length > maxLength) {
+                maxLength = l.href.length;
+                activeIndex = idx;
+              }
+            }
+          });
+          const isActive = index === activeIndex;
           const isHovered = hoveredIndex === index;
           const IconComponent = link.icon;
 

@@ -12,8 +12,11 @@ export default function SessionsTab({ clientId }: { clientId: string }) {
 
   return (
     <div className='flex flex-col gap-6'>
-      <div className='flex justify-between items-center mb-2'>
-        <h2 className='text-lg sm:text-3xl font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
+      <div className='flex flex-row items-center justify-between gap-2 sm:gap-4 mb-4'>
+        <h2
+          className='text-2xl md:text-3xl lg:text-4xl font-semibold'
+          style={{ fontFamily: "'DM Serif Display', serif" }}
+        >
           Past Sessions
         </h2>
       </div>

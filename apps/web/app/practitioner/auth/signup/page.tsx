@@ -64,23 +64,22 @@ function SignupBottomSection({
         {/* Stepper - spans full width */}
         <SignupStepper totalSteps={4} currentStep={step} />
 
-        <div className='flex flex-col sm:flex-row sm:justify-between gap-3 sm:gap-0'>
+        <div className='flex flex-row justify-between gap-3 w-full'>
           {step > 1 ? (
             <Button
               type='button'
-              className='h-12 w-full sm:w-auto px-8 text-base font-medium rounded-lg text-white shadow-lg transition-colors duration-200'
+              className='h-12 w-[48%] sm:w-auto px-8 text-base font-medium rounded-full border border-black bg-transparent text-black shadow-none transition-colors duration-200'
               onClick={onBack}
-              style={{ backgroundColor: 'black' }}
             >
               Back
             </Button>
           ) : (
-            <div className='hidden sm:block'></div>
+            <div className='w-[48%] sm:w-auto'></div>
           )}
 
           <Button
             type='submit'
-            className='h-12 w-full sm:w-auto px-8 text-base font-medium rounded-lg text-white shadow-lg'
+            className='h-12 w-[48%] sm:w-auto px-8 text-base font-medium rounded-full text-white shadow-lg'
             disabled={isSendingOTP || isSigningUp}
             onClick={onSubmit}
             style={{ backgroundColor: 'black' }}
@@ -407,7 +406,7 @@ export default function PractitionerSignUpPage() {
                 </FormItem>
               )}
             />
-            <div className='flex flex-col sm:flex-row justify-between text-sm pt-2 gap-2 sm:gap-0'>
+            <div className='flex flex-row justify-between items-center text-sm pt-2 w-full'>
               <Button
                 type='button'
                 variant='link'
@@ -417,12 +416,12 @@ export default function PractitionerSignUpPage() {
                 Change Email
               </Button>
               {resendTimer > 0 ? (
-                <span className='text-muted-foreground text-left sm:text-right'>Resend code in {resendTimer}s</span>
+                <span className='text-muted-foreground text-right'>Resend code in {resendTimer}s</span>
               ) : (
                 <Button
                   type='button'
                   variant='link'
-                  className='p-0 h-auto text-left sm:text-right'
+                  className='p-0 h-auto text-right'
                   onClick={() =>
                     handleSendOTP(
                       { email: form.getValues('email') },
@@ -646,8 +645,10 @@ export default function PractitionerSignUpPage() {
       {/* Right side - Form section */}
       <div className='flex-1 lg:w-2/5 flex flex-col min-h-screen auth-gradient'>
         {/* Main content area */}
-        <div className='flex-1 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 lg:pt-16 pb-6 sm:pb-0 auth-gradient'>
-          <div className={`w-full max-w-md ${step === 2 ? 'space-y-4 sm:space-y-6' : 'space-y-6 sm:space-y-8'}`}>
+        <div className='flex-1 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-8 pt-4 sm:pt-12 lg:pt-16 pb-2 sm:pb-0 auth-gradient'>
+          <div
+            className={`w-full max-w-md ${step === 2 ? 'space-y-4 sm:space-y-6' : step === 3 ? 'space-y-4 sm:space-y-8 pt-2 pb-2 sm:pt-0 sm:pb-6' : 'space-y-6 sm:space-y-8'}`}
+          >
             {/* Header content */}
             <div className='w-full flex flex-col items-center mt-4 justify-center text-center'>
               <h1

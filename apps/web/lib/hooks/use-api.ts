@@ -17,7 +17,8 @@ import { InviteClientDto, InvitationResponse, CreateIntakeFormDto } from '@repo/
 export type { InvitationResponse };
 export function useSendOtp() {
   return useMutation({
-    mutationFn: (data: SendOtpRequest) => ApiClient.post<boolean>('/api/auth/otp', data),
+    mutationFn: (data: SendOtpRequest & { role?: 'CLIENT' | 'PRACTITIONER' }) =>
+      ApiClient.post<boolean>('/api/auth/otp', data),
   });
 }
 

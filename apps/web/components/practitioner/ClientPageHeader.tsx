@@ -34,16 +34,22 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
 }) => {
   const router = useRouter();
   return (
-    <div className='flex flex-col gap-0 border-b px-2 lg:px-10 pt-2 pb-3 sm:pb-4'>
+    <div className='sticky top-0 z-30 bg-white/90 backdrop-blur-sm border-b border-gray-200 flex flex-col gap-0 px-2 lg:px-10 pt-2 pb-3 sm:pb-4'>
       <div className='w-full flex items-center'>
         <button
           type='button'
           aria-label='Back'
           onClick={onBack || (() => router.back())}
-          className='text-muted-foreground hover:text-foreground focus:outline-none'
-          style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          className='text-muted-foreground hover:text-foreground focus:outline-none flex items-center justify-center w-8 h-8 sm:w-11 sm:h-11 md:w-14 md:h-14 rounded-full transition-all min-w-0 min-h-0 max-w-full max-h-full p-0'
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <Image src='/arrow-right.svg' alt='Back' width={54} height={54} className='h-14 w-14' />
+          <Image
+            src='/arrow-right.svg'
+            alt='Back'
+            width={30}
+            height={30}
+            className='h-15 w-15 sm:h-7 sm:w-7 md:h-10 md:w-10'
+          />
         </button>
       </div>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-2 sm:px-0 mt-2 max-w-full'>
@@ -73,15 +79,29 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
             ) : null}
           </div>
         </div>
-        <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto min-w-0'>
+        {/* On mobile, show buttons side by side and never wrap */}
+        <div className='flex flex-row flex-nowrap gap-2 w-full sm:w-auto sm:gap-3 min-w-0'>
           {showMessagesButton && client.id && (
-            <Link href={`/practitioner/clients/${client.id}/messages`} className='ml-0 sm:ml-0'>
-              <Button variant='outline' className='rounded-full p-2 border border-border w-full sm:w-auto min-w-0'>
+            <Link href={`/practitioner/clients/${client.id}/messages`} className='ml-0 sm:ml-0 min-w-0'>
+              <Button
+                variant='outline'
+                className='rounded-full p-2 border border-black bg-transparent w-full sm:w-auto min-w-0 shadow-none'
+              >
                 <MessageCircle className='h-4 w-4' />
               </Button>
             </Link>
           )}
-          {rightActions}
+          {rightActions && React.isValidElement(rightActions)
+            ? React.cloneElement(rightActions as React.ReactElement<any>, {
+                className: [
+                  (rightActions as React.ReactElement<any>).props.className,
+                  // Responsive paddings, widths, and no wrapping
+                  'bg-black text-white rounded-full px-2 py-1 w-full min-w-0 max-w-full sm:px-6 sm:py-2 sm:w-auto sm:max-w-xs shadow-md hover:bg-neutral-800 transition-all flex-1',
+                ]
+                  .filter(Boolean)
+                  .join(' '),
+              })
+            : rightActions}
         </div>
       </div>
     </div>

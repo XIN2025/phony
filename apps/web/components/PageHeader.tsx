@@ -9,7 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 interface PageHeaderProps {
-  title: React.ReactNode;
+  title?: React.ReactNode;
   subtitle?: string;
   onBack?: () => void;
   backUrl?: string;
@@ -57,44 +57,51 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        'relative flex flex-col gap-0 border-b bg-transparent px-3 sm:px-4 lg:px-6 xl:px-8 pb-2 sm:pb-3 lg:pb-4 min-h-[48px] sm:min-h-[56px] max-w-full',
+        'relative flex flex-col gap-0 bg-transparent px-3 sm:px-4 lg:px-6 xl:px-8 pb-2 sm:pb-3 lg:pb-4 min-h-[48px] sm:min-h-[56px] max-w-full',
         className,
       )}
     >
-      <div className='flex flex-row items-center pt-3 sm:pt-4 lg:pt-6 w-full min-w-0'>
-        {leftElement && <div className='flex items-center flex-shrink-0 mr-2'>{leftElement}</div>}
-        {showBackButton && !leftElement && (
-          <button
-            type='button'
-            aria-label='Back'
-            onClick={handleBack}
-            className={cn(
-              'text-muted-foreground hover:text-foreground focus:outline-none mr-2 flex items-center justify-center',
-              largeBackButton ? 'w-14 h-14' : 'w-9 h-9 sm:w-10 sm:h-10',
-            )}
-          >
-            <Image
-              src='/arrow-right.svg'
-              alt='Back'
-              width={largeBackButton ? 54 : 28}
-              height={largeBackButton ? 54 : 28}
-              className={largeBackButton ? 'h-14 w-14' : 'h-7 w-7'}
-            />
-          </button>
-        )}
-        <div className='flex-1 min-w-0'>
-          {isLoading ? (
-            <Skeleton className={cn('h-6 sm:h-8 w-32 sm:w-48', titleClassName)} />
-          ) : (
-            <h1
-              className={cn('text-lg sm:text-xl lg:text-2xl font-bold tracking-tight truncate', titleClassName)}
-              style={{ fontFamily: "'DM Serif Display', serif" }}
+      <div className='flex flex-col gap-0 w-full min-w-0'>
+        <div className='flex flex-row items-center w-full'>
+          {leftElement && <div className='flex items-center flex-shrink-0 mr-2'>{leftElement}</div>}
+          {showBackButton && !leftElement && (
+            <button
+              type='button'
+              aria-label='Back'
+              onClick={handleBack}
+              className={cn(
+                'text-muted-foreground hover:text-foreground focus:outline-none mr-2 flex items-center justify-center',
+                largeBackButton ? 'w-14 h-14' : 'w-9 h-9 sm:w-10 sm:h-10',
+              )}
             >
-              {title}
-            </h1>
+              <Image
+                src='/arrow-right.svg'
+                alt='Back'
+                width={largeBackButton ? 54 : 28}
+                height={largeBackButton ? 54 : 28}
+                className={largeBackButton ? 'h-14 w-14' : 'h-15 w-15'}
+              />
+            </button>
           )}
         </div>
-        {rightElement && <div className='flex items-center flex-shrink-0 ml-2'>{rightElement}</div>}
+        {title && (
+          <div className='flex flex-row items-center justify-between w-full min-w-0 mt-2 sm:mt-0'>
+            <div className='flex-1 min-w-0'>
+              {isLoading ? (
+                <Skeleton className={cn('h-6 sm:h-8 w-32 sm:w-48', titleClassName)} />
+              ) : (
+                <h1
+                  className={cn('text-lg sm:text-xl lg:text-2xl font-bold tracking-tight truncate', titleClassName)}
+                  style={{ fontFamily: "'DM Serif Display', serif" }}
+                >
+                  {title}
+                </h1>
+              )}
+            </div>
+            {/* On small screens, rightElement is at the far right; on larger screens, keep as before */}
+            {rightElement && <div className='flex items-center flex-shrink-0 ml-2'>{rightElement}</div>}
+          </div>
+        )}
       </div>
       {subtitle && (
         <div className='flex flex-col gap-0 flex-1 min-w-0 mt-1'>

@@ -7,6 +7,16 @@ export class OtpAuthDto implements SendOtpRequest {
   @ApiProperty()
   @IsEmail()
   email: string;
+
+  @ApiProperty({
+    type: 'string',
+    enum: UserRole,
+    required: false,
+    description: 'Role for sign-in (CLIENT or PRACTITIONER)',
+  })
+  @IsEnum(UserRole)
+  @IsOptional()
+  role?: (typeof UserRole)[keyof typeof UserRole];
 }
 
 export class VerifyOtpDto implements VerifyOtpRequest {

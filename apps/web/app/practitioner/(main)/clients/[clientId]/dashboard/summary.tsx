@@ -15,6 +15,7 @@ import {
   useGenerateComprehensiveSummary,
   useGetSessionsByClient,
 } from '@/lib/hooks/use-api';
+import { useRouter } from 'next/navigation';
 
 function getAvgFeedbackForDay(tasks: any[]) {
   if (!tasks || tasks.length === 0) return 'Nil';
@@ -38,6 +39,7 @@ function getDateRangeArray(start: Date, end: Date) {
 }
 
 export default function SummaryTab({ clientId }: { clientId: string }) {
+  const router = useRouter();
   const [dateRange, setDateRange] = useState(() => {
     const today = new Date();
     const lastWeek = new Date();
@@ -219,6 +221,14 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
 
   const journalBadge = (journal: string) => journal;
 
+  // Helper to format date for URL (YYYY-MM-DD)
+  function formatDateForUrl(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   if (isClientLoading || isSessionsLoading || isActionItemsLoading) {
     return <div className='flex items-center justify-center min-h-screen'>Loading...</div>;
   }
@@ -227,13 +237,16 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
   return (
     <div className='flex flex-col gap-6 w-full mb-8'>
       {/* Date Picker Button */}
-      <div className='flex justify-between mb-2'>
-        <h2 className='text-lg sm:text-3xl font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
+      <div className='flex flex-row items-center justify-between gap-2 sm:gap-4 mb-4'>
+        <h2
+          className='text-2xl md:text-3xl lg:text-4xl font-semibold'
+          style={{ fontFamily: "'DM Serif Display', serif" }}
+        >
           Summary
         </h2>
         <button
           ref={dateButtonRef}
-          className='flex items-center gap-2 px-4 py-2 rounded-full border border-[#ececec] border-gray-700 shadow-sm text-base font-semibold hover:bg-[#f6f5f4] transition-all min-w-[220px]'
+          className='flex items-center gap-2 px-2 py-1 sm:px-4 sm:py-2 rounded-full border border-[#ececec] border-gray-700 shadow-sm text-xs sm:text-base font-semibold hover:bg-[#f6f5f4] transition-all min-w-[120px] sm:min-w-[220px]'
           onClick={() => setShowDatePicker((v) => !v)}
           aria-label='Select date range'
           type='button'
@@ -260,12 +273,13 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
               top: pickerPosition.top,
               left: pickerPosition.left,
               zIndex: 50,
-              width: 350,
+              width: typeof window !== 'undefined' && window.innerWidth < 640 ? 220 : 350,
+              maxWidth: '95vw',
               background: 'white',
               borderRadius: 16,
               boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
               border: '1px solid #ececec',
-              padding: 16,
+              padding: typeof window !== 'undefined' && window.innerWidth < 640 ? 8 : 16,
             }}
             className='calendar-float'
           >
@@ -384,6 +398,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
                       <TableRow
                         key={date.toISOString()}
                         className='border-b last:border-b-0 border-[#ececec] bg-white hover:bg-[#f6f5f4] transition-colors cursor-pointer'
+                        onClick={() => router.push(`/practitioner/clients/${clientId}/tasks/${formatDateForUrl(date)}`)}
                       >
                         <TableCell className='px-7 py-4 whitespace-nowrap text-base text-black'>
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

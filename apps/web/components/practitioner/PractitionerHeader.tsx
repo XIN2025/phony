@@ -16,7 +16,7 @@ export const PractitionerHeader = () => {
   };
 
   return (
-    <div className='sticky top-0 z-30 backdrop-blur-sm lg:hidden'>
+    <div className='sticky top-0 z-90  backdrop-blur-xl bg-white/20  lg:hidden'>
       <div className='flex items-center justify-between px-4 py-3'>
         <div className='flex items-center'>
           <button onClick={handleLogoClick} className='block cursor-pointer hover:opacity-80 transition-opacity'>

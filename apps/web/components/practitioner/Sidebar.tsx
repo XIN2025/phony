@@ -183,25 +183,38 @@ export const SidebarContent = ({
       </div>
       <div className='flex-1 py-2 lg:py-4 min-w-0'>
         <nav className='grid items-start px-4 lg:px-6 text-sm sm:text-base lg:text-lg gap-2 '>
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 sm:gap-4 lg:gap-5 rounded-full px-4 sm:px-6 lg:px-8 xl:px-12 py-2 transition-all font-medium text-sm sm:text-base lg:text-lg ${
-                  isActive
-                    ? 'bg-[#807171] text-[#FDF9F5] font-semibold shadow-sm'
-                    : 'text-[#807171] hover:text-black hover:bg-[#ede6e3]'
-                }`}
-                style={{ minHeight: 40, justifyContent: 'flex-start' }}
-              >
-                <link.icon className='h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6 flex-shrink-0' isActive={isActive} />
-                <span className='truncate'>{link.label}</span>
-              </Link>
-            );
-          })}
+          {((): React.ReactNode => {
+            // Find the navLink with the longest href that matches the start of the pathname
+            let activeIndex = -1;
+            let maxLength = -1;
+            (navLinks as any[]).forEach((link, idx) => {
+              if (pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href + '/'))) {
+                if (link.href.length > maxLength) {
+                  maxLength = link.href.length;
+                  activeIndex = idx;
+                }
+              }
+            });
+            return (navLinks as any[]).map((link, idx) => {
+              const isActive = idx === activeIndex;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 sm:gap-4 lg:gap-5 rounded-full px-4 sm:px-6 lg:px-8 xl:px-12 py-2 transition-all font-medium text-sm sm:text-base lg:text-lg ${
+                    isActive
+                      ? 'bg-[#807171] text-[#FDF9F5] font-semibold shadow-sm'
+                      : 'text-[#807171] hover:text-black hover:bg-[#ede6e3]'
+                  }`}
+                  style={{ minHeight: 40, justifyContent: 'flex-start' }}
+                >
+                  <link.icon className='h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6 flex-shrink-0' isActive={isActive} />
+                  <span className='truncate'>{link.label}</span>
+                </Link>
+              );
+            });
+          })()}
         </nav>
       </div>
       <div className='border-t border-[#e5d6d0] mt-auto px-6 sm:px-8 lg:px-8 xl:px-10 pb-4 sm:pb-6 lg:pb-8 pt-4 sm:pt-6 lg:pt-8 flex flex-col gap-3 sm:gap-4 lg:gap-4 min-w-0'>

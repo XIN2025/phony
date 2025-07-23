@@ -181,14 +181,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               )}
 
               {/* Clean message tail */}
-              <div
-                className={cn(
-                  'absolute w-0 h-0',
-                  isOwn
-                    ? 'bottom-0 -right-1 border-l-[8px] border-t-[8px] border-l-primary border-t-transparent'
-                    : 'bottom-0 -left-1 border-r-[8px] border-t-[8px] border-r-muted border-t-transparent',
-                )}
-              />
+              {/* Removed the tail triangle for both own and other messages */}
             </div>
 
             {/* Fixed Message Actions positioning to avoid avatar overlap */}

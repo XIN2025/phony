@@ -56,7 +56,7 @@ export class AuthController {
   @Public()
   @ApiResponse({ type: Boolean, description: 'Whether the OTP was sent successfully' })
   async otpAuth(@Body() body: OtpAuthDto): Promise<{ success: boolean }> {
-    return await this.authService.sendOtp(body.email);
+    return await this.authService.sendOtp(body.email, body.role);
   }
 
   @Post('practitioner/signup')

@@ -2,7 +2,7 @@
 import React from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { InviteClientDetailsForm } from '@/components/invite/InviteClientDetailsForm';
 import { IntakeFormSelector } from '@/components/invite/IntakeFormSelector';
@@ -21,6 +21,9 @@ export default function InviteClientPage() {
   const [submitting, setSubmitting] = React.useState(false);
   const [selectedFormId, setSelectedFormId] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  // Add a ref for the IntakeFormBuilder form
+  const formBuilderRef = useRef<HTMLFormElement>(null);
 
   const { mutate: inviteClient, isPending: isInviting } = useInviteClient();
   const { mutate: createIntakeForm, isPending: isCreatingForm } = useCreateIntakeForm();
@@ -218,10 +221,12 @@ export default function InviteClientPage() {
         title: inviteData.intakeFormId ? 'Edit Intake Form' : 'Create Intake Form',
         component: (
           <IntakeFormBuilder
+            ref={formBuilderRef}
             onSubmit={handleFormCreatePreview}
             onBack={handleBack}
             isEditMode={!!inviteData.intakeFormId}
             buttonText={inviteData.intakeFormId ? 'Edit Intake Form' : 'Create Intake Form'}
+            hideActionButtonOnMobile={true}
           />
         ),
       },
@@ -300,26 +305,52 @@ export default function InviteClientPage() {
 
   const currentStepData = steps[step - 1];
 
+  // Determine if we are on the Edit/Create Intake Form step
+  const isEditIntakeFormStep = step === 3;
+  // Render the action button for small screens in the header
+  const headerActionButton = isEditIntakeFormStep ? (
+    <button
+      type='button'
+      className='rounded-full px-4 py-2 bg-black text-white shadow-sm hover:bg-gray-900  sm:hidden ml-auto'
+      onClick={() => {
+        if (formBuilderRef.current) {
+          formBuilderRef.current.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+      }}
+    >
+      {inviteData.intakeFormId ? 'Edit  ' : 'Create  '}
+    </button>
+  ) : null;
+
   return (
     <div className='flex flex-col items-center justify-start min-h-screen w-full py-10 px-4'>
-      <div className='w-full max-w-[1050px] mx-auto'>
+      <div className='w-full max-w-[1050px] mx-auto min-h-screen'>
         {/* Header: Back button and page title (match dashboard style) */}
         <div className='mb-6'>
           <button
             type='button'
             aria-label='Back'
             onClick={handleBack}
-            className='text-muted-foreground hover:text-foreground focus:outline-none'
-            style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className='text-muted-foreground hover:text-foreground focus:outline-none flex items-center justify-center w-8 h-8 sm:w-11 sm:h-11 md:w-14 md:h-14 rounded-full transition-all min-w-0 min-h-0 max-w-full max-h-full p-0'
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <Image src='/arrow-right.svg' alt='Back' width={36} height={36} className='h-9 w-9' />
+            <Image
+              src='/arrow-right.svg'
+              alt='Back'
+              width={30}
+              height={30}
+              className='h-15 w-15 sm:h-7 sm:w-7 md:h-10 md:w-10'
+            />
           </button>
-          <h1
-            className=' l font-bold tracking-tight mt-4'
-            style={{ fontFamily: "'DM Serif Display', serif", fontSize: '32px' }}
-          >
-            {currentStepData?.title}
-          </h1>
+          <div className='flex flex-row items-center gap-2 mt-4'>
+            <h1
+              className='font-bold tracking-tight'
+              style={{ fontFamily: "'DM Serif Display', serif", fontSize: '32px' }}
+            >
+              {currentStepData?.title}
+            </h1>
+            {headerActionButton}
+          </div>
         </div>
         {/* Show spinner if submitting, otherwise show form */}
         {submitting ? (

@@ -16,9 +16,18 @@ interface Props {
   isLoading: boolean;
   isNewForm: boolean;
   buttonText?: string;
+  hideFixedBottomBar?: boolean;
 }
 
-export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNewForm, buttonText }: Props) {
+export function IntakeFormPreview({
+  formData,
+  onBack,
+  onSubmit,
+  isLoading,
+  isNewForm,
+  buttonText,
+  hideFixedBottomBar,
+}: Props) {
   const { inviteData, setInviteData } = useInviteContext();
 
   const hasChanges = inviteData.hasChanges || false;
@@ -99,8 +108,8 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
   };
 
   return (
-    <div className='flex flex-col items-center w-full min-h-[70vh]'>
-      <div className='w-full   flex flex-col gap-6'>
+    <div className='flex flex-col items-center w-full min-h-[70vh] pb-24'>
+      <div className='w-full flex flex-col gap-6'>
         {/* Form Title Card */}
         <div
           className='bg-white rounded-2xl p-6 mb-2'
@@ -128,7 +137,28 @@ export function IntakeFormPreview({ formData, onBack, onSubmit, isLoading, isNew
           </div>
         ))}
         {/* Buttons */}
-        <div className='flex flex-col sm:flex-row justify-between items-center gap-4 mt-8'>
+        {/* Fixed bar for small screens only */}
+        {!hideFixedBottomBar && (
+          <div className='fixed bottom-0 pb-15  left-0 w-full z-[9999] flex gap-4 px-4 py-3 block sm:hidden'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={onBack}
+              className='border-gray-700 bg-transparent flex-1 rounded-full px-8 sm:hidden'
+            >
+              Back
+            </Button>
+            <Button
+              onClick={() => onSubmit()}
+              disabled={isLoading}
+              className='flex-1 rounded-full bg-black sm:hidden px-8 text-white hover:bg-gray-800'
+            >
+              {buttonText || (isLoading ? 'Creating Form...' : isNewForm ? 'Send Invitation' : 'Save Changes')}
+            </Button>
+          </div>
+        )}
+        {/* Normal row for sm+ only */}
+        <div className='hidden sm:flex flex-row justify-between items-center gap-4 mt-8'>
           {shouldShowSaveOption && (
             <div className='flex items-center space-x-2 sm:mr-auto'>
               <Checkbox

@@ -72,7 +72,10 @@ const SidebarContent = React.memo<SidebarContentProps>(
     getOnlineStatusColor,
     refetchConversations,
   }) => (
-    <div className='flex flex-col h-full w-full bg-background border-r border-border/60'>
+    <div
+      className='flex flex-col h-full w-full border-r border-border/60'
+      style={{ background: 'rgba(250, 250, 250, 0.6)' }}
+    >
       <div className='p-3 sm:p-4 border-b border-border/60 bg-muted/5 flex-shrink-0'>
         <div className='flex items-center justify-between'>
           <h3 className='text-lg font-semibold'>Messages</h3>
@@ -113,7 +116,7 @@ const SidebarContent = React.memo<SidebarContentProps>(
         </div>
       </div>
 
-      <ScrollArea className='flex-1 min-h-0'>
+      <ScrollArea className='flex-1 min-h-0 chat-sidebar-scrollarea'>
         {isLoadingConversations ? (
           <div className='p-2 sm:p-3 space-y-2 sm:space-y-3'>
             {[...Array(4)].map((_, i) => (
@@ -809,11 +812,13 @@ export function ChatContainer({ participantId, className, height = '100%' }: Cha
 
   return (
     <div
-      className={cn(
-        'flex flex-col md:flex-row bg-background border border-gray-700 rounded-lg shadow-sm overflow-hidden w-full',
-        className,
-      )}
-      style={{ height, maxHeight: height, minHeight: 0 }}
+      className={cn('flex flex-col md:flex-row rounded-lg shadow-sm overflow-hidden w-full', className)}
+      style={{
+        height,
+        maxHeight: height,
+        minHeight: 0,
+        background: 'rgba(250, 250, 250, 0.6)',
+      }}
     >
       <div
         className={cn(
@@ -1140,6 +1145,11 @@ export function ChatContainer({ participantId, className, height = '100%' }: Cha
           )}
         </div>
       </div>
+      <style jsx global>{`
+        .chat-sidebar-scrollarea [data-slot='scroll-area-viewport'] {
+          background: rgba(250, 250, 250, 0.6) !important;
+        }
+      `}</style>
     </div>
   );
 }

@@ -183,34 +183,35 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
         />
       )}
 
-      <div className='w-full flex flex-col gap-8 px-2 pr-4'>
-        <div className='flex flex-row gap-6 mb-6'>
+      <div className='w-full flex flex-col gap-8 px-2 pr-4 sm:pr-8'>
+        {/* Responsive: stack on mobile, row on sm+ */}
+        <div className='flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6'>
           <div className='flex-1'>
-            <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col items-start'>
+            <div className='bg-white rounded-2xl shadow-md p-4 sm:p-8 flex flex-col items-start'>
               <div className='flex items-center justify-between w-full'>
                 <div
-                  className='text-4xl font-extrabold'
+                  className='text-3xl sm:text-4xl font-extrabold'
                   style={{ fontFamily: "'DM Serif Display', serif", color: '#807171' }}
                 >
                   {pending}
                 </div>
-                <ClipboardList className='h-10 w-10 text-[#807171]' />
+                <ClipboardList className='h-8 w-8 sm:h-10 sm:w-10 text-[#807171]' />
               </div>
-              <div className='text-lg font-semibold text-gray-700'>Tasks Pending</div>
+              <div className='text-base sm:text-lg font-semibold text-gray-700'>Tasks Pending</div>
             </div>
           </div>
-          <div className='flex-1'>
-            <div className='bg-white rounded-2xl shadow-md p-8 flex flex-col items-start'>
+          <div className='flex-1 mt-4 sm:mt-0'>
+            <div className='bg-white rounded-2xl shadow-md p-4 sm:p-8 flex flex-col items-start'>
               <div className='flex items-center justify-between w-full'>
                 <div
-                  className='text-3xl font-bold'
+                  className='text-2xl sm:text-3xl font-bold'
                   style={{ fontFamily: "'DM Serif Display', serif", color: '#807171' }}
                 >
                   {engagement}
                 </div>
-                <Sparkles className='h-10 w-10 text-[#807171]' />
+                <Sparkles className='h-8 w-8 sm:h-10 sm:w-10 text-[#807171]' />
               </div>
-              <div className='text-lg font-semibold text-gray-700'>Avg Engagement</div>
+              <div className='text-base sm:text-lg font-semibold text-gray-700'>Avg Engagement</div>
             </div>
           </div>
         </div>
@@ -223,15 +224,15 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
         )}
 
         {!isTasksLoading && (
-          <div className='flex flex-row gap-8 w-full'>
-            <div className='flex-1'>
-              <div className='bg-white rounded-2xl shadow-md p-8'>
-                <div className='text-xl font-bold mb-4' style={{ fontFamily: "'DM Serif Display', serif" }}>
+          <div className='flex flex-col sm:flex-row gap-4 sm:gap-8 w-full'>
+            <div className='flex-1 mb-4 sm:mb-0'>
+              <div className='bg-white rounded-2xl shadow-md p-4 sm:p-8'>
+                <div className='text-lg sm:text-xl font-bold mb-4' style={{ fontFamily: "'DM Serif Display', serif" }}>
                   Mandatory tasks for the week
                 </div>
                 <div className='flex flex-col gap-0'>
                   {mandatoryTasks.length === 0 ? (
-                    <div className='text-muted-foreground text-sm mb-4 px-6 py-6'>
+                    <div className='text-muted-foreground text-sm mb-4 px-2 sm:px-6 py-4 sm:py-6'>
                       No mandatory tasks for this date.
                     </div>
                   ) : (
@@ -243,7 +244,7 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
                       return (
                         <div
                           key={task.id}
-                          className={`flex items-center gap-3 py-4 ${idx !== mandatoryTasks.length - 1 ? 'border-b border-[#ececec]' : ''} cursor-pointer hover:bg-gray-50 rounded-lg transition-colors`}
+                          className={`flex items-center gap-2 sm:gap-3 py-3 sm:py-4 ${idx !== mandatoryTasks.length - 1 ? 'border-b border-[#ececec]' : ''} cursor-pointer hover:bg-gray-50 rounded-lg transition-colors`}
                           onClick={() => handleTaskClick(task)}
                         >
                           <div className='flex items-center justify-center w-5 h-5 mt-0.5'>
@@ -257,14 +258,14 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
                           </div>
                           <div className='flex-1'>
                             <div
-                              className={`font-medium text-base flex items-center gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
+                              className={`font-medium text-sm sm:text-base flex items-center gap-1 sm:gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
                             >
                               {task.description}
                               <span className='ml-1 text-gray-400 text-xs' title='Info'>
                                 ⓘ
                               </span>
                             </div>
-                            <div className='text-xs text-muted-foreground mt-1 flex items-center gap-2'>
+                            <div className='text-xs text-muted-foreground mt-1 flex items-center gap-1 sm:gap-2'>
                               <span role='img' aria-label='timer'>
                                 ⏱
                               </span>{' '}
@@ -272,7 +273,7 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
                             </div>
                           </div>
                           {isCompleted && (
-                            <span className='ml-2 text-2xl' role='img' aria-label='rating'>
+                            <span className='ml-2 text-xl sm:text-2xl' role='img' aria-label='rating'>
                               {ratingEmoji}
                             </span>
                           )}
@@ -285,13 +286,15 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
             </div>
 
             <div className='flex-1'>
-              <div className='bg-white rounded-2xl shadow-md p-8'>
-                <div className='text-xl font-bold mb-4' style={{ fontFamily: "'DM Serif Display', serif" }}>
+              <div className='bg-white rounded-2xl shadow-md p-4 sm:p-8'>
+                <div className='text-lg sm:text-xl font-bold mb-4' style={{ fontFamily: "'DM Serif Display', serif" }}>
                   Daily Tasks
                 </div>
                 <div className='flex flex-col gap-0'>
                   {dailyTasks.length === 0 ? (
-                    <div className='text-muted-foreground text-sm mb-4 px-6 py-6'>No daily tasks for this date.</div>
+                    <div className='text-muted-foreground text-sm mb-4 px-2 sm:px-6 py-4 sm:py-6'>
+                      No daily tasks for this date.
+                    </div>
                   ) : (
                     dailyTasks.map((task: any, idx: number) => {
                       const isCompleted = task.completions && task.completions.length > 0;
@@ -301,7 +304,7 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
                       return (
                         <div
                           key={task.id}
-                          className={`flex items-center gap-3 py-4 ${idx !== dailyTasks.length - 1 ? 'border-b border-[#ececec]' : ''} cursor-pointer hover:bg-gray-50 rounded-lg transition-colors`}
+                          className={`flex items-center gap-2 sm:gap-3 py-3 sm:py-4 ${idx !== dailyTasks.length - 1 ? 'border-b border-[#ececec]' : ''} cursor-pointer hover:bg-gray-50 rounded-lg transition-colors`}
                           onClick={() => handleTaskClick(task)}
                         >
                           <div className='flex items-center justify-center w-5 h-5 mt-0.5'>
@@ -315,14 +318,14 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
                           </div>
                           <div className='flex-1'>
                             <div
-                              className={`font-medium text-base flex items-center gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
+                              className={`font-medium text-sm sm:text-base flex items-center gap-1 sm:gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
                             >
                               {task.description}
                               <span className='ml-1 text-gray-400 text-xs' title='Info'>
                                 ⓘ
                               </span>
                             </div>
-                            <div className='text-xs text-muted-foreground mt-1 flex items-center gap-2'>
+                            <div className='text-xs text-muted-foreground mt-1 flex items-center gap-1 sm:gap-2'>
                               <span role='img' aria-label='timer'>
                                 ⏱
                               </span>{' '}
@@ -330,7 +333,7 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
                             </div>
                           </div>
                           {isCompleted && (
-                            <span className='ml-2 text-2xl' role='img' aria-label='rating'>
+                            <span className='ml-2 text-xl sm:text-2xl' role='img' aria-label='rating'>
                               {ratingEmoji}
                             </span>
                           )}

@@ -147,40 +147,57 @@ export default function LandingPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className='bg-white rounded-2xl p-6 w-full max-w-md'
+            className='rounded-3xl p-0 w-full max-w-md shadow-2xl'
+            style={{
+              background: 'radial-gradient(ellipse 120% 100% at 50% 0%, #fbeaec 60%, #f7f3f2 100%)',
+              border: '1.5px solid #807171',
+              boxShadow: '0 8px 32px 0 rgba(128,113,113,0.10)',
+            }}
           >
-            <div className='flex justify-between items-center mb-6'>
-              <h2 className='text-2xl font-bold text-gray-800'>Choose Your Role</h2>
+            <div className='flex justify-between items-center px-6 pt-6 pb-2 mb-2'>
+              <h2 className='text-2xl font-bold' style={{ color: '#807171' }}>
+                Choose Your Role
+              </h2>
               <button
                 onClick={() => setShowRoleSelection(false)}
-                className='p-2 hover:bg-gray-100 rounded-full transition-colors'
+                className='p-2 hover:bg-[#f7f3f2] rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#807171]'
               >
                 <X className='w-5 h-5' />
               </button>
             </div>
 
-            <div className='space-y-4'>
+            <div className='space-y-6 px-6 pb-6'>
               {/* Practitioner Section */}
-              <div className='border border-gray-200 rounded-xl p-4'>
-                <div className='flex items-center space-x-3 mb-3'>
-                  <div className='w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center'>
-                    <UserCheck className='w-5 h-5 text-blue-600' />
+              <div
+                className='border rounded-2xl p-5 mb-2 flex flex-col gap-3 shadow-sm'
+                style={{ borderColor: '#807171', background: 'rgba(255,255,255,0.95)' }}
+              >
+                <div className='flex items-center space-x-3 mb-2'>
+                  <div
+                    className='w-12 h-12 rounded-full flex items-center justify-center shadow'
+                    style={{ background: 'linear-gradient(135deg, #fbeaec 60%, #f7f3f2 100%)' }}
+                  >
+                    <UserCheck className='w-6 h-6' style={{ color: '#807171' }} />
                   </div>
                   <div>
-                    <h3 className='font-semibold text-gray-800'>Practitioner</h3>
-                    <p className='text-sm text-gray-600'>Therapists, Coaches, Counselors</p>
+                    <h3 className='font-semibold' style={{ color: '#807171' }}>
+                      Practitioner
+                    </h3>
+                    <p className='text-sm' style={{ color: '#8d8080' }}>
+                      Therapists, Coaches, Counselors
+                    </p>
                   </div>
                 </div>
                 <div className='flex space-x-2'>
                   <Button
                     variant='outline'
-                    className='flex-1'
+                    className='flex-1 border-2 border-[#807171] text-[#807171] hover:bg-[#fbeaec] hover:text-[#807171] bg-white rounded-full font-semibold shadow-none'
                     onClick={() => handleRoleSelection('practitioner', 'signin')}
                   >
                     Sign In
                   </Button>
                   <Button
-                    className='flex-1 bg-blue-600 hover:bg-blue-700'
+                    className='flex-1 bg-[#807171] hover:bg-[#8d8080] text-white rounded-full font-semibold shadow-none'
                     onClick={() => handleRoleSelection('practitioner', 'signup')}
                   >
                     Sign Up
@@ -189,28 +206,44 @@ export default function LandingPage() {
               </div>
 
               {/* Client Section */}
-              <div className='border border-gray-200 rounded-xl p-4'>
-                <div className='flex items-center space-x-3 mb-3'>
-                  <div className='w-10 h-10 bg-green-100 rounded-full flex items-center justify-center'>
-                    <User className='w-5 h-5 text-green-600' />
+              <div
+                className='border rounded-2xl p-5 flex flex-col gap-3 shadow-sm'
+                style={{ borderColor: '#807171', background: 'rgba(255,255,255,0.95)' }}
+              >
+                <div className='flex items-center space-x-3 mb-2'>
+                  <div
+                    className='w-12 h-12 rounded-full flex items-center justify-center shadow'
+                    style={{ background: 'linear-gradient(135deg, #fbeaec 60%, #f7f3f2 100%)' }}
+                  >
+                    <User className='w-6 h-6' style={{ color: '#807171' }} />
                   </div>
                   <div>
-                    <h3 className='font-semibold text-gray-800'>Client</h3>
-                    <p className='text-sm text-gray-600'>Patients, Clients, Students</p>
+                    <h3 className='font-semibold' style={{ color: '#807171' }}>
+                      Client
+                    </h3>
+                    <p className='text-sm' style={{ color: '#8d8080' }}>
+                      Patients, Clients, Students
+                    </p>
                   </div>
                 </div>
-                <div className='space-y-3'>
+                <div className='space-y-2'>
                   <Button
-                    className='w-full bg-green-600 hover:bg-green-700'
+                    className='w-full border-2 border-[#807171] text-[#807171] bg-white hover:bg-[#fbeaec] hover:text-[#807171] rounded-full font-semibold shadow-none'
                     onClick={() => handleRoleSelection('client', 'signin')}
                   >
                     Sign In
                   </Button>
-                  <div className='bg-gray-50 rounded-lg p-3 text-center'>
-                    <p className='text-sm text-gray-600 mb-2'>
+                  <div
+                    className='rounded-xl p-3 text-center'
+                    style={{
+                      background: 'linear-gradient(135deg, #fbeaec 80%, #f7f3f2 100%)',
+                      border: '1px solid #f7f3f2',
+                    }}
+                  >
+                    <p className='text-sm mb-2' style={{ color: '#8d8080' }}>
                       Need an account? Ask your practitioner to send you an invitation.
                     </p>
-                    <p className='text-xs text-gray-500'>
+                    <p className='text-xs' style={{ color: '#807171' }}>
                       Clients can only join with an invitation from their practitioner.
                     </p>
                   </div>

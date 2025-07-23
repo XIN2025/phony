@@ -159,13 +159,15 @@ export default function PractitionerDashboard() {
       </div>
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10 w-full'>
         <Card
-          className='relative pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6 px-4 sm:px-6 bg-white rounded-xl sm:rounded-2xl border-0 hover:bg-gray-50 transition-colors overflow-hidden'
-          style={{
-            boxShadow:
-              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-          }}
+          className='relative pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6 px-4 sm:px-6 rounded-xl sm:rounded-2xl border-0 shadow-[0_4px_16px_0_rgba(0,0,0,0.10)] hover:bg-gray-50/60 transition-colors overflow-hidden'
+          style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.10)', background: 'rgba(255,255,255,0.6)', border: 'none' }}
         >
-          <div className='flex flex-col min-w-0 pl-3 relative z-10'>
+          <div
+            className='flex flex-col min-w-0 pl-3 relative z-10'
+            style={{
+              background: 'rgba(250, 250, 250, 0.6)',
+            }}
+          >
             <span className='text-2xl font-medium  mb-1 sm:mb-2'>Total Clients</span>
             <span className='text-3xl md:text-5xl  font-bold text-gray-900'>{totalClients}</span>
             <span className='text-xs  mt-1'>+2 from last month</span>
@@ -175,11 +177,8 @@ export default function PractitionerDashboard() {
           </div>
         </Card>
         <Card
-          className='relative pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6 px-4 sm:px-6 bg-white rounded-xl sm:rounded-2xl border-0 hover:bg-gray-50 transition-colors overflow-hidden'
-          style={{
-            boxShadow:
-              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-          }}
+          className='relative pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6 px-4 sm:px-6 rounded-xl sm:rounded-2xl border-0 shadow-[0_4px_16px_0_rgba(0,0,0,0.10)] hover:bg-gray-50/60 transition-colors overflow-hidden'
+          style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.10)', background: 'rgba(255,255,255,0.6)', border: 'none' }}
         >
           <div className='flex flex-col min-w-0 pl-3 relative z-10'>
             <span className='text-2xl  font-medium  mb-1 sm:mb-2'>Unread Messages</span>
@@ -203,11 +202,8 @@ export default function PractitionerDashboard() {
           </div>
         </Card>
         <Card
-          className='relative pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6 px-4 sm:px-6 bg-white rounded-xl sm:rounded-2xl border-0 sm:col-span-2 lg:col-span-1 hover:bg-gray-50 transition-colors overflow-hidden'
-          style={{
-            boxShadow:
-              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-          }}
+          className='relative pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6 px-4 sm:px-6 rounded-xl sm:rounded-2xl border-0 shadow-[0_4px_16px_0_rgba(0,0,0,0.10)] hover:bg-gray-50/60 transition-colors overflow-hidden sm:col-span-2 lg:col-span-1'
+          style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.10)', background: 'rgba(255,255,255,0.6)', border: 'none' }}
         >
           <div className='flex flex-col min-w-0 pl-3 relative z-10'>
             <span className='text-2xl font-medium  mb-1 sm:mb-2'>Unread Journals</span>
@@ -232,45 +228,42 @@ export default function PractitionerDashboard() {
         </Card>
       </div>
       <Card
-        className='rounded-xl sm:rounded-2xl border-0 bg-white w-full min-w-0'
-        style={{
-          boxShadow:
-            '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-        }}
+        className='rounded-xl sm:rounded-2xl border-0 w-full min-w-0 shadow-[0_4px_16px_0_rgba(0,0,0,0.10)]'
+        style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.10)', background: 'rgba(255,255,255,0.6)', border: 'none' }}
       >
-        <CardContent className='p-4 sm:p-6 lg:p-8'>
+        <CardContent className='p-0 sm:p-4 lg:p-6 !pt-0 !pb-0'>
           <h2
-            className='text-base font-semibold mb-4 sm:mb-6 lg:mb-8 text-lg sm:text-xl lg:text-2xl '
+            className='text-base px-1 font-semibold mb-2 sm:mb-4 lg:mb-6 text-lg sm:text-xl lg:text-2xl '
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Last Active Clients
           </h2>
           <div className='overflow-x-auto'>
             <div className='min-w-full inline-block align-middle'>
-              <div className='overflow-hidden border border-gray-200/40 rounded-lg'>
-                <Table className='min-w-full text-xs sm:text-sm lg:text-base'>
+              <div className='overflow-hidden rounded-lg'>
+                <Table className='min-w-[700px] w-full text-xs sm:text-sm lg:text-base'>
                   <colgroup>
-                    <col className='w-[30%]' />
-                    <col className='w-[20%]' />
-                    <col className='w-[20%]' />
-                    <col className='w-[20%]' />
-                    <col className='w-[10%]' />
+                    <col className='w-[28%] min-w-[120px]' />
+                    <col className='w-[20%] min-w-[90px]' />
+                    <col className='w-[20%] min-w-[90px]' />
+                    <col className='w-[16%] min-w-[80px]' />
+                    <col className='w-[16%] min-w-[80px]' />
                   </colgroup>
                   <TableHeader>
                     <TableRow className='border-b border-gray-200/60 bg-gray-50/50'>
-                      <TableHead className='py-3 sm:py-4 lg:py-5 px-3 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
+                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base truncate'>
                         Member
                       </TableHead>
-                      <TableHead className='py-3 sm:py-4 lg:py-5 px-3 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base hidden sm:table-cell'>
+                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
                         Last Session
                       </TableHead>
-                      <TableHead className='py-3 sm:py-4 lg:py-5 px-3 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
+                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base truncate'>
                         Plan Engagement
                       </TableHead>
-                      <TableHead className='py-3 sm:py-4 lg:py-5 px-3 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base hidden lg:table-cell'>
+                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
                         Last Active
                       </TableHead>
-                      <TableHead className='py-3 sm:py-4 lg:py-5 px-3 sm:px-4 lg:px-6 text-center font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
+                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-center font-semibold text-gray-700 text-xs sm:text-sm lg:text-base truncate'>
                         Actions
                       </TableHead>
                     </TableRow>
@@ -283,7 +276,7 @@ export default function PractitionerDashboard() {
                           key={client.id}
                           className='border-b border-gray-200/40 last:border-b-0 hover:bg-gray-50/50 transition-colors h-[26px]'
                         >
-                          <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6 flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0'>
+                          <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 truncate'>
                             <Avatar className='h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 rounded-full flex-shrink-0'>
                               <AvatarImage
                                 src={getAvatarUrl(client.avatarUrl, {
@@ -299,22 +292,25 @@ export default function PractitionerDashboard() {
                               {client.firstName} {client.lastName}
                             </span>
                           </TableCell>
-                          <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base hidden sm:table-cell'>
+                          <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base'>
                             {getLastSession(client)}
                           </TableCell>
-                          <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6'>
+                          <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6'>
                             <span
-                              className={`rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-xs sm:text-sm font-semibold ${getPlanBadgeColor(
-                                planLevel || '',
-                              )}`}
+                              className={`rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-xs sm:text-sm font-semibold whitespace-nowrap block`}
+                              style={{
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
                             >
                               {planLevel}
                             </span>
                           </TableCell>
-                          <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base hidden lg:table-cell'>
+                          <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base'>
                             {getLastActive(client)}
                           </TableCell>
-                          <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6 text-center align-middle'>
+                          <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-center align-middle truncate'>
                             <div className='flex items-center justify-center gap-2 sm:gap-3 lg:gap-4 min-h-[20px] sm:min-h-[24px] lg:min-h-[26px]'>
                               <Link
                                 href={`/practitioner/clients/${client.id}/messages`}
@@ -350,7 +346,7 @@ export default function PractitionerDashboard() {
                         key={invitation.id}
                         className='border-b border-gray-200/40 last:border-b-0 hover:bg-gray-50/50 transition-colors h-[26px]'
                       >
-                        <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6 flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0'>
+                        <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0'>
                           <Avatar className='h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 rounded-full flex-shrink-0'>
                             <AvatarImage
                               src={getAvatarUrl(null, {
@@ -366,18 +362,18 @@ export default function PractitionerDashboard() {
                             {getClientDisplayName(invitation)}
                           </span>
                         </TableCell>
-                        <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base hidden sm:table-cell'>
+                        <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base'>
                           -
                         </TableCell>
-                        <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6'>
-                          <span className='rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-xs sm:text-sm font-semibold bg-gray-100 text-gray-700'>
+                        <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6'>
+                          <span className='rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-xs sm:text-sm font-semibold bg-gray-100 text-gray-700 block'>
                             Invitation Pending
                           </span>
                         </TableCell>
-                        <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base hidden lg:table-cell'>
+                        <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base'>
                           -
                         </TableCell>
-                        <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6 text-center align-middle'>
+                        <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-center align-middle'>
                           <div className='flex items-center justify-center gap-2 sm:gap-3 lg:gap-4 min-h-[20px] sm:min-h-[24px] lg:min-h-[26px]'>
                             <TooltipProvider>
                               <Tooltip>

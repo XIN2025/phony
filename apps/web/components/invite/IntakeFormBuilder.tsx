@@ -11,6 +11,8 @@ import { useInviteContext } from '@/context/InviteContext';
 import { useEffect, useState } from 'react';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { Textarea } from '@repo/ui/components/textarea';
+import { cn } from '@repo/ui/lib/utils';
+import React, { forwardRef } from 'react';
 
 interface QuestionOptionsProps {
   questionIndex: number;
@@ -93,6 +95,7 @@ interface IntakeFormBuilderProps {
   isEditMode?: boolean;
   buttonText?: string;
   initialFormData?: CreateIntakeFormDto | null;
+  hideActionButtonOnMobile?: boolean;
 }
 
 const questionTypeOptions = [
@@ -106,15 +109,19 @@ const questionTypeOptions = [
   { value: QuestionType.RATING, label: 'Rating' },
 ];
 
-export function IntakeFormBuilder({
-  onSubmit,
-  onBack,
-  onDelete,
-  isLoading,
-  isEditMode = false,
-  buttonText,
-  initialFormData,
-}: IntakeFormBuilderProps) {
+export const IntakeFormBuilder = forwardRef<HTMLFormElement, IntakeFormBuilderProps>(function IntakeFormBuilder(
+  {
+    onSubmit,
+    onBack,
+    onDelete,
+    isLoading,
+    isEditMode = false,
+    buttonText,
+    initialFormData,
+    hideActionButtonOnMobile = false,
+  },
+  ref,
+) {
   const { inviteData, setInviteData } = useInviteContext();
 
   const [originalFormData, setOriginalFormData] = useState<CreateIntakeFormDto | null>(null);
@@ -221,6 +228,7 @@ export function IntakeFormBuilder({
 
   return (
     <form
+      ref={ref}
       onSubmit={form.handleSubmit(handleFormSubmit)}
       className='w-full max-w-full min-w-0 overflow-x-hidden px-2 sm:px-4 md:px-8 flex flex-col gap-8'
     >
@@ -364,34 +372,39 @@ export function IntakeFormBuilder({
         ))}
       </div>
       {/* Add Question Button */}
-      <Button
+      <button
         type='button'
         onClick={addQuestion}
-        variant='ghost'
-        className='rounded-full border border-dashed border-gray-300 px-6 text-gray-700 hover:bg-gray-50 w-full sm:w-fit self-start'
+        className='flex items-center gap-2 text-black text-lg font-normal bg-transparent p-0 border-0 shadow-none hover:underline focus:underline outline-none'
+        style={{ boxShadow: 'none', background: 'none', border: 'none' }}
       >
-        + Add Question
-      </Button>
-      {/* Action Buttons */}
-      <div className='flex flex-col gap-4 -mt-4 sm:flex-row sm:justify-between'>
-        {onBack && (
-          <Button
-            type='button'
-            variant='outline'
-            onClick={onBack}
-            className='w-full rounded-full px-8 py-2 border border-black text-black bg-white hover:bg-gray-100 shadow-sm sm:w-auto'
-          >
-            Cancel
-          </Button>
-        )}
+        <span className='text-2xl pb-2 flex items-center' style={{ lineHeight: '1' }} aria-hidden='true'>
+          +
+        </span>
+        <span className='underline underline-offset-2 flex items-center' style={{ lineHeight: '1.2' }}>
+          Add Question
+        </span>
+      </button>
+      {/* Action Buttons - only show on sm+ screens */}
+      <div className='flex flex-row gap-4 -mt-4 w-full sm:flex'>
         <Button
           type='submit'
           disabled={isLoading}
-          className='w-full rounded-full px-8 py-2 bg-black text-white shadow-sm hover:bg-gray-900 sm:w-auto'
+          className={`flex-1 min-w-0 rounded-full px-4 py-2 bg-black text-white shadow-sm hover:bg-gray-900 truncate hidden sm:block sm:w-auto sm:flex-none sm:ml-auto`}
         >
           {buttonText || 'Preview'}
         </Button>
+        {/* Only show on mobile if not hidden by prop */}
+        {!hideActionButtonOnMobile && (
+          <Button
+            type='submit'
+            disabled={isLoading}
+            className='flex-1 min-w-0 rounded-full px-4 py-2 bg-black text-white shadow-sm hover:bg-gray-900 truncate sm:hidden ml-auto'
+          >
+            {buttonText || 'Preview'}
+          </Button>
+        )}
       </div>
     </form>
   );
-}
+});

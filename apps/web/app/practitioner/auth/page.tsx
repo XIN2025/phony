@@ -87,7 +87,7 @@ export default function PractitionerAuthPage() {
     if (!showOTP) {
       setEmail(values.email);
       handleSendOTP(
-        { email: values.email },
+        { email: values.email, role: 'PRACTITIONER' },
         {
           onSuccess: () => {
             toast.success('OTP sent successfully');
@@ -165,20 +165,20 @@ export default function PractitionerAuthPage() {
               </FormItem>
             )}
           />
-          <div className='flex justify-between text-xs sm:text-sm'>
+          <div className='flex flex-row justify-between items-center text-xs sm:text-sm w-full'>
             <Button type='button' variant='link' className='p-0 text-xs sm:text-sm' onClick={() => setShowOTP(false)}>
               Change Email
             </Button>
             {resendTimer > 0 ? (
-              <span className='text-muted-foreground text-xs sm:text-sm'>Resend code in {resendTimer}s</span>
+              <span className='text-muted-foreground text-right'>Resend code in {resendTimer}s</span>
             ) : (
               <Button
                 type='button'
                 variant='link'
-                className='p-0 text-xs sm:text-sm'
+                className='p-0 text-xs sm:text-sm text-right'
                 onClick={() =>
                   handleSendOTP(
-                    { email: form.getValues('email') },
+                    { email: form.getValues('email'), role: 'PRACTITIONER' },
                     {
                       onSuccess: () => {
                         toast.success('OTP resent successfully');
@@ -198,7 +198,7 @@ export default function PractitionerAuthPage() {
           </div>
           <Button
             type='submit'
-            className='w-full py-2 sm:py-3 text-sm sm:text-base'
+            className='w-full py-2 sm:py-3 text-sm sm:text-base rounded-full'
             disabled={isLoading || isVerifyingOtp}
           >
             {(isLoading || isVerifyingOtp) && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
@@ -229,7 +229,7 @@ export default function PractitionerAuthPage() {
             </FormItem>
           )}
         />
-        <Button type='submit' className='w-full h-12 text-base font-medium' disabled={isSendingOTP}>
+        <Button type='submit' className='w-full h-12 text-base font-medium rounded-full' disabled={isSendingOTP}>
           {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
           Send Verification Code
         </Button>
