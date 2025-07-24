@@ -25,7 +25,7 @@ export default function ClientAuthEmailPage() {
 
   function onSubmit(values: { email: string }) {
     sendOtp(
-      { email: values.email },
+      { email: values.email, role: 'CLIENT' },
       {
         onSuccess: () => {
           toast.success('OTP sent to your email');
