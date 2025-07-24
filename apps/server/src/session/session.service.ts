@@ -360,10 +360,17 @@ export class SessionService {
     });
   }
 
-  async generateComprehensiveSummaryForClient(clientId: string) {
+  async generateComprehensiveSummaryForClient(clientId: string, start?: string, end?: string) {
     try {
+      const sessionWhere: Record<string, unknown> = { clientId };
+      if (start && end) {
+        sessionWhere.recordedAt = {
+          gte: new Date(start),
+          lte: new Date(end),
+        };
+      }
       const sessions = await this.prisma.session.findMany({
-        where: { clientId },
+        where: sessionWhere,
         select: {
           id: true,
           title: true,

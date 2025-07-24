@@ -144,7 +144,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
         <Button
           type='submit'
           disabled={!isValid || isLoading}
-          className='flex-1 rounded-full px-4 py-3 bg-black sm:hidden text-white shadow-sm hover:bg-gray-900 text-base'
+          className='flex-1 rounded-full px-4 py-3 bg-[#807171]   sm:hidden text-white shadow-sm   text-base'
         >
           {isLoading ? 'Sending...' : 'Continue'}
         </Button>
@@ -162,7 +162,7 @@ export function InviteClientDetailsForm({ onNext, isLoading, onCancel }: Props) 
         <Button
           type='submit'
           disabled={!isValid || isLoading}
-          className='w-full rounded-full px-8 py-2 bg-black text-white shadow-sm hover:bg-gray-900 sm:w-auto'
+          className='w-full rounded-full px-8 py-2 bg-[#807171] text-white shadow-sm hover:bg-gray-900 sm:w-auto'
         >
           {isLoading ? 'Sending...' : 'Continue'}
         </Button>

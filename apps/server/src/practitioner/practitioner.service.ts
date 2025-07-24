@@ -67,10 +67,10 @@ export class PractitionerService {
     }
 
     if (intakeFormId) {
-      const form = await this.prismaService.intakeForm.findUnique({
-        where: { id: intakeFormId },
-        select: { title: true },
-      });
+      // const form = await this.prismaService.intakeForm.findUnique({
+      //   where: { id: intakeFormId },
+      //   select: { title: true },
+      // });
     }
 
     await this.sendInvitationEmail(invitation, practitioner, normalizedEmail, normalizedFirstName, normalizedLastName);
@@ -116,10 +116,10 @@ export class PractitionerService {
     });
 
     if (intakeFormId) {
-      const form = await this.prismaService.intakeForm.findUnique({
-        where: { id: intakeFormId },
-        select: { title: true },
-      });
+      // const form = await this.prismaService.intakeForm.findUnique({
+      //   where: { id: intakeFormId },
+      //   select: { title: true },
+      // });
     }
 
     try {

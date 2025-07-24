@@ -198,7 +198,7 @@ export default function PractitionerAuthPage() {
           </div>
           <Button
             type='submit'
-            className='w-full py-2 sm:py-3 text-sm sm:text-base rounded-full'
+            className='w-full py-2 bg-[#807171] sm:py-3 text-sm sm:text-base rounded-full'
             disabled={isLoading || isVerifyingOtp}
           >
             {(isLoading || isVerifyingOtp) && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
@@ -229,7 +229,11 @@ export default function PractitionerAuthPage() {
             </FormItem>
           )}
         />
-        <Button type='submit' className='w-full h-12 text-base font-medium rounded-full' disabled={isSendingOTP}>
+        <Button
+          type='submit'
+          className='w-full bg-[#807171] h-12 text-base font-medium rounded-full'
+          disabled={isSendingOTP}
+        >
           {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
           Send Verification Code
         </Button>

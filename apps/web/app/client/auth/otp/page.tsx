@@ -251,7 +251,7 @@ export default function ClientOtpPage() {
             <div className='w-full flex justify-center sm:justify-start'>
               <Button
                 type='submit'
-                className='w-full rounded-full text-base sm:text-lg md:text-base lg:text-lg font-semibold'
+                className='w-full rounded-full bg-[#807171] text-base sm:text-lg md:text-base lg:text-lg font-semibold'
                 disabled={(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) || otp.length !== 6}
               >
                 {(isInvitationFlow ? isVerifyingInvitation : isVerifyingRegular) && (

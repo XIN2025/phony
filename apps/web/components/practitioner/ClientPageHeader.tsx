@@ -34,7 +34,7 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
 }) => {
   const router = useRouter();
   return (
-    <div className='sticky top-0 sm:static sm:top-auto z-30  backdrop-blur-sm  flex flex-col gap-0 px-2 lg:px-10 pt-2 pb-3 sm:pb-4'>
+    <div className='0  backdrop-blur-sm  flex flex-col gap-0 px-2 lg:px-10 pt-2 pb-3 sm:pb-4'>
       <div className='w-full flex items-center'>
         <button
           type='button'
@@ -52,57 +52,60 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
           />
         </button>
       </div>
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-2 sm:px-0 mt-2 max-w-full'>
-        <div className='flex flex-row items-center gap-3 w-full sm:w-auto min-w-0'>
-          {showAvatar && (
-            <Avatar className='h-12 w-12'>
-              <AvatarImage
-                src={getAvatarUrl(client.avatarUrl, client)}
-                alt={`${client.firstName} ${client.lastName}`.trim()}
-              />
-              <AvatarFallback>{getInitials({ firstName: client.firstName, lastName: client.lastName })}</AvatarFallback>
-            </Avatar>
-          )}
-          <div className='flex flex-col'>
+      <div className='flex flex-col gap-2 px-2 sm:px-0 mt-2 max-w-full'>
+        <div className='flex flex-row items-center justify-between w-full gap-2'>
+          <div className='flex flex-row items-center gap-3 min-w-0'>
+            {showAvatar && (
+              <Avatar className='h-12 w-12'>
+                <AvatarImage
+                  src={getAvatarUrl(client.avatarUrl, client)}
+                  alt={`${client.firstName} ${client.lastName}`.trim()}
+                />
+                <AvatarFallback>
+                  {getInitials({ firstName: client.firstName, lastName: client.lastName })}
+                </AvatarFallback>
+              </Avatar>
+            )}
             <h1
-              className='text-lg sm:text-xl md:text-3xl font-bold leading-tight'
+              className='text-2xl md:text-3xl font-bold leading-tight'
               style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               {title || `${client.firstName} ${client.lastName}`}
             </h1>
-            {subtitle ? (
-              <p className='text-xs sm:text-sm text-muted-foreground'>{subtitle}</p>
-            ) : client.createdAt ? (
-              <p className='text-xs sm:text-sm text-muted-foreground'>
-                Client since {new Date(client.createdAt).toLocaleDateString()}
-              </p>
-            ) : null}
+          </div>
+          <div className='flex flex-col sm:flex-row flex-nowrap gap-2 sm:gap-3 min-w-0 sm:w-auto'>
+            {/* Hide messages button on small screens */}
+            <div className='hidden sm:block'>
+              {showMessagesButton && client.id && (
+                <Link href={`/practitioner/clients/${client.id}/messages`} className='ml-0 sm:ml-0 min-w-0'>
+                  <Button
+                    variant='outline'
+                    className='rounded-full p-2 border border-black bg-transparent sm:w-auto min-w-0 shadow-none'
+                  >
+                    <MessageCircle className='h-4 w-4' />
+                  </Button>
+                </Link>
+              )}
+            </div>
+            {rightActions && React.isValidElement(rightActions)
+              ? React.cloneElement(rightActions as React.ReactElement<any>, {
+                  className: [
+                    (rightActions as React.ReactElement<any>).props.className,
+                    'bg-[#807171] text-white rounded-full px-2 py-1 w-full min-w-0 max-w-full sm:px-6 sm:py-2 sm:w-auto sm:max-w-xs shadow-md hover:bg-neutral-800 transition-all flex-1',
+                  ]
+                    .filter(Boolean)
+                    .join(' '),
+                })
+              : rightActions}
           </div>
         </div>
-        {/* On mobile, show buttons side by side and never wrap */}
-        <div className='flex flex-row flex-nowrap gap-2 w-full sm:w-auto sm:gap-3 min-w-0'>
-          {showMessagesButton && client.id && (
-            <Link href={`/practitioner/clients/${client.id}/messages`} className='ml-0 sm:ml-0 min-w-0'>
-              <Button
-                variant='outline'
-                className='rounded-full p-2 border border-black bg-transparent w-full sm:w-auto min-w-0 shadow-none'
-              >
-                <MessageCircle className='h-4 w-4' />
-              </Button>
-            </Link>
-          )}
-          {rightActions && React.isValidElement(rightActions)
-            ? React.cloneElement(rightActions as React.ReactElement<any>, {
-                className: [
-                  (rightActions as React.ReactElement<any>).props.className,
-                  // Responsive paddings, widths, and no wrapping
-                  'bg-[#807171] text-white rounded-full px-2 py-1 w-full min-w-0 max-w-full sm:px-6 sm:py-2 sm:w-auto sm:max-w-xs shadow-md hover:bg-neutral-800 transition-all flex-1',
-                ]
-                  .filter(Boolean)
-                  .join(' '),
-              })
-            : rightActions}
-        </div>
+        {subtitle ? (
+          <p className='text-xs sm:text-sm text-muted-foreground'>{subtitle}</p>
+        ) : client.createdAt ? (
+          <p className='text-xs sm:text-sm text-muted-foreground'>
+            Client since {new Date(client.createdAt).toLocaleDateString()}
+          </p>
+        ) : null}
       </div>
     </div>
   );

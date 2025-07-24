@@ -20,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       onClick={() => router.push(`/practitioner/clients/${clientId}/dashboard/new-session`)}
       className='bg-[#807171] text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all w-full sm:w-auto min-w-0'
     >
-      <Plus className='h-4 w-4 mr-2' />
+      <Plus className='sm:h-4 sm:w-4 sm:mr-2 hidden ' />
       New Session
     </Button>
   );

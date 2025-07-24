@@ -1,24 +1,20 @@
 'use client';
+import { AuthHeader } from '@/components/PageHeader';
+import { SignupStepper } from '@/components/SignupStepper';
+import { useSignUpContext } from '@/context/signup-context';
+import { useCheckInvitationIntakeForm, useClientSignup } from '@/lib/hooks/use-api';
+import { AuthLayout } from '@repo/ui/components/auth-layout';
+import { Button } from '@repo/ui/components/button';
+import { Calendar } from '@repo/ui/components/calendar';
+import { Input } from '@repo/ui/components/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/popover';
+import { Loader2, User } from 'lucide-react';
+import { signIn } from 'next-auth/react';
+import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@repo/ui/components/button';
-import { Input } from '@repo/ui/components/input';
-import { Label } from '@repo/ui/components/label';
 import { toast } from 'sonner';
-import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
-import { User } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
-import { useSignUpContext } from '@/context/signup-context';
-import { AuthLayout } from '@repo/ui/components/auth-layout';
-import { AuthHeader } from '@/components/PageHeader';
-import { useCheckInvitationIntakeForm, useClientSignup } from '@/lib/hooks/use-api';
-import { SignupStepper } from '@/components/SignupStepper';
-import { Calendar } from '@repo/ui/components/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/popover';
-import Image from 'next/image';
-import { signIn } from 'next-auth/react';
-import { Loader2 } from 'lucide-react';
 
 const validatePhoneNumber = (value: string): string => {
   return value.replace(/[^0-9+\-()\s]/g, '');
@@ -298,7 +294,7 @@ export default function PersonalDetailsPage() {
               <div className='pt-4'>
                 <Button
                   type='submit'
-                  className='w-full rounded-full'
+                  className='w-full bg-[#807171] rounded-full'
                   disabled={isSigningUp}
                   style={{ fontSize: 18, fontWeight: 600, height: 48, backgroundColor: '#807171' }}
                 >
@@ -320,7 +316,7 @@ export default function PersonalDetailsPage() {
           <div className='flex justify-center px-4'>
             <Button
               type='submit'
-              className='w-full max-w-md rounded-full'
+              className='w-full bg-[#807171] max-w-md rounded-full'
               disabled={isSigningUp}
               style={{ fontSize: 18, fontWeight: 600, height: 48, backgroundColor: '#807171' }}
               onClick={handleNext}

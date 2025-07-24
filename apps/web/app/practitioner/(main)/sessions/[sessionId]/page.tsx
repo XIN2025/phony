@@ -190,7 +190,7 @@ export default function SessionDetailPage() {
         return;
       }
       await refetch();
-      router.push(`/practitioner/clients/${session.client?.id || ''}/dashboard?editPlan=${plan.id}`);
+      router.push(`/practitioner/clients/${session.client?.id || ''}/plans/${plan.id}`);
     } catch (err: any) {
       setSaveError(err.message || 'Failed to generate action plan');
     } finally {

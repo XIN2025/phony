@@ -79,10 +79,9 @@ function SignupBottomSection({
 
           <Button
             type='submit'
-            className='h-12 w-[48%] sm:w-auto px-8 text-base font-medium rounded-full text-white shadow-lg'
+            className='h-12 w-[48%] bg-[#807171] sm:w-auto px-8 text-base font-medium rounded-full text-white '
             disabled={isSendingOTP || isSigningUp}
             onClick={onSubmit}
-            style={{ backgroundColor: 'black' }}
           >
             {isSendingOTP && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             {isSigningUp && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}

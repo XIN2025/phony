@@ -328,7 +328,7 @@ export const AudioRecorder = forwardRef<
           <DialogOverlay className='backdrop-blur-[6px] bg-black/5' />
           <DialogContent
             showCloseButton={false}
-            className='max-w-sm w-full max-h-[90vh] p-8 flex flex-col items-center text-center test-center-modal'
+            className='max-w-sm  w-full max-h-[90vh] p-8 flex flex-col items-center text-center test-center-modal'
           >
             <DialogHeader>
               <DialogTitle className='text-xl font-semibold mb-2'>End Session?</DialogTitle>
@@ -341,7 +341,7 @@ export const AudioRecorder = forwardRef<
               <Button variant='outline' className='flex-1 py-2' onClick={handleStopCancel}>
                 Cancel
               </Button>
-              <Button className='flex-1 py-2 bg-black text-white' onClick={handleStopConfirm}>
+              <Button className='flex-1 py-2 bg-[#807171] text-white' onClick={handleStopConfirm}>
                 Stop
               </Button>
             </div>

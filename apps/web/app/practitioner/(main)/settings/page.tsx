@@ -274,7 +274,7 @@ export default function SettingsPage() {
                       {/* Logout button for small screens inside the card */}
                       <div className=' mt-8'>
                         <Button
-                          className='bg-foreground text-background hover:bg-foreground/90 rounded-full w-full sm:w-auto'
+                          className='bg-[#807171] text-background hover:bg-foreground/90 rounded-full w-full sm:w-auto'
                           onClick={() => signOut({ callbackUrl: '/' })}
                         >
                           Logout

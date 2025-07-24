@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Param, Put, UseGuards, UseInterceptors, UploadedFile, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  Req,
+  Query,
+} from '@nestjs/common';
 import { SessionService } from './session.service';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { SessionStatus } from '@repo/db';
@@ -84,8 +96,12 @@ export class SessionController {
   @Post('client/:clientId/comprehensive-summary')
   @ApiOperation({ summary: 'Generate comprehensive summary for client' })
   @ApiResponse({ status: 200, description: 'Comprehensive summary generated successfully.' })
-  async generateComprehensiveSummary(@Param('clientId') clientId: string) {
-    return await this.sessionService.generateComprehensiveSummaryForClient(clientId);
+  async generateComprehensiveSummary(
+    @Param('clientId') clientId: string,
+    @Query('start') start?: string,
+    @Query('end') end?: string
+  ) {
+    return await this.sessionService.generateComprehensiveSummaryForClient(clientId, start, end);
   }
 
   @Put(':id/status')

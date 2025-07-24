@@ -130,7 +130,7 @@ export default function ClientAuthEmailPage() {
             </div>
             <Button
               type='submit'
-              className='w-full rounded-full py-2 sm:py-3 md:py-2 lg:py-3 text-sm sm:text-base md:text-sm lg:text-base'
+              className='w-full bg-[#807171] rounded-full py-2 sm:py-3 md:py-2 lg:py-3 text-sm sm:text-base md:text-sm lg:text-base'
               disabled={isPending}
             >
               {isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}

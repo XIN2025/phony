@@ -16,6 +16,7 @@ import {
   useGetSessionsByClient,
 } from '@/lib/hooks/use-api';
 import { useRouter } from 'next/navigation';
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/components/toggle-group';
 
 function getAvgFeedbackForDay(tasks: any[]) {
   if (!tasks || tasks.length === 0) return 'Nil';
@@ -59,6 +60,11 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
     left: 0,
     width: 0,
   });
+  const [snapshotMode, setSnapshotMode] = useState<'7days' | 'lifetime'>('7days');
+  const [lifetimeRange, setLifetimeRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
+  const [showFullSummary, setShowFullSummary] = useState(false);
+  const summaryContentRef = useRef<HTMLDivElement>(null);
+  const [summaryOverflow, setSummaryOverflow] = useState(false);
 
   useEffect(() => {
     setDatePickerMounted(true);
@@ -121,6 +127,31 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
   const [isSummaryCached, setIsSummaryCached] = useState(false);
   const generateComprehensiveSummaryMutation = useGenerateComprehensiveSummary();
 
+  useEffect(() => {
+    if (snapshotMode === 'lifetime') {
+      // Find earliest and latest journal/task/session date
+      const allDates = [
+        ...(journalEntries || []).map((j) => new Date(j.createdAt)),
+        ...(rangedActionItems || []).flatMap(
+          (t) => t.completions?.map((c: any) => new Date(c.completedAt)).filter(Boolean) || [],
+        ),
+        ...(sessions || []).map((s) => new Date(s.recordedAt)),
+      ].filter(Boolean);
+      if (allDates.length > 0) {
+        const minDate = new Date(Math.min(...allDates.map((d) => d.getTime())));
+        const maxDate = new Date(Math.max(...allDates.map((d) => d.getTime())));
+        setDateRange({ startDate: minDate, endDate: maxDate, key: 'selection' });
+        setLifetimeRange({ startDate: minDate, endDate: maxDate });
+      }
+    } else {
+      // Last 7 days
+      const today = new Date();
+      const lastWeek = new Date();
+      lastWeek.setDate(today.getDate() - 6);
+      setDateRange({ startDate: lastWeek, endDate: today, key: 'selection' });
+    }
+  }, [snapshotMode, journalEntries, rangedActionItems, sessions]);
+
   const filteredTasks = rangedActionItems;
   const filteredJournals = useMemo(() => {
     const { startDate, endDate } = dateRange;
@@ -129,6 +160,12 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
       return d >= startDate && d <= endDate;
     });
   }, [journalEntries, dateRange]);
+
+  useLayoutEffect(() => {
+    if (summaryContentRef.current) {
+      setSummaryOverflow(summaryContentRef.current.scrollHeight > summaryContentRef.current.clientHeight);
+    }
+  }, [comprehensiveSummary, showFullSummary]);
 
   const weekDates = getDateRangeArray(dateRange.startDate, dateRange.endDate);
   const totalTasks = weekDates.reduce((sum, date) => {
@@ -184,7 +221,13 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
     try {
       setShowComprehensiveSummary(true);
       setIsSummaryCached(false);
-      const summary = await generateComprehensiveSummaryMutation.mutateAsync(clientId);
+      let start: string | undefined = undefined;
+      let end: string | undefined = undefined;
+      if (snapshotMode === '7days' || snapshotMode === 'lifetime') {
+        start = dateRange.startDate.toISOString();
+        end = dateRange.endDate.toISOString();
+      }
+      const summary = await generateComprehensiveSummaryMutation.mutateAsync({ clientId, start, end });
       setComprehensiveSummary({ ...summary, lastSessionCount: sessions.length });
       setIsSummaryCached(summary.isCached || false);
     } catch (error: any) {
@@ -247,6 +290,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
           onClick={() => setShowDatePicker((v) => !v)}
           aria-label='Select date range'
           type='button'
+          disabled={snapshotMode === 'lifetime'}
         >
           <span className='mr-2'>
             <svg width='20' height='20' fill='none' viewBox='0 0 24 24'>
@@ -313,7 +357,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
             </div>
             <ClipboardList className='h-10 w-10 text-[#807171]' />
           </div>
-          <div className='text-base font-semibold text-black/80'>Avg Daily Tasks Completion</div>
+          <div className='text-base font-semibold text-black/80 '>Avg Daily Tasks Completion</div>
         </div>
         <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-6 flex flex-col items-start gap-2'>
           <div className='flex items-center justify-between w-full'>
@@ -328,8 +372,8 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
           <div className='text-base font-semibold text-black/80'>Journal Entries</div>
         </div>
       </div>
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-full'>
-        <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-0 flex-1 min-w-0'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-full items-start'>
+        <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-0 min-w-0 flex flex-col'>
           <div className='p-6 pb-2'>
             <div className='text-2xl font-bold mb-4' style={{ fontFamily: "'DM Serif Display', serif" }}>
               Last Week's Overview
@@ -411,7 +455,8 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
           </div>
         </div>
         <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-4 sm:p-6 flex flex-col gap-4 w-full min-w-0'>
-          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2'>
+          {/* Header row: Snapshot heading and toggle, fully responsive layout */}
+          <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-2'>
             <div className='text-2xl font-bold flex items-center' style={{ fontFamily: "'DM Serif Display', serif" }}>
               Snapshot
               {isSummaryCached && (
@@ -420,25 +465,39 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
                 </span>
               )}
             </div>
-            <Button
-              variant='outline'
-              className='rounded-full border border-black px-4 py-1.5 text-base font-semibold hover:bg-[#f6f5f4] transition-all w-full sm:w-auto mt-2 sm:mt-0'
-              onClick={handleGenerateComprehensiveSummary}
-              disabled={generateComprehensiveSummaryMutation.isPending}
-            >
-              {generateComprehensiveSummaryMutation.isPending ? 'Generating...' : 'Generate Snapshot'}
-            </Button>
+            {/* Improved responsive toggle: full width below xl, inline on xl+ */}
+            <div className='flex flex-row p-1 bg-[#f6f5f4] border border-[#d1d1d1] rounded-full shadow-sm w-full xl:w-fit'>
+              {['7days', 'lifetime'].map((mode) => (
+                <button
+                  key={mode}
+                  type='button'
+                  onClick={() => setSnapshotMode(mode as '7days' | 'lifetime')}
+                  className={`text-center rounded-full px-3 md:px-5 lg:px-7 xl:px-8 text-xs md:text-sm lg:text-base font-normal transition-colors border border-transparent w-1/2 xl:w-auto ${
+                    snapshotMode === mode
+                      ? 'bg-[#D1CCE9] text-black font-semibold shadow-none'
+                      : 'bg-transparent text-[#b0acae]'
+                  }`}
+                >
+                  {mode === '7days' ? 'Last 7 Days' : 'Lifetime'}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className='text-lg font-semibold text-[#2d4739] mb-2'>Last Week's Progress</div>
-          <div className='flex flex-col sm:flex-row gap-3 mb-2'>
-            <div className='flex-1 bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col items-center mb-2 sm:mb-0'>
-              <div className='text-xs text-gray-500 mb-1'>Tasks Done</div>
+
+          {/* Metrics row: Tasks Done & Avg Task Feedback side by side */}
+          <div className='flex flex-row gap-3 mb-2'>
+            <div className='flex-1 bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col  '>
+              <div className='text-lg   mb-1 font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
+                Tasks Done
+              </div>
               <div className='text-xl font-bold'>
                 {completedTasks}/{totalTasks}
               </div>
             </div>
-            <div className='flex-1 bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col items-center'>
-              <div className='text-xs text-gray-500 mb-1'>Avg Task Feedback</div>
+            <div className='flex-1 bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col '>
+              <div className='text-lg   mb-1 font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
+                Avg Task Feedback
+              </div>
               <div className='text-xl font-bold flex items-center gap-1'>
                 <span>
                   {(() => {
@@ -461,18 +520,71 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
               </div>
             </div>
           </div>
-          <div className='bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 mb-2 overflow-x-auto'>
-            <div className='text-xs font-semibold mb-1'>Previous Session Summary</div>
-            <div className='text-sm text-gray-700'>
+          {/* Tasks Missed full width below */}
+          <div className='bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col  mb-2 w-full'>
+            <div className='text-lg   mb-1 font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
+              Tasks Missed
+            </div>
+            <div className='text-xl font-bold'>{totalTasks - completedTasks}</div>
+          </div>
+          <div className='bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 mb-2 overflow-x-auto relative'>
+            <div
+              className='text-lg font-semibold mb-1 font-semibold'
+              style={{ fontFamily: "'DM Serif Display', serif" }}
+            >
+              Previous Session Summary
+            </div>
+            <div
+              ref={summaryContentRef}
+              className='text-sm text-gray-700'
+              style={
+                showFullSummary
+                  ? { maxHeight: 'none', overflow: 'visible' }
+                  : { maxHeight: 96, overflow: 'hidden', position: 'relative' }
+              }
+            >
               {comprehensiveSummary?.summary ? (
                 <MarkdownRenderer content={comprehensiveSummary.summary} />
               ) : (
                 'No summary available.'
               )}
+              {!showFullSummary && summaryOverflow && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: 32,
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, #fff 100%)',
+                  }}
+                />
+              )}
             </div>
+            {!showFullSummary && summaryOverflow && (
+              <button
+                className='mt-2 text-xs text-[#807171] underline font-semibold w-full text-center'
+                onClick={() => setShowFullSummary(true)}
+              >
+                Show More
+              </button>
+            )}
+            {showFullSummary && summaryOverflow && (
+              <button
+                className='mt-2 text-xs text-[#807171] underline font-semibold w-full text-center'
+                onClick={() => setShowFullSummary(false)}
+              >
+                Show Less
+              </button>
+            )}
           </div>
           <div className='bg-white border border-[#ececec] rounded-xl p-3 sm:p-4'>
-            <div className='text-xs font-semibold mb-1'>Insights</div>
+            <div
+              className='text-lg font-semibold mb-1 font-semibold'
+              style={{ fontFamily: "'DM Serif Display', serif" }}
+            >
+              Insights
+            </div>
             <div className='text-sm text-gray-700'>
               {Array.isArray(comprehensiveSummary?.keyInsights)
                 ? comprehensiveSummary.keyInsights.map((insight: string, idx: number) => (
@@ -483,6 +595,15 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
                 : 'No insights available.'}
             </div>
           </div>
+          <Button
+            variant='outline'
+            className='rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm text-white font-medium bg-[#807171] text-white hover:bg-black hover:text-white shadow-sm w-full sm:w-auto'
+            onClick={handleGenerateComprehensiveSummary}
+            disabled={generateComprehensiveSummaryMutation.isPending}
+            style={{ width: '100%' }}
+          >
+            {generateComprehensiveSummaryMutation.isPending ? 'Generating...' : 'Generate Snapshot'}
+          </Button>
         </div>
       </div>
     </div>

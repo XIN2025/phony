@@ -1,19 +1,17 @@
 'use client';
 
+import { ClientPageHeader } from '@/components/practitioner/ClientPageHeader';
 import { TaskEditorDialog } from '@/components/practitioner/TaskEditorDialog';
-import { useGetClientActionItemsInRange, useGetClientJournalEntries } from '@/lib/hooks/use-api';
-import { getEngagementForDay, getRatingEmoji, isSameDay } from '@/lib/utils';
-import { ArrowLeft, Calendar, ClipboardList, Sparkles } from 'lucide-react';
+import { useGetClient, useGetClientActionItemsInRange, useGetClientJournalEntries } from '@/lib/hooks/use-api';
+import { getEngagementForDay, getRatingEmoji } from '@/lib/utils';
+import { Calendar, ClipboardList, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import DatePicker from 'react-date-picker';
-import 'react-date-picker/dist/DatePicker.css';
 import 'react-calendar/dist/Calendar.css';
-import { DateRange } from 'react-date-range';
+import 'react-date-picker/dist/DatePicker.css';
+import DatePicker from 'react-date-picker';
+import { Calendar as ReactCalendar } from 'react-calendar';
 import { createPortal } from 'react-dom';
-import Image from 'next/image';
-import { ClientPageHeader } from '@/components/practitioner/ClientPageHeader';
-import { useGetClient } from '@/lib/hooks/use-api';
 
 export default function TaskDetailsPage({ params }: { params: Promise<{ clientId: string; date: string }> }) {
   const router = useRouter();
@@ -162,7 +160,7 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
   const rightActions = (
     <button
       ref={dateButtonRef}
-      className='rounded-full border border-gray-300 px-4 py-2 text-sm bg-white shadow hover:bg-gray-50 transition'
+      className='rounded-full border border-gray-300 px-4 py-2 text-sm  shadow transition'
       onClick={() => setShowDatePicker((v) => !v)}
       type='button'
     >
@@ -170,6 +168,16 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
       {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
     </button>
   );
+
+  // Handle date change from picker
+  const handleDateChange = (value: any) => {
+    if (!value || Array.isArray(value)) return;
+    setSelectedDate(value);
+    setShowDatePicker(false);
+    // Update the URL to the new date
+    const dateString = value.toISOString().split('T')[0];
+    router.replace(`/practitioner/clients/${clientId}/tasks/${dateString}`);
+  };
 
   return (
     <div className='w-full min-h-screen flex flex-col items-stretch px-0'>
@@ -183,7 +191,7 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
         />
       )}
 
-      <div className='w-full flex flex-col gap-8 px-2 pr-4 sm:pr-8'>
+      <div className='w-full flex flex-col gap-8 px-2 pr-4 sm:px-8'>
         {/* Responsive: stack on mobile, row on sm+ */}
         <div className='flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6'>
           <div className='flex-1'>
@@ -357,6 +365,38 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
           readOnly={true}
         />
       )}
+      {datePickerMounted &&
+        showDatePicker &&
+        createPortal(
+          <div
+            ref={datePickerRef}
+            style={{
+              position: 'absolute',
+              top: pickerPosition.top,
+              left: pickerPosition.left,
+              zIndex: 50,
+              width: typeof window !== 'undefined' && window.innerWidth < 640 ? 220 : 350,
+              maxWidth: '95vw',
+              background: 'white',
+              borderRadius: 16,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+              border: '1px solid #ececec',
+              padding: typeof window !== 'undefined' && window.innerWidth < 640 ? 8 : 16,
+            }}
+            className='calendar-float'
+          >
+            <ReactCalendar
+              onChange={handleDateChange}
+              value={selectedDate}
+              locale='en-US'
+              maxDetail='month'
+              minDetail='month'
+              showNeighboringMonth={false}
+              tileClassName={() => 'cursor-pointer'}
+            />
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

@@ -20,7 +20,7 @@ export default function InviteSuccessPage() {
           Invite Sent!
         </h1>
         <Link href='/practitioner'>
-          <Button className='rounded-full px-10 bg-black text-white text-base font-medium w-72 mx-auto'>
+          <Button className='rounded-full px-10 bg-[#807171] text-white text-base font-medium w-72 mx-auto'>
             Go to Dashboard
           </Button>
         </Link>

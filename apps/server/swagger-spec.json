@@ -477,7 +477,11 @@
     "/api/sessions/client/{clientId}/comprehensive-summary": {
       "post": {
         "operationId": "SessionController_generateComprehensiveSummary",
-        "parameters": [{ "name": "clientId", "required": true, "in": "path", "schema": { "type": "string" } }],
+        "parameters": [
+          { "name": "clientId", "required": true, "in": "path", "schema": { "type": "string" } },
+          { "name": "start", "required": true, "in": "query", "schema": { "type": "string" } },
+          { "name": "end", "required": true, "in": "query", "schema": { "type": "string" } }
+        ],
         "responses": { "200": { "description": "Comprehensive summary generated successfully." } },
         "security": [{ "bearer": [] }],
         "summary": "Generate comprehensive summary for client",

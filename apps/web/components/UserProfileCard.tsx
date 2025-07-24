@@ -118,7 +118,7 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({ userId, mode }
       <div className='mt-8'>
         <Button
           variant='default'
-          className='w-full bg-black text-white rounded-full py-3 text-base font-medium hover:bg-gray-900'
+          className='w-full bg-[#807171] text-white rounded-full py-3 text-base font-medium'
           onClick={() => signOut({ callbackUrl: '/' })}
         >
           Logout

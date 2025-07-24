@@ -401,7 +401,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
   const suggestedItems = currentPlanData?.suggestedActionItems || [];
 
   return (
-    <div className='space-y-8 w-full max-w-full md:max-w-[1350px] mx-auto px-2 sm:px-6 md:px-10'>
+    <div className='space-y-8 w-full max-w-full  mx-auto px-2 sm:px-6 md:px-10'>
       {/* Responsive header and publish button */}
       {showHeader && (
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4'>
@@ -427,13 +427,20 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
         </div>
         <div className='space-y-0 divide-y divide-gray-200'>
           {actionItems.map((item: ActionItem) => (
-            <div key={item.id} className='flex flex-col py-4 w-full min-w-0'>
-              <div className='flex flex-col sm:flex-row items-start sm:items-center w-full gap-2 sm:gap-0 min-w-0'>
+            <div
+              key={item.id}
+              className='py-4 w-full cursor-pointer hover:bg-gray-50 rounded-lg transition-colors'
+              onClick={() => handleEditTaskClick(item)}
+            >
+              <div className='flex flex-col sm:flex-row items-start sm:items-center w-full gap-2 sm:gap-0'>
                 <div className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-0 flex-1 break-words'>
                   {item.description}
                 </div>
                 <div className='flex-1 min-w-0' />
-                <div className='flex flex-wrap items-center gap-1 min-w-0 justify-end'>
+                <div
+                  className='flex flex-wrap items-center gap-1 min-w-0 justify-end'
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Button
                     variant='ghost'
                     size='icon'
@@ -470,7 +477,10 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                     ))}
                   </div>
                 </div>
-                <div className='flex flex-wrap items-center gap-1 min-w-[120px] justify-end pr-2'>
+                <div
+                  className='flex flex-wrap items-center gap-1 min-w-[120px] justify-end pr-2'
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Checkbox
                     checked={!!item.isMandatory}
                     onCheckedChange={(checked) => {
@@ -529,8 +539,8 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
         </div>
         <div className='space-y-0 divide-y divide-gray-200'>
           {suggestedItems.map((item: SuggestedActionItem) => (
-            <div key={item.id} className='flex flex-col py-4 w-full min-w-0'>
-              <div className='flex flex-col sm:flex-row items-start sm:items-center w-full gap-2 sm:gap-0 min-w-0'>
+            <div key={item.id} className='py-4 w-full'>
+              <div className='flex flex-col sm:flex-row items-start sm:items-center w-full gap-2 sm:gap-0'>
                 <div
                   className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-0 flex-1 cursor-pointer hover:underline break-words'
                   onClick={() => setViewingSuggestion(item)}

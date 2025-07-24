@@ -144,14 +144,14 @@ export function IntakeFormPreview({
               type='button'
               variant='outline'
               onClick={onBack}
-              className='border-gray-700 bg-transparent flex-1 rounded-full px-8 sm:hidden'
+              className='border-gray-700 bg-transparent flex-1 rounded-full px -8 sm:hidden'
             >
               Back
             </Button>
             <Button
               onClick={() => onSubmit()}
               disabled={isLoading}
-              className='flex-1 rounded-full bg-black sm:hidden px-8 text-white hover:bg-gray-800'
+              className='flex-1 rounded-full bg-[#807171] sm:hidden px-8 text-white  '
             >
               {buttonText || (isLoading ? 'Creating Form...' : isNewForm ? 'Send Invitation' : 'Save Changes')}
             </Button>
@@ -172,13 +172,18 @@ export function IntakeFormPreview({
             </div>
           )}
           <div className='flex gap-4 w-full sm:w-auto sm:ml-auto'>
-            <Button type='button' variant='outline' onClick={onBack} className='rounded-full px-8'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={onBack}
+              className='rounded-full bg-transparent border-gray-700 px-8'
+            >
               Back
             </Button>
             <Button
               onClick={() => onSubmit()}
               disabled={isLoading}
-              className='rounded-full bg-black px-8 text-white hover:bg-gray-800'
+              className='rounded-full bg-[#807171] px-8 text-white  '
             >
               {buttonText || (isLoading ? 'Creating Form...' : isNewForm ? 'Send Invitation' : 'Save Changes')}
             </Button>

@@ -116,6 +116,10 @@ const JournalsIcon = ({ className, isActive }: { className?: string; isActive?: 
   </svg>
 );
 
+const InfinityIcon = () => (
+  <Image src='/infinity.svg' alt='Infinity Logo' width={32} height={32} className='h-5 w-auto' />
+);
+
 export const SidebarContent = ({
   navLinks,
   pathname,
@@ -178,7 +182,10 @@ export const SidebarContent = ({
           href={homePath}
           className='flex items-center justify-start text-xl sm:text-2xl font-logo font-semibold text-black min-w-0'
         >
-          <ContinuumIcon />
+          <span className='flex flex-row items-center gap-2'>
+            <InfinityIcon />
+            <ContinuumIcon />
+          </span>
         </Link>
       </div>
       <div className='flex-1 py-2 lg:py-4 min-w-0'>

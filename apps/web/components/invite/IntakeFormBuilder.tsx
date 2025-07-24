@@ -390,7 +390,7 @@ export const IntakeFormBuilder = forwardRef<HTMLFormElement, IntakeFormBuilderPr
         <Button
           type='submit'
           disabled={isLoading}
-          className={`flex-1 min-w-0 rounded-full px-4 py-2 bg-black text-white shadow-sm hover:bg-gray-900 truncate hidden sm:block sm:w-auto sm:flex-none sm:ml-auto`}
+          className={`flex-1 min-w-0 rounded-full px-4 py-2 bg-[#807171] text-white shadow-sm hover:bg-gray-900 truncate hidden sm:block sm:w-auto sm:flex-none sm:ml-auto`}
         >
           {buttonText || 'Preview'}
         </Button>

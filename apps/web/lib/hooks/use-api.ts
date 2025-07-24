@@ -706,12 +706,13 @@ export function useUpdateSession() {
 }
 
 export function useGenerateComprehensiveSummary() {
-  const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: (clientId: string) => ApiClient.post<any>(`/api/sessions/client/${clientId}/comprehensive-summary`),
-    onSuccess: (_, clientId) => {
-      queryClient.invalidateQueries({ queryKey: ['sessions', 'client', clientId] });
+    mutationFn: async ({ clientId, start, end }: { clientId: string; start?: string; end?: string }) => {
+      let url = `/api/sessions/client/${clientId}/comprehensive-summary`;
+      if (start && end) {
+        url += `?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
+      }
+      return ApiClient.post<any>(url);
     },
   });
 }
