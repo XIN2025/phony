@@ -172,7 +172,7 @@ export default function PractitionerDashboard() {
             <span className='text-3xl md:text-5xl  font-bold text-gray-900'>{totalClients}</span>
             <span className='text-xs  mt-1'>+2 from last month</span>
           </div>
-          <div className='absolute -bottom-2 sm:-bottom-4 top-2 sm:top-5 -right-2 sm:-right-4 opacity-40'>
+          <div className='absolute -bottom-2 sm:-bottom-4 lg:-bottom-6 -right-2 sm:-right-4 lg:-right-6 opacity-40'>
             <Users className='h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 text-[#807171] stroke-[0.5]' />
           </div>
         </Card>
@@ -191,7 +191,7 @@ export default function PractitionerDashboard() {
             </span>
             <span className='text-xs text-gray-700 mt-1'>&nbsp;</span>
           </div>
-          <div className='absolute top-2 sm:top-5 -bottom-2 sm:-bottom-4 -right-2 sm:-right-4 opacity-40'>
+          <div className='absolute -bottom-2 sm:-bottom-4 lg:-bottom-6 -right-2 sm:-right-4 lg:-right-6 opacity-40'>
             <Image
               src='/home/sms-tracking.svg'
               alt='SMS Tracking'
@@ -216,7 +216,7 @@ export default function PractitionerDashboard() {
             </span>
             <span className='text-xs text-gray-500 mt-1'>&nbsp;</span>
           </div>
-          <div className='absolute -bottom-2 sm:-bottom-4 -right-3 sm:-right-6 top-2 sm:top-5 opacity-40'>
+          <div className='absolute -bottom-2 sm:-bottom-4 lg:-bottom-6 -right-3 sm:-right-6 lg:-right-8 opacity-40'>
             <Image
               src='/home/book.svg'
               alt='Book'

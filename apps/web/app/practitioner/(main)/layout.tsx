@@ -21,6 +21,20 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
     <div className='relative min-h-screen w-full'>
       {/* Gradient background - matching client style */}
       <div className='absolute inset-0 z-0 bg-gradient-to-r from-red-50 via-orange-30 to-blue-50' />
+      {/* Subtle purplish cloudy gradient shape - harmonized with background */}
+      <div
+        className='pointer-events-none absolute z-0'
+        style={{
+          left: '40vw',
+          top: '55vh',
+          width: '48vw',
+          height: '180px',
+          background: 'radial-gradient(ellipse 60% 100% at 60% 40%, rgba(139,92,246,0.13) 0%, transparent 80%)',
+          filter: 'blur(32px)',
+          opacity: 0.38,
+          borderRadius: '60% 80% 70% 50% / 70% 40% 80% 60%',
+        }}
+      />
       {/* Desktop grid layout */}
       <div className='relative z-10 hidden lg:grid min-h-screen w-full lg:grid-cols-[220px_1fr] xl:grid-cols-[260px_1fr] 2xl:grid-cols-[300px_1fr]'>
         {/* Sidebar */}

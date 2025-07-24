@@ -34,7 +34,7 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
 }) => {
   const router = useRouter();
   return (
-    <div className='sticky top-0 z-30 bg-white/90 backdrop-blur-sm border-b border-gray-200 flex flex-col gap-0 px-2 lg:px-10 pt-2 pb-3 sm:pb-4'>
+    <div className='sticky top-0 sm:static sm:top-auto z-30  backdrop-blur-sm border-b border-gray-200 flex flex-col gap-0 px-2 lg:px-10 pt-2 pb-3 sm:pb-4'>
       <div className='w-full flex items-center'>
         <button
           type='button'
