@@ -311,7 +311,7 @@ export default function InviteClientPage() {
   const headerActionButton = isEditIntakeFormStep ? (
     <button
       type='button'
-      className='rounded-full px-4 py-2 bg-black text-white shadow-sm hover:bg-gray-900  sm:hidden ml-auto'
+      className='rounded-full px-4 py-2 bg-[#807171] text-white shadow-sm hover:bg-gray-900  sm:hidden ml-auto'
       onClick={() => {
         if (formBuilderRef.current) {
           formBuilderRef.current.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));

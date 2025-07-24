@@ -34,7 +34,7 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
 }) => {
   const router = useRouter();
   return (
-    <div className='sticky top-0 sm:static sm:top-auto z-30  backdrop-blur-sm border-b border-gray-200 flex flex-col gap-0 px-2 lg:px-10 pt-2 pb-3 sm:pb-4'>
+    <div className='sticky top-0 sm:static sm:top-auto z-30  backdrop-blur-sm  flex flex-col gap-0 px-2 lg:px-10 pt-2 pb-3 sm:pb-4'>
       <div className='w-full flex items-center'>
         <button
           type='button'
@@ -96,7 +96,7 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
                 className: [
                   (rightActions as React.ReactElement<any>).props.className,
                   // Responsive paddings, widths, and no wrapping
-                  'bg-black text-white rounded-full px-2 py-1 w-full min-w-0 max-w-full sm:px-6 sm:py-2 sm:w-auto sm:max-w-xs shadow-md hover:bg-neutral-800 transition-all flex-1',
+                  'bg-[#807171] text-white rounded-full px-2 py-1 w-full min-w-0 max-w-full sm:px-6 sm:py-2 sm:w-auto sm:max-w-xs shadow-md hover:bg-neutral-800 transition-all flex-1',
                 ]
                   .filter(Boolean)
                   .join(' '),

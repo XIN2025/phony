@@ -140,15 +140,21 @@ export default function ClientSettingsPage() {
       <div className='flex items-center justify-between mb-6'>
         <div className='flex items-center gap-4'>
           <h1
-            // className='text-xl sm:text-3xl font-semibold pl-4 sm:pl-0'
-            className='font-semibold mb-2 sm:mb-0 truncate text-2xl lg:text-3xl xl:text-4xl'
+            className='mb-2 sm:mb-0 truncate text-2xl lg:text-3xl font-bold xl:text-4xl font-serif font-normal'
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
-            Profile Settings
+            <span className='block sm:hidden font-bold ' style={{ fontFamily: "'DM Serif Display', serif" }}>
+              Profile
+              <br />
+              Settings
+            </span>
+            <span className='hidden sm:inline font-bold' style={{ fontFamily: "'DM Serif Display', serif" }}>
+              Profile Settings
+            </span>
           </h1>
         </div>
         <Button
-          className='rounded-full text-sm px-4 py-2 sm:text-base sm:px-6 sm:py-2 font-medium bg-black text-white hover:bg-gray-900 shadow-none'
+          className='bg-foreground bg-[#807171] text-background hover:bg-foreground/90 rounded-full px-6'
           onClick={handleSaveChanges}
           disabled={updateProfileMutation.isPending}
         >
@@ -163,19 +169,22 @@ export default function ClientSettingsPage() {
         </Button>
       </div>
       <div className='mb-8 w-full'>
-        <div className='inline-flex sm:w-auto w-full justify-between bg-[#F6F6F6] border border-[#D9D9D9] rounded-full p-1'>
-          <button
-            className={`w-full flex-1 sm:w-auto sm:flex-none text-center px-4 py-1 rounded-full text-sm font-medium transition-all ${activeTab === 'profile' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
-            onClick={() => setActiveTab('profile')}
-          >
-            Profile
-          </button>
-          <button
-            className={`w-full flex-1 sm:w-auto sm:flex-none text-center px-4 py-1 rounded-full text-sm font-medium transition-all ${activeTab === 'notifications' ? 'bg-black text-white shadow-md' : 'bg-transparent text-black'}`}
-            onClick={() => setActiveTab('notifications')}
-          >
-            Notifications
-          </button>
+        <div className='flex flex-row w-full sm:w-fit bg-[#f6f5f4] border p-1 border-[#d1d1d1] rounded-full mb-6 overflow-x-auto whitespace-nowrap'>
+          {[
+            { key: 'profile', label: 'Profile' },
+            { key: 'notifications', label: 'Notifications' },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type='button'
+              onClick={() => setActiveTab(tab.key)}
+              className={`text-center rounded-full p-1 px-8 py-2 text-base font-normal transition-colors w-full sm:w-auto flex-1 sm:flex-none ${activeTab === tab.key ? 'bg-[#D1CCE9] text-black font-semibold shadow-none' : 'bg-transparent text-[#b0acae]'}`}
+              aria-selected={activeTab === tab.key}
+              tabIndex={0}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
       {activeTab === 'profile' && (
@@ -297,8 +306,7 @@ export default function ClientSettingsPage() {
               </div>
               <div className='flex justify-end mt-8'>
                 <Button
-                  variant='default'
-                  className='bg-black text-white rounded-full px-8 py-3 text-base font-medium hover:bg-gray-900 w-auto'
+                  className='bg-[#807171] text-white rounded-full px-6 py-3 text-base font-medium hover:bg-[#6e625c] w-auto'
                   onClick={() => signOut({ callbackUrl: '/' })}
                 >
                   Logout
@@ -359,7 +367,7 @@ export default function ClientSettingsPage() {
             className='w-full rounded-xl border border-[#BDBDBD] bg-white mb-4'
             style={{ boxShadow: '0 0 0 0 transparent' }}
           >
-            <div className='p-10'>
+            <div className='p-6 sm:p-8'>
               <h2 className='text-xl font-semibold mb-2' style={{ fontFamily: "'DM Serif Display', serif" }}>
                 Email Notifications
               </h2>
@@ -367,42 +375,54 @@ export default function ClientSettingsPage() {
               <div className='space-y-6'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <div className='font-medium'>Email Reminders</div>
-                    <div className='text-gray-500 text-sm'>
+                    <Label htmlFor='emailReminders' className='font-medium'>
+                      Email Reminders
+                    </Label>
+                    <p className='text-sm text-muted-foreground'>
                       When your practitioner sends a new Action Plan or makes changes in tasks
-                    </div>
+                    </p>
                   </div>
                   <Switch
+                    id='emailReminders'
                     checked={notificationSettings.emailReminders}
                     onCheckedChange={() => handleNotificationChange('emailReminders')}
                   />
                 </div>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <div className='font-medium'>Practitioner Messages</div>
-                    <div className='text-gray-500 text-sm'>When your practitioner messages you</div>
+                    <Label htmlFor='practitionerMessages' className='font-medium'>
+                      Practitioner Messages
+                    </Label>
+                    <p className='text-sm text-muted-foreground'>When your practitioner messages you</p>
                   </div>
                   <Switch
+                    id='practitionerMessages'
                     checked={notificationSettings.practitionerMessages}
                     onCheckedChange={() => handleNotificationChange('practitionerMessages')}
                   />
                 </div>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <div className='font-medium'>Engagement Prompts</div>
-                    <div className='text-gray-500 text-sm'>When your activity is low</div>
+                    <Label htmlFor='engagementPrompts' className='font-medium'>
+                      Engagement Prompts
+                    </Label>
+                    <p className='text-sm text-muted-foreground'>When your activity is low</p>
                   </div>
                   <Switch
+                    id='engagementPrompts'
                     checked={notificationSettings.engagementPrompts}
                     onCheckedChange={() => handleNotificationChange('engagementPrompts')}
                   />
                 </div>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <div className='font-medium'>Marketing Emails</div>
-                    <div className='text-gray-500 text-sm'>News and feature updates</div>
+                    <Label htmlFor='marketingEmails' className='font-medium'>
+                      Marketing Emails
+                    </Label>
+                    <p className='text-sm text-muted-foreground'>News and feature updates</p>
                   </div>
                   <Switch
+                    id='marketingEmails'
                     checked={notificationSettings.marketingEmails}
                     onCheckedChange={() => handleNotificationChange('marketingEmails')}
                   />

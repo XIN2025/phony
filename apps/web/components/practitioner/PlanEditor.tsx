@@ -137,7 +137,7 @@ export function PublishPlanButton({
     <Button
       onClick={onClick}
       disabled={disabled}
-      className='bg-primary text-white rounded-full px-6 py-2 font-semibold shadow-none hover:bg-primary/90'
+      className='bg-[#807171] text-white rounded-full px-6 py-2 font-semibold shadow-none hover:bg-primary/90'
     >
       {isPublishing ? 'Publishing...' : 'Publish Plan'}
     </Button>

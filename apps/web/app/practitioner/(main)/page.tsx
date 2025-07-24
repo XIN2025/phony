@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar'
 import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
-import { Eye, Loader2, MessageSquare, Users, BookText, Repeat, Trash2 } from 'lucide-react';
+import { Eye, Loader2, MessageSquare, Users, BookText, Repeat, Trash2, Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/tooltip';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -140,7 +140,7 @@ export default function PractitionerDashboard() {
   }
 
   return (
-    <div className='flex flex-col w-full pt-4 sm:pt-6 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0'>
+    <div className='flex flex-col w-full pt-2 sm:pt-5 px-3 sm:px-4 lg:px-6 xl:px-8 min-w-0'>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <h1
@@ -151,10 +151,13 @@ export default function PractitionerDashboard() {
           </h1>
         </div>
         <Button
-          className='rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium bg-black text-white hover:bg-gray-800 shadow-sm w-full sm:w-auto'
+          className='rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium bg-[#807171] text-white hover:bg-gray-800 shadow-sm w-full sm:w-auto'
           asChild
         >
-          <Link href='/practitioner/invite'>+ Invite Client</Link>
+          <Link href='/practitioner/invite'>
+            <Plus className='h-4 w-4 mr-2' />
+            Invite Client
+          </Link>
         </Button>
       </div>
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10 w-full'>
@@ -164,9 +167,9 @@ export default function PractitionerDashboard() {
         >
           <div
             className='flex flex-col min-w-0 pl-3 relative z-10'
-            style={{
-              background: 'rgba(250, 250, 250, 0.6)',
-            }}
+            // style={{
+            //   background: 'rgba(250, 250, 250, 0.6)',
+            // }}
           >
             <span className='text-2xl font-medium  mb-1 sm:mb-2'>Total Clients</span>
             <span className='text-3xl md:text-5xl  font-bold text-gray-900'>{totalClients}</span>

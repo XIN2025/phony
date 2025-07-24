@@ -103,7 +103,7 @@ export default function NewFormPage() {
     headerAction = (
       <button
         type='button'
-        className='rounded-full px-4 py-2 bg-black text-white shadow-sm hover:bg-gray-900 truncate sm:hidden ml-auto'
+        className='rounded-full px-4 py-2 bg-[#807171] text-white shadow-sm hover:bg-gray-900 truncate sm:hidden ml-auto'
         onClick={() => {
           // Use ref to trigger form submission
           if (formBuilderRef.current) {
@@ -118,7 +118,7 @@ export default function NewFormPage() {
     headerAction = (
       <button
         type='button'
-        className='rounded-full px-4 py-2 bg-black text-white shadow-sm hover:bg-gray-900 truncate sm:hidden ml-auto'
+        className='rounded-full px-4 py-2 bg-[#807171] text-white shadow-sm hover:bg-gray-900 truncate sm:hidden ml-auto'
         onClick={handleSaveForm}
         disabled={isCreating}
       >

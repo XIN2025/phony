@@ -252,7 +252,7 @@ const JournalEditor = ({ entryId }: { entryId: string }) => {
             <ArrowLeft size={22} />
           </Link>
           <h1
-            className='text-lg sm:text-2xl lg:text-3xl font-semibold mb-0 truncate'
+            className='text-2xl lg:text-3xl font-semibold mb-0 truncate'
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Journals

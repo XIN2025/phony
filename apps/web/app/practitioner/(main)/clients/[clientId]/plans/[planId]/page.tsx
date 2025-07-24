@@ -38,7 +38,7 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
           <p className='text-gray-600 mb-4'>This plan hasn't been published yet.</p>
           <Button
             onClick={() => router.push(`/practitioner/clients/${clientId}/dashboard?editPlan=${planId}`)}
-            className='bg-primary text-white rounded-full px-6 py-2'
+            className='bg-[#807171] text-white rounded-full px-6 py-2'
           >
             Edit Plan
           </Button>

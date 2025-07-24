@@ -136,7 +136,7 @@ export default function SettingsPage() {
   );
 
   return (
-    <div className='flex flex-col bg-transparent text-foreground'>
+    <div className='flex flex-col md:pt-3 bg-transparent text-foreground'>
       <PageHeader
         title={
           <>
@@ -155,7 +155,7 @@ export default function SettingsPage() {
         leftElement={<div className='sm:hidden'>{/*  */}</div>}
         rightElement={
           <Button
-            className='bg-foreground text-background hover:bg-foreground/90 rounded-full px-6'
+            className='bg-foreground  bg-[#807171] text-background hover:bg-foreground/90 rounded-full px-6'
             onClick={handleSaveChanges}
             disabled={isUpdatingProfile}
           >
@@ -166,7 +166,7 @@ export default function SettingsPage() {
       />
       <main className='flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8'>
         {/* Dashboard-style tab bar */}
-        <div className='flex flex-row gap-0 bg-[#f6f5f4] border border-[#d1d1d1] rounded-full w-full sm:w-fit mb-6 overflow-x-auto whitespace-nowrap max-w-xs mx-auto sm:mx-0'>
+        <div className='flex flex-row w-full sm:w-fit bg-[#f6f5f4] border p-1 border-[#d1d1d1] rounded-full mb-6 overflow-x-auto whitespace-nowrap'>
           {[
             { key: 'profile', label: 'Profile' },
             { key: 'notifications', label: 'Notifications' },
@@ -176,9 +176,10 @@ export default function SettingsPage() {
               type='button'
               onClick={() => setActiveTab(tab.key as 'profile' | 'notifications')}
               className={cn(
-                'rounded-full px-8 py-3 text-base font-normal transition-colors',
+                'text-center rounded-full p-1 px-8 py-2 text-base font-normal transition-colors w-full sm:w-auto',
+                'flex-1 sm:flex-none',
                 activeTab === tab.key
-                  ? 'bg-[#c8c3c3] text-black font-semibold shadow-none'
+                  ? 'bg-[#D1CCE9] text-black font-semibold shadow-none'
                   : 'bg-transparent text-[#b0acae]',
               )}
               aria-selected={activeTab === tab.key}

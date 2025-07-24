@@ -50,7 +50,7 @@ export default function JournalEntryViewPage({ params }: { params: Promise<{ ent
             <ArrowLeft size={22} />
           </button>
           <h1
-            className='text-lg sm:text-2xl lg:text-3xl font-semibold mb-0 truncate'
+            className='text-2xl lg:text-3xl font-semibold mb-0 truncate'
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             {entry.title || 'Untitled Journal'}

@@ -504,8 +504,8 @@ const ClientPage = () => {
             </span>
           </div>
           <div className='flex items-center justify-center pr-3 sm:pr-6'>
-            <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full  flex items-center justify-center'>
-              <ClipboardList className='w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 ' />
+            <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center pr-0 sm:pr-0 mr-1 sm:mr-0'>
+              <ClipboardList className='w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7' />
             </div>
           </div>
         </Card>
@@ -717,7 +717,7 @@ const ClientPage = () => {
           <Button
             onClick={handleFeedbackSubmit}
             disabled={!!loadingTaskId || !selectedFeedback}
-            className='w-full mt-4 bg-gray-800 hover:bg-gray-700 text-white'
+            className='w-full mt-4 bg-[#807171] hover:bg-gray-700 text-white'
           >
             {loadingTaskId ? (
               <span className='flex items-center justify-center gap-2'>

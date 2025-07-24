@@ -5,7 +5,7 @@ import { Button } from '@repo/ui/components/button';
 import { Card } from '@repo/ui/components/card';
 import { Input } from '@repo/ui/components/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/table';
-import { Search, MessageCircle, Loader2, Repeat, Trash2 } from 'lucide-react';
+import { Search, MessageCircle, Loader2, Repeat, Trash2, Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/tooltip';
 import { getInitials, getAvatarUrl } from '@/lib/utils';
 import { useState } from 'react';
@@ -56,7 +56,7 @@ export default function ClientsPage() {
   if (isLoading) {
     return (
       <>
-        <header className='flex flex-col gap-4 border-b bg-transparent p-6 sm:flex-row sm:items-center sm:justify-between'>
+        <header className='flex flex-col gap-4  bg-transparent p-6 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex items-center gap-2'>
             <h1
               className='text-xl font-bold tracking-tight truncate text-2xl sm:text-3xl lg:text-4xl '
@@ -67,8 +67,9 @@ export default function ClientsPage() {
           </div>
           <div className='flex items-center gap-2'>
             <Link href='/practitioner/invite'>
-              <Button className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'>
-                + Invite Client
+              <Button className='bg-[#807171] text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'>
+                <Plus className='h-4 w-4 mr-2' />
+                Invite Client
               </Button>
             </Link>
           </div>
@@ -94,7 +95,10 @@ export default function ClientsPage() {
           </div>
           <div className='flex items-center gap-2'>
             <Link href='/practitioner/invite'>
-              <Button className='whitespace-nowrap'>+ Invite Client</Button>
+              <Button className='whitespace-nowrap'>
+                <Plus className='h-4 w-4 mr-2' />
+                Invite Client
+              </Button>
             </Link>
           </div>
         </header>
@@ -109,7 +113,7 @@ export default function ClientsPage() {
 
   return (
     <>
-      <header className='flex flex-row items-center justify-between gap-3 sm:gap-4 border-b bg-transparent p-4 sm:p-6 min-w-0'>
+      <header className='flex flex-row items-center justify-between gap-3 sm:gap-4  bg-transparent p-4 sm:p-6 min-w-0'>
         <div className='flex items-center gap-2 min-w-0'>
           <h1
             className='text-xl font-bold tracking-tight truncate text-2xl sm:text-3xl lg:text-4xl '
@@ -120,8 +124,9 @@ export default function ClientsPage() {
         </div>
         <div className='flex items-center gap-2'>
           <Link href='/practitioner/invite'>
-            <Button className='bg-black text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-md hover:bg-neutral-800 transition-all w-full sm:w-auto'>
-              + Invite Client
+            <Button className='bg-[#807171] text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-md hover:bg-neutral-800 transition-all w-full sm:w-auto'>
+              <Plus className='h-4 w-4 mr-2' />
+              Invite Client
             </Button>
           </Link>
         </div>
@@ -328,8 +333,9 @@ export default function ClientsPage() {
                 </p>
                 {!searchTerm && (
                   <Link href='/practitioner/invite'>
-                    <Button className='bg-black text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'>
-                      + Invite Your First Client
+                    <Button className='bg-[#807171] text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'>
+                      <Plus className='h-4 w-4 mr-2' />
+                      Invite Your First Client
                     </Button>
                   </Link>
                 )}

@@ -300,7 +300,7 @@ export default function PersonalDetailsPage() {
                   type='submit'
                   className='w-full rounded-full'
                   disabled={isSigningUp}
-                  style={{ fontSize: 18, fontWeight: 600, height: 48 }}
+                  style={{ fontSize: 18, fontWeight: 600, height: 48, backgroundColor: '#807171' }}
                 >
                   {isSigningUp ? 'Creating Account...' : 'Continue'}
                 </Button>
@@ -322,7 +322,7 @@ export default function PersonalDetailsPage() {
               type='submit'
               className='w-full max-w-md rounded-full'
               disabled={isSigningUp}
-              style={{ fontSize: 18, fontWeight: 600, height: 48 }}
+              style={{ fontSize: 18, fontWeight: 600, height: 48, backgroundColor: '#807171' }}
               onClick={handleNext}
             >
               {isSigningUp ? 'Creating Account...' : 'Continue'}

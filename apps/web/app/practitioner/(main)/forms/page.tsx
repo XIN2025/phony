@@ -43,7 +43,7 @@ export default function FormsPage() {
           <div className='flex items-center gap-2'>
             <Button
               onClick={handleNewForm}
-              className='bg-black text-white hover:bg-neutral-800 rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-md transition-all w-full sm:w-auto'
+              className='bg-black text-white bg-[#807171] hover:bg-neutral-800 rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-md transition-all w-full sm:w-auto'
             >
               <Plus className='h-4 w-4 mr-2' />
               New Intake Form

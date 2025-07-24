@@ -225,7 +225,7 @@ function NewSessionPageContent(): React.ReactElement {
         </AlertDialogContent>
       </AlertDialog>
       <div className='min-h-screen flex flex-col'>
-        <div className='flex flex-col gap-0 border-b px-2 lg:px-10 pt-2 pb-3 sm:pb-4'>
+        <div className='flex flex-col gap-0  px-2 lg:px-10 pt-2 pb-3 sm:pb-4'>
           <button
             type='button'
             aria-label='Back'
@@ -242,7 +242,7 @@ function NewSessionPageContent(): React.ReactElement {
             />
           </button>
           <h2
-            className='text-lg sm:text-xl md:text-3xl font-bold leading-tight mt-2'
+            className='text-2xl md:text-3xl font-bold leading-tight mt-2'
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             New Session

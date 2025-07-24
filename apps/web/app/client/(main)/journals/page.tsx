@@ -83,14 +83,14 @@ export default function JournalsPage() {
       <div className='flex flex-row items-center justify-between mb-6 sm:mb-8 lg:mb-10 w-full gap-4 sm:gap-6'>
         <div className='flex items-center gap-2 min-w-0'>
           <h1
-            className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-semibold mb-0 truncate'
+            className='text-2xl lg:text-3xl xl:text-4xl font-semibold mb-0 truncate'
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Journal
           </h1>
         </div>
         <Link href='/client/journals/new' className='w-auto'>
-          <Button className='w-auto rounded-full px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-medium bg-black text-white hover:bg-gray-800 shadow-sm'>
+          <Button className='w-auto rounded-full px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-medium bg-[#807171] text-white hover:bg-gray-800 shadow-sm'>
             <Plus className='mr-2 h-4 w-4 sm:h-5 sm:w-5' /> New Entry
           </Button>
         </Link>
@@ -118,7 +118,7 @@ export default function JournalsPage() {
         <div className='text-center py-8 sm:py-12'>
           <p className='text-gray-500 mb-4 text-sm sm:text-base'>No journal entries found</p>
           <Link href='/client/journals/new'>
-            <Button className='bg-black text-white rounded-full px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base'>
+            <Button className='bg-[#807171] text-white rounded-full px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base'>
               <Plus className='mr-2 h-4 w-4' /> Create Your First Entry
             </Button>
           </Link>

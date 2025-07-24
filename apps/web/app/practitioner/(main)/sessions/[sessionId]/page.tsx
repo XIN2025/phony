@@ -304,7 +304,7 @@ export default function SessionDetailPage() {
             </div>
           </div>
           <Button
-            className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
+            className='rounded-full px-6 py-2 font-medium bg-[#807171]  text-background hover:bg-foreground/90'
             onClick={handlePublishPlan}
             disabled={publishPlanMutation.isPending}
           >
@@ -356,14 +356,14 @@ export default function SessionDetailPage() {
 
   const rightActions = session?.plan ? (
     <Button
-      className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
+      className='rounded-full px-6 py-2 font-medium bg-[#807171] text-background hover:bg-foreground/90'
       onClick={() => router.push(`/practitioner/clients/${session.client?.id}/plans/${session.plan.id}`)}
     >
       View Action Plan
     </Button>
   ) : (
     <Button
-      className='rounded-full px-6 py-2 font-medium bg-foreground text-background hover:bg-foreground/90'
+      className='rounded-full px-6 py-2 font-medium bg-[#807171] text-background hover:bg-foreground/90'
       onClick={handleGenerateActionPlan}
     >
       Generate Action Plan
@@ -433,9 +433,9 @@ export default function SessionDetailPage() {
         )}
       </div>
 
-      <div className='flex-1 w-full px-4 sm:px-8 py-4 max-w-6xl mx-auto flex flex-col gap-8'>
-        {}
-        <div className='bg-white rounded-2xl shadow-lg p-6 mb-0'>
+      <div className='flex-1 w-full flex mx-auto  max-w-[1450px] flex-col pt-6 sm:pt-8'>
+        {/* Add spacing below summary card */}
+        <div className='bg-white rounded-2xl shadow-lg p-6 mb-8'>
           <div className='flex items-center justify-between mb-2'>
             <div className='font-extrabold text-2xl mb-2'>Session Summary</div>
             {!editingSummary && (
@@ -473,8 +473,8 @@ export default function SessionDetailPage() {
             <MarkdownRenderer content={session.aiSummary || ''} className='text-sm' />
           )}
         </div>
-        {}
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+        {/* Add grid gap and responsive margin */}
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8'>
           {}
           <div className='bg-white rounded-2xl shadow-lg p-6 flex flex-col'>
             <div className='flex items-center justify-between mb-2'>

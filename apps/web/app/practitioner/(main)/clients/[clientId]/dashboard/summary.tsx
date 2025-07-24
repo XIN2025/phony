@@ -238,10 +238,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
     <div className='flex flex-col gap-6 w-full mb-8'>
       {/* Date Picker Button */}
       <div className='flex flex-row items-center justify-between gap-2 sm:gap-4 mb-4'>
-        <h2
-          className='text-2xl md:text-3xl lg:text-4xl font-semibold'
-          style={{ fontFamily: "'DM Serif Display', serif" }}
-        >
+        <h2 className='text-2xl md:text-3xl  font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
           Summary
         </h2>
         <button

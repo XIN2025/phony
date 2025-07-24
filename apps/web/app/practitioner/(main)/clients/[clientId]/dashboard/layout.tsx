@@ -4,6 +4,7 @@ import { useRouter, useParams, usePathname } from 'next/navigation';
 import { ClientPageHeader } from '@/components/practitioner/ClientPageHeader';
 import { Button } from '@repo/ui/components/button';
 import React from 'react';
+import { Plus } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -17,9 +18,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const rightActions = (
     <Button
       onClick={() => router.push(`/practitioner/clients/${clientId}/dashboard/new-session`)}
-      className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all w-full sm:w-auto min-w-0'
+      className='bg-[#807171] text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all w-full sm:w-auto min-w-0'
     >
-      + New Session
+      <Plus className='h-4 w-4 mr-2' />
+      New Session
     </Button>
   );
 

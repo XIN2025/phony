@@ -220,7 +220,7 @@ export const AudioRecorder = forwardRef<
               <Button
                 aria-label='Start Recording'
                 onClick={handleStart}
-                className='flex-1 rounded-full bg-foreground text-background hover:bg-foreground/90 focus:ring-2 focus:ring-offset-2 focus:ring-foreground'
+                className='flex-1 bg-[#807171] rounded-full text-white hover:bg-[#6e625c] focus:ring-2 focus:ring-offset-2 focus:ring-foreground'
                 size='lg'
               >
                 <Play className='mr-2 h-5 w-5' />
@@ -232,7 +232,7 @@ export const AudioRecorder = forwardRef<
                 <Button
                   aria-label='Pause Recording'
                   onClick={handlePause}
-                  className='flex-1 rounded-full bg-foreground text-background hover:bg-foreground/90 focus:ring-2 focus:ring-offset-2 focus:ring-foreground'
+                  className='flex-1 rounded-full bg-[#807171] text-white hover:bg-[#6e625c] focus:ring-2 focus:ring-offset-2 focus:ring-foreground'
                   size='lg'
                 >
                   <Pause className='mr-2 h-5 w-5' />
@@ -242,7 +242,7 @@ export const AudioRecorder = forwardRef<
                   aria-label='Stop Recording'
                   variant='outline'
                   onClick={handleStopClick}
-                  className='flex-1 rounded-full border border-foreground text-foreground hover:bg-foreground hover:text-background focus:ring-2 focus:ring-offset-2 focus:ring-foreground'
+                  className='flex-1 rounded-full bg-[#807171] text-white hover:bg-[#6e625c] focus:ring-2 focus:ring-offset-2 focus:ring-foreground'
                   size='lg'
                 >
                   <Square className='mr-2 h-5 w-5' />
@@ -255,7 +255,7 @@ export const AudioRecorder = forwardRef<
                 <Button
                   aria-label='Resume Recording'
                   onClick={handleResume}
-                  className='flex-1 rounded-full bg-foreground text-background hover:bg-foreground/90 focus:ring-2 focus:ring-offset-2 focus:ring-foreground'
+                  className='flex-1 rounded-full bg-[#807171] text-white hover:bg-[#6e625c] focus:ring-2 focus:ring-offset-2 focus:ring-foreground'
                   size='lg'
                 >
                   <RotateCcw className='mr-2 h-5 w-5' />
@@ -265,7 +265,7 @@ export const AudioRecorder = forwardRef<
                   aria-label='Stop Recording'
                   variant='outline'
                   onClick={handleStopClick}
-                  className='flex-1 rounded-full border border-foreground text-foreground hover:bg-foreground hover:text-background focus:ring-2 focus:ring-offset-2 focus:ring-foreground'
+                  className='flex-1 rounded-full bg-[#807171] text-white hover:bg-[#6e625c] focus:ring-2 focus:ring-offset-2 focus:ring-foreground'
                   size='lg'
                 >
                   <Square className='mr-2 h-5 w-5' />

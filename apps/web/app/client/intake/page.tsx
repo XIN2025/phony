@@ -688,7 +688,7 @@ export default function IntakePage() {
               <Button
                 type='submit'
                 disabled={isSubmitting || hasSubmitted}
-                className='w-full rounded-full h-12 text-base font-semibold'
+                className='w-full rounded-full h-12 text-base font-semibold bg-[#807171]'
               >
                 {isSubmitting ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
                 {hasSubmitted ? 'Submitting...' : 'Continue'}

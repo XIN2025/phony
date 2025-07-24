@@ -77,7 +77,7 @@ export default function PractitionerSessionsPage() {
               Client has consented for session recording
             </label>
             <button
-              className='bg-black text-white px-4 py-2 rounded w-full text-sm sm:text-base'
+              className='bg-black text-white px-4 py-2  rounded w-full text-sm sm:text-base'
               disabled={!consentGiven}
               onClick={() => setShowConsentModal(false)}
             >
