@@ -22,16 +22,16 @@ export default function SessionsTab({ clientId }: { clientId: string }) {
           <Table className='min-w-[600px] sm:min-w-full bg-white rounded-2xl overflow-hidden'>
             <TableHeader>
               <TableRow className='bg-white'>
-                <TableHead className='px-3 sm:px-7 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='px-3 sm:px-7 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-gray-800 border-b border-[#e5e5e5] lg:px-4 lg:py-2'>
                   Session Title
                 </TableHead>
-                <TableHead className='px-3 sm:px-7 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='px-3 sm:px-7 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-gray-800 border-b border-[#e5e5e5] lg:px-4 lg:py-2'>
                   Date
                 </TableHead>
-                <TableHead className='px-3 sm:px-7 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='px-3 sm:px-7 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-gray-800 border-b border-[#e5e5e5] lg:px-4 lg:py-2'>
                   Duration
                 </TableHead>
-                <TableHead className='px-3 sm:px-7 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='px-3 sm:px-7 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-gray-800 border-b border-[#e5e5e5] lg:px-4 lg:py-2'>
                   Summary
                 </TableHead>
               </TableRow>
@@ -62,16 +62,16 @@ export default function SessionsTab({ clientId }: { clientId: string }) {
                       className='cursor-pointer hover:bg-gray-50 transition-colors border-b last:border-b-0 border-[#ececec]'
                       onClick={() => router.push(`/practitioner/sessions/${session.id}`)}
                     >
-                      <TableCell className='px-3 sm:px-7 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900'>
+                      <TableCell className='px-3 sm:px-7 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 lg:px-4 lg:py-2'>
                         {session.title || 'Untitled Session'}
                       </TableCell>
-                      <TableCell className='px-3 sm:px-7 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900'>
+                      <TableCell className='px-3 sm:px-7 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 lg:px-4 lg:py-2'>
                         {new Date(session.recordedAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className='px-3 sm:px-7 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900'>
+                      <TableCell className='px-3 sm:px-7 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 lg:px-4 lg:py-2'>
                         {duration}
                       </TableCell>
-                      <TableCell className='px-3 sm:px-7 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900'>
+                      <TableCell className='px-3 sm:px-7 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 lg:px-4 lg:py-2'>
                         {summary}
                       </TableCell>
                     </TableRow>

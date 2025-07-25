@@ -162,30 +162,25 @@ export default function PractitionerDashboard() {
       </div>
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10 w-full'>
         <Card
-          className='relative pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6 px-4 sm:px-6 rounded-xl sm:rounded-2xl border-0 shadow-[0_4px_16px_0_rgba(0,0,0,0.10)] hover:bg-gray-50/60 transition-colors overflow-hidden'
-          style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.10)', background: 'rgba(255,255,255,0.6)', border: 'none' }}
-        >
-          <div
-            className='flex flex-col min-w-0 pl-3 relative z-10'
-            // style={{
-            //   background: 'rgba(250, 250, 250, 0.6)',
-            // }}
-          >
-            <span className='text-2xl font-medium  mb-1 sm:mb-2'>Total Clients</span>
-            <span className='text-3xl md:text-5xl  font-bold text-gray-900'>{totalClients}</span>
-            <span className='text-xs  mt-1'>+2 from last month</span>
-          </div>
-          <div className='absolute -bottom-2 sm:-bottom-4 lg:-bottom-6 -right-2 sm:-right-4 lg:-right-6 opacity-40'>
-            <Users className='h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 text-[#807171] stroke-[0.5]' />
-          </div>
-        </Card>
-        <Card
-          className='relative pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6 px-4 sm:px-6 rounded-xl sm:rounded-2xl border-0 shadow-[0_4px_16px_0_rgba(0,0,0,0.10)] hover:bg-gray-50/60 transition-colors overflow-hidden'
+          className='relative pt-4 sm:pt-6 lg:pt-4 pb-4 sm:pb-6 lg:pb-4 px-4 sm:px-6 lg:px-4 rounded-xl sm:rounded-2xl border-0 shadow-[0_4px_16px_0_rgba(0,0,0,0.10)] hover:bg-gray-50/60 transition-colors overflow-hidden'
           style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.10)', background: 'rgba(255,255,255,0.6)', border: 'none' }}
         >
           <div className='flex flex-col min-w-0 pl-3 relative z-10'>
-            <span className='text-2xl  font-medium  mb-1 sm:mb-2'>Unread Messages</span>
-            <span className='text-2xl md:text-5xl font-bold text-gray-900'>
+            <span className='text-[14px] sm:text-[16px] font-medium  mb-1 sm:mb-2'>Total Clients</span>
+            <span className='text-[30px] sm:text-[36px]  font-bold text-gray-900'>{totalClients}</span>
+            <span className='text-xs  mt-1'>+2 from last month</span>
+          </div>
+          <div className='absolute -bottom-2 sm:-bottom-4 lg:-bottom-6 -right-2 sm:-right-4 lg:-right-6 opacity-60'>
+            <Users className='h-24 w-24 sm:h-30 sm:w-30 lg:h-34 lg:w-34 text-[#807171] stroke-[0.5]' />
+          </div>
+        </Card>
+        <Card
+          className='relative pt-4 sm:pt-6 lg:pt-4 pb-4 sm:pb-6 lg:pb-4 px-4 sm:px-6 lg:px-4 rounded-xl sm:rounded-2xl border-0 shadow-[0_4px_16px_0_rgba(0,0,0,0.10)] hover:bg-gray-50/60 transition-colors overflow-hidden'
+          style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.10)', background: 'rgba(255,255,255,0.6)', border: 'none' }}
+        >
+          <div className='flex flex-col min-w-0 pl-3 relative z-10'>
+            <span className='text-[14px] sm:text-[16px] font-medium  mb-1 sm:mb-2'>Unread Messages</span>
+            <span className='text-[30px] sm:text-[36px]  font-bold text-gray-900'>
               {isUnreadLoading ? (
                 <Loader2 className='inline h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground' />
               ) : (
@@ -194,23 +189,23 @@ export default function PractitionerDashboard() {
             </span>
             <span className='text-xs text-gray-700 mt-1'>&nbsp;</span>
           </div>
-          <div className='absolute -bottom-2 sm:-bottom-4 lg:-bottom-6 -right-2 sm:-right-4 lg:-right-6 opacity-40'>
+          <div className='absolute -bottom-2 sm:-bottom-4 lg:-bottom-6 -right-2 sm:-right-4 lg:-right-6 opacity-60'>
             <Image
               src='/home/sms-tracking.svg'
               alt='SMS Tracking'
               width={160}
               height={133}
-              className='h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40'
+              className='h-24 w-24 sm:h-30 sm:w-30 lg:h-34 lg:w-34'
             />
           </div>
         </Card>
         <Card
-          className='relative pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6 px-4 sm:px-6 rounded-xl sm:rounded-2xl border-0 shadow-[0_4px_16px_0_rgba(0,0,0,0.10)] hover:bg-gray-50/60 transition-colors overflow-hidden sm:col-span-2 lg:col-span-1'
+          className='relative pt-4 sm:pt-6 lg:pt-4 pb-4 sm:pb-6 lg:pb-4 px-4 sm:px-6 lg:px-4 rounded-xl sm:rounded-2xl border-0 shadow-[0_4px_16px_0_rgba(0,0,0,0.10)] hover:bg-gray-50/60 transition-colors overflow-hidden sm:col-span-2 lg:col-span-1'
           style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.10)', background: 'rgba(255,255,255,0.6)', border: 'none' }}
         >
           <div className='flex flex-col min-w-0 pl-3 relative z-10'>
-            <span className='text-2xl font-medium  mb-1 sm:mb-2'>Unread Journals</span>
-            <span className='text-2xl md:text-5xl font-bold text-gray-900'>
+            <span className='text-[14px] sm:text-[16px] font-medium  mb-1 sm:mb-2'>Unread Journals</span>
+            <span className='text-[30px] sm:text-[36px]  font-bold text-gray-900'>
               {isUnreadJournalsLoading ? (
                 <Loader2 className='inline h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground' />
               ) : (
@@ -219,13 +214,13 @@ export default function PractitionerDashboard() {
             </span>
             <span className='text-xs text-gray-500 mt-1'>&nbsp;</span>
           </div>
-          <div className='absolute -bottom-2 sm:-bottom-4 lg:-bottom-6 -right-3 sm:-right-6 lg:-right-8 opacity-40'>
+          <div className='absolute -bottom-2 sm:-bottom-4 lg:-bottom-6 -right-3 sm:-right-6 lg:-right-8 opacity-60'>
             <Image
               src='/home/book.svg'
               alt='Book'
               width={84}
               height={80}
-              className='h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40'
+              className='h-24 w-24 sm:h-30 sm:w-30 lg:h-34 lg:w-34 text-[#807171] stroke-[0.5]'
             />
           </div>
         </Card>
@@ -246,11 +241,10 @@ export default function PractitionerDashboard() {
               <div className='overflow-hidden rounded-lg'>
                 <Table className='min-w-[700px] w-full text-xs sm:text-sm lg:text-base'>
                   <colgroup>
-                    <col className='w-[28%] min-w-[120px]' />
-                    <col className='w-[20%] min-w-[90px]' />
-                    <col className='w-[20%] min-w-[90px]' />
-                    <col className='w-[16%] min-w-[80px]' />
-                    <col className='w-[16%] min-w-[80px]' />
+                    <col className='w-[32%] min-w-[120px]' />
+                    <col className='w-[22%] min-w-[90px]' />
+                    <col className='w-[26%] min-w-[90px]' />
+                    <col className='w-[20%] min-w-[80px]' />
                   </colgroup>
                   <TableHeader>
                     <TableRow className='border-b border-gray-200/60 bg-gray-50/50'>
@@ -262,9 +256,6 @@ export default function PractitionerDashboard() {
                       </TableHead>
                       <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base truncate'>
                         Plan Engagement
-                      </TableHead>
-                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
-                        Last Active
                       </TableHead>
                       <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-center font-semibold text-gray-700 text-xs sm:text-sm lg:text-base truncate'>
                         Actions
@@ -309,9 +300,6 @@ export default function PractitionerDashboard() {
                             >
                               {planLevel}
                             </span>
-                          </TableCell>
-                          <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base'>
-                            {getLastActive(client)}
                           </TableCell>
                           <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-center align-middle truncate'>
                             <div className='flex items-center justify-center gap-2 sm:gap-3 lg:gap-4 min-h-[20px] sm:min-h-[24px] lg:min-h-[26px]'>
@@ -372,9 +360,6 @@ export default function PractitionerDashboard() {
                           <span className='rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-xs sm:text-sm font-semibold bg-gray-100 text-gray-700 block'>
                             Invitation Pending
                           </span>
-                        </TableCell>
-                        <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base'>
-                          -
                         </TableCell>
                         <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-center align-middle'>
                           <div className='flex items-center justify-center gap-2 sm:gap-3 lg:gap-4 min-h-[20px] sm:min-h-[24px] lg:min-h-[26px]'>

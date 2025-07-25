@@ -21,9 +21,9 @@ export default function ProfileTab({ clientId }: { clientId: string }) {
         {/* Heading row */}
 
         {/* Top section: Two-column grid */}
-        <div className='grid grid-cols-1 md:grid-cols-2 px-2 md:px-8 gap-6 max-w-full'>
+        <div className='grid grid-cols-1 md:grid-cols-2 px-2 md:px-8 gap-6 max-w-full lg:gap-4 lg:md:px-4'>
           {/* Personal Details */}
-          <div className='bg-white rounded-2xl shadow-md p-4 md:p-8 flex flex-col gap-4 min-h-[180px] md:min-h-[260px]'>
+          <div className='bg-white rounded-2xl shadow-md p-4 md:p-8 flex flex-col gap-4 min-h-[180px] md:min-h-[260px] lg:p-4'>
             <div className='flex items-center gap-4 mb-4'>
               <Avatar className='h-16 w-16 border-2 border-gray-200'>
                 <AvatarImage src={getAvatarUrl(client.avatarUrl, client)} />
@@ -60,13 +60,13 @@ export default function ProfileTab({ clientId }: { clientId: string }) {
             </div>
           </div>
           {/* Client Information */}
-          <div className='bg-white rounded-2xl shadow-md p-8  flex flex-col gap-4 min-h-[260px]'>
+          <div className='bg-white rounded-2xl shadow-md p-8  flex flex-col gap-4 min-h-[260px] lg:p-4'>
             <div className='font-semibold text-xl mb-4'>Client Information</div>
             <div className='grid grid-cols-1 gap-2 text-base'>{/* Removed medications UI block */}</div>
           </div>
         </div>
         {/* Intake Survey Responses */}
-        <div className='w-full px-2 md:px-8 max-w-full'>
+        <div className='w-full px-2 md:px-8 max-w-full lg:md:px-4'>
           <div className='flex justify-end mb-2'>
             <button
               className='border border-gray-300 rounded-full px-5 py-1.5 text-sm font-medium bg-white hover:bg-gray-100 transition shadow-sm'
@@ -76,7 +76,7 @@ export default function ProfileTab({ clientId }: { clientId: string }) {
             </button>
           </div>
           {showIntake && (
-            <div className='bg-white rounded-2xl shadow-md px-2 p-4 md:p-8'>
+            <div className='bg-white rounded-2xl shadow-md px-2 p-4 md:p-8 lg:p-4'>
               <div className='font-semibold text-xl mb-1'>Intake Survey Responses</div>
               {client.intakeFormSubmission ? (
                 <>

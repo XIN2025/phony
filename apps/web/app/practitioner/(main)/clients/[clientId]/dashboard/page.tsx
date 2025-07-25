@@ -64,9 +64,9 @@ const ClientDashboardContent = ({ clientId }: { clientId: string }) => {
   };
 
   return (
-    <div className='flex flex-col min-h-screen pt-6 sm:pt-8'>
+    <div className='flex flex-col min-h-screen pt-6 sm:pt-8 lg:pt-4'>
       <div className='flex-1 w-full flex'>
-        <div className='w-full px-4 sm:px-8 lg:px-16 flex flex-col gap-6 sm:gap-8'>
+        <div className='w-full px-4 sm:px-8 lg:px-8 flex flex-col gap-6 sm:gap-8 lg:gap-4'>
           <div className='w-full'>
             <div className='flex flex-row p-1 bg-[#f6f5f4] border border-[#d1d1d1] rounded-full shadow-sm w-full sm:w-fit mb-6 overflow-x-auto whitespace-nowrap'>
               {TABS.map((tab) => (

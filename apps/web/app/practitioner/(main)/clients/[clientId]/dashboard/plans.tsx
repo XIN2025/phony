@@ -58,7 +58,7 @@ export default function PlansTab({ clientId }: { clientId: string }) {
           <Table className='min-w-full bg-white rounded-2xl overflow-hidden'>
             <TableHeader>
               <TableRow className='bg-white'>
-                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5] lg:px-4 lg:py-2'>
                   Date
                 </TableHead>
                 <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
@@ -109,7 +109,7 @@ export default function PlansTab({ clientId }: { clientId: string }) {
                       className='hover:bg-gray-50 transition-colors border-b last:border-b-0 border-[#ececec] cursor-pointer'
                       onClick={() => router.push(`/practitioner/clients/${clientId}/plans/${plan.id}`)}
                     >
-                      <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
+                      <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900 lg:px-4 lg:py-2'>
                         {recordedAt
                           ? new Date(recordedAt).toLocaleDateString('en-US', {
                               month: 'short',
@@ -122,7 +122,7 @@ export default function PlansTab({ clientId }: { clientId: string }) {
                         {sessionTitle || 'Untitled Session'}
                       </TableCell>
                       <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>{total}</TableCell>
-                      <TableCell className='px-4 py-5 whitespace-nowrap'>
+                      <TableCell className='px-4 py-5 whitespace-nowrap lg:px-2 lg:py-1'>
                         <span
                           className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold ${badgeClass}`}
                         >

@@ -278,7 +278,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
 
   // --- UI ---
   return (
-    <div className='flex flex-col gap-6 w-full mb-8'>
+    <div className='flex flex-col gap-6 w-full mb-8 lg:gap-4 lg:mb-4'>
       {/* Date Picker Button */}
       <div className='flex flex-row items-center justify-between gap-2 sm:gap-4 mb-4'>
         <h2 className='text-2xl md:text-3xl  font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
@@ -346,8 +346,8 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
           document.body,
         )}
       {/* End Date Picker */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-full'>
-        <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-6 flex flex-col items-start gap-2'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-full lg:gap-4'>
+        <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-6 lg:p-4 flex flex-col items-start gap-2'>
           <div className='flex items-center justify-between w-full'>
             <div
               className='text-[2rem] font-extrabold'
@@ -359,7 +359,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
           </div>
           <div className='text-base font-semibold text-black/80 '>Avg Daily Tasks Completion</div>
         </div>
-        <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-6 flex flex-col items-start gap-2'>
+        <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-6 lg:p-4 flex flex-col items-start gap-2'>
           <div className='flex items-center justify-between w-full'>
             <div
               className='text-[2rem] font-extrabold'
@@ -372,9 +372,9 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
           <div className='text-base font-semibold text-black/80'>Journal Entries</div>
         </div>
       </div>
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-full items-start'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-full items-start lg:gap-4'>
         <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-0 min-w-0 flex flex-col'>
-          <div className='p-6 pb-2'>
+          <div className='p-6 pb-2 lg:p-4 lg:pb-1'>
             <div className='text-2xl font-bold mb-4' style={{ fontFamily: "'DM Serif Display', serif" }}>
               Last Week's Overview
             </div>
@@ -383,7 +383,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
             <Table className='min-w-[320px] sm:min-w-[600px] bg-white rounded-2xl overflow-hidden text-xs sm:text-sm'>
               <TableHeader>
                 <TableRow className='bg-white'>
-                  <TableHead className='px-7 py-4 text-left text-base font-bold text-black border-b border-[#e5e5e5]'>
+                  <TableHead className='px-7 py-4 text-left text-base font-bold text-black border-b border-[#e5e5e5] lg:px-4 lg:py-2'>
                     Date
                   </TableHead>
                   <TableHead className='px-7 py-4 text-left text-base font-bold text-black border-b border-[#e5e5e5]'>
@@ -441,7 +441,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
                         className='border-b last:border-b-0 border-[#ececec] bg-white hover:bg-[#f6f5f4] transition-colors cursor-pointer'
                         onClick={() => router.push(`/practitioner/clients/${clientId}/tasks/${formatDateForUrl(date)}`)}
                       >
-                        <TableCell className='px-7 py-4 whitespace-nowrap text-base text-black'>
+                        <TableCell className='px-7 py-4 whitespace-nowrap text-base text-black lg:px-4 lg:py-2'>
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </TableCell>
                         <TableCell className='px-7 py-4 whitespace-nowrap text-base text-black'>{`${completed}/${dayTasks.length}`}</TableCell>
@@ -454,9 +454,9 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
             </Table>
           </div>
         </div>
-        <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-4 sm:p-6 flex flex-col gap-4 w-full min-w-0'>
+        <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-4 sm:p-6 flex flex-col gap-4 w-full min-w-0 lg:p-2'>
           {/* Header row: Snapshot heading and toggle, fully responsive layout */}
-          <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-2'>
+          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2 sm:gap-1 sm:mb-1'>
             <div className='text-2xl font-bold flex items-center' style={{ fontFamily: "'DM Serif Display', serif" }}>
               Snapshot
               {isSummaryCached && (
@@ -465,18 +465,19 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
                 </span>
               )}
             </div>
-            {/* Improved responsive toggle: full width below xl, inline on xl+ */}
-            <div className='flex flex-row p-1 bg-[#f6f5f4] border border-[#d1d1d1] rounded-full shadow-sm w-full xl:w-fit'>
+            {/* Improved responsive toggle: full width below sm, auto width and inline on sm+ */}
+            <div className='flex flex-row p-1 bg-[#f6f5f4] border border-[#d1d1d1] rounded-full shadow-sm w-full sm:w-auto'>
               {['7days', 'lifetime'].map((mode) => (
                 <button
                   key={mode}
                   type='button'
                   onClick={() => setSnapshotMode(mode as '7days' | 'lifetime')}
-                  className={`text-center rounded-full px-3 md:px-5 lg:px-7 xl:px-8 text-xs md:text-sm lg:text-base font-normal transition-colors border border-transparent w-1/2 xl:w-auto ${
+                  className={`text-center rounded-full px-3 md:px-5 lg:px-7 xl:px-8 text-xs md:text-sm lg:text-base font-normal transition-colors border border-transparent flex-1 sm:flex-none ${
                     snapshotMode === mode
                       ? 'bg-[#D1CCE9] text-black font-semibold shadow-none'
                       : 'bg-transparent text-[#b0acae]'
                   }`}
+                  style={{ minWidth: 100 }}
                 >
                   {mode === '7days' ? 'Last 7 Days' : 'Lifetime'}
                 </button>
@@ -485,8 +486,8 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
           </div>
 
           {/* Metrics row: Tasks Done & Avg Task Feedback side by side */}
-          <div className='flex flex-row gap-3 mb-2'>
-            <div className='flex-1 bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col  '>
+          <div className='flex flex-row gap-3 mb-2 lg:gap-1 lg:mb-1'>
+            <div className='flex-1 bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col lg:p-2'>
               <div className='text-lg   mb-1 font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
                 Tasks Done
               </div>
@@ -494,7 +495,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
                 {completedTasks}/{totalTasks}
               </div>
             </div>
-            <div className='flex-1 bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col '>
+            <div className='flex-1 bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col lg:p-2'>
               <div className='text-lg   mb-1 font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
                 Avg Task Feedback
               </div>
@@ -521,13 +522,13 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
             </div>
           </div>
           {/* Tasks Missed full width below */}
-          <div className='bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col  mb-2 w-full'>
+          <div className='bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 flex flex-col mb-2 w-full lg:p-2 lg:mb-1'>
             <div className='text-lg   mb-1 font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
               Tasks Missed
             </div>
             <div className='text-xl font-bold'>{totalTasks - completedTasks}</div>
           </div>
-          <div className='bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 mb-2 overflow-x-auto relative'>
+          <div className='bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 mb-2 overflow-x-auto relative lg:p-2 lg:mb-1'>
             <div
               className='text-lg font-semibold mb-1 font-semibold'
               style={{ fontFamily: "'DM Serif Display', serif" }}
@@ -578,7 +579,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
               </button>
             )}
           </div>
-          <div className='bg-white border border-[#ececec] rounded-xl p-3 sm:p-4'>
+          <div className='bg-white border border-[#ececec] rounded-xl p-3 sm:p-4 lg:p-2'>
             <div
               className='text-lg font-semibold mb-1 font-semibold'
               style={{ fontFamily: "'DM Serif Display', serif" }}

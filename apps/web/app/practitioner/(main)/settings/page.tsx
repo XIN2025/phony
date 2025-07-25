@@ -164,7 +164,7 @@ export default function SettingsPage() {
           </Button>
         }
       />
-      <main className='flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8'>
+      <main className='flex-1 overflow-y-auto p-4 sm:p-6 lg:px-4'>
         {/* Dashboard-style tab bar */}
         <div className='flex flex-row w-full sm:w-fit bg-[#f6f5f4] border p-1 border-[#d1d1d1] rounded-full mb-6 overflow-x-auto whitespace-nowrap'>
           {[
@@ -193,7 +193,7 @@ export default function SettingsPage() {
         {activeTab === 'profile' && (
           <>
             <Card className='border border-border rounded-2xl shadow-none'>
-              <CardContent className='p-6 sm:p-8'>
+              <CardContent className='p-6 sm:p-8 lg:p-4'>
                 <div className='max-w-4xl'>
                   <h2 className='text-lg font-semibold'>Profile Information</h2>
                   <p className='text-muted-foreground text-sm mt-1 mb-6'>Update your profile details</p>
@@ -285,7 +285,7 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
-            <div className='mt-6 flex max-w-4xl'>
+            <div className='mt-6 flex max-w-4xl lg:mt-2'>
               <Button variant='destructive' className='bg-red-500/10 rounded-full text-red-500 hover:bg-red-500/20'>
                 <Trash2 className='h-4 w-4 mr-2' />
                 Delete Account

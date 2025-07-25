@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { useGetCurrentUser } from '@/lib/hooks/use-api';
 
 const ContinuumIcon = () => (
-  <Image src='/Continuum.svg' alt='Continuum Logo' width={120} height={32} className='h-6 w-auto' />
+  <Image src='/Continuum.svg' alt='Continuum Logo' width={120} height={32} className='h-5 xl:h-6 w-auto' />
 );
 
 // SVG icon components that use the actual SVG files and can change color
@@ -117,7 +117,7 @@ const JournalsIcon = ({ className, isActive }: { className?: string; isActive?: 
 );
 
 const InfinityIcon = () => (
-  <Image src='/infinity.svg' alt='Infinity Logo' width={32} height={32} className='h-5 w-auto' />
+  <Image src='/infinity.svg' alt='Infinity Logo' width={32} height={32} className='h-3 xl:h-5 w-auto' />
 );
 
 export const SidebarContent = ({
@@ -177,7 +177,7 @@ export const SidebarContent = ({
   };
   return (
     <div className='flex h-full flex-col font-sans bg-white lg:bg-transparent shadow-lg sm:shadow-none border-r sm:border-none min-w-0 rounded-bl-2xl'>
-      <div className='flex h-[56px] sm:h-[64px] lg:h-[68px] items-center px-6 sm:px-8 lg:px-8 xl:px-10 mb-4 sm:mb-6 lg:mb-8'>
+      <div className='flex h-[56px] sm:h-[64px] lg:h-[68px] items-center px-6 sm:px-8 lg:px-4 xl:px-6 mb-4 sm:mb-6 lg:mb-4'>
         <Link
           href={homePath}
           className='flex items-center justify-start text-xl sm:text-2xl font-logo font-semibold text-black min-w-0'
@@ -188,8 +188,8 @@ export const SidebarContent = ({
           </span>
         </Link>
       </div>
-      <div className='flex-1 py-2 lg:py-4 min-w-0'>
-        <nav className='grid items-start px-4 lg:px-6 text-sm sm:text-base lg:text-lg gap-2 '>
+      <div className='flex-1 py-2 lg:py-2 min-w-0'>
+        <nav className='grid items-start px-6 lg:px-8 text-sm sm:text-base lg:text-lg gap-2 '>
           {((): React.ReactNode => {
             // Find the navLink with the longest href that matches the start of the pathname
             let activeIndex = -1;
@@ -209,7 +209,7 @@ export const SidebarContent = ({
                   key={link.href}
                   href={link.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 sm:gap-4 lg:gap-5 rounded-full px-4 sm:px-6 lg:px-8 xl:px-12 py-2 transition-all font-medium text-sm sm:text-base lg:text-lg ${
+                  className={`flex items-center gap-3 sm:gap-4 lg:gap-3 rounded-full px-4 sm:px-6 lg:px-4 xl:px-6 py-2 transition-all font-medium text-sm  xl:text-lg ${
                     isActive
                       ? 'bg-[#8C7FC8] text-white font-semibold shadow-sm'
                       : 'text-[#807171] hover:text-black hover:bg-[#ede6e3]'
@@ -224,14 +224,14 @@ export const SidebarContent = ({
           })()}
         </nav>
       </div>
-      <div className='border-t border-[#e5d6d0] mt-auto px-6 sm:px-8 lg:px-8 xl:px-10 pb-4 sm:pb-6 lg:pb-8 pt-4 sm:pt-6 lg:pt-8 flex flex-col gap-3 sm:gap-4 lg:gap-4 min-w-0'>
+      <div className='border-t border-[#e5d6d0] mt-auto px-6 sm:px-8 lg:px-4 xl:px-6 pb-4 sm:pb-6 lg:pb-4 pt-4 sm:pt-6 lg:pt-4 flex flex-col gap-3 sm:gap-4 lg:gap-3 min-w-0'>
         <div className='flex items-center gap-2 sm:gap-3'>
           <UserProfile />
         </div>
         <Button
           variant='ghost'
           size='sm'
-          className='w-full justify-start gap-2 lg:gap-3 text-[#807171] hover:text-black text-sm sm:text-base lg:text-lg'
+          className='w-full justify-start gap-2 lg:gap-2 text-[#807171] hover:text-black text-sm sm:text-base lg:text-lg'
           onClick={() => signOut({ callbackUrl: '/' })}
         >
           <LogOut className='h-4 w-4 lg:h-5 lg:w-5 flex-shrink-0' />

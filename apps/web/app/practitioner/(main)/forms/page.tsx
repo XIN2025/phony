@@ -30,7 +30,7 @@ export default function FormsPage() {
   return (
     <div className='flex flex-col min-h-screen min-w-0'>
       {/* Header */}
-      <div className='flex flex-col gap-0 border-b px-3 sm:px-4 lg:px-6 xl:px-8 pt-3 sm:pt-4 lg:pt-6 pb-2 sm:pb-3 lg:pb-4'>
+      <div className='flex flex-col gap-0  px-3 sm:px-4 lg:px-4 xl:px-6 pt-3 sm:pt-4 lg:pt-4 pb-2 sm:pb-3 lg:pb-2'>
         <div className='flex flex-row items-center bg-transparent justify-between gap-2 sm:gap-4'>
           <div className='flex items-center gap-2 min-w-0'>
             <h1
@@ -53,8 +53,8 @@ export default function FormsPage() {
       </div>
 
       {/* Content */}
-      <div className='flex-1 w-full py-3 sm:py-4 lg:py-6 xl:py-8 min-w-0'>
-        <div className='w-full px-3 sm:px-4 lg:px-6 xl:px-8 space-y-4 sm:space-y-6 lg:space-y-8 min-w-0'>
+      <div className='flex-1 w-full py-3 sm:py-4 lg:py-4 xl:py-6 min-w-0'>
+        <div className='w-full px-3 sm:px-4 lg:px-4 xl:px-6 space-y-4 sm:space-y-6 lg:space-y-4 min-w-0'>
           {/* Search and View Controls */}
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4'>
             <div className='relative flex-1 max-w-md min-w-0'>
@@ -159,7 +159,7 @@ export default function FormsPage() {
                     className='bg-white rounded-xl sm:rounded-2xl shadow-md cursor-pointer hover:bg-gray-100 transition-colors border-0 min-w-0'
                     onClick={() => handleFormClick(form.id)}
                   >
-                    <CardContent className='p-3 sm:p-4 lg:p-6'>
+                    <CardContent className='p-3 sm:p-4 lg:p-4'>
                       <div className='aspect-[4/3] bg-muted rounded-lg mb-3 sm:mb-4 flex items-center justify-center'>
                         <FileText className='h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground' />
                       </div>

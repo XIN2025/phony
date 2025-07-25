@@ -113,10 +113,10 @@ export default function ClientsPage() {
 
   return (
     <>
-      <header className='flex flex-row items-center justify-between gap-3 sm:gap-4  bg-transparent p-4 sm:p-6 min-w-0'>
+      <header className='flex flex-row items-center justify-between gap-3 sm:gap-4  bg-transparent p-3 sm:p-6 lg:p-4 min-w-0'>
         <div className='flex items-center gap-2 min-w-0'>
           <h1
-            className='text-xl font-bold tracking-tight truncate text-2xl sm:text-3xl lg:text-4xl '
+            className='text-xl font-bold tracking-tight truncate text-2xl sm:text-[32px] '
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Clients
@@ -124,7 +124,7 @@ export default function ClientsPage() {
         </div>
         <div className='flex items-center gap-2'>
           <Link href='/practitioner/invite'>
-            <Button className='bg-[#807171] text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-md hover:bg-neutral-800 transition-all w-full sm:w-auto'>
+            <Button className='bg-[#807171] text-white rounded-full px-4 sm:px-6 lg:px-4 py-2 sm:py-3 lg:py-2 text-sm sm:text-base font-semibold shadow-md hover:bg-neutral-800 transition-all w-full sm:w-auto'>
               <Plus className='h-4 w-4 mr-2' />
               Invite Client
             </Button>
@@ -132,7 +132,7 @@ export default function ClientsPage() {
         </div>
       </header>
 
-      <div className='p-4 sm:p-6 lg:p-10 flex flex-col items-center min-h-[80vh] min-w-0'>
+      <div className='p-4 sm:p-6 lg:p-6 flex flex-col items-center min-h-[80vh] min-w-0'>
         <div className='w-full   min-w-0'>
           <div className='mb-6 sm:mb-8'>
             <div className='relative w-full max-w-md ml-0'>
@@ -149,173 +149,153 @@ export default function ClientsPage() {
           </div>
 
           <Card className='w-full bg-white rounded-xl sm:rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] sm:shadow-[0_15px_35px_-5px_rgba(0,0,0,0.15)] lg:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] border-0 p-0 overflow-hidden min-w-0'>
-            <div className='p-4 sm:p-6 lg:p-8'>
+            <div className='p-4 sm:p-6 lg:p-4'>
               <h2
-                className='text-base font-semibold mb-4 sm:mb-6 lg:mb-8 text-lg sm:text-xl lg:text-2xl xl:text-3xl'
+                className='text-base font-semibold mb-4 sm:mb-6 lg:mb-4 text-lg sm:text-xl lg:text-2xl xl:text-3xl'
                 style={{ fontFamily: "'DM Serif Display', serif" }}
               >
                 Last Active Clients
               </h2>
               <div className='overflow-x-auto'>
                 <div className='min-w-full inline-block align-middle'>
-                  <div className='overflow-hidden border border-gray-200/40 rounded-lg'>
-                    <Table className='min-w-full text-xs sm:text-sm lg:text-base'>
-                      <colgroup>
-                        <col className='w-[25%]' />
-                        <col className='w-[25%]' />
-                        <col className='w-[15%]' />
-                        <col className='w-[20%]' />
-                        <col className='w-[10%]' />
-                        <col className='w-[5%]' />
-                      </colgroup>
-                      <TableHeader>
-                        <TableRow className='border-b border-gray-200/60 bg-gray-50/50'>
-                          <TableHead className='py-3 sm:py-4 lg:py-5 px-3 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
-                            Member
-                          </TableHead>
-                          <TableHead className='py-3 sm:py-4 lg:py-5 px-3 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base hidden sm:table-cell'>
-                            Email ID
-                          </TableHead>
-                          <TableHead className='py-3 sm:py-4 lg:py-5 px-3 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base hidden md:table-cell'>
-                            Phone
-                          </TableHead>
-                          <TableHead className='py-3 sm:py-4 lg:py-5 px-3 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
-                            Plan Engagement
-                          </TableHead>
-                          <TableHead className='py-3 sm:py-4 lg:py-5 px-3 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base hidden lg:table-cell'>
-                            Last Active
-                          </TableHead>
-                          <TableHead className='py-3 sm:py-4 lg:py-5 px-3 sm:px-4 lg:px-6 text-center font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
-                            Actions
-                          </TableHead>
+                  <Table className='min-w-full text-xs sm:text-sm lg:text-base'>
+                    <colgroup>
+                      <col className='w-[30%]' />
+                      <col className='w-[28%]' />
+                      <col className='w-[18%]' />
+                      <col className='w-[24%]' />
+                    </colgroup>
+                    <TableHeader>
+                      <TableRow className='border-b border-gray-200/60 bg-gray-50/50'>
+                        <TableHead className='py-3 sm:py-4 lg:py-3 px-3 sm:px-4 lg:px-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
+                          Member
+                        </TableHead>
+                        <TableHead className='py-3 sm:py-4 lg:py-3 px-3 sm:px-4 lg:px-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base hidden sm:table-cell'>
+                          Email ID
+                        </TableHead>
+                        <TableHead className='py-3 sm:py-4 lg:py-3 px-3 sm:px-4 lg:px-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base hidden md:table-cell'>
+                          Phone
+                        </TableHead>
+                        <TableHead className='py-3 sm:py-4 lg:py-3 px-3 sm:px-4 lg:px-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
+                          Plan Engagement
+                        </TableHead>
+                        <TableHead className='py-3 sm:py-4 lg:py-3 px-3 sm:px-4 lg:px-4 text-center font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
+                          Actions
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredClients.map((client) => (
+                        <TableRow
+                          key={client.id}
+                          className='group cursor-pointer hover:bg-gray-50/50 transition-colors h-[26px]'
+                          onClick={() => handleClientRowClick(client.id)}
+                        >
+                          <TableCell className='py-1.5 px-3 sm:px-4 lg:px-4'>
+                            <div className='flex items-center gap-2 sm:gap-3 min-w-0'>
+                              <Avatar className='h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0 bg-[#E5D6D0]'>
+                                <AvatarImage
+                                  src={getAvatarUrl(client.avatarUrl, {
+                                    firstName: client.firstName,
+                                    lastName: client.lastName,
+                                  })}
+                                />
+                                <AvatarFallback className='text-xs sm:text-sm font-medium'>
+                                  {getInitials({ firstName: client.firstName, lastName: client.lastName })}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className='min-w-0 flex-1'>
+                                <span className='text-sm sm:text-base font-medium block truncate text-black'>
+                                  {client.firstName} {client.lastName}
+                                </span>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className='hidden sm:table-cell py-1.5 px-3 sm:px-4 lg:px-4 text-gray-700 text-xs sm:text-sm lg:text-base'>
+                            <span className='truncate block'>{client.email}</span>
+                          </TableCell>
+                          <TableCell className='hidden md:table-cell py-1.5 px-3 sm:px-4 lg:px-4 text-gray-700 text-xs sm:text-sm lg:text-base'>
+                            <span>{client.phoneNumber || '-'}</span>
+                          </TableCell>
+                          <TableCell className='py-1.5 px-3 sm:px-4 lg:px-4'>
+                            {(() => {
+                              const label = getActivityLabel(client);
+                              const badgeColor = (() => {
+                                switch (label) {
+                                  case 'Low':
+                                    return 'bg-[#F8D7D7] text-black';
+                                  case 'Invitation Pending':
+                                    return 'bg-gray-100 text-gray-700';
+                                  default:
+                                    return 'bg-[#E5D6D0] text-black';
+                                }
+                              })();
+                              return (
+                                <span
+                                  className={`px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 rounded-full text-xs sm:text-sm font-semibold ${badgeColor}`}
+                                >
+                                  {label}
+                                </span>
+                              );
+                            })()}
+                          </TableCell>
+                          <TableCell className='py-1.5 px-3 sm:px-4 lg:px-4 text-center align-middle'>
+                            <div className='flex items-center justify-center gap-2 sm:gap-3 lg:gap-2 min-h-[20px] sm:min-h-[24px] lg:min-h-[26px]'>
+                              {!client.clientStatus || client.clientStatus === 'NEEDS_INTAKE' ? (
+                                <>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          className='rounded-full p-1 sm:p-1.5 lg:p-2 hover:bg-gray-200/50 focus:outline-none flex items-center justify-center h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7'
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                          }}
+                                          aria-label='Resend Invitation'
+                                        >
+                                          <Repeat className='h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4 text-blue-600' />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side='top'>Resend</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          className='rounded-full p-1 sm:p-1.5 lg:p-2 hover:bg-red-100 focus:outline-none flex items-center justify-center h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7'
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                          }}
+                                          aria-label='Delete Invitation'
+                                        >
+                                          <Trash2 className='h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4 text-red-600' />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side='top'>Delete</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </>
+                              ) : (
+                                <Link
+                                  href={`/practitioner/clients/${client.id}/messages`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Button
+                                    variant='ghost'
+                                    size='icon'
+                                    className='rounded-full p-1 sm:p-1.5 lg:p-2 hover:bg-gray-200/50 h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 flex items-center justify-center'
+                                  >
+                                    <MessageCircle className='h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4 text-gray-600' />
+                                  </Button>
+                                </Link>
+                              )}
+                            </div>
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredClients.map((client) => (
-                          <TableRow
-                            key={client.id}
-                            className='group cursor-pointer hover:bg-gray-50/50 transition-colors h-[26px]'
-                            onClick={() => handleClientRowClick(client.id)}
-                          >
-                            <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6'>
-                              <div className='flex items-center gap-2 sm:gap-3 min-w-0'>
-                                <Avatar className='h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0 bg-[#E5D6D0]'>
-                                  <AvatarImage
-                                    src={getAvatarUrl(client.avatarUrl, {
-                                      firstName: client.firstName,
-                                      lastName: client.lastName,
-                                    })}
-                                  />
-                                  <AvatarFallback className='text-xs sm:text-sm font-medium'>
-                                    {getInitials({ firstName: client.firstName, lastName: client.lastName })}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className='min-w-0 flex-1'>
-                                  <span className='text-sm sm:text-base font-medium block truncate text-black'>
-                                    {client.firstName} {client.lastName}
-                                  </span>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className='hidden sm:table-cell py-1.5 px-3 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base'>
-                              <span className='truncate block'>{client.email}</span>
-                            </TableCell>
-                            <TableCell className='hidden md:table-cell py-1.5 px-3 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base'>
-                              <span>{client.phoneNumber || '-'}</span>
-                            </TableCell>
-                            <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6'>
-                              {(() => {
-                                const label = getActivityLabel(client);
-                                const badgeColor = (() => {
-                                  switch (label) {
-                                    case 'Low':
-                                      return 'bg-[#F8D7D7] text-black';
-                                    case 'Invitation Pending':
-                                      return 'bg-gray-100 text-gray-700';
-                                    default:
-                                      return 'bg-[#E5D6D0] text-black';
-                                  }
-                                })();
-                                return (
-                                  <span
-                                    className={`px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 rounded-full text-xs sm:text-sm font-semibold ${badgeColor}`}
-                                  >
-                                    {label}
-                                  </span>
-                                );
-                              })()}
-                            </TableCell>
-                            <TableCell className='hidden lg:table-cell py-1.5 px-3 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base'>
-                              <span>
-                                {client.hasCompletedIntake && client.clientStatus !== 'NEEDS_INTAKE' ? (
-                                  new Date(client.createdAt).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric',
-                                  })
-                                ) : (
-                                  <span className='text-gray-500 italic'>Nil</span>
-                                )}
-                              </span>
-                            </TableCell>
-                            <TableCell className='py-1.5 px-3 sm:px-4 lg:px-6 text-center align-middle'>
-                              <div className='flex items-center justify-center gap-2 sm:gap-3 lg:gap-4 min-h-[20px] sm:min-h-[24px] lg:min-h-[26px]'>
-                                {!client.clientStatus || client.clientStatus === 'NEEDS_INTAKE' ? (
-                                  <>
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <button
-                                            className='rounded-full p-1 sm:p-1.5 lg:p-2 hover:bg-gray-200/50 focus:outline-none flex items-center justify-center h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7'
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                            }}
-                                            aria-label='Resend Invitation'
-                                          >
-                                            <Repeat className='h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4 text-blue-600' />
-                                          </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent side='top'>Resend</TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <button
-                                            className='rounded-full p-1 sm:p-1.5 lg:p-2 hover:bg-red-100 focus:outline-none flex items-center justify-center h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7'
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                            }}
-                                            aria-label='Delete Invitation'
-                                          >
-                                            <Trash2 className='h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4 text-red-600' />
-                                          </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent side='top'>Delete</TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  </>
-                                ) : (
-                                  <Link
-                                    href={`/practitioner/clients/${client.id}/messages`}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <Button
-                                      variant='ghost'
-                                      size='icon'
-                                      className='rounded-full p-1 sm:p-1.5 lg:p-2 hover:bg-gray-200/50 h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 flex items-center justify-center'
-                                    >
-                                      <MessageCircle className='h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4 text-gray-600' />
-                                    </Button>
-                                  </Link>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             </div>
@@ -333,7 +313,7 @@ export default function ClientsPage() {
                 </p>
                 {!searchTerm && (
                   <Link href='/practitioner/invite'>
-                    <Button className='bg-[#807171] text-white rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'>
+                    <Button className='bg-[#807171] text-white rounded-full px-4 sm:px-6 lg:px-4 py-2 sm:py-3 lg:py-2 text-sm sm:text-base font-semibold shadow-md hover:bg-neutral-800 transition-all'>
                       <Plus className='h-4 w-4 mr-2' />
                       Invite Your First Client
                     </Button>

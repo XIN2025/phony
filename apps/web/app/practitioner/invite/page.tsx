@@ -323,10 +323,10 @@ export default function InviteClientPage() {
   ) : null;
 
   return (
-    <div className='flex flex-col items-center justify-start min-h-screen w-full py-10 px-4'>
-      <div className='w-full max-w-[1050px] mx-auto min-h-screen'>
+    <div className='flex flex-col items-center justify-start min-h-screen w-full py-10 px-4 lg:py-6'>
+      <div className='w-full max-w-[1050px] mx-auto min-h-screen lg:px-4'>
         {/* Header: Back button and page title (match dashboard style) */}
-        <div className='mb-6'>
+        <div className='mb-6 lg:mb-0'>
           <button
             type='button'
             aria-label='Back'
@@ -342,7 +342,7 @@ export default function InviteClientPage() {
               className='h-15 w-15 sm:h-7 sm:w-7 md:h-10 md:w-10'
             />
           </button>
-          <div className='flex flex-row items-center gap-2 mt-4'>
+          <div className='flex flex-row items-center gap-2 mt-4 lg:mt-0 lg:gap-1'>
             <h1
               className='font-bold tracking-tight'
               style={{ fontFamily: "'DM Serif Display', serif", fontSize: '32px' }}
@@ -352,6 +352,7 @@ export default function InviteClientPage() {
             {headerActionButton}
           </div>
         </div>
+        <div className='mt-0 lg:mt-3'></div>
         {/* Show spinner if submitting, otherwise show form */}
         {submitting ? (
           <div className='flex justify-center items-center h-40'>

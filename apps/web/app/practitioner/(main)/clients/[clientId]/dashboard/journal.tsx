@@ -53,7 +53,7 @@ export default function JournalTab({
                 className='flex flex-col p-0 overflow-hidden h-48 sm:h-56 lg:h-64 xl:h-72 min-w-0 w-full bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/50 hover:shadow-xl transition-shadow cursor-pointer'
                 onClick={() => handleJournalClick(entry)}
               >
-                <div className='flex-1 p-3 sm:p-4 lg:p-5 overflow-hidden'>
+                <div className='flex-1 p-3 sm:p-4 lg:p-3 overflow-hidden'>
                   <div className='font-semibold text-sm sm:text-base leading-tight text-gray-800 mb-2'>
                     {entry.title || 'Untitled Entry'}
                   </div>
