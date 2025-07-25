@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { OpenAI } from 'openai';
 import { z } from 'zod';
 import { filterTranscriptPrompt } from './prompts/filter-transcript';
 import { meetingSummaryPrompt } from './prompts/meeting-summary';
 import { actionItemPrompt } from './prompts/action-item.suggestion';
 import { generateMoreTasksPrompt } from './prompts/generate-more-tasks';
 import { comprehensiveSummaryPrompt } from './prompts/comprehensive-summary';
+import { jsonrepair } from 'jsonrepair';
 
 const summarySchema = z.object({
   title: z.string().describe('A concise, relevant title for the session, max 5 words'),
@@ -85,18 +86,16 @@ export type ActionItemSuggestions = z.infer<typeof actionItemSuggestionsSchema>;
 
 @Injectable()
 export class AiService {
-  private readonly model: GenerativeModel;
+  private readonly openai: OpenAI;
   private readonly logger = new Logger(AiService.name);
+  private readonly model = 'gpt-4';
 
   constructor(private configService: ConfigService) {
-    const apiKey = this.configService.get<string>('ai.geminiApiKey');
+    const apiKey = this.configService.get<string>('ai.openaiApiKey');
     if (!apiKey) {
-      throw new Error('GEMINI_API_KEY is not defined in the environment variables.');
+      throw new Error('OPENAI_API_KEY is not defined in the environment variables.');
     }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    // this.model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-    this.model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    this.openai = new OpenAI({ apiKey });
   }
 
   private convertToolsToHelpToString(toolsToHelp: unknown): string | undefined {
@@ -136,31 +135,43 @@ export class AiService {
     return processed;
   }
 
+  private async callOpenAI(prompt: string, systemMessage?: string): Promise<string> {
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: 'system',
+            content:
+              systemMessage ||
+              'You are a helpful assistant. Respond ONLY with valid JSON that matches the provided schema exactly. Do not include any extra text.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 2048,
+      });
+      return response.choices[0]?.message?.content || '';
+    } catch (error) {
+      this.logger.error('OpenAI API error:', error);
+      throw error;
+    }
+  }
+
   async filterTranscript(rawTranscript: string): Promise<string> {
     if (!rawTranscript || rawTranscript.trim().length === 0) {
       return '';
     }
-
     try {
       if (rawTranscript.length > 100000) {
         rawTranscript = rawTranscript.substring(0, 100000);
       }
-
       const prompt = this.getFilteredTranscriptPrompt();
       const fullPrompt = `${prompt}\n\nPlease filter the following transcript:\n\n---\n\n${rawTranscript}`;
-
-      const result = await this.model.generateContent(fullPrompt);
-
-      if (!result || !result.response) {
-        throw new Error('No response from Gemini API');
-      }
-
-      const filteredText = result.response.text();
-
+      const filteredText = await this.callOpenAI(fullPrompt);
       if (!filteredText) {
         return rawTranscript;
       }
-
       return filteredText;
     } catch (error) {
       this.logger.error(`Error in filterTranscript:`, error);
@@ -176,26 +187,16 @@ export class AiService {
         summary: 'No transcript content available to summarize.',
       };
     }
-
     try {
       const prompt = this.getMeetingSummaryPrompt();
       const fullPrompt = `${prompt}\n\nGenerate a summary for the following transcript:\n\n---\n\n${filteredTranscript}`;
-
-      const result = await this.model.generateContent(fullPrompt);
-
-      if (!result || !result.response) {
-        throw new Error('No response from Gemini API');
-      }
-
-      const summaryText = result.response.text();
-
+      const summaryText = await this.callOpenAI(fullPrompt);
       if (!summaryText) {
         return {
           title: 'Session Summary',
           summary: 'AI summary generation failed - no response received.',
         };
       }
-
       let parsedSummary: SessionSummary;
       try {
         const jsonMatch = summaryText.match(/\{[\s\S]*\}/);
@@ -213,7 +214,6 @@ export class AiService {
           summary: summaryText,
         };
       }
-
       return parsedSummary;
     } catch (error) {
       this.logger.error(`Error in generateStructuredSummary:`, error);
@@ -226,37 +226,81 @@ export class AiService {
     if (!filteredTranscript || filteredTranscript.trim().length === 0) {
       return { sessionTasks: [], complementaryTasks: [] };
     }
-
     try {
       const prompt = this.getActionItemSuggestionPrompt();
-      const fullPrompt = `${prompt}\n\nAnalyze the following session transcript and suggest action items:\n\n---\n\n${filteredTranscript}`;
-
-      const result = await this.model.generateContent(fullPrompt);
-
-      if (!result || !result.response) {
-        throw new Error('No response from Gemini API');
-      }
-
-      const suggestionText = result.response.text();
-
+      const fullPrompt = `${prompt}\n\nAnalyze the following session transcript and suggest action items. Respond ONLY with a JSON object that matches the schema exactly. Do not include any extra text.`;
+      const systemMessage = `You are an AI assistant. Respond ONLY with valid JSON in the following format. Do not include any extra text. Example:
+{
+  "sessionTasks": [
+    {
+      "description": "Start friendly conversations",
+      "category": "Social",
+      "target": "Increase social interaction",
+      "frequency": "Daily",
+      "weeklyRepetitions": 5,
+      "isMandatory": false,
+      "whyImportant": "Helps reduce loneliness and build confidence.",
+      "recommendedActions": "Greet at least one new person each day.",
+      "toolsToHelp": [
+        {
+          "name": "Meetup",
+          "whatItEnables": "Find local events",
+          "link": "https://www.meetup.com"
+        }
+      ]
+    }
+  ],
+  "complementaryTasks": [
+    {
+      "description": "Practice 4-7-8 breathing",
+      "category": "Mindfulness",
+      "target": "Reduce anxiety",
+      "frequency": "Twice daily",
+      "weeklyRepetitions": 7,
+      "isMandatory": false,
+      "whyImportant": "Promotes relaxation and stress reduction.",
+      "recommendedActions": "Practice the breathing technique every morning and night.",
+      "toolsToHelp": [
+        {
+          "name": "Calm App",
+          "whatItEnables": "Guided breathing exercises",
+          "link": "https://www.calm.com"
+        }
+      ]
+    }
+  ]
+}`;
+      console.log('AI SUGGEST ACTION ITEMS - PROMPT:', fullPrompt);
+      console.log('AI SUGGEST ACTION ITEMS - SYSTEM MESSAGE:', systemMessage);
+      const suggestionTextRaw = await this.callOpenAI(fullPrompt, systemMessage);
+      console.log('AI SUGGEST ACTION ITEMS - RAW RESPONSE:', suggestionTextRaw);
+      const suggestionText = suggestionTextRaw;
       if (!suggestionText) {
         return { sessionTasks: [], complementaryTasks: [] };
       }
-
       let parsedSuggestions: ActionItemSuggestions;
       try {
+        // Try direct parse
         const jsonMatch = suggestionText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          throw new Error('No JSON found in response');
-        }
-        const jsonData = JSON.parse(jsonMatch[0]);
+        if (!jsonMatch) throw new Error('No JSON found in response');
+        const jsonString = jsonMatch[0];
+        const jsonData = JSON.parse(jsonString);
         parsedSuggestions = actionItemSuggestionsSchema.parse(jsonData);
       } catch (parseError) {
-        this.logger.error(`Error parsing action item suggestions:`, parseError);
-        this.logger.error(`Raw suggestion text:`, suggestionText.substring(0, 500) + '...');
-        parsedSuggestions = { sessionTasks: [], complementaryTasks: [] };
+        this.logger.warn('Initial parse failed, attempting jsonrepair...', parseError);
+        try {
+          const repaired = jsonrepair(suggestionText);
+          const jsonMatch = repaired.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) throw new Error('No JSON found in repaired response');
+          const jsonString = jsonMatch[0];
+          const jsonData = JSON.parse(jsonString);
+          parsedSuggestions = actionItemSuggestionsSchema.parse(jsonData);
+        } catch (repairError) {
+          this.logger.error('Error parsing action item suggestions after repair:', repairError);
+          this.logger.error('Raw suggestion text:', suggestionText.substring(0, 500) + '...');
+          parsedSuggestions = { sessionTasks: [], complementaryTasks: [] };
+        }
       }
-
       const processedSuggestions = this.processActionItemSuggestions(parsedSuggestions);
       return processedSuggestions;
     } catch (error) {
@@ -281,15 +325,12 @@ export class AiService {
         actionItemSuggestions: { sessionTasks: [], complementaryTasks: [] },
       };
     }
-
     try {
       const filteredTranscript = await this.filterTranscript(rawTranscript);
-
       const [summary, actionItemSuggestions] = await Promise.all([
         this.generateStructuredSummary(filteredTranscript),
         this.suggestActionItems(filteredTranscript),
       ]);
-
       return {
         filteredTranscript,
         summary,
@@ -310,36 +351,23 @@ export class AiService {
     if (!sessionData || sessionData.trim().length === 0) {
       return { sessionTasks: [], complementaryTasks: [] };
     }
-
     const existingTasksContext = [
       ...existingSessionTasks.map((task) => `Session Task: ${task}`),
       ...existingComplementaryTasks.map((task) => `Complementary Task: ${task}`),
     ].join('\n');
-
     const prompt = this.getGenerateMoreTasksPrompt();
     const fullPrompt = `${prompt}\n\nAnalyze the following session data and existing tasks to generate additional complementary tasks:\n\n---\n\nSession Data:\n${sessionData}\n\n---\n\nExisting Tasks:\n${existingTasksContext || 'No existing tasks'}\n\n---`;
-
-    const result = await this.model.generateContent(fullPrompt);
-
-    if (!result || !result.response) {
-      throw new Error('No response from Gemini API');
-    }
-
-    const suggestionText = result.response.text();
-
+    const suggestionText = await this.callOpenAI(fullPrompt);
     if (!suggestionText) {
       return { sessionTasks: [], complementaryTasks: [] };
     }
-
     let parsedSuggestions: ActionItemSuggestions;
     try {
       const jsonMatch = suggestionText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
       }
-
       const jsonData = JSON.parse(jsonMatch[0]);
-
       if (jsonData.complementaryTasks && !jsonData.sessionTasks) {
         parsedSuggestions = {
           sessionTasks: [],
@@ -352,7 +380,6 @@ export class AiService {
       this.logger.error('Error parsing AI response:', error);
       parsedSuggestions = { sessionTasks: [], complementaryTasks: [] };
     }
-
     return this.processActionItemSuggestions(parsedSuggestions);
   }
 
@@ -392,29 +419,18 @@ export class AiService {
         recommendations: ['Begin regular sessions to establish therapeutic relationship'],
       };
     }
-
     const sortedSessions = sessionSummaries.sort(
       (a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime()
     );
-
     const sessionData = sortedSessions
       .map(
         (session, index) =>
           `Session ${index + 1} (${new Date(session.recordedAt).toLocaleDateString()}):\nTitle: ${session.title}\nSummary: ${session.summary}\n`
       )
       .join('\n---\n\n');
-
     const prompt = this.getComprehensiveSummaryPrompt();
     const fullPrompt = `${prompt}\n\nAnalyze the following session summaries to create a comprehensive client summary:\n\n---\n\n${sessionData}`;
-
-    const result = await this.model.generateContent(fullPrompt);
-
-    if (!result || !result.response) {
-      throw new Error('No response from Gemini API');
-    }
-
-    const summaryText = result.response.text();
-
+    const summaryText = await this.callOpenAI(fullPrompt);
     if (!summaryText) {
       return {
         title: 'Comprehensive Client Summary',
@@ -423,7 +439,6 @@ export class AiService {
         recommendations: ['Review sessions manually'],
       };
     }
-
     let parsedSummary: ComprehensiveSummary;
     try {
       const jsonMatch = summaryText.match(/\{[\s\S]*\}/);
@@ -442,7 +457,6 @@ export class AiService {
         recommendations: ['Review generated summary manually'],
       };
     }
-
     return parsedSummary;
   }
 }

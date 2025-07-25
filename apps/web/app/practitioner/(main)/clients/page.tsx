@@ -301,14 +301,8 @@ export default function ClientsPage() {
             </div>
 
             {filteredClients.length === 0 && (
-              <div className='text-center py-12 sm:py-16 px-4'>
-                <h1
-                  className='text-xl font-bold tracking-tight truncate text-2xl sm:text-3xl lg:text-4xl mb-4'
-                  style={{ fontFamily: "'DM Serif Display', serif" }}
-                >
-                  Clients
-                </h1>
-                <p className='text-muted-foreground mb-4 sm:mb-6 text-base sm:text-lg'>
+              <div className='text-center py-12 sm:py-16 lg:py-8 px-4'>
+                <p className='text-muted-foreground mb-4 sm:mb-6 lg:mb-4 text-base sm:text-lg'>
                   {searchTerm ? 'No clients found matching your search.' : 'No clients found.'}
                 </p>
                 {!searchTerm && (

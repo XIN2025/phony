@@ -223,7 +223,7 @@ export default function ClientSignUpPage() {
             <SignupStepper totalSteps={4} currentStep={1} />
             <Button
               type='submit'
-              className='w-full rounded-full text-sm sm:text-base md:text-sm lg:text-base'
+              className='w-full rounded-full bg-[#807171] text-sm sm:text-base md:text-sm lg:text-base'
               disabled={isSendingOtp}
             >
               {isSendingOtp && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}

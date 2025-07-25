@@ -433,7 +433,7 @@ export default function SessionDetailPage() {
         )}
       </div>
 
-      <div className='flex-1 w-full flex mx-auto  max-w-[1450px] flex-col pt-6 sm:pt-8'>
+      <div className='flex-1 w-full flex mx-auto px-10 max-w-[1450px] flex-col pt-6 sm:pt-8'>
         {/* Add spacing below summary card */}
         <div className='bg-white rounded-2xl shadow-lg p-6 mb-8'>
           <div className='flex items-center justify-between mb-2'>
@@ -529,7 +529,43 @@ export default function SessionDetailPage() {
             <div className='font-bold text-base mb-2'>Transcript</div>
             <div className='text-sm leading-relaxed flex-1 overflow-y-auto'>
               {session.filteredTranscript ? (
-                <MarkdownRenderer content={session.filteredTranscript} className='text-sm' />
+                (() => {
+                  let parsed: any = null;
+                  try {
+                    parsed =
+                      typeof session.filteredTranscript === 'string'
+                        ? JSON.parse(session.filteredTranscript)
+                        : session.filteredTranscript;
+                  } catch (e) {
+                    parsed = null;
+                  }
+                  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    // Render structured transcript
+                    return (
+                      <div>
+                        {Object.entries(parsed).map(([speaker, content]: [string, any]) => (
+                          <div key={speaker} className='mb-4'>
+                            <div className='font-semibold mb-1'>{speaker}</div>
+                            {content['Therapeutic Content'] &&
+                            content['Therapeutic Content']['Action Items'] &&
+                            Array.isArray(content['Therapeutic Content']['Action Items']) ? (
+                              <ul className='list-disc pl-5'>
+                                {content['Therapeutic Content']['Action Items'].map((item: string, idx: number) => (
+                                  <li key={idx}>{item}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <pre className='bg-gray-100 rounded p-2 text-xs'>{JSON.stringify(content, null, 2)}</pre>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  } else {
+                    // Fallback: render as Markdown
+                    return <MarkdownRenderer content={session.filteredTranscript} className='text-sm' />;
+                  }
+                })()
               ) : (
                 <span className='text-muted-foreground'>No transcript available.</span>
               )}

@@ -189,7 +189,7 @@ export const SidebarContent = ({
         </Link>
       </div>
       <div className='flex-1 py-2 lg:py-2 min-w-0'>
-        <nav className='grid items-start px-6 lg:px-8 text-sm sm:text-base lg:text-lg gap-2 '>
+        <nav className='grid items-start px-6 xl:px-8 text-sm sm:text-base lg:text-lg gap-2 '>
           {((): React.ReactNode => {
             // Find the navLink with the longest href that matches the start of the pathname
             let activeIndex = -1;

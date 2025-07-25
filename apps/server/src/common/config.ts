@@ -63,6 +63,7 @@ export const config = {
   ai: {
     geminiApiKey: optionalEnvVars.GEMINI_API_KEY,
     deepgramApiKey: optionalEnvVars.DEEPGRAM_API_KEY,
+    openaiApiKey: process.env.OPENAI_API_KEY || '',
   },
   vapid: {
     publicKey: optionalEnvVars.VAPID_PUBLIC_KEY,
