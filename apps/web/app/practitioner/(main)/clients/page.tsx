@@ -59,7 +59,7 @@ export default function ClientsPage() {
         <header className='flex flex-col gap-4  bg-transparent p-6 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex items-center gap-2'>
             <h1
-              className='text-xl font-bold tracking-tight truncate text-2xl sm:text-3xl lg:text-4xl '
+              className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px]'
               style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               Clients
@@ -87,7 +87,7 @@ export default function ClientsPage() {
         <header className='flex flex-col gap-4 border-b bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6'>
           <div className='flex items-center gap-2'>
             <h1
-              className='text-xl font-bold tracking-tight truncate text-2xl sm:text-3xl lg:text-4xl '
+              className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px]'
               style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               Clients
@@ -116,7 +116,7 @@ export default function ClientsPage() {
       <header className='flex flex-row items-center justify-between gap-3 sm:gap-4  bg-transparent p-3 sm:p-6 lg:p-4 min-w-0'>
         <div className='flex items-center gap-2 min-w-0'>
           <h1
-            className='text-xl font-bold tracking-tight truncate text-2xl sm:text-[32px] '
+            className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px]'
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Clients
@@ -151,7 +151,7 @@ export default function ClientsPage() {
           <Card className='w-full bg-white rounded-xl sm:rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] sm:shadow-[0_15px_35px_-5px_rgba(0,0,0,0.15)] lg:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] border-0 p-0 overflow-hidden min-w-0'>
             <div className='p-4 sm:p-6 lg:p-4'>
               <h2
-                className='text-base font-semibold mb-4 sm:mb-6 lg:mb-4 text-lg sm:text-xl lg:text-2xl xl:text-3xl'
+                className=' lg:text-[20px] xl:text-[24px] text-base px-1 font-semibold mb-2 sm:mb-4 lg:mb-6  sm:text-xl  '
                 style={{ fontFamily: "'DM Serif Display', serif" }}
               >
                 Last Active Clients
@@ -167,19 +167,23 @@ export default function ClientsPage() {
                     </colgroup>
                     <TableHeader>
                       <TableRow className='border-b border-gray-200/60 bg-gray-50/50'>
-                        <TableHead className='py-3 sm:py-4 lg:py-3 px-3 sm:px-4 lg:px-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
+                        <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px]  truncate'>
                           Member
                         </TableHead>
-                        <TableHead className='py-3 sm:py-4 lg:py-3 px-3 sm:px-4 lg:px-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base hidden sm:table-cell'>
+                        <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px]  truncate'>
+                          {' '}
                           Email ID
                         </TableHead>
-                        <TableHead className='py-3 sm:py-4 lg:py-3 px-3 sm:px-4 lg:px-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base hidden md:table-cell'>
+                        <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px]  truncate'>
+                          {' '}
                           Phone
                         </TableHead>
-                        <TableHead className='py-3 sm:py-4 lg:py-3 px-3 sm:px-4 lg:px-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
+                        <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px]  truncate'>
+                          {' '}
                           Plan Engagement
                         </TableHead>
-                        <TableHead className='py-3 sm:py-4 lg:py-3 px-3 sm:px-4 lg:px-4 text-center font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
+                        <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px]  truncate'>
+                          {' '}
                           Actions
                         </TableHead>
                       </TableRow>

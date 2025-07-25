@@ -300,7 +300,12 @@ export default function SessionDetailPage() {
               <ArrowLeft className='h-4 w-4' />
             </Button>
             <div className='flex flex-col min-w-0'>
-              <h1 className='text-2xl font-bold truncate'>Action Plan</h1>
+              <h1
+                className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px]'
+                style={{ fontFamily: "'DM Serif Display', serif" }}
+              >
+                Action Plan
+              </h1>
             </div>
           </div>
           <Button

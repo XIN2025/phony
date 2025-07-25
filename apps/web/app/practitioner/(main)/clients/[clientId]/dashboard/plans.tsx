@@ -41,7 +41,11 @@ export default function PlansTab({ clientId }: { clientId: string }) {
   return (
     <div className='flex flex-col gap-6'>
       <div className='flex flex-row items-center justify-between gap-2 sm:gap-4 mb-4'>
-        <h2 className='text-2xl md:text-3xl  font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
+        <h2
+          className='text-2xl lg:text-[24px] xl:text-[28px] font-semibold'
+          style={{ fontFamily: "'DM Serif Display', serif" }}
+        >
+          {' '}
           Plans
         </h2>
         <input
@@ -55,19 +59,25 @@ export default function PlansTab({ clientId }: { clientId: string }) {
       </div>
       <div className='overflow-x-auto'>
         <div className='bg-white rounded-2xl shadow-md p-0'>
-          <Table className='min-w-full bg-white rounded-2xl overflow-hidden'>
+          <Table className='min-w-[700px] w-full text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px]'>
+            <colgroup>
+              <col className='w-[24%] min-w-[90px]' />
+              <col className='w-[28%] min-w-[90px]' />
+              <col className='w-[28%] min-w-[90px]' />
+              <col className='w-[20%] min-w-[80px]' />
+            </colgroup>
             <TableHeader>
-              <TableRow className='bg-white'>
-                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5] lg:px-4 lg:py-2'>
+              <TableRow className='border-b border-gray-200/60 bg-gray-50/50'>
+                <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px] truncate'>
                   Date
                 </TableHead>
-                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px]'>
                   Session Title
                 </TableHead>
-                <TableHead className='px-7 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px] truncate'>
                   Tasks
                 </TableHead>
-                <TableHead className='px-0 py-4 text-left text-sm font-bold text-gray-800 border-b border-[#e5e5e5]'>
+                <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-center font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px] truncate'>
                   Avg Task Feedback
                 </TableHead>
               </TableRow>
@@ -99,32 +109,29 @@ export default function PlansTab({ clientId }: { clientId: string }) {
                   } else if (avgFeedback === 'Sad') {
                     badgeClass = 'bg-red-100 text-red-800';
                     badgeIcon = <span className='mr-1'>🙁</span>;
-                  } else if (avgFeedback === 'Nil') {
-                    badgeClass = 'bg-gray-200 text-gray-700';
-                    badgeIcon = null;
                   }
+
                   return (
                     <TableRow
-                      key={plan.id}
-                      className='hover:bg-gray-50 transition-colors border-b last:border-b-0 border-[#ececec] cursor-pointer'
-                      onClick={() => router.push(`/practitioner/clients/${clientId}/plans/${plan.id}`)}
+                      key={sessionId}
+                      className='border-b border-gray-200/40 last:border-b-0 hover:bg-gray-50/50 transition-colors h-[26px]'
+                      onClick={() => router.push(`/practitioner/sessions/${sessionId}`)}
                     >
-                      <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900 lg:px-4 lg:py-2'>
+                      <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-800 text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px] truncate'>
                         {recordedAt
-                          ? new Date(recordedAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: '2-digit',
-                            })
-                          : '--'}
+                          ? new Date(recordedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                          : '-'}
                       </TableCell>
-                      <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>
-                        {sessionTitle || 'Untitled Session'}
+                      <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-800 text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px]'>
+                        {sessionTitle}
                       </TableCell>
-                      <TableCell className='px-7 py-5 whitespace-nowrap text-sm text-gray-900'>{total}</TableCell>
-                      <TableCell className='px-4 py-5 whitespace-nowrap lg:px-2 lg:py-1'>
+                      <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-800 text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px]'>
+                        {`${completed}/${total}`}
+                      </TableCell>
+                      <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-center'>
                         <span
-                          className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold ${badgeClass}`}
+                          className={`inline-flex items-center rounded-full px-5 py-1.5 text-sm font-semibold ${badgeClass}`}
+                          style={{ minWidth: 80, justifyContent: 'center' }}
                         >
                           {badgeIcon}
                           {avgFeedback}

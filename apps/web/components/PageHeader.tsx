@@ -91,7 +91,10 @@ export function PageHeader({
                 <Skeleton className={cn('h-6 sm:h-8 w-32 sm:w-48', titleClassName)} />
               ) : (
                 <h1
-                  className={cn('text-lg sm:text-xl lg:text-2xl font-bold tracking-tight truncate', titleClassName)}
+                  className={cn(
+                    'font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px]',
+                    titleClassName,
+                  )}
                   style={{ fontFamily: "'DM Serif Display', serif" }}
                 >
                   {title}

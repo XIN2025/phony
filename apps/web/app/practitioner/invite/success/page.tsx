@@ -14,7 +14,7 @@ export default function InviteSuccessPage() {
           </span>
         </div>
         <h1
-          className='text-2xl  font-bold  mb-2 text-center text-[#807171]'
+          className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px] text-center text-[#807171]'
           style={{ fontFamily: "'DM Serif Display', serif" }}
         >
           Invite Sent!

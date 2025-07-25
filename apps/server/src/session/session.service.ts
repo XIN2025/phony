@@ -46,11 +46,25 @@ export class SessionService {
     status: (typeof SessionStatus)[keyof typeof SessionStatus],
     transcript?: string
   ) {
+    // Ensure transcript is plain text, not JSON
+    let safeTranscript = transcript;
+    if (safeTranscript && safeTranscript.trim().length > 0) {
+      try {
+        const parsed = JSON.parse(safeTranscript);
+        if (typeof parsed === 'object') {
+          safeTranscript = Object.entries(parsed)
+            .map(([k, v]) => `${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`)
+            .join('\n');
+        }
+      } catch {
+        // Not JSON, do nothing
+      }
+    }
     return await this.prisma.session.update({
       where: { id: sessionId },
       data: {
         status,
-        transcript,
+        transcript: safeTranscript,
       },
     });
   }
@@ -124,7 +138,21 @@ export class SessionService {
   private async transcribeAndUpdateStatus(sessionId: string, audioFileUrl: string) {
     try {
       const fullFilePath = path.join(process.cwd(), 'uploads', path.basename(audioFileUrl));
-      const transcript = await this.transcriptionService.transcribeAudio(fullFilePath);
+      let transcript = await this.transcriptionService.transcribeAudio(fullFilePath);
+
+      // Ensure transcript is plain text, not JSON
+      if (transcript && transcript.trim().length > 0) {
+        try {
+          const parsed = JSON.parse(transcript);
+          if (typeof parsed === 'object') {
+            transcript = Object.entries(parsed)
+              .map(([k, v]) => `${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`)
+              .join('\n');
+          }
+        } catch {
+          // Not JSON, do nothing
+        }
+      }
 
       if (transcript && transcript.trim().length > 0) {
         await this.prisma.session.update({

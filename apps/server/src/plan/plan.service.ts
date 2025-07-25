@@ -448,9 +448,24 @@ export class PlanService {
 
         const aiResults = await this.aiService.processSession(combinedText);
 
-        if (aiResults.actionItemSuggestions?.sessionTasks?.length > 0) {
+        if (
+          aiResults.actionItemSuggestions?.sessionTasks?.length > 0 ||
+          aiResults.actionItemSuggestions?.complementaryTasks?.length > 0
+        ) {
           try {
-            const sessionTaskItems = aiResults.actionItemSuggestions.sessionTasks.map((s) => ({
+            const sessionTaskItems = (aiResults.actionItemSuggestions.sessionTasks || []).map((s) => ({
+              planId: planId,
+              description: s.description,
+              category: s.category,
+              target: s.target,
+              weeklyRepetitions: s.weeklyRepetitions || 1,
+              isMandatory: s.isMandatory || false,
+              whyImportant: s.whyImportant,
+              recommendedActions: s.recommendedActions,
+              toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
+              source: ActionItemSource.MANUAL,
+            }));
+            const complementaryTaskItems = (aiResults.actionItemSuggestions.complementaryTasks || []).map((s) => ({
               planId: planId,
               description: s.description,
               category: s.category,
@@ -462,32 +477,14 @@ export class PlanService {
               toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
               source: ActionItemSource.AI_SUGGESTED,
             }));
-            await this.prisma.actionItem.createMany({ data: sessionTaskItems });
+            const actionItemData = [...sessionTaskItems, ...complementaryTaskItems];
+            if (actionItemData.length > 0) {
+              await this.prisma.actionItem.createMany({ data: actionItemData });
+            }
           } catch (createError) {
-            console.error(`[PlanService] Error creating session task items:`, createError);
+            console.error(`[PlanService] Error creating action items:`, createError);
             console.error(`[PlanService] Error details:`, createError.message);
-            throw new Error(`Failed to create session task items: ${createError.message}`);
-          }
-        }
-
-        if (aiResults.actionItemSuggestions?.complementaryTasks?.length > 0) {
-          try {
-            const complementaryItems = aiResults.actionItemSuggestions.complementaryTasks.map((s) => ({
-              planId: planId,
-              description: s.description,
-              category: s.category,
-              target: s.target,
-              weeklyRepetitions: s.weeklyRepetitions || 1,
-              isMandatory: s.isMandatory || false,
-              whyImportant: s.whyImportant,
-              recommendedActions: s.recommendedActions,
-              toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
-            }));
-            await this.prisma.suggestedActionItem.createMany({ data: complementaryItems });
-          } catch (createError) {
-            console.error(`[PlanService] Error creating complementary task items:`, createError);
-            console.error(`[PlanService] Error details:`, createError.message);
-            throw new Error(`Failed to create complementary task items: ${createError.message}`);
+            throw new Error(`Failed to create action items: ${createError.message}`);
           }
         }
       } catch (err) {
@@ -615,17 +612,19 @@ export class PlanService {
           description: s.description,
           category: s.category,
           target: s.target,
-          weeklyRepetitions: s.weeklyRepetitions || 1,
+          weeklyRepetitions:
+            typeof s.weeklyRepetitions === 'string' ? parseInt(s.weeklyRepetitions, 10) || 1 : s.weeklyRepetitions || 1,
           isMandatory: s.isMandatory || false,
           whyImportant: s.whyImportant,
           recommendedActions: Array.isArray(s.recommendedActions)
             ? s.recommendedActions.join('\n')
             : s.recommendedActions,
           toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
-          status: SuggestedActionItemStatus.PENDING,
+          source: ActionItemSource.AI_SUGGESTED,
         }));
-
-        await this.prisma.suggestedActionItem.createMany({ data: complementaryItems });
+        if (complementaryItems.length > 0) {
+          await this.prisma.actionItem.createMany({ data: complementaryItems });
+        }
       }
     } catch (err) {
       console.error('Error generating more tasks:', err);

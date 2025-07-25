@@ -66,12 +66,21 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
                 </AvatarFallback>
               </Avatar>
             )}
-            <h1
-              className='text-2xl md:text-3xl font-bold leading-tight'
-              style={{ fontFamily: "'DM Serif Display', serif" }}
-            >
-              {title || `${client.firstName} ${client.lastName}`}
-            </h1>
+            <div className='flex flex-col min-w-0'>
+              <h1
+                className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px]'
+                style={{ fontFamily: "'DM Serif Display', serif" }}
+              >
+                {title || `${client.firstName} ${client.lastName}`}
+              </h1>
+              {subtitle ? (
+                <p className='text-xs sm:text-sm text-muted-foreground'>{subtitle}</p>
+              ) : client.createdAt ? (
+                <p className='text-xs sm:text-sm text-muted-foreground'>
+                  Client since {new Date(client.createdAt).toLocaleDateString()}
+                </p>
+              ) : null}
+            </div>
           </div>
           <div className='flex flex-col sm:flex-row flex-nowrap gap-2 sm:gap-3 min-w-0 sm:w-auto'>
             {/* Hide messages button on small screens */}
@@ -99,13 +108,6 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
               : rightActions}
           </div>
         </div>
-        {subtitle ? (
-          <p className='text-xs sm:text-sm text-muted-foreground'>{subtitle}</p>
-        ) : client.createdAt ? (
-          <p className='text-xs sm:text-sm text-muted-foreground'>
-            Client since {new Date(client.createdAt).toLocaleDateString()}
-          </p>
-        ) : null}
       </div>
     </div>
   );

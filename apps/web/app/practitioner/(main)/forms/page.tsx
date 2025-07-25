@@ -34,7 +34,7 @@ export default function FormsPage() {
         <div className='flex flex-row items-center bg-transparent justify-between gap-2 sm:gap-4'>
           <div className='flex items-center gap-2 min-w-0'>
             <h1
-              className='text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight truncate'
+              className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px]'
               style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               My Forms

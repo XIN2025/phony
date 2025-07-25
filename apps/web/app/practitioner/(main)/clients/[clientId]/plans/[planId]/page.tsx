@@ -91,7 +91,7 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
             rightActions={rightActions}
           />
         )}
-        <div className='flex-1 flex flex-col items-center justify-center w-full px-2 sm:px-6 md:px-10 py-8'>
+        <div className='flex-1 flex flex-col items-center  w-full px-2 sm:px-6 md:px-10 py-8'>
           <div className='w-full '>
             <PlanEditor
               planId={planId}
@@ -136,7 +136,7 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
         />
       )}
       {editMode ? (
-        <div className='flex-1 flex flex-col items-center justify-center w-full px-2 sm:px-6 md:px-10 py-8'>
+        <div className='flex-1 flex flex-col items-center  w-full px-2 sm:px-6 md:px-10 py-8'>
           <div className='w-full '>
             <PlanEditor
               planId={planId}

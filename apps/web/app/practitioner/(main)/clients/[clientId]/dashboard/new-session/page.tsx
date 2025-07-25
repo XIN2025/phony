@@ -241,14 +241,14 @@ function NewSessionPageContent(): React.ReactElement {
               className='h-15 w-15 sm:h-7 sm:w-7 md:h-10 md:w-10'
             />
           </button>
-          <h2
-            className='text-2xl md:text-3xl font-bold leading-tight mt-2'
+          <h1
+            className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px] mt-2'
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             New Session
-          </h2>
+          </h1>
         </div>
-        <div className='flex flex-col md:flex-row gap-6 p-8 flex-1'>
+        <div className='flex flex-col md:flex-row gap-6 p-8 px-10 flex-1'>
           <div className='flex-1 space-y-6'>
             <div className='bg-white rounded-2xl shadow-lg p-6'>
               <div className='font-semibold mb-2'>Session Details</div>

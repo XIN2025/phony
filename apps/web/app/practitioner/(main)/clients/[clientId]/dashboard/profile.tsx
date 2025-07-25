@@ -51,7 +51,7 @@ export default function ProfileTab({ clientId }: { clientId: string }) {
               <div>
                 <span className='font-semibold'>Occupation:</span> <span className='font-normal'>{occupation}</span>
               </div>
-              <div>
+              <div className='text-sm text-muted-foreground mt-1'>
                 <span className='font-semibold'>Client Since:</span>{' '}
                 <span className='font-normal'>
                   {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : '-'}

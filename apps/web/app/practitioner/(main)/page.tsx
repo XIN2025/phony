@@ -144,7 +144,7 @@ export default function PractitionerDashboard() {
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 w-full gap-3'>
         <div className='flex items-center gap-2 min-w-0'>
           <h1
-            className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
+            className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px]'
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Welcome Back{user?.firstName ? ` Dr. ${user.firstName}` : ''}
@@ -167,8 +167,10 @@ export default function PractitionerDashboard() {
         >
           <div className='flex flex-col min-w-0 pl-3 relative z-10'>
             <span className='text-[14px] sm:text-[16px] font-medium  mb-1 sm:mb-2'>Total Clients</span>
-            <span className='text-[30px] sm:text-[36px]  font-bold text-gray-900'>{totalClients}</span>
-            <span className='text-xs  mt-1'>+2 from last month</span>
+            <span className='text-[24px] sm:text-[28px] lg:text-[32px] 2xl:text-[36px] font-bold text-gray-900'>
+              {totalClients}
+            </span>
+            {/* <span className='text-[12px] mt-1'>+2 from last month</span> */}
           </div>
           <div className='absolute -bottom-2 sm:-bottom-4 lg:-bottom-6 -right-2 sm:-right-4 lg:-right-6 opacity-60'>
             <Users className='h-24 w-24 sm:h-30 sm:w-30 lg:h-34 lg:w-34 text-[#807171] stroke-[0.5]' />
@@ -180,7 +182,7 @@ export default function PractitionerDashboard() {
         >
           <div className='flex flex-col min-w-0 pl-3 relative z-10'>
             <span className='text-[14px] sm:text-[16px] font-medium  mb-1 sm:mb-2'>Unread Messages</span>
-            <span className='text-[30px] sm:text-[36px]  font-bold text-gray-900'>
+            <span className='text-[24px] sm:text-[28px] lg:text-[32px] 2xl:text-[36px] font-bold text-gray-900'>
               {isUnreadLoading ? (
                 <Loader2 className='inline h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground' />
               ) : (
@@ -205,7 +207,7 @@ export default function PractitionerDashboard() {
         >
           <div className='flex flex-col min-w-0 pl-3 relative z-10'>
             <span className='text-[14px] sm:text-[16px] font-medium  mb-1 sm:mb-2'>Unread Journals</span>
-            <span className='text-[30px] sm:text-[36px]  font-bold text-gray-900'>
+            <span className='text-[24px] sm:text-[28px] lg:text-[32px] 2xl:text-[36px] font-bold text-gray-900'>
               {isUnreadJournalsLoading ? (
                 <Loader2 className='inline h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground' />
               ) : (
@@ -231,7 +233,7 @@ export default function PractitionerDashboard() {
       >
         <CardContent className='p-0 sm:p-4 lg:p-6 !pt-0 !pb-0'>
           <h2
-            className='text-base px-1 font-semibold mb-2 sm:mb-4 lg:mb-6 text-lg sm:text-xl lg:text-2xl '
+            className=' lg:text-[20px] xl:text-[24px] text-base px-1 font-semibold mb-2 sm:mb-4 lg:mb-6  sm:text-xl  '
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Last Active Clients
@@ -239,7 +241,7 @@ export default function PractitionerDashboard() {
           <div className='overflow-x-auto'>
             <div className='min-w-full inline-block align-middle'>
               <div className='overflow-hidden rounded-lg'>
-                <Table className='min-w-[700px] w-full text-xs sm:text-sm lg:text-base'>
+                <Table className='min-w-[700px] w-full text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px]'>
                   <colgroup>
                     <col className='w-[32%] min-w-[120px]' />
                     <col className='w-[22%] min-w-[90px]' />
@@ -248,16 +250,16 @@ export default function PractitionerDashboard() {
                   </colgroup>
                   <TableHeader>
                     <TableRow className='border-b border-gray-200/60 bg-gray-50/50'>
-                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base truncate'>
+                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px]  truncate'>
                         Member
                       </TableHead>
-                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base'>
+                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px] '>
                         Last Session
                       </TableHead>
-                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base truncate'>
+                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px]  truncate'>
                         Plan Engagement
                       </TableHead>
-                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-center font-semibold text-gray-700 text-xs sm:text-sm lg:text-base truncate'>
+                      <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-center font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px]  truncate'>
                         Actions
                       </TableHead>
                     </TableRow>
@@ -268,7 +270,8 @@ export default function PractitionerDashboard() {
                       return (
                         <TableRow
                           key={client.id}
-                          className='border-b border-gray-200/40 last:border-b-0 hover:bg-gray-50/50 transition-colors h-[26px]'
+                          className='border-b border-gray-200/40 last:border-b-0 hover:bg-gray-50/50 transition-colors h-[26px] cursor-pointer'
+                          onClick={() => router.push(`/practitioner/clients/${client.id}/dashboard`)}
                         >
                           <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 truncate'>
                             <Avatar className='h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 rounded-full flex-shrink-0'>
@@ -278,20 +281,20 @@ export default function PractitionerDashboard() {
                                   lastName: client.lastName,
                                 })}
                               />
-                              <AvatarFallback className='text-xs sm:text-sm lg:text-base'>
+                              <AvatarFallback className='text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px]'>
                                 {getInitials({ firstName: client.firstName, lastName: client.lastName })}
                               </AvatarFallback>
                             </Avatar>
-                            <span className='font-medium text-gray-800 text-xs sm:text-sm lg:text-base truncate'>
+                            <span className='font-medium text-gray-800 text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px] truncate'>
                               {client.firstName} {client.lastName}
                             </span>
                           </TableCell>
-                          <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base'>
+                          <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px]'>
                             {getLastSession(client)}
                           </TableCell>
                           <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6'>
                             <span
-                              className={`rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-xs sm:text-sm font-semibold whitespace-nowrap block`}
+                              className={`rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-[12px] sm:text-[14px] font-semibold whitespace-nowrap block`}
                               style={{
                                 maxWidth: '100%',
                                 overflow: 'hidden',
@@ -301,7 +304,10 @@ export default function PractitionerDashboard() {
                               {planLevel}
                             </span>
                           </TableCell>
-                          <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-center align-middle truncate'>
+                          <TableCell
+                            className='py-1.5 px-2 sm:px-4 lg:px-6 text-center align-middle truncate'
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <div className='flex items-center justify-center gap-2 sm:gap-3 lg:gap-4 min-h-[20px] sm:min-h-[24px] lg:min-h-[26px]'>
                               <Link
                                 href={`/practitioner/clients/${client.id}/messages`}
@@ -313,18 +319,6 @@ export default function PractitionerDashboard() {
                                   className='rounded-full p-1 sm:p-1.5 lg:p-2 hover:bg-gray-200/50 h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 flex items-center justify-center'
                                 >
                                   <MessageSquare className='h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4 text-gray-600' />
-                                </Button>
-                              </Link>
-                              <Link
-                                href={`/practitioner/clients/${client.id}/dashboard`}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Button
-                                  variant='ghost'
-                                  size='icon'
-                                  className='rounded-full p-1 sm:p-1.5 lg:p-2 hover:bg-gray-200/50 h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 flex items-center justify-center'
-                                >
-                                  <Eye className='h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4 text-gray-600' />
                                 </Button>
                               </Link>
                             </div>
@@ -345,19 +339,19 @@ export default function PractitionerDashboard() {
                                 lastName: invitation.clientLastName,
                               })}
                             />
-                            <AvatarFallback className='text-xs sm:text-sm lg:text-base'>
+                            <AvatarFallback className='text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px]'>
                               {getInitials(getClientDisplayName(invitation))}
                             </AvatarFallback>
                           </Avatar>
-                          <span className='font-medium text-gray-800 text-xs sm:text-sm lg:text-base truncate'>
+                          <span className='font-medium text-gray-800 text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px] truncate'>
                             {getClientDisplayName(invitation)}
                           </span>
                         </TableCell>
-                        <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-700 text-xs sm:text-sm lg:text-base'>
+                        <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px]'>
                           -
                         </TableCell>
                         <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6'>
-                          <span className='rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-xs sm:text-sm font-semibold bg-gray-100 text-gray-700 block'>
+                          <span className='rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-[12px] sm:text-[14px] font-semibold bg-gray-100 text-gray-700 block'>
                             Invitation Pending
                           </span>
                         </TableCell>

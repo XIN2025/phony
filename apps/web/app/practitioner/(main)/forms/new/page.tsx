@@ -44,7 +44,7 @@ function IntakeFormPageLayout({
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
           <div className='flex items-center gap-2'>
             <h1
-              className='text-xl sm:text-2xl md:text-3xl font-bold leading-tight'
+              className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px]'
               style={{ fontFamily: "'DM Serif Display', serif" }}
             >
               {title}

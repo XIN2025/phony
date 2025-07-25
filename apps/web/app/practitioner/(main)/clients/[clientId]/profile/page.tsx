@@ -59,7 +59,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
         {/* Heading row */}
         <div className='flex items-center mb-6'>
           <h1
-            className='tracking-tight text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
+            className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px]'
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Client Profile
@@ -80,6 +80,12 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
                 <div className='font-semibold text-xl'>
                   {client.firstName} {client.lastName}
                 </div>
+                <div className='text-sm text-muted-foreground mt-1'>
+                  <span className='font-semibold'>Client Since:</span>{' '}
+                  <span className='font-normal'>
+                    {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : '-'}
+                  </span>
+                </div>
               </div>
             </div>
             <div className='grid grid-cols-1 gap-2 text-base'>
@@ -95,12 +101,6 @@ export default function ClientProfilePage({ params }: { params: Promise<{ client
               </div>
               <div>
                 <span className='font-semibold'>Occupation:</span> <span className='font-normal'>{occupation}</span>
-              </div>
-              <div>
-                <span className='font-semibold'>Client Since:</span>{' '}
-                <span className='font-normal'>
-                  {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : '-'}
-                </span>
               </div>
             </div>
           </div>

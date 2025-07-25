@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { useGetCurrentUser } from '@/lib/hooks/use-api';
 
 const ContinuumIcon = () => (
-  <Image src='/Continuum.svg' alt='Continuum Logo' width={120} height={32} className='h-5 xl:h-6 w-auto' />
+  <Image src='/Continuum.svg' alt='Continuum Logo' width={120} height={32} className='h-5 2xl:h-6 w-auto' />
 );
 
 // SVG icon components that use the actual SVG files and can change color
@@ -117,7 +117,18 @@ const JournalsIcon = ({ className, isActive }: { className?: string; isActive?: 
 );
 
 const InfinityIcon = () => (
-  <Image src='/infinity.svg' alt='Infinity Logo' width={32} height={32} className='h-3 xl:h-5 w-auto' />
+  <Image src='/infinity.svg' alt='Infinity Logo' width={32} height={32} className='h-3 2xl:h-4 w-auto' />
+);
+
+const SidebarIcon = () => (
+  <Image
+    src='/sidebar/sidebar.svg'
+    alt='Sidebar Icon'
+    width={32}
+    height={32}
+    className='hidden xl:inline h-6
+   w-auto'
+  />
 );
 
 export const SidebarContent = ({
@@ -180,12 +191,13 @@ export const SidebarContent = ({
       <div className='flex h-[56px] sm:h-[64px] lg:h-[68px] items-center px-6 sm:px-8 lg:px-4 xl:px-6 mb-4 sm:mb-6 lg:mb-4'>
         <Link
           href={homePath}
-          className='flex items-center justify-start text-xl sm:text-2xl font-logo font-semibold text-black min-w-0'
+          className='flex items-center justify-between w-full text-xl sm:text-2xl font-logo font-semibold text-black min-w-0 gap-x-2 lg:gap-x-8 xl:gap-x-12'
         >
           <span className='flex flex-row items-center gap-2'>
             <InfinityIcon />
             <ContinuumIcon />
           </span>
+          <SidebarIcon />
         </Link>
       </div>
       <div className='flex-1 py-2 lg:py-2 min-w-0'>
@@ -209,7 +221,7 @@ export const SidebarContent = ({
                   key={link.href}
                   href={link.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 sm:gap-4 lg:gap-3 rounded-full px-4 sm:px-6 lg:px-4 xl:px-6 py-2 transition-all font-medium text-sm  xl:text-lg ${
+                  className={`flex items-center gap-3 sm:gap-4 lg:gap-3 rounded-full px-4 sm:px-6 lg:px-4 xl:px-6 py-2 transition-all font-medium text-xs lg:text-sm  2xl:text-md ${
                     isActive
                       ? 'bg-[#8C7FC8] text-white font-semibold shadow-sm'
                       : 'text-[#807171] hover:text-black hover:bg-[#ede6e3]'
@@ -228,15 +240,6 @@ export const SidebarContent = ({
         <div className='flex items-center gap-2 sm:gap-3'>
           <UserProfile />
         </div>
-        <Button
-          variant='ghost'
-          size='sm'
-          className='w-full justify-start gap-2 lg:gap-2 text-[#807171] hover:text-black text-sm sm:text-base lg:text-lg'
-          onClick={() => signOut({ callbackUrl: '/' })}
-        >
-          <LogOut className='h-4 w-4 lg:h-5 lg:w-5 flex-shrink-0' />
-          <span className='truncate'>Sign Out</span>
-        </Button>
       </div>
     </div>
   );

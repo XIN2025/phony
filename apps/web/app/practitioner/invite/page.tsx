@@ -344,8 +344,8 @@ export default function InviteClientPage() {
           </button>
           <div className='flex flex-row items-center gap-2 mt-4 lg:mt-0 lg:gap-1'>
             <h1
-              className='font-bold tracking-tight'
-              style={{ fontFamily: "'DM Serif Display', serif", fontSize: '32px' }}
+              className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px]'
+              style={{ fontFamily: "'DM Serif Display', serif", fontSize: undefined }}
             >
               {currentStepData?.title}
             </h1>

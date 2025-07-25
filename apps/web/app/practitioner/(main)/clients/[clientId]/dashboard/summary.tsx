@@ -31,7 +31,7 @@ function getAvgFeedbackForDay(tasks: any[]) {
 
 function getDateRangeArray(start: Date, end: Date) {
   const arr = [];
-  let dt = new Date(start);
+  const dt = new Date(start);
   while (dt <= end) {
     arr.push(new Date(dt));
     dt.setDate(dt.getDate() + 1);
@@ -281,7 +281,10 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
     <div className='flex flex-col gap-6 w-full mb-8 lg:gap-4 lg:mb-4'>
       {/* Date Picker Button */}
       <div className='flex flex-row items-center justify-between gap-2 sm:gap-4 mb-4'>
-        <h2 className='text-2xl md:text-3xl  font-semibold' style={{ fontFamily: "'DM Serif Display', serif" }}>
+        <h2
+          className='text-2xl lg:text-[24px] xl:text-[28px] font-semibold'
+          style={{ fontFamily: "'DM Serif Display', serif" }}
+        >
           Summary
         </h2>
         <button
@@ -380,19 +383,19 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
             </div>
           </div>
           <div className='overflow-x-auto w-full'>
-            <Table className='min-w-[320px] sm:min-w-[600px] bg-white rounded-2xl overflow-hidden text-xs sm:text-sm'>
+            <Table className='min-w-[700px] w-full text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px]'>
               <TableHeader>
-                <TableRow className='bg-white'>
-                  <TableHead className='px-7 py-4 text-left text-base font-bold text-black border-b border-[#e5e5e5] lg:px-4 lg:py-2'>
+                <TableRow className='border-b border-gray-200/60 bg-gray-50/50'>
+                  <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px] truncate'>
                     Date
                   </TableHead>
-                  <TableHead className='px-7 py-4 text-left text-base font-bold text-black border-b border-[#e5e5e5]'>
+                  <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px]'>
                     Tasks
                   </TableHead>
-                  <TableHead className='px-7 py-4 text-left text-base font-bold text-black border-b border-[#e5e5e5]'>
+                  <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px] truncate'>
                     Avg Task Feedback
                   </TableHead>
-                  <TableHead className='px-7 py-4 text-left text-base font-bold text-black border-b border-[#e5e5e5]'>
+                  <TableHead className='py-3 px-2 sm:px-4 lg:px-6 text-left font-semibold text-gray-700 text-[12px] sm:text-[14px] lg:text-[16px] truncate'>
                     Journal Entry
                   </TableHead>
                 </TableRow>
@@ -438,15 +441,19 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
                     return (
                       <TableRow
                         key={date.toISOString()}
-                        className='border-b last:border-b-0 border-[#ececec] bg-white hover:bg-[#f6f5f4] transition-colors cursor-pointer'
+                        className='border-b border-gray-200/40 last:border-b-0 hover:bg-gray-50/50 transition-colors h-[26px]'
                         onClick={() => router.push(`/practitioner/clients/${clientId}/tasks/${formatDateForUrl(date)}`)}
                       >
-                        <TableCell className='px-7 py-4 whitespace-nowrap text-base text-black lg:px-4 lg:py-2'>
+                        <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-800 text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px] truncate'>
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </TableCell>
-                        <TableCell className='px-7 py-4 whitespace-nowrap text-base text-black'>{`${completed}/${dayTasks.length}`}</TableCell>
-                        <TableCell className='px-7 py-4 whitespace-nowrap'>{feedbackBadge(feedback)}</TableCell>
-                        <TableCell className='px-7 py-4 whitespace-nowrap'>{journalBadge(journal)}</TableCell>
+                        <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-800 text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px]'>
+                          {`${completed}/${dayTasks.length}`}
+                        </TableCell>
+                        <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6'>{feedbackBadge(feedback)}</TableCell>
+                        <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-800 text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px]'>
+                          {journalBadge(journal)}
+                        </TableCell>
                       </TableRow>
                     );
                   })}

@@ -398,7 +398,9 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
   }
 
   const actionItems = currentPlanData?.actionItems || [];
-  const suggestedItems = currentPlanData?.suggestedActionItems || [];
+  // Split actionItems by source
+  const sessionItems = actionItems.filter((item: ActionItem) => item.source !== 'AI_SUGGESTED');
+  const aiSuggestedItems = actionItems.filter((item: ActionItem) => item.source === 'AI_SUGGESTED');
 
   return (
     <div className='space-y-8 w-full max-w-full  mx-auto px-2 sm:px-6 md:px-10'>
@@ -416,24 +418,26 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
           )}
         </div>
       )}
+      {/* Single card for all tasks */}
       <div className='rounded-3xl shadow-2xl bg-white p-4 sm:p-10 w-full mx-0' style={{ borderColor: '#B0B3B8' }}>
-        <div className='flex items-center justify-between mb-2 sm:mb-4 border-b pb-2'>
-          <div className='font-bold text-lg sm:text-xl text-gray-900 text-left underline tracking-tighter underline-offset-4'>
-            Tasks mentioned during session
+        {/* Tasks mentioned in session section */}
+        <div className='flex items-center justify-between mb-2 sm:mb-4'>
+          <div className='font-bold text-lg sm:text-xl text-gray-900 text-left tracking-tighter'>
+            Tasks Mentioned In Session
           </div>
           <Button size='sm' variant='ghost' className='text-primary font-semibold' onClick={handleAddTaskClick}>
             + Add Task
           </Button>
         </div>
         <div className='space-y-0 divide-y divide-gray-200'>
-          {actionItems.map((item: ActionItem) => (
+          {sessionItems.map((item: ActionItem) => (
             <div
               key={item.id}
               className='py-4 w-full cursor-pointer hover:bg-gray-50 rounded-lg transition-colors'
               onClick={() => handleEditTaskClick(item)}
             >
               <div className='flex flex-col sm:flex-row items-start sm:items-center w-full gap-2 sm:gap-0'>
-                <div className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-0 flex-1 break-words'>
+                <div className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-0 flex-1 break-words underline underline-offset-4'>
                   {item.description}
                 </div>
                 <div className='flex-1 min-w-0' />
@@ -521,11 +525,10 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
             </div>
           ))}
         </div>
-      </div>
-      <div className='rounded-3xl shadow-2xl bg-white p-4 sm:p-10 w-full mx-0 mt-8' style={{ borderColor: '#B0B3B8' }}>
-        <div className='flex items-center justify-between mb-2 sm:mb-4 border-b pb-2'>
-          <div className='font-bold text-lg sm:text-xl flex items-center gap-2 text-gray-900 text-left underline underline-offset-4 tracking-tghter'>
-            <span>✧</span> Complementary Tasks
+        {/* AI Task Suggestions section */}
+        <div className='flex items-center justify-between mt-8 mb-2 sm:mb-4'>
+          <div className='font-bold text-lg sm:text-xl flex items-center gap-2 text-gray-900 text-left tracking-tghter'>
+            <span>✧</span> AI Task Suggestions
           </div>
           <Button
             size='sm'
@@ -538,25 +541,37 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
           </Button>
         </div>
         <div className='space-y-0 divide-y divide-gray-200'>
-          {suggestedItems.map((item: SuggestedActionItem) => (
-            <div key={item.id} className='py-4 w-full'>
+          {aiSuggestedItems.map((item: ActionItem) => (
+            <div
+              key={item.id}
+              className='py-4 w-full cursor-pointer hover:bg-gray-50 rounded-lg transition-colors'
+              onClick={() => handleEditTaskClick(item)}
+            >
               <div className='flex flex-col sm:flex-row items-start sm:items-center w-full gap-2 sm:gap-0'>
-                <div
-                  className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-0 flex-1 cursor-pointer hover:underline break-words'
-                  onClick={() => setViewingSuggestion(item)}
-                >
+                <div className='font-semibold text-base sm:text-lg text-gray-900 flex items-center gap-2 min-w-0 flex-1 break-words underline underline-offset-4'>
                   {item.description}
                 </div>
                 <div className='flex-1 min-w-0' />
-                <div className='min-w-0 pl-2 flex flex-wrap items-center justify-end'>
+                <div
+                  className='min-w-0 pl-2 flex flex-wrap items-center justify-end gap-2'
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Button
-                    size='sm'
-                    variant='outline'
-                    className='font-medium border-2 border-gray-800 rounded-lg'
-                    onClick={() => handleApproveSuggestion(item.id)}
-                    disabled={approveSuggestionMutation.isPending}
+                    variant='ghost'
+                    size='icon'
+                    className='hover:bg-gray-100'
+                    onClick={() => handleEditTaskClick(item)}
                   >
-                    Add to Action Plan
+                    <Edit className='h-4 w-4' />
+                  </Button>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='hover:bg-gray-100 text-destructive'
+                    onClick={() => handleDeleteActionItem(item.id)}
+                    disabled={deleteActionItemMutation.isPending}
+                  >
+                    <Trash2 className='h-4 w-4' />
                   </Button>
                 </div>
               </div>
@@ -581,7 +596,7 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
                   <Checkbox
                     checked={!!item.isMandatory}
                     onCheckedChange={() => {
-                      toast.info('Add this task to the action plan before marking it mandatory.');
+                      toast.info('All tasks are now part of the action plan.');
                     }}
                     className='scale-90'
                   />
@@ -592,19 +607,14 @@ export const PlanEditor: React.FC<PlanEditorProps> = ({
           ))}
         </div>
       </div>
+      {/* Dialogs remain unchanged */}
       <TaskEditorDialog
         open={showTaskDialog}
         onClose={() => setShowTaskDialog(false)}
         onSave={handleTaskDialogSave}
         initialValues={taskDialogInitialValues}
       />
-      <TaskEditorDialog
-        open={!!viewingSuggestion}
-        onClose={() => setViewingSuggestion(null)}
-        onSave={() => {}}
-        initialValues={viewingSuggestion}
-        readOnly={true}
-      />
+      {/* No longer using viewingSuggestion or suggestedItems, so remove this dialog */}
     </div>
   );
 };
