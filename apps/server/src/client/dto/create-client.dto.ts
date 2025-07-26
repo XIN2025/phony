@@ -31,9 +31,4 @@ export class CreateClientDto {
   @IsDateString()
   @IsNotEmpty()
   dob: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  occupation: string;
 }

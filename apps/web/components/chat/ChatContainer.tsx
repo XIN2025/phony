@@ -155,7 +155,7 @@ const SidebarContent = React.memo<SidebarContentProps>(
                         src={getAvatarUrl(getConversationAvatar(conversation), getConversationUser(conversation))}
                         alt={getConversationDisplayName(conversation)}
                       />
-                      <AvatarFallback className='text-xs sm:text-sm font-medium bg-gradient-to-br from-blue-100 to-purple-100 text-blue-700'>
+                      <AvatarFallback className='text-xs sm:text-sm font-medium'>
                         {getInitials(getConversationDisplayName(conversation))}
                       </AvatarFallback>
                     </Avatar>
@@ -905,7 +905,7 @@ export function ChatContainer({ participantId, className, height = '100%' }: Cha
                               src={getAvatarUrl(getConversationAvatar(conversation))}
                               alt={getConversationDisplayName(conversation)}
                             />
-                            <AvatarFallback className='text-xs sm:text-sm font-medium bg-gradient-to-br from-blue-100 to-purple-100 text-blue-700'>
+                            <AvatarFallback className='text-xs sm:text-sm font-medium'>
                               {getInitials(getConversationDisplayName(conversation))}
                             </AvatarFallback>
                           </Avatar>

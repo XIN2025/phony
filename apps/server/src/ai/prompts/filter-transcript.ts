@@ -45,6 +45,16 @@ build meaningful action items or insights for the client's wellness journey.
 - Overly verbose explanations that could be condensed
 - Unnecessary clarifications or confirmations
 
+## **CRITICAL OUTPUT FORMAT REQUIREMENTS:**
+
+**YOU MUST RETURN ONLY PLAIN TEXT. DO NOT RETURN JSON, MARKDOWN, OR ANY STRUCTURED FORMAT.**
+
+- Return the cleaned transcript as simple, readable text
+- Do not include any JSON formatting, brackets, or structured data
+- Do not include any markdown formatting
+- Do not include any headers, bullet points, or special formatting
+- Just return the cleaned conversation as plain text that can be displayed directly
+
 ## **OUTPUT INSTRUCTIONS:**
 
 Please provide a clean, concise version of the transcript that:
@@ -54,6 +64,8 @@ Please provide a clean, concise version of the transcript that:
 3. Removes noise while keeping the essential meaning intact
 4. Corrects obvious speech-to-text errors where the meaning is clear
 5. Summarizes repetitive points concisely rather than removing them entirely if they're therapeutically relevant
+
+**REMEMBER: Return ONLY plain text, no JSON, no markdown, no structured formatting.**
 
 Focus on creating a transcript that would be valuable for:
 

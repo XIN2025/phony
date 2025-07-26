@@ -1090,7 +1090,6 @@
           "lastName": { "type": "string" },
           "invitationToken": { "type": "string" },
           "dob": { "type": "string" },
-          "profession": { "type": "string" },
           "phoneNumber": { "type": "string" },
           "notificationSettings": { "type": "object" }
         },

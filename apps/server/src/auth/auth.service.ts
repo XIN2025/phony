@@ -335,7 +335,7 @@ export class AuthService {
   }
 
   async handleClientSignUp(data: ClientSignUpDto, file?: Express.Multer.File): Promise<LoginResponseDto> {
-    const { email, firstName, lastName, invitationToken, dob, profession, phoneNumber, notificationSettings } = data;
+    const { email, firstName, lastName, invitationToken, dob, phoneNumber, notificationSettings } = data;
 
     validateRequiredFields({ email, firstName, invitationToken }, ['email', 'firstName', 'invitationToken']);
 
@@ -395,7 +395,6 @@ export class AuthService {
       clientStatus,
       practitionerId: invitation.practitionerId,
       dob: dob ?? null,
-      profession: profession ?? undefined,
       phoneNumber: phoneNumber ?? undefined,
       notificationSettings: notificationSettings || null,
     };

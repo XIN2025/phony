@@ -551,11 +551,26 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
                   : { maxHeight: 96, overflow: 'hidden', position: 'relative' }
               }
             >
-              {comprehensiveSummary?.summary ? (
-                <MarkdownRenderer content={comprehensiveSummary.summary} />
-              ) : (
-                'No summary available.'
-              )}
+              {comprehensiveSummary?.summary
+                ? (() => {
+                    // Check if the summary is JSON and format it properly
+                    let summaryContent = comprehensiveSummary.summary;
+                    try {
+                      // Try to parse as JSON
+                      const jsonData = JSON.parse(comprehensiveSummary.summary);
+                      if (jsonData.summary) {
+                        summaryContent = jsonData.summary;
+                      } else if (typeof jsonData === 'object') {
+                        // If it's an object but doesn't have a summary field, stringify it nicely
+                        summaryContent = JSON.stringify(jsonData, null, 2);
+                      }
+                    } catch (e) {
+                      // Not JSON, use as-is
+                      summaryContent = comprehensiveSummary.summary;
+                    }
+                    return <MarkdownRenderer content={summaryContent} />;
+                  })()
+                : 'No summary available.'}
               {!showFullSummary && summaryOverflow && (
                 <div
                   style={{

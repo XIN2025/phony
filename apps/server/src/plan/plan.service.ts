@@ -458,7 +458,10 @@ export class PlanService {
               description: s.description,
               category: s.category,
               target: s.target,
-              weeklyRepetitions: s.weeklyRepetitions || 1,
+              weeklyRepetitions:
+                typeof s.weeklyRepetitions === 'string'
+                  ? parseInt(s.weeklyRepetitions, 10) || 1
+                  : s.weeklyRepetitions || 1,
               isMandatory: s.isMandatory || false,
               whyImportant: s.whyImportant,
               recommendedActions: s.recommendedActions,
@@ -470,7 +473,10 @@ export class PlanService {
               description: s.description,
               category: s.category,
               target: s.target,
-              weeklyRepetitions: s.weeklyRepetitions || 1,
+              weeklyRepetitions:
+                typeof s.weeklyRepetitions === 'string'
+                  ? parseInt(s.weeklyRepetitions, 10) || 1
+                  : s.weeklyRepetitions || 1,
               isMandatory: s.isMandatory || false,
               whyImportant: s.whyImportant,
               recommendedActions: s.recommendedActions,
@@ -532,27 +538,31 @@ export class PlanService {
     if (!actionItem) {
       throw new Error('Resource not found. Please check the URL.');
     }
+
+    const updatePayload = {
+      description: updateData.description,
+      category: updateData.category,
+      target: updateData.target,
+      weeklyRepetitions: updateData.weeklyRepetitions,
+      isMandatory: updateData.isMandatory,
+      whyImportant: updateData.whyImportant,
+      recommendedActions: updateData.recommendedActions,
+      toolsToHelp: updateData.toolsToHelp,
+      daysOfWeek: updateData.daysOfWeek || [],
+      resources: updateData.resources
+        ? {
+            deleteMany: {},
+            create: updateData.resources,
+          }
+        : undefined,
+    };
+
     const updated = await this.prisma.actionItem.update({
       where: { id: actionItemId },
-      data: {
-        description: updateData.description,
-        category: updateData.category,
-        target: updateData.target,
-        weeklyRepetitions: updateData.weeklyRepetitions,
-        isMandatory: updateData.isMandatory,
-        whyImportant: updateData.whyImportant,
-        recommendedActions: updateData.recommendedActions,
-        toolsToHelp: updateData.toolsToHelp,
-        daysOfWeek: updateData.daysOfWeek || [],
-        resources: updateData.resources
-          ? {
-              deleteMany: {},
-              create: updateData.resources,
-            }
-          : undefined,
-      },
+      data: updatePayload,
       include: { resources: true },
     });
+
     // Send push notification to client
     const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
     if (plan) {

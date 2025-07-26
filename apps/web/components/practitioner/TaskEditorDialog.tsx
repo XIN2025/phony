@@ -35,7 +35,6 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
   const [form, setForm] = useState({
     isMandatory: initialValues?.isMandatory || false,
     description: initialValues?.description || '',
-    category: initialValues?.category || '',
     weeklyRepetitions: initialValues?.weeklyRepetitions || 1,
     daysOfWeek: initialValues?.daysOfWeek || [],
     whyImportant: initialValues?.whyImportant || '',
@@ -57,7 +56,6 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
       setForm({
         isMandatory: initialValues.isMandatory || false,
         description: initialValues.description || '',
-        category: initialValues.category || '',
         weeklyRepetitions: initialValues.weeklyRepetitions || 1,
         daysOfWeek: initialValues.daysOfWeek || [],
         whyImportant: initialValues.whyImportant || '',
@@ -75,7 +73,6 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
       setForm({
         isMandatory: false,
         description: '',
-        category: '',
         weeklyRepetitions: 1,
         daysOfWeek: [],
         whyImportant: '',
@@ -184,13 +181,6 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
               placeholder='Task name'
               value={form.description}
               onChange={(e) => handleChange('description', e.target.value)}
-              className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base w-full ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
-              disabled={readOnly}
-            />
-            <Input
-              placeholder='Category'
-              value={form.category}
-              onChange={(e) => handleChange('category', e.target.value)}
               className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base w-full ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
               disabled={readOnly}
             />
@@ -406,7 +396,7 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
             {!readOnly && (
               <Button
                 type='submit'
-                className='bg-black text-white rounded-full px-6 py-2 text-base font-semibold shadow-none hover:bg-gray-900'
+                className='bg-[#807171] text-white rounded-full px-6 py-2 text-base font-semibold shadow-none hover:bg-gray-900'
               >
                 Save Task
               </Button>

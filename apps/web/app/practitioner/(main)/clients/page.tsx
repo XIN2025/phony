@@ -197,7 +197,7 @@ export default function ClientsPage() {
                         >
                           <TableCell className='py-1.5 px-3 sm:px-4 lg:px-4'>
                             <div className='flex items-center gap-2 sm:gap-3 min-w-0'>
-                              <Avatar className='h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0 bg-[#E5D6D0]'>
+                              <Avatar className='h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0'>
                                 <AvatarImage
                                   src={getAvatarUrl(client.avatarUrl, {
                                     firstName: client.firstName,

@@ -157,7 +157,7 @@ export function getAvatarUrl(user: { avatarUrl?: string | null; firstName: strin
     return user.avatarUrl;
   }
   const initials = `${user.firstName.charAt(0)}${user.lastName?.charAt(0) ?? ''}`.toUpperCase();
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=random&size=128`;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=8C7FC8&color=ffffff&size=128&bold=true`;
 }
 
 export function formatDate(date: Date): string {

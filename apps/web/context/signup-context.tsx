@@ -12,7 +12,6 @@ interface SignUpData {
   lastName?: string;
   phoneNumber?: string;
   dob?: string;
-  occupation?: string;
   profileImage?: File | null;
 }
 

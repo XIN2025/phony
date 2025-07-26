@@ -2,12 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OpenAI } from 'openai';
 import { z } from 'zod';
-import { filterTranscriptPrompt } from './prompts/filter-transcript';
-import { meetingSummaryPrompt } from './prompts/meeting-summary';
 import { actionItemPrompt } from './prompts/action-item.suggestion';
-import { generateMoreTasksPrompt } from './prompts/generate-more-tasks';
 import { comprehensiveSummaryPrompt } from './prompts/comprehensive-summary';
-import { jsonrepair } from 'jsonrepair';
+import { filterTranscriptPrompt } from './prompts/filter-transcript';
+import { generateMoreTasksPrompt } from './prompts/generate-more-tasks';
+import { meetingSummaryPrompt } from './prompts/meeting-summary';
 
 const summarySchema = z.object({
   title: z.string().describe('A concise, relevant title for the session, max 5 words'),
@@ -29,7 +28,10 @@ const actionItemSuggestionsSchema = z.object({
         category: z.string().optional().describe('Optional category for the task'),
         target: z.string().optional().describe('Optional target or goal for the task'),
         frequency: z.string().optional().describe('Optional frequency or schedule for the task'),
-        weeklyRepetitions: z.number().optional().describe('Number of times per week this should be done'),
+        weeklyRepetitions: z
+          .union([z.string(), z.number()])
+          .optional()
+          .describe('Number of times per week this should be done'),
         isMandatory: z.boolean().optional().describe('Whether this is a mandatory task'),
         whyImportant: z.string().optional().describe('Why this task is important for the client'),
         recommendedActions: z.string().optional().describe('Specific steps to complete this task'),
@@ -57,7 +59,10 @@ const actionItemSuggestionsSchema = z.object({
         category: z.string().optional().describe('Optional category for the task'),
         target: z.string().optional().describe('Optional target or goal for the task'),
         frequency: z.string().optional().describe('Optional schedule or frequency for the task'),
-        weeklyRepetitions: z.number().optional().describe('Number of times per week this should be done'),
+        weeklyRepetitions: z
+          .union([z.string(), z.number()])
+          .optional()
+          .describe('Number of times per week this should be done'),
         isMandatory: z.boolean().optional().describe('Whether this is a mandatory task'),
         whyImportant: z.string().optional().describe('Why this task is important for the client'),
         recommendedActions: z.string().optional().describe('Specific steps to complete this task'),
@@ -135,6 +140,19 @@ export class AiService {
     return processed;
   }
 
+  private transformWeeklyRepetitions(suggestions: ActionItemSuggestions): ActionItemSuggestions {
+    type Task = typeof actionItemSuggestionsSchema.shape.sessionTasks.element;
+    const transformTask = (task: z.infer<Task>) => ({
+      ...task,
+      weeklyRepetitions:
+        typeof task.weeklyRepetitions === 'string' ? parseInt(task.weeklyRepetitions, 10) : task.weeklyRepetitions,
+    });
+    return {
+      sessionTasks: suggestions.sessionTasks.map(transformTask),
+      complementaryTasks: suggestions.complementaryTasks.map(transformTask),
+    };
+  }
+
   private async callOpenAI(prompt: string, systemMessage?: string): Promise<string> {
     try {
       const response = await this.openai.chat.completions.create({
@@ -149,9 +167,11 @@ export class AiService {
           { role: 'user', content: prompt },
         ],
         temperature: 0.7,
-        max_tokens: 2048,
+        max_tokens: 4096,
       });
-      return response.choices[0]?.message?.content || '';
+      const content = response.choices[0]?.message?.content || '';
+      this.logger.log(`OpenAI response length: ${content.length}, content preview: ${content.substring(0, 200)}...`);
+      return content;
     } catch (error) {
       this.logger.error('OpenAI API error:', error);
       throw error;
@@ -168,7 +188,9 @@ export class AiService {
       }
       const prompt = this.getFilteredTranscriptPrompt();
       const fullPrompt = `${prompt}\n\nPlease filter the following transcript:\n\n---\n\n${rawTranscript}`;
-      const filteredText = await this.callOpenAI(fullPrompt);
+      const systemMessage =
+        'You are a helpful assistant. Return ONLY the cleaned transcript as plain text. Do NOT return JSON, markdown, or any other structured format. The output must be simple, readable text that can be displayed directly to users.';
+      const filteredText = await this.callOpenAI(fullPrompt, systemMessage);
       if (!filteredText) {
         return rawTranscript;
       }
@@ -228,80 +250,32 @@ export class AiService {
     }
     try {
       const prompt = this.getActionItemSuggestionPrompt();
-      const fullPrompt = `${prompt}\n\nAnalyze the following session transcript and suggest action items. Respond ONLY with a JSON object that matches the schema exactly. Do not include any extra text.`;
-      const systemMessage = `You are an AI assistant. Respond ONLY with valid JSON in the following format. Do not include any extra text. Example:
-{
-  "sessionTasks": [
-    {
-      "description": "Start friendly conversations",
-      "category": "Social",
-      "target": "Increase social interaction",
-      "frequency": "Daily",
-      "weeklyRepetitions": 5,
-      "isMandatory": false,
-      "whyImportant": "Helps reduce loneliness and build confidence.",
-      "recommendedActions": "Greet at least one new person each day.",
-      "toolsToHelp": [
-        {
-          "name": "Meetup",
-          "whatItEnables": "Find local events",
-          "link": "https://www.meetup.com"
-        }
-      ]
-    }
-  ],
-  "complementaryTasks": [
-    {
-      "description": "Practice 4-7-8 breathing",
-      "category": "Mindfulness",
-      "target": "Reduce anxiety",
-      "frequency": "Twice daily",
-      "weeklyRepetitions": 7,
-      "isMandatory": false,
-      "whyImportant": "Promotes relaxation and stress reduction.",
-      "recommendedActions": "Practice the breathing technique every morning and night.",
-      "toolsToHelp": [
-        {
-          "name": "Calm App",
-          "whatItEnables": "Guided breathing exercises",
-          "link": "https://www.calm.com"
-        }
-      ]
-    }
-  ]
-}`;
+      const fullPrompt = `${prompt}\n\nAnalyze the following session transcript and suggest action items:\n\n---\n\n${filteredTranscript}`;
+
       console.log('AI SUGGEST ACTION ITEMS - PROMPT:', fullPrompt);
-      console.log('AI SUGGEST ACTION ITEMS - SYSTEM MESSAGE:', systemMessage);
-      const suggestionTextRaw = await this.callOpenAI(fullPrompt, systemMessage);
-      console.log('AI SUGGEST ACTION ITEMS - RAW RESPONSE:', suggestionTextRaw);
-      const suggestionText = suggestionTextRaw;
+      const suggestionText = await this.callOpenAI(fullPrompt);
+      console.log('AI SUGGEST ACTION ITEMS - RAW RESPONSE:', suggestionText);
+
       if (!suggestionText) {
         return { sessionTasks: [], complementaryTasks: [] };
       }
+
       let parsedSuggestions: ActionItemSuggestions;
       try {
-        // Try direct parse
         const jsonMatch = suggestionText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('No JSON found in response');
-        const jsonString = jsonMatch[0];
-        const jsonData = JSON.parse(jsonString);
+        if (!jsonMatch) {
+          throw new Error('No JSON found in response');
+        }
+        const jsonData = JSON.parse(jsonMatch[0]);
         parsedSuggestions = actionItemSuggestionsSchema.parse(jsonData);
       } catch (parseError) {
-        this.logger.warn('Initial parse failed, attempting jsonrepair...', parseError);
-        try {
-          const repaired = jsonrepair(suggestionText);
-          const jsonMatch = repaired.match(/\{[\s\S]*\}/);
-          if (!jsonMatch) throw new Error('No JSON found in repaired response');
-          const jsonString = jsonMatch[0];
-          const jsonData = JSON.parse(jsonString);
-          parsedSuggestions = actionItemSuggestionsSchema.parse(jsonData);
-        } catch (repairError) {
-          this.logger.error('Error parsing action item suggestions after repair:', repairError);
-          this.logger.error('Raw suggestion text:', suggestionText.substring(0, 500) + '...');
-          parsedSuggestions = { sessionTasks: [], complementaryTasks: [] };
-        }
+        this.logger.error(`Error parsing action item suggestions:`, parseError);
+        this.logger.error(`Raw suggestion text:`, suggestionText.substring(0, 500) + '...');
+        parsedSuggestions = { sessionTasks: [], complementaryTasks: [] };
       }
-      const processedSuggestions = this.processActionItemSuggestions(parsedSuggestions);
+
+      const transformedSuggestions = this.transformWeeklyRepetitions(parsedSuggestions);
+      const processedSuggestions = this.processActionItemSuggestions(transformedSuggestions);
       return processedSuggestions;
     } catch (error) {
       this.logger.error(`Error in suggestActionItems:`, error);
@@ -422,21 +396,29 @@ export class AiService {
     const sortedSessions = sessionSummaries.sort(
       (a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime()
     );
+    this.logger.log(`Processing ${sortedSessions.length} sessions for comprehensive summary`);
+
     const sessionData = sortedSessions
       .map(
         (session, index) =>
           `Session ${index + 1} (${new Date(session.recordedAt).toLocaleDateString()}):\nTitle: ${session.title}\nSummary: ${session.summary}\n`
       )
       .join('\n---\n\n');
+
+    this.logger.log(`Session data length: ${sessionData.length}`);
+    this.logger.log(`First session preview: ${sessionData.substring(0, 500)}...`);
     const prompt = this.getComprehensiveSummaryPrompt();
     const fullPrompt = `${prompt}\n\nAnalyze the following session summaries to create a comprehensive client summary:\n\n---\n\n${sessionData}`;
+    this.logger.log(`Comprehensive summary prompt length: ${fullPrompt.length}`);
     const summaryText = await this.callOpenAI(fullPrompt);
-    if (!summaryText) {
+    this.logger.log(`Comprehensive summary response length: ${summaryText?.length || 0}`);
+    if (!summaryText || summaryText.trim().length === 0) {
+      this.logger.error('Empty response from OpenAI for comprehensive summary');
       return {
         title: 'Comprehensive Client Summary',
-        summary: 'AI comprehensive summary generation failed - no response received.',
-        keyInsights: ['AI analysis failed'],
-        recommendations: ['Review sessions manually'],
+        summary: 'AI comprehensive summary generation failed - no response received from the AI service.',
+        keyInsights: ['AI analysis failed - no response received'],
+        recommendations: ['Check AI service configuration and try again'],
       };
     }
     let parsedSummary: ComprehensiveSummary;
@@ -447,15 +429,39 @@ export class AiService {
       }
       const jsonString = jsonMatch[0];
       const jsonData = JSON.parse(jsonString);
-      parsedSummary = comprehensiveSummarySchema.parse(jsonData);
+
+      // Handle nested summary structure
+      if (jsonData.summary && typeof jsonData.summary === 'object') {
+        // Convert nested object to markdown string
+        const summaryObject = jsonData.summary;
+        let markdownSummary = '';
+
+        for (const [key, value] of Object.entries(summaryObject)) {
+          if (typeof value === 'object' && value !== null) {
+            markdownSummary += `## ${key}\n\n`;
+            for (const [subKey, subValue] of Object.entries(value)) {
+              if (typeof subValue === 'string') {
+                markdownSummary += `### ${subKey}\n${subValue}\n\n`;
+              }
+            }
+          } else if (typeof value === 'string') {
+            markdownSummary += `## ${key}\n\n${value}\n\n`;
+          }
+        }
+        // Create properly structured summary
+        const flattenedData = {
+          ...jsonData,
+          summary: markdownSummary.trim(),
+        };
+        parsedSummary = comprehensiveSummarySchema.parse(flattenedData);
+      } else {
+        // Normal flat structure
+        parsedSummary = comprehensiveSummarySchema.parse(jsonData);
+      }
     } catch (error) {
       this.logger.error('Error parsing comprehensive summary:', error);
-      parsedSummary = {
-        title: 'Comprehensive Client Summary',
-        summary: summaryText,
-        keyInsights: ['Analysis completed but parsing failed'],
-        recommendations: ['Review generated summary manually'],
-      };
+      this.logger.error('Raw summary text:', summaryText.substring(0, 500) + '...');
+      throw new Error(`Failed to parse AI response: ${error.message}`);
     }
     return parsedSummary;
   }

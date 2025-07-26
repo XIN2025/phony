@@ -37,7 +37,7 @@ export function getAvatarUrl(
     if (user?.firstName || user?.lastName) {
       name = `${user.firstName || ''}${user.lastName || ''}`.trim();
     }
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=ffffff&size=128&bold=true`;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=8C7FC8&color=ffffff&size=128&bold=true`;
   }
 
   if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {

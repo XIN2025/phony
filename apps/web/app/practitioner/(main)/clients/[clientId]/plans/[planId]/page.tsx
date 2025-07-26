@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { use } from 'react';
 import { useGetPlan } from '@/lib/hooks/use-api';
 import { Badge } from '@repo/ui/components/badge';
@@ -33,6 +33,7 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const planEditorRef = useRef<{ savePendingChanges: () => Promise<void> }>(null);
 
   const DAYS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
 
@@ -94,6 +95,7 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
         <div className='flex-1 flex flex-col items-center  w-full px-2 sm:px-6 md:px-10 py-8'>
           <div className='w-full '>
             <PlanEditor
+              ref={planEditorRef}
               planId={planId}
               clientId={clientId}
               sessionId={plan.sessionId || plan.session?.id || ''}
@@ -118,6 +120,23 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
     </Button>
   );
 
+  // For edit mode, show Save Changes button in header
+  const editModeRightActions = (
+    <Button
+      className='bg-[#807171] text-white rounded-full px-6 py-2 font-semibold shadow-none hover:bg-primary/90'
+      onClick={async () => {
+        if (planEditorRef.current) {
+          await planEditorRef.current.savePendingChanges();
+          toast.success('Changes saved successfully!');
+          setEditMode(false);
+          router.replace(`/practitioner/clients/${clientId}/plans/${planId}`);
+        }
+      }}
+    >
+      Save Changes
+    </Button>
+  );
+
   return (
     <div className='w-full min-h-screen flex flex-col bg-transparent'>
       {client && (
@@ -132,13 +151,14 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
           onBack={() => router.back()}
           showAvatar={false}
           showMessagesButton={false}
-          rightActions={plan.status !== 'DRAFT' && !editMode ? rightActions : null}
+          rightActions={editMode ? editModeRightActions : plan.status !== 'DRAFT' ? rightActions : null}
         />
       )}
       {editMode ? (
         <div className='flex-1 flex flex-col items-center  w-full px-2 sm:px-6 md:px-10 py-8'>
           <div className='w-full '>
             <PlanEditor
+              ref={planEditorRef}
               planId={planId}
               clientId={clientId}
               sessionId={plan.sessionId || plan.session?.id || ''}

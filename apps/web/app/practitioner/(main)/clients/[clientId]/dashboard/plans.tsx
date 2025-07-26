@@ -115,7 +115,7 @@ export default function PlansTab({ clientId }: { clientId: string }) {
                     <TableRow
                       key={sessionId}
                       className='border-b border-gray-200/40 last:border-b-0 hover:bg-gray-50/50 transition-colors h-[26px]'
-                      onClick={() => router.push(`/practitioner/sessions/${sessionId}`)}
+                      onClick={() => router.push(`/practitioner/clients/${clientId}/plans/${plan.id}`)}
                     >
                       <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6 text-gray-800 text-[12px] sm:text-[14px] lg:text-[16px] xl:text-[14px] truncate'>
                         {recordedAt

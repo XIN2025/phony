@@ -41,7 +41,6 @@ export default function ClientSettingsPage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [dob, setDob] = useState(currentUser && 'dob' in currentUser && currentUser.dob ? currentUser.dob : '');
-  const [profession, setProfession] = useState(currentUser?.profession || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -53,7 +52,6 @@ export default function ClientSettingsPage() {
       setEmail(currentUser.email || '');
       setPhone(currentUser.phoneNumber || '');
       setDob(currentUser.dob || '');
-      setProfession(currentUser.profession || '');
     }
   }, [currentUser]);
 
@@ -104,7 +102,6 @@ export default function ClientSettingsPage() {
     formData.append('notificationSettings', JSON.stringify(notificationSettings));
     if (currentUser?.role === 'CLIENT') {
       formData.append('dob', String(dob || ''));
-      formData.append('profession', String(profession || ''));
     }
 
     if (avatarFile) {
@@ -289,17 +286,6 @@ export default function ClientSettingsPage() {
                           />
                         </PopoverContent>
                       </Popover>
-                    </div>
-                    <div>
-                      <Label htmlFor='profession' className='text-base font-medium'>
-                        Occupation
-                      </Label>
-                      <Input
-                        id='profession'
-                        value={String(profession || '')}
-                        onChange={(e) => setProfession(e.target.value)}
-                        className='mt-2'
-                      />
                     </div>
                   </>
                 )}

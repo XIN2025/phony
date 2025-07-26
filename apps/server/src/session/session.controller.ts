@@ -30,13 +30,23 @@ export class SessionController {
   @ApiOperation({ summary: 'Create a new session' })
   @ApiResponse({ status: 201, description: 'Session created successfully.' })
   async createSession(
-    @Body() createSessionDto: { clientId: string; title: string; notes?: string; summaryTitle?: string },
+    @Body() createSessionDto: { clientId: string; title?: string; notes?: string; summaryTitle?: string },
     @CurrentUser() user: RequestUser
   ) {
+    // Generate default title if not provided or empty
+    let finalTitle = createSessionDto.title;
+    if (!finalTitle || finalTitle.trim() === '') {
+      const today = new Date();
+      const day = today.getDate().toString().padStart(2, '0');
+      const month = (today.getMonth() + 1).toString().padStart(2, '0');
+      const year = today.getFullYear().toString().slice(-2);
+      finalTitle = `Session ${day}-${month}-${year}`;
+    }
+
     return await this.sessionService.createSession(
       user.id,
       createSessionDto.clientId,
-      createSessionDto.title,
+      finalTitle,
       createSessionDto.notes,
       createSessionDto.summaryTitle
     );

@@ -673,7 +673,7 @@ export function useCreateSession() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { clientId: string; title: string; notes?: string }) =>
+    mutationFn: (data: { clientId: string; title?: string; notes?: string }) =>
       ApiClient.post<{ id: string }>('/api/sessions', data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sessions', 'client', variables.clientId] });
@@ -752,6 +752,10 @@ export function useGenerateMoreTasks() {
     mutationFn: (planId: string) => ApiClient.post<any>(`/api/plans/${planId}/generate-more-tasks`),
     onSuccess: (_, planId) => {
       queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+      queryClient.refetchQueries({ queryKey: ['planData', planId] });
+      // Also invalidate the plan query key used by the plan page
+      queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+      queryClient.refetchQueries({ queryKey: ['plan', planId] });
       queryClient.invalidateQueries({ queryKey: ['planData'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       queryClient.invalidateQueries({ queryKey: ['plans'] });
@@ -765,7 +769,7 @@ export function useGetPlanWithSuggestions(planId: string) {
     queryKey: ['planData', planId],
     queryFn: () => ApiClient.get<any>(`/api/plans/${planId}/with-suggestions`),
     enabled: !!planId,
-    staleTime: 30 * 1000,
+    staleTime: 0, // Always refetch when invalidated
   });
 }
 
@@ -788,6 +792,8 @@ export function useApproveSuggestion() {
     mutationFn: (suggestionId: string) => ApiClient.post(`/api/plans/suggestions/${suggestionId}/approve`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['planData'] });
+      queryClient.refetchQueries({ queryKey: ['planData'] });
+      queryClient.invalidateQueries({ queryKey: ['plan'] });
       queryClient.invalidateQueries({ queryKey: ['plans'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
     },
@@ -801,6 +807,8 @@ export function useRejectSuggestion() {
     mutationFn: (suggestionId: string) => ApiClient.post(`/api/plans/suggestions/${suggestionId}/reject`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['planData'] });
+      queryClient.refetchQueries({ queryKey: ['planData'] });
+      queryClient.invalidateQueries({ queryKey: ['plan'] });
       queryClient.invalidateQueries({ queryKey: ['plans'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
     },
@@ -815,6 +823,8 @@ export function useUpdateSuggestion() {
       ApiClient.patch(`/api/plans/suggestions/${suggestionId}`, updatedData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['planData'] });
+      queryClient.refetchQueries({ queryKey: ['planData'] });
+      queryClient.invalidateQueries({ queryKey: ['plan'] });
       queryClient.invalidateQueries({ queryKey: ['plans'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
     },
@@ -829,6 +839,10 @@ export function useAddCustomActionItem() {
       ApiClient.post(`/api/plans/${planId}/action-items`, data),
     onSuccess: (_, { planId }) => {
       queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+      queryClient.refetchQueries({ queryKey: ['planData', planId] });
+      // Also invalidate the plan query key used by the plan page
+      queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+      queryClient.refetchQueries({ queryKey: ['plan', planId] });
     },
   });
 }
@@ -841,6 +855,10 @@ export function useDeleteActionItem() {
       ApiClient.delete(`/api/plans/${planId}/action-items/${itemId}`),
     onSuccess: (_, { planId }) => {
       queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+      queryClient.refetchQueries({ queryKey: ['planData', planId] });
+      // Also invalidate the plan query key used by the plan page
+      queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+      queryClient.refetchQueries({ queryKey: ['plan', planId] });
     },
   });
 }
@@ -853,6 +871,13 @@ export function useUpdateActionItem() {
       ApiClient.patch(`/api/plans/${planId}/action-items/${itemId}`, data),
     onSuccess: (_, { planId }) => {
       queryClient.invalidateQueries({ queryKey: ['planData', planId] });
+      queryClient.refetchQueries({ queryKey: ['planData', planId] });
+      // Also invalidate the plan query key used by the plan page
+      queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+      queryClient.refetchQueries({ queryKey: ['plan', planId] });
+      // Also invalidate broader queries to ensure all related data is refreshed
+      queryClient.invalidateQueries({ queryKey: ['planData'] });
+      queryClient.invalidateQueries({ queryKey: ['plans'] });
     },
   });
 }

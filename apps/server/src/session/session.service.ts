@@ -138,6 +138,18 @@ export class SessionService {
   private async transcribeAndUpdateStatus(sessionId: string, audioFileUrl: string) {
     try {
       const fullFilePath = path.join(process.cwd(), 'uploads', path.basename(audioFileUrl));
+
+      this.logger.log(`Starting transcription for session ${sessionId}`);
+      this.logger.log(`Audio file path: ${fullFilePath}`);
+
+      // Check if file exists and get its size
+      if (fs.existsSync(fullFilePath)) {
+        const stats = fs.statSync(fullFilePath);
+        this.logger.log(`Audio file size: ${stats.size} bytes`);
+      } else {
+        this.logger.error(`Audio file does not exist: ${fullFilePath}`);
+      }
+
       let transcript = await this.transcriptionService.transcribeAudio(fullFilePath);
 
       // Ensure transcript is plain text, not JSON
@@ -155,6 +167,9 @@ export class SessionService {
       }
 
       if (transcript && transcript.trim().length > 0) {
+        this.logger.log(
+          `Transcription successful for session ${sessionId}. Transcript length: ${transcript.length} characters`
+        );
         await this.prisma.session.update({
           where: { id: sessionId },
           data: {
@@ -169,6 +184,7 @@ export class SessionService {
           });
         }, 0);
       } else {
+        this.logger.error(`Transcription failed for session ${sessionId}. No transcript generated.`);
         await this.prisma.session.update({
           where: { id: sessionId },
           data: {
@@ -181,6 +197,22 @@ export class SessionService {
       }
     } catch (error) {
       this.logger.error(`An error occurred in the background transcription process for session ${sessionId}:`, error);
+      this.logger.error(`Error stack:`, error.stack);
+
+      // Update session status to failed
+      try {
+        await this.prisma.session.update({
+          where: { id: sessionId },
+          data: {
+            transcript: '',
+            filteredTranscript: '',
+            aiSummary: `Transcription failed: ${error.message || 'Unknown error'}`,
+            status: SessionStatus.TRANSCRIPTION_FAILED,
+          },
+        });
+      } catch (updateError) {
+        this.logger.error(`Failed to update session status after transcription error:`, updateError);
+      }
     }
   }
 
@@ -201,6 +233,10 @@ export class SessionService {
       if (aiResults.actionItemSuggestions?.complementaryTasks?.length > 0) {
         const normalizedSuggestions = aiResults.actionItemSuggestions.complementaryTasks.map((suggestion) => ({
           ...suggestion,
+          weeklyRepetitions:
+            typeof suggestion.weeklyRepetitions === 'string'
+              ? parseInt(suggestion.weeklyRepetitions, 10) || 1
+              : suggestion.weeklyRepetitions || 1,
           toolsToHelp: normalizeToolsToHelp(suggestion.toolsToHelp),
         }));
         await this.createSuggestedActionItems(sessionId, normalizedSuggestions);
@@ -408,11 +444,17 @@ export class SessionService {
         orderBy: { recordedAt: 'asc' },
       });
 
+      this.logger.log(`Found ${sessions.length} total sessions for client ${clientId}`);
+      this.logger.log(
+        `Sessions with AI summaries: ${sessions.filter((s) => s.aiSummary && s.aiSummary.trim().length > 0).length}`
+      );
+
       const sessionsWithSummaries = sessions.filter(
         (session) => session.aiSummary && session.aiSummary.trim().length > 0
       );
 
       if (sessionsWithSummaries.length === 0) {
+        this.logger.warn(`No sessions with summaries found for client ${clientId}`);
         return {
           title: 'Comprehensive Client Summary',
           summary: 'No session summaries available for analysis.',
@@ -420,6 +462,8 @@ export class SessionService {
           recommendations: ['Complete and process sessions to generate comprehensive summary'],
         };
       }
+
+      this.logger.log(`Processing ${sessionsWithSummaries.length} sessions with summaries`);
 
       const cachedSummary = await this.prisma.comprehensiveSummary.findFirst({
         where: { clientId },
@@ -444,6 +488,16 @@ export class SessionService {
         recordedAt: session.recordedAt,
         sessionId: session.id,
       }));
+
+      this.logger.log(
+        `Session summaries prepared:`,
+        sessionSummaries.map((s) => ({
+          id: s.sessionId,
+          title: s.title,
+          summaryLength: s.summary.length,
+          summaryPreview: s.summary.substring(0, 100) + '...',
+        }))
+      );
 
       let comprehensiveSummary;
       try {

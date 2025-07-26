@@ -33,7 +33,6 @@ export default function PersonalDetailsPage() {
   const [lastName, setLastName] = useState(signUpData.lastName || '');
   const [phoneNumber, setPhoneNumber] = useState(signUpData.phoneNumber || '');
   const [dob, setDob] = useState(signUpData.dob || '');
-  const [occupation, setOccupation] = useState(signUpData.occupation || '');
   const [profileImage, setProfileImage] = useState<File | null>(signUpData.profileImage || null);
   const [profileImagePreview, setProfileImagePreview] = useState<string>('');
   const [showCalendar, setShowCalendar] = useState(false);
@@ -74,7 +73,7 @@ export default function PersonalDetailsPage() {
   const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!firstName.trim() || !lastName.trim() || !phoneNumber.trim() || !dob.trim() || !occupation.trim()) {
+    if (!firstName.trim() || !lastName.trim() || !phoneNumber.trim() || !dob.trim()) {
       toast.error('Please fill out all fields.');
       return;
     }
@@ -84,7 +83,6 @@ export default function PersonalDetailsPage() {
       lastName: lastName.trim(),
       phoneNumber: phoneNumber.trim(),
       dob: dob.trim(),
-      occupation: occupation.trim(),
       profileImage,
     });
 
@@ -103,7 +101,6 @@ export default function PersonalDetailsPage() {
     if (profileImage) formData.append('profileImage', profileImage);
     formData.append('phoneNumber', phoneNumber.trim());
     formData.append('dob', dob.trim());
-    formData.append('profession', occupation.trim());
 
     try {
       setIsLoading(true);
@@ -277,14 +274,6 @@ export default function PersonalDetailsPage() {
                   />
                 </PopoverContent>
               </Popover>
-              <Input
-                id='occupation'
-                placeholder='Occupation'
-                value={occupation}
-                onChange={(e) => setOccupation(e.target.value)}
-                className='bg-white/80 text-sm sm:text-base md:text-sm lg:text-base'
-                required
-              />
             </div>
 
             {/* Desktop stepper and button inside form */}

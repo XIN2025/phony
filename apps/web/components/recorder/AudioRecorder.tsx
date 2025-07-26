@@ -76,10 +76,6 @@ export const AudioRecorder = forwardRef<
 
   const handleStopConfirm = async () => {
     console.log('[AudioRecorder] handleStopConfirm called, status:', status);
-    if (!sessionTitle || sessionTitle.trim() === '') {
-      setStopModalError('Please enter a session title before ending the session.');
-      return;
-    }
     setStopModalError(null);
     setShowStopConfirmationModal(false);
     if (status === 'recording' || status === 'paused') {
@@ -129,18 +125,29 @@ export const AudioRecorder = forwardRef<
       setShowProcessingModal(true);
       (async () => {
         setProcessingError(null);
-        if (!clientId || !sessionTitle) {
-          setProcessingError('Missing client or session information.');
-          console.error('[AudioRecorder] Missing clientId or sessionTitle', { clientId, sessionTitle });
+        if (!clientId) {
+          setProcessingError('Missing client information.');
+          console.error('[AudioRecorder] Missing clientId', { clientId });
           return;
         }
+
+        // Generate default title if sessionTitle is empty
+        let finalTitle = sessionTitle;
+        if (!finalTitle || finalTitle.trim() === '') {
+          const today = new Date();
+          const day = today.getDate().toString().padStart(2, '0');
+          const month = (today.getMonth() + 1).toString().padStart(2, '0');
+          const year = today.getFullYear().toString().slice(-2);
+          finalTitle = `Session ${day}-${month}-${year}`;
+        }
+
         try {
-          console.log('[AudioRecorder] Creating session', { clientId, sessionTitle, sessionNotes });
+          console.log('[AudioRecorder] Creating session', { clientId, title: finalTitle, sessionNotes });
 
           // Create session using React Query mutation
           const newSession = await createSessionMutation.mutateAsync({
             clientId,
-            title: sessionTitle,
+            title: finalTitle,
             notes: sessionNotes || '',
           });
           const sessionId = newSession.id;
