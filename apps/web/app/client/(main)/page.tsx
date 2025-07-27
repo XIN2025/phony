@@ -58,6 +58,7 @@ interface ActionItem {
   completions?: Array<{
     id: string;
     completedAt: string;
+    completionDate?: string;
     rating?: number;
     journalEntry?: string;
     achievedValue?: string;
@@ -113,7 +114,19 @@ const ClientPage = () => {
 
   const actionItems =
     activePlan?.actionItems?.map((item: ActionItem) => {
-      const isCompleted = item.completions && item.completions.length > 0;
+      // Check if task is completed for the selected date
+      const selectedDateStart = new Date(selectedDate);
+      selectedDateStart.setHours(0, 0, 0, 0);
+      const selectedDateEnd = new Date(selectedDate);
+      selectedDateEnd.setHours(23, 59, 59, 999);
+
+      const isCompleted =
+        item.completions &&
+        item.completions.some((completion: any) => {
+          const completionDate = new Date(completion.completionDate || completion.completedAt);
+          return completionDate >= selectedDateStart && completionDate <= selectedDateEnd;
+        });
+
       return {
         ...item,
         isCompleted,
@@ -255,6 +268,7 @@ const ClientPage = () => {
         await undoTaskCompletionMutation.mutateAsync({
           taskId: task.id,
           clientId: session?.user?.id || '',
+          completionDate: selectedDate.toISOString(),
         });
         toast.success('Task marked as incomplete');
       } else {
@@ -262,6 +276,7 @@ const ClientPage = () => {
           taskId: task.id,
           completionData: {
             clientId: session?.user?.id || '',
+            completionDate: selectedDate.toISOString(),
             rating: 0,
             journalEntry: '',
             achievedValue: '',
@@ -292,6 +307,7 @@ const ClientPage = () => {
         taskId: selectedTask.id,
         completionData: {
           clientId: session?.user?.id || '',
+          completionDate: selectedDate.toISOString(),
           rating: ratingMap[selectedFeedback],
           journalEntry: completionData.journalEntry,
           achievedValue: completionData.achievedValue,
@@ -358,6 +374,7 @@ const ClientPage = () => {
         taskId: selectedTask.id,
         completionData: {
           clientId: session?.user?.id || '',
+          completionDate: selectedDate.toISOString(),
           rating: ratingMap[selectedFeedback],
           journalEntry: completionData.journalEntry,
           achievedValue: completionData.achievedValue,

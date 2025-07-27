@@ -18,9 +18,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const rightActions = (
     <Button
       onClick={() => router.push(`/practitioner/clients/${clientId}/dashboard/new-session`)}
-      className='bg-[#807171] text-white rounded-full px-6 py-2 text-base font-semibold shadow-md hover:bg-neutral-800 transition-all w-full sm:w-auto min-w-0'
+      className='bg-[#807171] text-white rounded-full px-3 py-1.5 sm:px-5 sm:py-2 text-sm sm:text-base font-semibold shadow-md hover:bg-neutral-800 transition-all w-full sm:w-auto min-w-0'
     >
-      <Plus className='sm:h-4 sm:w-4 sm:mr-2 hidden ' />
+      <Plus className='sm:h-4 sm:w-4 sm:mr-2 h-3 w-3 mr-1' />
       New Session
     </Button>
   );

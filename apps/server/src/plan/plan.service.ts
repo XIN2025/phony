@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { PlanStatus, ActionItemSource, SuggestedActionItemStatus } from '@repo/db';
+import { PlanStatus, ActionItemSource } from '@repo/db';
 import { AiService } from '../ai/ai.service';
 import * as webpush from 'web-push';
 import { ConfigService } from '@nestjs/config';
@@ -650,8 +650,9 @@ export class PlanService {
   }
 
   async getClientActionItemsInRange(clientId: string, start: string, end: string) {
+    const startDate = new Date(start);
+    startDate.setHours(0, 0, 0, 0);
     const endDate = new Date(end);
-
     endDate.setHours(23, 59, 59, 999);
 
     const plans = await this.prisma.plan.findMany({
@@ -688,14 +689,46 @@ export class PlanService {
       orderBy: { publishedAt: 'desc' },
     });
 
+    // Filter action items by date range relevance, but do NOT filter their completions array
     const allActionItems = plans.flatMap((plan) => {
-      return plan.actionItems.map((item) => ({
-        ...item,
-        planId: plan.id,
-        planPublishedAt: plan.publishedAt,
-        sessionDate: plan.session?.recordedAt,
-        session: plan.session,
-      }));
+      return plan.actionItems
+        .map((item) => {
+          // Determine if the action item is relevant for the date range
+          const hasCompletionsInRange = (item.completions || []).some((completion) => {
+            const completionDate = completion.completionDate || completion.completedAt;
+            if (!completionDate) return false;
+            const date = new Date(completionDate);
+            return date >= startDate && date <= endDate;
+          });
+
+          // Check if task is scheduled for any day in the selected range
+          let isScheduledInRange = false;
+          if (item.daysOfWeek && item.daysOfWeek.length > 0) {
+            const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+              const dayShort = dayMap[d.getDay()];
+              if (item.daysOfWeek.includes(dayShort)) {
+                isScheduledInRange = true;
+                break;
+              }
+            }
+          } else {
+            isScheduledInRange = true;
+          }
+
+          if (hasCompletionsInRange || isScheduledInRange) {
+            return {
+              ...item,
+              // DO NOT filter completions here
+              planId: plan.id,
+              planPublishedAt: plan.publishedAt,
+              sessionDate: plan.session?.recordedAt,
+              session: plan.session,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
     });
 
     return allActionItems;

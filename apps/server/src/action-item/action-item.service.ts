@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 interface CreateCompletionDto {
   actionItemId: string;
   clientId: string;
+  completionDate?: Date;
   rating?: number;
   journalEntry?: string;
   achievedValue?: string;
@@ -15,27 +16,72 @@ export class ActionItemService {
 
   async completeActionItem(data: CreateCompletionDto) {
     console.log('Completing action item:', data);
-    const result = await this.prisma.actionItemCompletion.create({
-      data: {
+
+    const completionDate = data.completionDate || new Date();
+    const dateStart = new Date(completionDate);
+    dateStart.setHours(0, 0, 0, 0);
+    const dateEnd = new Date(completionDate);
+    dateEnd.setHours(23, 59, 59, 999);
+
+    // Check if there's already a completion for this task, client, and date
+    const existingCompletion = await this.prisma.actionItemCompletion.findFirst({
+      where: {
         actionItemId: data.actionItemId,
         clientId: data.clientId,
-        rating: data.rating,
-        journalEntry: data.journalEntry,
-        achievedValue: data.achievedValue,
-      },
-      include: {
-        actionItem: {
-          select: {
-            id: true,
-            description: true,
-            category: true,
-            target: true,
-          },
+        completionDate: {
+          gte: dateStart,
+          lte: dateEnd,
         },
       },
     });
-    console.log('Action item completion result:', result);
-    return result;
+
+    if (existingCompletion) {
+      // Update existing completion
+      const result = await this.prisma.actionItemCompletion.update({
+        where: { id: existingCompletion.id },
+        data: {
+          rating: data.rating,
+          journalEntry: data.journalEntry,
+          achievedValue: data.achievedValue,
+        },
+        include: {
+          actionItem: {
+            select: {
+              id: true,
+              description: true,
+              category: true,
+              target: true,
+            },
+          },
+        },
+      });
+      console.log('Action item completion updated:', result);
+      return result;
+    } else {
+      // Create new completion
+      const result = await this.prisma.actionItemCompletion.create({
+        data: {
+          actionItemId: data.actionItemId,
+          clientId: data.clientId,
+          completionDate: completionDate,
+          rating: data.rating,
+          journalEntry: data.journalEntry,
+          achievedValue: data.achievedValue,
+        },
+        include: {
+          actionItem: {
+            select: {
+              id: true,
+              description: true,
+              category: true,
+              target: true,
+            },
+          },
+        },
+      });
+      console.log('Action item completion created:', result);
+      return result;
+    }
   }
 
   async getActionItemCompletions(actionItemId: string, clientId?: string) {
@@ -127,13 +173,35 @@ export class ActionItemService {
     });
   }
 
-  async undoActionItemCompletion(actionItemId: string, clientId: string) {
-    console.log('Undoing action item completion:', { actionItemId, clientId });
+  async undoActionItemCompletion(actionItemId: string, clientId: string, completionDate?: Date) {
+    console.log('Undoing action item completion:', { actionItemId, clientId, completionDate });
+
+    const whereClause: {
+      actionItemId: string;
+      clientId: string;
+      completionDate?: {
+        gte: Date;
+        lte: Date;
+      };
+    } = {
+      actionItemId,
+      clientId,
+    };
+
+    if (completionDate) {
+      const dateStart = new Date(completionDate);
+      dateStart.setHours(0, 0, 0, 0);
+      const dateEnd = new Date(completionDate);
+      dateEnd.setHours(23, 59, 59, 999);
+
+      whereClause.completionDate = {
+        gte: dateStart,
+        lte: dateEnd,
+      };
+    }
+
     const completion = await this.prisma.actionItemCompletion.findFirst({
-      where: {
-        actionItemId,
-        clientId,
-      },
+      where: whereClause,
     });
 
     if (!completion) {

@@ -18,9 +18,46 @@ import {
 import { useRouter } from 'next/navigation';
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/components/toggle-group';
 
-function getAvgFeedbackForDay(tasks: any[]) {
+function getAvgFeedbackForDay(tasks: any[], date: Date) {
   if (!tasks || tasks.length === 0) return 'Nil';
-  const allCompletions = tasks.flatMap((task) => task.completions || []);
+
+  // Filter completions for the specific date
+  const dateStart = new Date(date);
+  dateStart.setHours(0, 0, 0, 0);
+  const dateEnd = new Date(date);
+  dateEnd.setHours(23, 59, 59, 999);
+
+  const allCompletions = tasks.flatMap((task) =>
+    (task.completions || []).filter((completion: any) => {
+      const completionDate = new Date(completion.completionDate || completion.completedAt);
+      return completionDate >= dateStart && completionDate <= dateEnd;
+    }),
+  );
+
+  if (allCompletions.length === 0) return 'Nil';
+  const totalRating = allCompletions.reduce((sum, completion) => sum + (completion.rating || 0), 0);
+  const avgRating = totalRating / allCompletions.length;
+  if (avgRating >= 4) return 'Happy';
+  if (avgRating >= 2.5) return 'Neutral';
+  return 'Sad';
+}
+
+function getAvgFeedbackForRange(tasks: any[], startDate: Date, endDate: Date) {
+  if (!tasks || tasks.length === 0) return 'Nil';
+
+  // Filter completions for the date range
+  const rangeStart = new Date(startDate);
+  rangeStart.setHours(0, 0, 0, 0);
+  const rangeEnd = new Date(endDate);
+  rangeEnd.setHours(23, 59, 59, 999);
+
+  const allCompletions = tasks.flatMap((task) =>
+    (task.completions || []).filter((completion: any) => {
+      const completionDate = new Date(completion.completionDate || completion.completedAt);
+      return completionDate >= rangeStart && completionDate <= rangeEnd;
+    }),
+  );
+
   if (allCompletions.length === 0) return 'Nil';
   const totalRating = allCompletions.reduce((sum, completion) => sum + (completion.rating || 0), 0);
   const avgRating = totalRating / allCompletions.length;
@@ -143,16 +180,51 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
         setDateRange({ startDate: minDate, endDate: maxDate, key: 'selection' });
         setLifetimeRange({ startDate: minDate, endDate: maxDate });
       }
-    } else {
-      // Last 7 days
+    } else if (snapshotMode === '7days') {
+      // Only set to last 7 days if the mode just changed
       const today = new Date();
       const lastWeek = new Date();
       lastWeek.setDate(today.getDate() - 6);
       setDateRange({ startDate: lastWeek, endDate: today, key: 'selection' });
     }
-  }, [snapshotMode, journalEntries, rangedActionItems, sessions]);
+  }, [snapshotMode]);
 
-  const filteredTasks = rangedActionItems;
+  const filteredTasks = useMemo(() => {
+    if (!rangedActionItems) return [];
+
+    // Filter tasks based on the selected date range
+    const { startDate, endDate } = dateRange;
+    const rangeStart = new Date(startDate);
+    rangeStart.setHours(0, 0, 0, 0);
+    const rangeEnd = new Date(endDate);
+    rangeEnd.setHours(23, 59, 59, 999);
+
+    return rangedActionItems.filter((task) => {
+      // Check if task has any completions within the selected date range
+      const hasCompletionsInRange =
+        task.completions &&
+        task.completions.some((completion: any) => {
+          const completionDate = new Date(completion.completionDate || completion.completedAt);
+          return completionDate >= rangeStart && completionDate <= rangeEnd;
+        });
+
+      // Include tasks that either have completions in range or are scheduled for days in range
+      if (hasCompletionsInRange) return true;
+
+      // Check if task is scheduled for any day in the selected range
+      const taskDates = getDateRangeArray(rangeStart, rangeEnd);
+      return taskDates.some((date) => {
+        const dayOfWeek = date.getDay();
+        const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+        const selectedDayShort = dayMap[dayOfWeek];
+
+        if (task.daysOfWeek && task.daysOfWeek.length > 0) {
+          return task.daysOfWeek.some((day: string) => day === selectedDayShort);
+        }
+        return true; // If no specific days, include it
+      });
+    });
+  }, [rangedActionItems, dateRange]);
   const filteredJournals = useMemo(() => {
     const { startDate, endDate } = dateRange;
     return (journalEntries || []).filter((j) => {
@@ -196,7 +268,21 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
         const dayOfWeek = date.getDay();
         const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
         const selectedDayShort = dayMap[dayOfWeek];
-        if (t.completions && t.completions.length > 0) {
+
+        // Check if task is completed for the specific date
+        const selectedDateStart = new Date(date);
+        selectedDateStart.setHours(0, 0, 0, 0);
+        const selectedDateEnd = new Date(date);
+        selectedDateEnd.setHours(23, 59, 59, 999);
+
+        const isCompleted =
+          t.completions &&
+          t.completions.some((completion: any) => {
+            const completionDate = new Date(completion.completionDate || completion.completedAt);
+            return completionDate >= selectedDateStart && completionDate <= selectedDateEnd;
+          });
+
+        if (isCompleted) {
           if (t.daysOfWeek && t.daysOfWeek.length > 0) {
             return t.daysOfWeek.some((day: string) => day === selectedDayShort);
           }
@@ -209,9 +295,24 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
 
   const completion = useMemo(() => {
     if (filteredTasks.length === 0) return 0;
-    const completed = filteredTasks.filter((t) => t.completions && t.completions.length > 0).length;
+    const completed = filteredTasks.filter((t) => {
+      // Check if task is completed for any day in the date range
+      const { startDate, endDate } = dateRange;
+      const rangeStart = new Date(startDate);
+      rangeStart.setHours(0, 0, 0, 0);
+      const rangeEnd = new Date(endDate);
+      rangeEnd.setHours(23, 59, 59, 999);
+
+      return (
+        t.completions &&
+        t.completions.some((completion: any) => {
+          const completionDate = new Date(completion.completionDate || completion.completedAt);
+          return completionDate >= rangeStart && completionDate <= rangeEnd;
+        })
+      );
+    }).length;
     return Math.round((completed / filteredTasks.length) * 100);
-  }, [filteredTasks]);
+  }, [filteredTasks, dateRange]);
 
   const handleGenerateComprehensiveSummary = async () => {
     if (isSummaryCached && comprehensiveSummary && comprehensiveSummary.lastSessionCount === sessions.length) {
@@ -379,7 +480,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
         <div className='bg-white rounded-2xl shadow-md border border-[#ececec] p-0 min-w-0 flex flex-col'>
           <div className='p-6 pb-2 lg:p-4 lg:pb-1'>
             <div className='text-2xl font-bold mb-4' style={{ fontFamily: "'DM Serif Display', serif" }}>
-              Last Week's Overview
+              {snapshotMode === '7days' ? "Last Week's Overview" : 'Date Range Overview'}
             </div>
           </div>
           <div className='overflow-x-auto w-full'>
@@ -413,7 +514,19 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
                       const selectedDate = new Date(date);
                       selectedDate.setHours(0, 0, 0, 0);
                       if (t.isMandatory) {
-                        const isCompleted = t.completions && t.completions.length > 0;
+                        // Check if task is completed for the specific date
+                        const selectedDateStart = new Date(date);
+                        selectedDateStart.setHours(0, 0, 0, 0);
+                        const selectedDateEnd = new Date(date);
+                        selectedDateEnd.setHours(23, 59, 59, 999);
+
+                        const isCompleted =
+                          t.completions &&
+                          t.completions.some((completion: any) => {
+                            const completionDate = new Date(completion.completionDate || completion.completedAt);
+                            return completionDate >= selectedDateStart && completionDate <= selectedDateEnd;
+                          });
+
                         if (isCompleted) {
                           if (t.daysOfWeek && t.daysOfWeek.length > 0) {
                             return t.daysOfWeek.some((day: string) => day === selectedDayShort);
@@ -435,8 +548,22 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
                         return true;
                       }
                     });
-                    const completed = dayTasks.filter((t) => t.completions && t.completions.length > 0).length;
-                    const feedback = getAvgFeedbackForDay(dayTasks);
+                    const completed = dayTasks.filter((t) => {
+                      // Check if task is completed for the specific date
+                      const selectedDateStart = new Date(date);
+                      selectedDateStart.setHours(0, 0, 0, 0);
+                      const selectedDateEnd = new Date(date);
+                      selectedDateEnd.setHours(23, 59, 59, 999);
+
+                      return (
+                        t.completions &&
+                        t.completions.some((completion: any) => {
+                          const completionDate = new Date(completion.completionDate || completion.completedAt);
+                          return completionDate >= selectedDateStart && completionDate <= selectedDateEnd;
+                        })
+                      );
+                    }).length;
+                    const feedback = getAvgFeedbackForDay(dayTasks, date);
                     const journal = filteredJournals.some((j) => isSameDay(new Date(j.createdAt), date)) ? 'Yes' : 'No';
                     return (
                       <TableRow
@@ -509,7 +636,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
               <div className='text-xl font-bold flex items-center gap-1'>
                 <span>
                   {(() => {
-                    const avgFeedback = getAvgFeedbackForDay(filteredTasks);
+                    const avgFeedback = getAvgFeedbackForRange(filteredTasks, dateRange.startDate, dateRange.endDate);
                     if (avgFeedback === 'Happy') return '😊';
                     if (avgFeedback === 'Neutral') return '😐';
                     if (avgFeedback === 'Sad') return '🙁';
@@ -518,7 +645,7 @@ export default function SummaryTab({ clientId }: { clientId: string }) {
                 </span>
                 <span>
                   {(() => {
-                    const avgFeedback = getAvgFeedbackForDay(filteredTasks);
+                    const avgFeedback = getAvgFeedbackForRange(filteredTasks, dateRange.startDate, dateRange.endDate);
                     if (avgFeedback === 'Happy') return 'Happy';
                     if (avgFeedback === 'Neutral') return 'Neutral';
                     if (avgFeedback === 'Sad') return 'Sad';

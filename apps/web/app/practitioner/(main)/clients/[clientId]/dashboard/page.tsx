@@ -147,10 +147,21 @@ function formatDateForUrl(date: Date) {
   return date.toISOString().split('T')[0];
 }
 
-function getAvgFeedbackForDay(tasks: PopulatedActionItem[]) {
+function getAvgFeedbackForDay(tasks: PopulatedActionItem[], date: Date) {
   if (!tasks || tasks.length === 0) return 'Nil';
 
-  const allCompletions = tasks.flatMap((task) => task.completions || []);
+  // Filter completions for the specific date
+  const dateStart = new Date(date);
+  dateStart.setHours(0, 0, 0, 0);
+  const dateEnd = new Date(date);
+  dateEnd.setHours(23, 59, 59, 999);
+
+  const allCompletions = tasks.flatMap((task) =>
+    (task.completions || []).filter((completion: any) => {
+      const completionDate = new Date(completion.completionDate || completion.completedAt);
+      return completionDate >= dateStart && completionDate <= dateEnd;
+    }),
+  );
 
   if (allCompletions.length === 0) return 'Nil';
 
@@ -164,7 +175,7 @@ function getAvgFeedbackForDay(tasks: PopulatedActionItem[]) {
 
 function getDateRangeArray(start: Date, end: Date) {
   const arr = [];
-  let dt = new Date(start);
+  const dt = new Date(start);
   while (dt <= end) {
     arr.push(new Date(dt));
     dt.setDate(dt.getDate() + 1);

@@ -303,6 +303,7 @@ model ActionItemCompletion {
   clientId      String     @db.ObjectId
   client        User       @relation("ClientCompletions", fields: [clientId], references: [id], onDelete: Cascade)
   completedAt   DateTime   @default(now())
+  completionDate DateTime  @default(now()) @map("completion_date")
   rating        Int?
   journalEntry  String?
   achievedValue String?

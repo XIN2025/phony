@@ -56,15 +56,27 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
     selectedDateObj.setHours(0, 0, 0, 0); // Reset time to start of day
 
     if (t.isMandatory) {
-      const isCompleted = t.completions && t.completions.length > 0;
+      // Check if task is completed for the selected date
+      const selectedDateStart = new Date(selectedDate);
+      selectedDateStart.setHours(0, 0, 0, 0);
+      const selectedDateEnd = new Date(selectedDate);
+      selectedDateEnd.setHours(23, 59, 59, 999);
+
+      const isCompleted =
+        t.completions &&
+        t.completions.some((completion: any) => {
+          const completionDate = new Date(completion.completionDate || completion.completedAt);
+          return completionDate >= selectedDateStart && completionDate <= selectedDateEnd;
+        });
+
       if (isCompleted) {
-        // If task is completed, only show on its configured days
+        // If task is completed for this date, only show on its configured days
         if (t.daysOfWeek && t.daysOfWeek.length > 0) {
           return t.daysOfWeek.some((day: string) => day === selectedDayShort);
         }
         return true;
       } else {
-        // If task is NOT completed, show on ALL future dates until completed
+        // If task is NOT completed for this date, show on ALL future dates until completed
         // This makes mandatory tasks persist until they're done
         if (selectedDateObj >= today) {
           return true;
@@ -87,8 +99,23 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
 
   const mandatoryTasks = dayTasks.filter((t: any) => t.isMandatory);
   const dailyTasks = dayTasks.filter((t: any) => !t.isMandatory);
-  const pending = dayTasks.filter((t: any) => !t.completions || t.completions.length === 0).length;
-  const engagement = getEngagementForDay(dayTasks);
+  const pending = dayTasks.filter((t: any) => {
+    // Check if task is completed for the selected date
+    const selectedDateStart = new Date(selectedDate);
+    selectedDateStart.setHours(0, 0, 0, 0);
+    const selectedDateEnd = new Date(selectedDate);
+    selectedDateEnd.setHours(23, 59, 59, 999);
+
+    const isCompleted =
+      t.completions &&
+      t.completions.some((completion: any) => {
+        const completionDate = new Date(completion.completionDate || completion.completedAt);
+        return completionDate >= selectedDateStart && completionDate <= selectedDateEnd;
+      });
+
+    return !isCompleted;
+  }).length;
+  const engagement = getEngagementForDay(dayTasks, selectedDate);
 
   const [selectedTask, setSelectedTask] = React.useState<any | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = React.useState(false);

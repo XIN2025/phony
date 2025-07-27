@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { use } from 'react';
+import React from 'react';
 import { useGetPlan } from '@/lib/hooks/use-api';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
@@ -34,6 +35,18 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
   const [isPublishing, setIsPublishing] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const planEditorRef = useRef<{ savePendingChanges: () => Promise<void> }>(null);
+
+  // Check for edit query parameter
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editParam = urlParams.get('edit');
+    if (editParam === 'true') {
+      setEditMode(true);
+      // Clean up the URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, []);
 
   const DAYS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
 
@@ -121,21 +134,21 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
   );
 
   // For edit mode, show Save Changes button in header
-  const editModeRightActions = (
-    <Button
-      className='bg-[#807171] text-white rounded-full px-6 py-2 font-semibold shadow-none hover:bg-primary/90'
-      onClick={async () => {
-        if (planEditorRef.current) {
-          await planEditorRef.current.savePendingChanges();
-          toast.success('Changes saved successfully!');
-          setEditMode(false);
-          router.replace(`/practitioner/clients/${clientId}/plans/${planId}`);
-        }
-      }}
-    >
-      Save Changes
-    </Button>
-  );
+  // const editModeRightActions = (
+  //   <Button
+  //     className='bg-[#807171] text-white rounded-full px-6 py-2 font-semibold shadow-none hover:bg-primary/90'
+  //     onClick={async () => {
+  //       if (planEditorRef.current) {
+  //         await planEditorRef.current.savePendingChanges();
+  //         toast.success('Changes saved successfully!');
+  //         setEditMode(false);
+  //         router.replace(`/practitioner/clients/${clientId}/plans/${planId}`);
+  //       }
+  //     }}
+  //   >
+  //     Save Changes
+  //   </Button>
+  // );
 
   return (
     <div className='w-full min-h-screen flex flex-col bg-transparent'>
@@ -151,7 +164,7 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
           onBack={() => router.back()}
           showAvatar={false}
           showMessagesButton={false}
-          rightActions={editMode ? editModeRightActions : plan.status !== 'DRAFT' ? rightActions : null}
+          rightActions={editMode ? null : plan.status !== 'DRAFT' ? rightActions : null}
         />
       )}
       {editMode ? (
@@ -275,6 +288,9 @@ export default function ActionPlanSummaryPage({ params }: { params: Promise<{ cl
         onSave={() => {}}
         initialValues={selectedTask}
         readOnly={true}
+        planId={planId}
+        clientId={clientId}
+        onEditTask={() => setEditMode(true)}
       />
     </div>
   );

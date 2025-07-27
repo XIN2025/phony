@@ -294,12 +294,7 @@ export default function PractitionerDashboard() {
                           </TableCell>
                           <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6'>
                             <span
-                              className={`rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-[12px] sm:text-[14px] font-semibold whitespace-nowrap block`}
-                              style={{
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}
+                              className={`rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-[12px] sm:text-[14px] font-semibold whitespace-nowrap inline-block ${getPlanBadgeColor(planLevel)}`}
                             >
                               {planLevel}
                             </span>

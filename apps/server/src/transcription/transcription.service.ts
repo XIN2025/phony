@@ -15,36 +15,25 @@ export class TranscriptionService {
       throw new Error('DEEPGRAM_API_KEY is not defined or empty in the environment variables.');
     }
     this.deepgram = createClient(apiKey);
-
-    // Test the API key on startup
-    this.testDeepgramConnection().catch((error) => {
-      this.logger.error('Failed to test Deepgram connection on startup:', error);
-    });
   }
 
   private async testDeepgramConnection(): Promise<void> {
-    try {
-      this.logger.log('Testing Deepgram API connection...');
+    this.logger.log('Testing Deepgram API connection...');
 
-      // Create a minimal test audio buffer (silence)
-      const testBuffer = Buffer.alloc(1024); // 1KB of silence
+    // Create a minimal test audio buffer (silence)
+    const testBuffer = Buffer.alloc(1024); // 1KB of silence
 
-      const { result, error } = await this.deepgram.listen.prerecorded.transcribeFile(testBuffer, {
-        model: 'nova-2',
-        smart_format: true,
-        diarize: true,
-      });
+    const { error } = await this.deepgram.listen.prerecorded.transcribeFile(testBuffer, {
+      model: 'nova-2',
+      smart_format: true,
+      diarize: true,
+    });
 
-      if (error) {
-        this.logger.error('Deepgram API test failed:', error);
-        throw new Error(`Deepgram API test failed: ${error.message || 'Unknown error'}`);
-      }
-
-      this.logger.log('Deepgram API connection test successful');
-    } catch (error) {
-      this.logger.error('Deepgram API connection test failed:', error);
-      throw error;
+    if (error) {
+      throw new Error(`Deepgram API test failed: ${error.message || 'Unknown error'}`);
     }
+
+    this.logger.log('Deepgram API connection test successful');
   }
 
   async transcribeAudio(filePath: string): Promise<string | null> {

@@ -8,6 +8,9 @@ import { useDropzone } from 'react-dropzone';
 import type { FileWithPath } from 'react-dropzone';
 import { useUploadResource } from '@/lib/hooks/use-api';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { Edit } from 'lucide-react';
 
 const DAYS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
 
@@ -17,6 +20,9 @@ export interface TaskEditorDialogProps {
   onSave: (values: any) => void;
   initialValues?: any;
   readOnly?: boolean;
+  planId?: string;
+  clientId?: string;
+  onEditTask?: () => void;
 }
 
 interface Resource {
@@ -31,6 +37,9 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
   onSave,
   initialValues,
   readOnly = false,
+  planId,
+  clientId,
+  onEditTask,
 }) => {
   const [form, setForm] = useState({
     isMandatory: initialValues?.isMandatory || false,
@@ -50,6 +59,19 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
 
   const uploadResourceMutation = useUploadResource();
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  // Check if user is a practitioner
+  const isPractitioner = session?.user?.role === 'PRACTITIONER';
+
+  // Handle Edit Task button click
+  const handleEditTask = () => {
+    if (onEditTask) {
+      onEditTask();
+    }
+    onClose();
+  };
 
   React.useEffect(() => {
     if (initialValues) {
@@ -166,15 +188,30 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
           style={{ maxHeight: '80vh' }}
         >
           <DialogHeader>
-            <DialogTitle
-              className='text-xl sm:text-2xl font-bold mb-1'
-              style={{ fontFamily: "'DM Serif Display', serif" }}
-            >
-              Tasks
-            </DialogTitle>
-            <DialogDescription className='text-sm sm:text-base font-medium mb-4'>
-              Daily Targeted Goals
-            </DialogDescription>
+            <div className='flex items-start justify-between w-full'>
+              <div className='flex-1 min-w-0'>
+                <DialogTitle
+                  className='text-xl sm:text-2xl font-bold mb-1'
+                  style={{ fontFamily: "'DM Serif Display', serif" }}
+                >
+                  Tasks
+                </DialogTitle>
+                <DialogDescription className='text-sm sm:text-base font-medium mb-4'>
+                  Daily Targeted Goals
+                </DialogDescription>
+              </div>
+              <div className='flex items-center gap-2'>
+                {readOnly && isPractitioner && planId && clientId && (
+                  <Button
+                    type='button'
+                    onClick={handleEditTask}
+                    className='bg-[#807171] text-white rounded-full px-4 py-2 text-base font-semibold shadow-none hover:bg-gray-900 flex items-center gap-2'
+                  >
+                    <Edit className='h-4 w-4 mr-1' /> Edit Task
+                  </Button>
+                )}
+              </div>
+            </div>
           </DialogHeader>
           <div className='space-y-4'>
             <Input
@@ -392,7 +429,7 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
               </div>
             </div>
           </div>
-          <div className='flex justify-end mt-8'>
+          <div className='flex justify-end mt-8 gap-3'>
             {!readOnly && (
               <Button
                 type='submit'

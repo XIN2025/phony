@@ -104,9 +104,35 @@ export function isSameDay(date1: Date | string | null | undefined, date2: Date |
   return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
 }
 
-export function getEngagementForDay(tasks: Array<{ completions?: Array<unknown> }>): string {
+export function getEngagementForDay(tasks: Array<{ completions?: Array<unknown> }>, date?: Date): string {
   if (!tasks || tasks.length === 0) return 'Nil';
-  const completed = tasks.filter((t) => t.completions && t.completions.length > 0).length;
+
+  let completed: number;
+
+  if (date) {
+    // Check completion for specific date
+    const dateStart = new Date(date);
+    dateStart.setHours(0, 0, 0, 0);
+    const dateEnd = new Date(date);
+    dateEnd.setHours(23, 59, 59, 999);
+
+    completed = tasks.filter((t) => {
+      return (
+        t.completions &&
+        t.completions.some((completion) => {
+          const comp = completion as { completionDate?: string; completedAt?: string };
+          const completionDate = comp.completionDate || comp.completedAt;
+          if (!completionDate) return false;
+          const date = new Date(completionDate);
+          return date >= dateStart && date <= dateEnd;
+        })
+      );
+    }).length;
+  } else {
+    // Legacy behavior - check if any completion exists
+    completed = tasks.filter((t) => t.completions && t.completions.length > 0).length;
+  }
+
   const ratio = completed / tasks.length;
   if (ratio === 1) return 'High';
   if (ratio >= 0.5) return 'Medium';

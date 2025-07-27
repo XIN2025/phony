@@ -53,10 +53,10 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
         </button>
       </div>
       <div className='flex flex-col gap-2 px-2 sm:px-0 mt-2 max-w-full'>
-        <div className='flex flex-row items-center justify-between w-full gap-2'>
-          <div className='flex flex-row items-center gap-3 min-w-0'>
+        <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-2'>
+          <div className='flex flex-row items-start sm:items-center gap-3 min-w-0 flex-1'>
             {showAvatar && (
-              <Avatar className='h-12 w-12'>
+              <Avatar className='h-12 w-12 flex-shrink-0'>
                 <AvatarImage
                   src={getAvatarUrl(client.avatarUrl, client)}
                   alt={`${client.firstName} ${client.lastName}`.trim()}
@@ -66,9 +66,9 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
                 </AvatarFallback>
               </Avatar>
             )}
-            <div className='flex flex-col min-w-0'>
+            <div className='flex flex-col min-w-0 flex-1'>
               <h1
-                className='font-semibold mb-2 sm:mb-0 truncate text-xl sm:text-2xl lg:text-[26px] xl:text-[32px]'
+                className='font-semibold mb-2 sm:mb-0 break-words text-lg sm:text-xl lg:text-[26px] xl:text-[32px] leading-tight'
                 style={{ fontFamily: "'DM Serif Display', serif" }}
               >
                 {title || `${client.firstName} ${client.lastName}`}
@@ -82,25 +82,22 @@ export const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
               ) : null}
             </div>
           </div>
-          <div className='flex flex-col sm:flex-row flex-nowrap gap-2 sm:gap-3 min-w-0 sm:w-auto'>
-            {/* Hide messages button on small screens */}
-            <div className='hidden sm:block'>
-              {showMessagesButton && client.id && (
-                <Link href={`/practitioner/clients/${client.id}/messages`} className='ml-0 sm:ml-0 min-w-0'>
-                  <Button
-                    variant='outline'
-                    className='rounded-full p-2 border border-black bg-transparent sm:w-auto min-w-0 shadow-none'
-                  >
-                    <MessageCircle className='h-4 w-4' />
-                  </Button>
-                </Link>
-              )}
-            </div>
+          <div className='flex flex-row flex-nowrap gap-2 sm:gap-3 min-w-0 sm:w-auto w-full sm:w-auto'>
+            {showMessagesButton && client.id && (
+              <Link href={`/practitioner/clients/${client.id}/messages`} className='ml-0 sm:ml-0 min-w-0'>
+                <Button
+                  variant='outline'
+                  className='rounded-full p-2 border border-black bg-transparent sm:w-auto min-w-0 shadow-none hover:bg-black hover:text-white transition-all'
+                >
+                  <MessageCircle className='h-4 w-4' />
+                </Button>
+              </Link>
+            )}
             {rightActions && React.isValidElement(rightActions)
               ? React.cloneElement(rightActions as React.ReactElement<any>, {
                   className: [
                     (rightActions as React.ReactElement<any>).props.className,
-                    'bg-[#807171] text-white rounded-full px-2 py-1 w-full min-w-0 max-w-full sm:px-6 sm:py-2 sm:w-auto sm:max-w-xs shadow-md hover:bg-neutral-800 transition-all flex-1',
+                    'bg-[#807171] text-white rounded-full px-3 py-1.5 w-full min-w-0 max-w-full sm:px-5 sm:py-2 sm:w-auto sm:max-w-xs shadow-md hover:bg-neutral-800 transition-all flex-1 text-sm sm:text-base',
                   ]
                     .filter(Boolean)
                     .join(' '),

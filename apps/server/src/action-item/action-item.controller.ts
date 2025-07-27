@@ -42,6 +42,7 @@ export class ActionItemController {
     @Body()
     completionData: {
       clientId: string;
+      completionDate?: string;
       rating?: number;
       journalEntry?: string;
       achievedValue?: string;
@@ -50,14 +51,23 @@ export class ActionItemController {
     return await this.actionItemService.completeActionItem({
       actionItemId,
       ...completionData,
+      completionDate: completionData.completionDate ? new Date(completionData.completionDate) : undefined,
     });
   }
 
   @Delete(':id/complete')
   @ApiOperation({ summary: 'Undo action item completion' })
   @ApiResponse({ status: 200, description: 'Action item completion undone successfully.' })
-  async undoActionItemCompletion(@Param('id') actionItemId: string, @Query('clientId') clientId: string) {
-    return await this.actionItemService.undoActionItemCompletion(actionItemId, clientId);
+  async undoActionItemCompletion(
+    @Param('id') actionItemId: string,
+    @Query('clientId') clientId: string,
+    @Query('completionDate') completionDate?: string
+  ) {
+    return await this.actionItemService.undoActionItemCompletion(
+      actionItemId,
+      clientId,
+      completionDate ? new Date(completionDate) : undefined
+    );
   }
 
   @Get(':id/completions')

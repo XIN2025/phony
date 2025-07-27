@@ -940,8 +940,22 @@ export function useUndoTaskCompletion() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ taskId, clientId }: { taskId: string; clientId: string }) =>
-      ApiClient.delete(`/api/action-items/${taskId}/complete?clientId=${encodeURIComponent(clientId)}`),
+    mutationFn: ({
+      taskId,
+      clientId,
+      completionDate,
+    }: {
+      taskId: string;
+      clientId: string;
+      completionDate?: string;
+    }) => {
+      const params = new URLSearchParams();
+      params.append('clientId', clientId);
+      if (completionDate) {
+        params.append('completionDate', completionDate);
+      }
+      return ApiClient.delete(`/api/action-items/${taskId}/complete?${params.toString()}`);
+    },
     onSuccess: (_, { taskId }) => {
       queryClient.invalidateQueries({ queryKey: ['client-plans'] });
       queryClient.invalidateQueries({ queryKey: ['client-action-items'] });

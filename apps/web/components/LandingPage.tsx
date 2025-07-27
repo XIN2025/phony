@@ -1,671 +1,352 @@
 ﻿'use client';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { Button } from '@repo/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
-import { Input } from '@repo/ui/components/input';
-import { Textarea } from '@repo/ui/components/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import {
-  ShieldCheck,
-  Lock,
-  MessageCircle,
-  Sparkles,
-  Workflow,
-  ClipboardList,
-  Users,
-  NotebookPen,
-  ArrowRight,
-  CheckCircle,
-  Star,
-  Heart,
-  Zap,
-  MapPin,
-  Mail,
-  Phone,
-  Facebook,
-  Instagram,
-  Linkedin,
-  Twitter,
-  User,
-  Bot,
-  TrendingUp,
-  Menu,
-  X,
-  UserCheck,
-  UserPlus,
-  LogIn,
-} from 'lucide-react';
-import { useState } from 'react';
+import { AuthDialog } from './AuthDialog';
 
-export default function LandingPage() {
-  const router = useRouter();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showRoleSelection, setShowRoleSelection] = useState(false);
+const ContinuumLanding = () => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
+  const howItWorksRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: howItWorksRef,
+    offset: ['start end', 'end start'],
+  });
 
-  const handleRoleSelection = (role: 'practitioner' | 'client', action: 'signin' | 'signup') => {
-    if (role === 'practitioner') {
-      if (action === 'signup') {
-        router.push('/practitioner/auth/signup');
-      } else {
-        router.push('/practitioner/auth');
-      }
-    } else {
-      // Clients can only sign in, not sign up directly
-      router.push('/client/auth');
-    }
-  };
+  const steps = [
+    {
+      number: 1,
+      title: 'Session',
+      description:
+        'Run your session as normal. Using AI, Continuum captures and structures key insights — no extra admin needed',
+      bgColor: 'bg-pink-100',
+      video: '/landingpage/step1.mp4',
+    },
+    {
+      number: 2,
+      title: 'Plan',
+      description:
+        'AI drafts a personalised programme based on verbatim tasks and suggested tasks. These tasks then include potential actions, reflections, and resources. You edit or approve with one click.',
+      bgColor: 'bg-pink-200',
+      video: '/landingpage/step2.mp4',
+    },
+    {
+      number: 3,
+      title: 'Engage',
+      description:
+        'Clients get their plan via an app, showing up in a daily format — They can tick off tasks, journal and give feedback. You can communicate with your clients any time via secure in app messaging.',
+      bgColor: 'bg-blue-100',
+      video: '/landingpage/step3.mp4',
+    },
+    {
+      number: 4,
+      title: 'Track',
+      description:
+        "Get real-time visibility into client progress, plus weekly summaries before each session — so you know exactly what's working and what's not.",
+      bgColor: 'bg-purple-100',
+      video: '/landingpage/step4.mp4',
+    },
+  ];
+
+  useEffect(() => {
+    const unsubscribe = scrollYProgress.onChange((latest) => {
+      const progress = latest;
+      const stepIndex = Math.min(Math.floor(progress * steps.length * 1.2), steps.length - 1);
+      setCurrentStep(Math.max(0, stepIndex));
+    });
+
+    return () => unsubscribe();
+  }, [scrollYProgress, steps.length]);
+
+  const currentStepData = steps[currentStep];
 
   return (
     <div className='min-h-screen bg-white'>
-      {/* Navigation */}
-      <nav className='fixed top-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 z-50'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='flex justify-between items-center h-16'>
-            <div className='flex items-center space-x-2'>
-              <Image src='/infinity.svg' alt='Continuum' width={32} height={32} className='w-10 h-4' />
-              <Image src='/Continuum.svg' alt='Continuum' width={32} height={32} className='w-32 h-32' />
-              {/* <span className='text-xl font-semibold text-gray-800'>CONTINUUM</span> */}
+      {/* Header - Fixed with Proper Backdrop Blur */}
+      <header
+        className='fixed top-0 left-0 right-0 z-50 border-b border-white/20 shadow-lg'
+        style={{
+          backdropFilter: 'blur(15px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(15px) saturate(180%)',
+          backgroundColor: 'rgba(255, 255, 255, 0.25)',
+        }}
+      >
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center'>
+          <div className='flex items-center space-x-2'>
+            <div className='flex items-center justify-center'>
+              <Image
+                src='/landingpage/infinity.svg'
+                alt='Infinity'
+                width={32}
+                height={32}
+                className='w-6 h-6 sm:w-8 sm:h-8'
+              />
             </div>
-
-            {/* Desktop Navigation */}
-            <div className='hidden md:flex items-center space-x-8'>
-              <a href='#home' className='text-gray-800 font-medium border-b-2 border-gray-800 pb-1'>
-                Home
-              </a>
-              <a href='#features' className='text-gray-600 hover:text-gray-800 transition-colors'>
-                Features
-              </a>
-              <a href='#about' className='text-gray-600 hover:text-gray-800 transition-colors'>
-                About Us
-              </a>
-            </div>
-
-            {/* Desktop Buttons */}
-            <div className='hidden md:flex items-center space-x-4'>
-              <Button
-                variant='outline'
-                className='border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white'
-                onClick={() => setShowRoleSelection(true)}
-              >
-                <LogIn className='w-4 h-4 mr-2' />
-                Sign In
-              </Button>
-              <Button className='bg-gray-800 text-white hover:bg-gray-700' onClick={() => setShowRoleSelection(true)}>
-                <UserPlus className='w-4 h-4 mr-2' />
-                Get Started
-              </Button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button className='md:hidden p-2' onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-              {isMobileMenuOpen ? <X className='w-6 h-6' /> : <Menu className='w-6 h-6' />}
+            <Image
+              src='/landingpage/continuum.svg'
+              alt='Continuum'
+              width={120}
+              height={24}
+              className='h-4 w-auto sm:h-6'
+            />
+          </div>
+          <div className='flex items-center space-x-2 sm:space-x-4 md:space-x-6'>
+            <button className='text-white hover:text-gray-300 transition-colors font-medium text-sm sm:text-base hidden sm:block'>
+              Contact Us
+            </button>
+            <button
+              onClick={() => setIsAuthDialogOpen(true)}
+              className='px-3 py-1.5 sm:px-4 sm:py-2 md:px-6 border border-white/30 text-white rounded-lg hover:bg-white/10 transition-colors font-medium text-sm sm:text-base'
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => setIsAuthDialogOpen(true)}
+              className='px-3 py-1.5 sm:px-4 sm:py-2 md:px-6 text-white rounded-lg transition-all duration-500 ease-in-out font-medium text-sm sm:text-base hover:scale-105'
+              style={{
+                background: 'linear-gradient(to right, #A5B7C8 0%, #E9ADA3 50%, #C87F94 100%)',
+                transition: 'all 0.5s ease-in-out',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(to right, #C87F94 0%, #E9ADA3 50%, #A5B7C8 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(to right, #A5B7C8 0%, #E9ADA3 50%, #C87F94 100%)';
+              }}
+            >
+              Get Started
             </button>
           </div>
-
-          {/* Mobile Navigation */}
-          {isMobileMenuOpen && (
-            <div className='md:hidden py-4 border-t border-gray-200'>
-              <div className='flex flex-col space-y-4'>
-                <a href='#home' className='text-gray-800 font-medium'>
-                  Home
-                </a>
-                <a href='#features' className='text-gray-600 hover:text-gray-800 transition-colors'>
-                  Features
-                </a>
-                <a href='#about' className='text-gray-600 hover:text-gray-800 transition-colors'>
-                  About Us
-                </a>
-                <div className='flex flex-col space-y-2 pt-4'>
-                  <Button
-                    variant='outline'
-                    className='border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white'
-                    onClick={() => setShowRoleSelection(true)}
-                  >
-                    <LogIn className='w-4 h-4 mr-2' />
-                    Sign In
-                  </Button>
-                  <Button
-                    className='bg-gray-800 text-white hover:bg-gray-700'
-                    onClick={() => setShowRoleSelection(true)}
-                  >
-                    <UserPlus className='w-4 h-4 mr-2' />
-                    Get Started
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-      </nav>
-
-      {/* Role Selection Modal */}
-      {showRoleSelection && (
-        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className='rounded-3xl p-0 w-full max-w-md shadow-2xl'
-            style={{
-              background: 'radial-gradient(ellipse 120% 100% at 50% 0%, #fbeaec 60%, #f7f3f2 100%)',
-              border: '1.5px solid #807171',
-              boxShadow: '0 8px 32px 0 rgba(128,113,113,0.10)',
-            }}
-          >
-            <div className='flex justify-between items-center px-6 pt-6 pb-2 mb-2'>
-              <h2 className='text-2xl font-bold' style={{ color: '#807171' }}>
-                Choose Your Role
-              </h2>
-              <button
-                onClick={() => setShowRoleSelection(false)}
-                className='p-2 hover:bg-[#f7f3f2] rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#807171]'
-              >
-                <X className='w-5 h-5' />
-              </button>
-            </div>
-
-            <div className='space-y-6 px-6 pb-6'>
-              {/* Practitioner Section */}
-              <div
-                className='border rounded-2xl p-5 mb-2 flex flex-col gap-3 shadow-sm'
-                style={{ borderColor: '#807171', background: 'rgba(255,255,255,0.95)' }}
-              >
-                <div className='flex items-center space-x-3 mb-2'>
-                  <div
-                    className='w-12 h-12 rounded-full flex items-center justify-center shadow'
-                    style={{ background: 'linear-gradient(135deg, #fbeaec 60%, #f7f3f2 100%)' }}
-                  >
-                    <UserCheck className='w-6 h-6' style={{ color: '#807171' }} />
-                  </div>
-                  <div>
-                    <h3 className='font-semibold' style={{ color: '#807171' }}>
-                      Practitioner
-                    </h3>
-                    <p className='text-sm' style={{ color: '#8d8080' }}>
-                      Therapists, Coaches, Counselors
-                    </p>
-                  </div>
-                </div>
-                <div className='flex space-x-2'>
-                  <Button
-                    variant='outline'
-                    className='flex-1 border-2 border-[#807171] text-[#807171] hover:bg-[#fbeaec] hover:text-[#807171] bg-white rounded-full font-semibold shadow-none'
-                    onClick={() => handleRoleSelection('practitioner', 'signin')}
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    className='flex-1 bg-[#807171] hover:bg-[#8d8080] text-white rounded-full font-semibold shadow-none'
-                    onClick={() => handleRoleSelection('practitioner', 'signup')}
-                  >
-                    Sign Up
-                  </Button>
-                </div>
-              </div>
-
-              {/* Client Section */}
-              <div
-                className='border rounded-2xl p-5 flex flex-col gap-3 shadow-sm'
-                style={{ borderColor: '#807171', background: 'rgba(255,255,255,0.95)' }}
-              >
-                <div className='flex items-center space-x-3 mb-2'>
-                  <div
-                    className='w-12 h-12 rounded-full flex items-center justify-center shadow'
-                    style={{ background: 'linear-gradient(135deg, #fbeaec 60%, #f7f3f2 100%)' }}
-                  >
-                    <User className='w-6 h-6' style={{ color: '#807171' }} />
-                  </div>
-                  <div>
-                    <h3 className='font-semibold' style={{ color: '#807171' }}>
-                      Client
-                    </h3>
-                    <p className='text-sm' style={{ color: '#8d8080' }}>
-                      Patients, Clients, Students
-                    </p>
-                  </div>
-                </div>
-                <div className='space-y-2'>
-                  <Button
-                    className='w-full border-2 border-[#807171] text-[#807171] bg-white hover:bg-[#fbeaec] hover:text-[#807171] rounded-full font-semibold shadow-none'
-                    onClick={() => handleRoleSelection('client', 'signin')}
-                  >
-                    Sign In
-                  </Button>
-                  <div
-                    className='rounded-xl p-3 text-center'
-                    style={{
-                      background: 'linear-gradient(135deg, #fbeaec 80%, #f7f3f2 100%)',
-                      border: '1px solid #f7f3f2',
-                    }}
-                  >
-                    <p className='text-sm mb-2' style={{ color: '#8d8080' }}>
-                      Need an account? Ask your practitioner to send you an invitation.
-                    </p>
-                    <p className='text-xs' style={{ color: '#807171' }}>
-                      Clients can only join with an invitation from their practitioner.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      </header>
 
       {/* Hero Section */}
-      <section id='home' className='pt-20 pb-16 px-4 sm:px-6 lg:px-8 cloudy-gradient-background'>
-        <div className='max-w-7xl mx-auto'>
-          <div className='grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16'>
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              className='text-center lg:text-left'
+      <section className='min-h-screen pt-16 sm:pt-20 pb-8 sm:pb-16 px-4 sm:px-6 relative overflow-hidden'>
+        {/* Background Image */}
+        <div className='absolute inset-0 z-0'>
+          <Image src='/landingpage/placeholder1.jpg' alt='Background' fill className='object-cover' priority />
+          <div className='absolute inset-0 bg-black/40'></div>
+        </div>
+
+        <div className='relative z-10 max-w-7xl mx-auto h-screen flex items-center xl:justify-start 2xl:justify-start'>
+          <div className='max-w-2xl w-full text-left xl:ml-8 2xl:ml-16'>
+            <h1
+              className='text-4xl sm:text-[40px] md:text-[50px] lg:text-[64px] font-bold text-white leading-tight mb-6 sm:mb-8'
+              style={{ fontFamily: 'DM Serif Display, serif' }}
             >
-              <h1 className='text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-800 mb-6 leading-tight'>
-                <span className='text-gray-600 font-serif'>Where Therapy &</span>
-                <br />
-                <span className='text-gray-800'>Coaching Becomes</span>
-                <br />
-                <span className='text-gray-800'>Action & Accountability</span>
-              </h1>
-              <p className='text-base sm:text-lg text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0'>
-                Extend the impact of your work beyond sessions, through structure, accountability, and communication
-              </p>
-              <div className='flex flex-col sm:flex-row gap-4 justify-center lg:justify-start'>
-                <Button
-                  size='lg'
-                  className='bg-gray-800 text-white hover:bg-gray-700 px-8 py-3 text-lg'
-                  onClick={() => setShowRoleSelection(true)}
-                >
-                  <UserPlus className='w-5 h-5 mr-2' />
-                  Get Started
-                </Button>
-                <Button
-                  size='lg'
-                  variant='outline'
-                  className='border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white px-8 py-3 text-lg'
-                  onClick={() => setShowRoleSelection(true)}
-                >
-                  <LogIn className='w-5 h-5 mr-2' />
-                  Sign In
-                </Button>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className='relative'
+              Where Therapy &<br />
+              Coaching Becomes
+              <br />
+              Action & Accountability
+            </h1>
+            <p className='text-lg sm:text-xl text-white/90 leading-relaxed mb-6 sm:mb-8'>
+              Transform every session into actionable steps that
+              <br className='hidden sm:block' />
+              keep clients progressing between meetings.
+            </p>
+            <button
+              onClick={() => setIsAuthDialogOpen(true)}
+              className='px-6 py-3 sm:px-8 sm:py-4 text-white rounded-lg text-base sm:text-lg font-semibold transition-all duration-500 ease-in-out hover:scale-105'
+              style={{
+                background: 'linear-gradient(to right, #A5B7C8 0%, #E9ADA3 50%, #C87F94 100%)',
+                transition: 'all 0.5s ease-in-out',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(to right, #C87F94 0%, #E9ADA3 50%, #A5B7C8 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(to right, #A5B7C8 0%, #E9ADA3 50%, #C87F94 100%)';
+              }}
             >
-              <div className='relative bg-gray-200 rounded-2xl overflow-hidden h-64 sm:h-80 lg:h-96 xl:h-[500px] shadow-xl'>
-                <Image src='/auth.jpg' alt='Therapy session' fill className='object-cover grayscale' />
-
-                {/* Top-right testimonial */}
-                <div className='absolute top-4 right-4 sm:top-8 sm:right-8'>
-                  <div className='flex items-center space-x-3'>
-                    <div className='w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden'>
-                      <User className='w-6 h-6 text-gray-600' />
-                    </div>
-                    <div className='bg-white rounded-lg p-3 shadow-lg max-w-48'>
-                      <p className='text-sm text-gray-800'>I am in a much better place than I was 2 years ago</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mid-right testimonial */}
-                <div className='absolute top-1/3 right-4 sm:right-8 hidden sm:block'>
-                  <div className='flex items-center space-x-3'>
-                    <div className='w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden'>
-                      <User className='w-6 h-6 text-gray-600' />
-                    </div>
-                    <div className='bg-white rounded-lg p-3 shadow-lg max-w-48'>
-                      <p className='text-sm text-gray-800'>I am in a much better place than I was 2 years ago</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom-left testimonial */}
-                <div className='absolute bottom-4 left-4 sm:bottom-8 sm:left-8'>
-                  <div className='flex items-center space-x-3'>
-                    <div className='w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden'>
-                      <User className='w-6 h-6 text-gray-600' />
-                    </div>
-                    <div className='bg-white rounded-lg p-3 shadow-lg max-w-48'>
-                      <p className='text-sm text-gray-800'>I am in a much better place than I was 2 years ago</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+              Get Started
+            </button>
           </div>
+        </div>
+      </section>
 
-          {/* What We Do Section - Now part of the same section */}
-          <div
-            className='max-w-4xl mx-auto text-center'
-            style={{
-              background: 'radial-gradient(ellipse 80% 60% at 50% 40%, #fbeaec 0%, #f7f3f2 100%)',
-              borderRadius: '1rem',
-              padding: '2.5rem 1.5rem',
-              marginTop: '2rem',
-              marginBottom: '2rem',
-            }}
-          >
-            <motion.h2
-              className='text-3xl sm:text-4xl font-bold text-gray-800 mb-8 font-serif'
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              What We Do
-            </motion.h2>
-            <motion.div
-              className=' backdrop-blur-sm rounded-xl p-2 shadow-sm border border-gray-100'
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <p className='text-base sm:text-lg text-gray-800 leading-relaxed'>
+      {/* What We Do Section */}
+      <section className='py-0 bg-white'>
+        <div className='grid lg:grid-cols-2 min-h-screen'>
+          {/* Left Content */}
+          <div className='flex items-center justify-center p-6 sm:p-8 lg:p-12 xl:p-20 order-2 lg:order-1'>
+            <div className='max-w-lg'>
+              <h2 className='text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-6 sm:mb-8'>What We Do</h2>
+              <p className='text-base sm:text-lg text-gray-700 leading-relaxed'>
                 Continuum is a practitioner-first platform that turns conversations into notes into action. Using
                 secure, AI-assisted tools, we help therapists and coaches create personalised daily programmes — so
                 clients stay supported, engaged, and moving forward between sessions.
               </p>
-            </motion.div>
+            </div>
+          </div>
+
+          {/* Right Image */}
+          <div className='relative min-h-[50vh] lg:min-h-screen order-1 lg:order-2'>
+            <Image
+              src='/landingpage/placeholder2.svg'
+              alt='Smiling blonde woman therapist'
+              fill
+              className='object-cover'
+            />
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section id='features' className='py-16 px-4 sm:px-6 lg:px-8 bg-white'>
-        <div className='max-w-7xl mx-auto'>
-          <motion.div
-            className='text-center mb-12 sm:mb-16'
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className='text-3xl sm:text-4xl font-bold text-gray-800 mb-4 font-serif'>How It Works</h2>
-            <p className='text-lg sm:text-xl text-gray-600'>Four simple steps to transform your practice</p>
-          </motion.div>
+      {/* How It Works - Vertical Flow Section */}
+      <section
+        ref={howItWorksRef}
+        className='relative'
+        style={{ height: '500vh' }} // 5x viewport height for smooth scrolling
+      >
+        <div className='sticky top-0 h-screen flex items-center justify-center overflow-hidden'>
+          <div className='w-full h-full'>
+            {/* Section Header - only show initially */}
+            <div className='absolute top-8 sm:top-12 lg:top-20 left-0 right-0 text-center z-20 px-4'>
+              <h2 className='text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2 sm:mb-4'>How It Works</h2>
+              <p className='text-lg sm:text-xl text-gray-600'>Four simple steps to transform your practice</p>
+            </div>
 
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8'>
-            {[
-              {
-                number: '1',
-                title: 'Session',
-                description:
-                  'Run your session as normal. Continuum captures and structures key insights — no extra admin needed',
-              },
-              {
-                number: '2',
-                title: 'Plan',
-                description:
-                  'AI drafts a personalised programme based on verbatim tasks and suggested tasks. These tasks then include potential actions, reflections, and resources. You edit or approve with one click.',
-              },
-              {
-                number: '3',
-                title: 'Engage',
-                description:
-                  'Clients get their plan via an app, showing up in a daily format — They can tick off tasks, journal and give feedback. You can communicate with your clients any time via secure in-app messaging.',
-              },
-              {
-                number: '4',
-                title: 'Track',
-                description:
-                  "Get real-time visibility into client progress, plus weekly summaries before each session — so you know exactly what's working and what's not.",
-              },
-            ].map((step, index) => (
+            <AnimatePresence mode='wait'>
               <motion.div
-                key={step.number}
-                className='bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-200'
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                key={currentStep}
+                initial={{ opacity: 0, y: 100 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -100 }}
+                transition={{ duration: 0.8, ease: 'easeInOut' }}
+                className={`w-full h-full ${currentStepData?.bgColor || 'bg-pink-100'} relative`}
               >
-                <div className='w-10 h-10 bg-gray-800 text-white rounded-full flex items-center justify-center text-sm font-bold mb-4'>
-                  {step.number}
+                {/* Large Step Number Background */}
+                <div className='absolute left-4 sm:left-8 lg:left-20 top-1/2 transform -translate-y-1/2 z-0'>
+                  <span className='text-8xl sm:text-12xl md:text-16xl lg:text-[20rem] font-bold text-white/20 select-none'>
+                    {currentStepData?.number || 1}
+                  </span>
                 </div>
-                <h3 className='text-lg sm:text-xl font-bold text-gray-800 mb-3'>{step.title}</h3>
-                <p className='text-sm sm:text-base text-gray-600 leading-relaxed'>{step.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Solving the Biggest Gaps Section */}
-      <section className='py-16 px-4 sm:px-6 lg:px-8'>
-        <div className='max-w-7xl mx-auto'>
-          <motion.div
-            className='text-center mb-12 sm:mb-16'
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className='text-3xl sm:text-4xl font-bold text-gray-800 mb-4 font-serif'>
-              Solving the Biggest Gaps in Coaching & Therapy
-            </h2>
-            <p className='text-lg sm:text-xl text-gray-600'>
-              Purpose-built tools that address real practitioner challenges
-            </p>
-          </motion.div>
-
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8'>
-            {[
-              {
-                icon: <NotebookPen className='w-6 h-6' />,
-                title: 'Effortless Notes',
-                description: 'AI-assisted note-taking means you focus on your client — not your keyboard.',
-              },
-              {
-                icon: <MessageCircle className='w-6 h-6' />,
-                title: 'Daily Client Support',
-                description: 'Personalised, simple programmes to keep clients engaged and aligned with their goals.',
-              },
-              {
-                icon: <TrendingUp className='w-6 h-6' />,
-                title: 'Progress Visibility',
-                description: "See what's getting done and what's falling behind — in one smart dashboard.",
-              },
-              {
-                icon: <Mail className='w-6 h-6' />,
-                title: 'One Secure Inbox',
-                description:
-                  'Keep all client conversations in one encrypted, private space — no more scattered messages.',
-              },
-            ].map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                className='bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow'
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <div
-                  className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${
-                    index === 0
-                      ? 'bg-blue-100'
-                      : index === 1
-                        ? 'bg-green-100'
-                        : index === 2
-                          ? 'bg-purple-100'
-                          : 'bg-pink-100'
-                  }`}
-                >
-                  <div
-                    className={
-                      index === 0
-                        ? 'text-blue-600'
-                        : index === 1
-                          ? 'text-green-600'
-                          : index === 2
-                            ? 'text-purple-600'
-                            : 'text-pink-600'
-                    }
+                <div className='relative h-full flex items-center justify-center'>
+                  {/* Large Video - Fixed size 825x490px, responsive */}
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className='relative mx-auto px-4 sm:px-8 lg:px-20'
                   >
-                    {feature.icon}
-                  </div>
+                    <div
+                      style={{
+                        width: 'min(825px, 90vw)',
+                        height: 'min(490px, 50vw)',
+                        maxWidth: '100%',
+                        maxHeight: '60vh',
+                        position: 'relative',
+                      }}
+                      className='rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex items-center justify-center bg-black'
+                    >
+                      <video
+                        src={currentStepData?.video || '/landingpage/step1.mp4'}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+
+                    {/* Content Card - Positioned over video like in screenshots */}
+                    <motion.div
+                      className='absolute bottom-4 right-4 sm:bottom-8 sm:right-8 max-w-xs sm:max-w-sm bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl'
+                      initial={{ x: 50, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ duration: 0.8, delay: 0.6 }}
+                    >
+                      <div className='flex items-center space-x-3 mb-3 sm:mb-4'>
+                        <div className='w-8 h-8 sm:w-10 sm:h-10 bg-pink-400 rounded-lg flex items-center justify-center'>
+                          <span className='text-white text-sm sm:text-lg font-bold'>
+                            {currentStepData?.number || 1}
+                          </span>
+                        </div>
+                        <h3 className='text-lg sm:text-xl font-bold text-gray-900'>
+                          {currentStepData?.title || 'Session'}
+                        </h3>
+                      </div>
+                      <p className='text-xs sm:text-sm text-gray-700 leading-relaxed'>
+                        {currentStepData?.description || ''}
+                      </p>
+                    </motion.div>
+                  </motion.div>
                 </div>
-                <h3 className='text-lg sm:text-xl font-bold text-gray-800 mb-3'>{feature.title}</h3>
-                <p className='text-sm sm:text-base text-gray-600 leading-relaxed'>{feature.description}</p>
               </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Progress indicator */}
+        <div className='fixed right-4 sm:right-8 top-1/2 transform -translate-y-1/2 z-30'>
+          <div className='flex flex-col space-y-2 sm:space-y-3'>
+            {steps.map((_, index) => (
+              <div
+                key={index}
+                className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-all duration-300 ${
+                  index === currentStep ? 'bg-pink-400 scale-125' : 'bg-white/50 border-2 border-pink-400'
+                }`}
+              />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Built on Trust Section */}
-      <section className='py-16 px-4 sm:px-6 lg:px-8 cloudy-gradient-background' style={{ minHeight: 'auto' }}>
-        <div className='max-w-7xl mx-auto'>
-          <motion.div
-            className='text-center mb-12 sm:mb-16'
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className='text-3xl sm:text-4xl font-bold text-gray-800 mb-4 font-serif'>Built on Trust</h2>
-            <p className='text-lg sm:text-xl text-gray-600'>Security, privacy and practitioner autonomy at our core</p>
-          </motion.div>
-
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8'>
-            {[
-              {
-                icon: <User className='w-6 h-6' />,
-                title: "You're In Control",
-                description: 'Nothing gets sent to clients without your approval',
-              },
-              {
-                icon: <Lock className='w-6 h-6' />,
-                title: 'Privacy-First',
-                description: 'All data is encrypted and secured to the highest standard',
-              },
-              {
-                icon: <Bot className='w-6 h-6' />,
-                title: 'AI That Supports',
-                description: 'Continuum enhances & elevates what you do, but critically does not replace you',
-              },
-            ].map((item, index) => (
-              <motion.div
-                key={item.title}
-                className='bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100'
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <div className='w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4'>
-                  {item.icon}
-                </div>
-                <h3 className='text-lg sm:text-xl font-bold text-gray-800 mb-3'>{item.title}</h3>
-                <p className='text-sm sm:text-base text-gray-600 leading-relaxed'>{item.description}</p>
-              </motion.div>
-            ))}
+      {/* CTA Section */}
+      <section className='py-12 sm:py-16 lg:py-20 px-4 sm:px-6 bg-pink-50'>
+        <div className='max-w-4xl mx-auto text-center space-y-6 sm:space-y-8'>
+          <h2 className='text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900'>
+            Ready to transform
+            <br />
+            your practice?
+          </h2>
+          <p className='text-lg sm:text-xl text-gray-600'>
+            Click Get Started to sign up now, or contact us for
+            <br className='hidden sm:block' />
+            more information.
+          </p>
+          <div className='flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4'>
+            <button
+              onClick={() => setIsAuthDialogOpen(true)}
+              className='px-6 py-3 sm:px-8 sm:py-4 text-white rounded-lg text-base sm:text-lg font-semibold transition-all duration-500 ease-in-out hover:scale-105'
+              style={{
+                background: 'linear-gradient(to right, #A5B7C8 0%, #E9ADA3 50%, #C87F94 100%)',
+                transition: 'all 0.5s ease-in-out',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(to right, #C87F94 0%, #E9ADA3 50%, #A5B7C8 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(to right, #A5B7C8 0%, #E9ADA3 50%, #C87F94 100%)';
+              }}
+            >
+              Get Started
+            </button>
+            <button className='px-6 py-3 sm:px-8 sm:py-4 border-2 border-gray-300 text-gray-700 rounded-lg text-base sm:text-lg font-semibold hover:bg-gray-50 transition-colors'>
+              Contact Us
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Got Feedback Section */}
-      <section id='about' className='py-16 px-4 sm:px-6 lg:px-8'>
-        <div className='max-w-4xl mx-auto text-center'>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className='text-3xl sm:text-4xl font-bold text-gray-800 mb-4 font-serif'>Got Feedback?</h2>
-            <p className='text-lg sm:text-xl text-gray-600 italic mb-4'>We'd love to hear it.</p>
-            <p className='text-base sm:text-lg text-gray-600 mb-8 max-w-2xl mx-auto'>
-              Whether you're a client or a clinician, your ideas matter. Leave a suggestion, request a feature, or just
-              let us know what you think
-            </p>
-
-            <div className='bg-white rounded-xl p-6 sm:p-8 shadow-sm max-w-2xl mx-auto'>
-              <form className='space-y-6 text-left'>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>User Type</label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select your user type' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='client'>Client</SelectItem>
-                      <SelectItem value='practitioner'>Practitioner</SelectItem>
-                      <SelectItem value='other'>Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>
-                    What would you like to see improved or added?
-                  </label>
-                  <Textarea
-                    placeholder='Share your thoughts, suggestions, or feature requests...'
-                    className='min-h-[120px]'
-                  />
-                </div>
-
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>Email (Optional)</label>
-                  <Input placeholder="If you'd like a reply" />
-                </div>
-
-                <Button type='submit' className='w-full bg-gray-800 text-white hover:bg-gray-700'>
-                  Submit Feedback
-                </Button>
-              </form>
-            </div>
-          </motion.div>
+      {/* Final Section */}
+      <section className='py-12 sm:py-16 lg:py-20 px-4 sm:px-6 bg-white'>
+        <div className='max-w-4xl mx-auto text-center space-y-6 sm:space-y-8'>
+          <h2 className='text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900'>
+            Solving the Biggest Gaps
+            <br />
+            in Coaching & Therapy
+          </h2>
+          <p className='text-lg sm:text-xl text-gray-600'>
+            Purpose-built tools that address real practitioner challenges
+          </p>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className='py-12 px-4 sm:px-6 lg:px-8 bg-gray-800 text-white'>
-        <div className='max-w-7xl mx-auto'>
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 items-center'>
-            <div className='flex items-center space-x-2'>
-              <Image src='/infinity.svg' alt='Continuum' width={72} height={32} className='w-80 h-8' />
-              <span className='text-xl font-semibold'>CONTINUUM</span>
-            </div>
-
-            <div className='sm:col-span-2 flex flex-col space-y-2'>
-              <div className='flex items-center space-x-2'>
-                <MapPin className='w-4 h-4' />
-                <span className='text-sm sm:text-base'>123 Street, ABC, CF, USA, 000000</span>
-              </div>
-              <div className='flex items-center space-x-2'>
-                <Mail className='w-4 h-4' />
-                <span className='text-sm sm:text-base'>info@continuum.com</span>
-              </div>
-              <div className='flex items-center space-x-2'>
-                <Phone className='w-4 h-4' />
-                <span className='text-sm sm:text-base'>+011234567890</span>
-              </div>
-            </div>
-
-            <div className='flex flex-col items-start sm:items-end space-y-4'>
-              <div className='flex space-x-4'>
-                <Facebook className='w-5 h-5 cursor-pointer hover:text-gray-300 transition-colors' />
-                <Instagram className='w-5 h-5 cursor-pointer hover:text-gray-300 transition-colors' />
-                <Linkedin className='w-5 h-5 cursor-pointer hover:text-gray-300 transition-colors' />
-                <Twitter className='w-5 h-5 cursor-pointer hover:text-gray-300 transition-colors' />
-              </div>
-              <p className='text-xs sm:text-sm text-gray-400'>Continuum © 2025 All Rights Reserved.</p>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* Auth Dialog */}
+      <AuthDialog isOpen={isAuthDialogOpen} onClose={() => setIsAuthDialogOpen(false)} />
     </div>
   );
-}
+};
+
+export default ContinuumLanding;
