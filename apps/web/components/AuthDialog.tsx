@@ -32,7 +32,16 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className='sm:max-w-md'>
+      <DialogContent
+        className='sm:max-w-md fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999] bg-white border border-gray-200 shadow-2xl'
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 9999,
+        }}
+      >
         <DialogHeader>
           <DialogTitle className='text-center text-xl font-semibold'>Welcome to Continuum</DialogTitle>
         </DialogHeader>
