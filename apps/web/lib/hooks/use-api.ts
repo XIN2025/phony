@@ -203,6 +203,7 @@ export interface IntakeForm {
   questions: IntakeFormQuestion[];
   questionCount?: number;
   submissionCount?: number;
+  isTemplate?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -211,10 +212,38 @@ export function useGetIntakeForms() {
   return useQuery({
     queryKey: ['intakeForms'],
     queryFn: () => ApiClient.get<IntakeForm[]>('/api/intake-forms'),
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 5 * 60 * 1000,
   });
+}
+
+export function useGetTemplateForms() {
+  console.log('🔄 useGetTemplateForms hook called');
+
+  const query = useQuery({
+    queryKey: ['templateForms'],
+    queryFn: async () => {
+      console.log('🚀 useGetTemplateForms: Making API call to /api/intake-forms/templates');
+      try {
+        const result = await ApiClient.get<IntakeForm[]>('/api/intake-forms/templates');
+        console.log('📦 useGetTemplateForms: API response:', result);
+        return result;
+      } catch (error) {
+        console.error('❌ useGetTemplateForms: API call failed:', error);
+        throw error;
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  console.log('🔄 useGetTemplateForms query state:', {
+    data: query.data,
+    isLoading: query.isLoading,
+    error: query.error,
+    isFetching: query.isFetching,
+    isStale: query.isStale,
+  });
+
+  return query;
 }
 
 export function useGetIntakeForm(id: string) {
@@ -264,6 +293,13 @@ export function useDeleteIntakeForm() {
     },
   });
 }
+
+export function useSeedTemplates() {
+  return useMutation({
+    mutationFn: () => ApiClient.post<{ message: string }>('/api/intake-form-templates/seed'),
+  });
+}
+
 export interface ClientIntakeForm {
   id: string;
   title: string;

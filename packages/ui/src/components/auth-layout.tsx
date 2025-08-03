@@ -10,7 +10,7 @@ interface AuthLayoutProps {
 export function AuthLayout({ children, variant = 'practitioner' }: AuthLayoutProps) {
   return (
     <div
-      className={`fixed inset-0 flex min-h-screen w-screen overflow-hidden ${variant === 'client' ? 'client-auth-gradient' : 'auth-gradient'}`}
+      className={`fixed inset-0 flex min-h-screen w-screen overflow-visible ${variant === 'client' ? 'client-auth-gradient' : 'auth-gradient'}`}
     >
       {/* Left side with image */}
       <div className='relative hidden h-full min-h-screen w-1/2 lg:block'>

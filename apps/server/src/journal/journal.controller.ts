@@ -132,21 +132,11 @@ export class JournalController {
   @ApiOperation({ summary: 'Get unread journal count for the current practitioner' })
   @ApiResponse({ status: 200, description: 'Unread journal count retrieved successfully.' })
   async getUnreadJournalCount(@CurrentUser() user: RequestUser) {
-    console.log('getUnreadJournalCount controller called with user:', user);
-    console.log('User role:', user.role);
-    console.log('User ID:', user.id);
-
     if (user.role !== 'PRACTITIONER') {
-      console.log('User is not a practitioner, throwing error');
       throw new Error('Unauthorized: Only practitioners can access unread journal count');
     }
 
-    console.log('Calling journalService.getUnreadJournalCount with user.id:', user.id);
     const count = await this.journalService.getUnreadJournalCount(user.id);
-    console.log('Got count from service:', count);
-
-    const result = { count };
-    console.log('Returning result:', result);
-    return result;
+    return { count };
   }
 }

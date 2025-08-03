@@ -77,7 +77,10 @@ export class IntakeFormService {
 
   async getIntakeFormsByPractitioner(practitionerId: string) {
     return await this.prisma.intakeForm.findMany({
-      where: { practitionerId },
+      where: {
+        practitionerId,
+        isTemplate: false, // Exclude template forms from regular form list
+      },
       include: {
         questions: {
           orderBy: {
@@ -228,5 +231,55 @@ export class IntakeFormService {
         submittedAt: 'desc',
       },
     });
+  }
+
+  async getTemplateFormsByPractitioner(practitionerId: string) {
+    console.log('🔍 getTemplateFormsByPractitioner called with practitionerId:', practitionerId);
+
+    // First, let's see all intake forms in the database
+    const allForms = await this.prisma.intakeForm.findMany({
+      select: {
+        id: true,
+        title: true,
+        isTemplate: true,
+        practitionerId: true,
+      },
+    });
+    console.log('📊 All intake forms in database:', allForms);
+
+    // Now let's see all forms with isTemplate: true
+    const allTemplateForms = await this.prisma.intakeForm.findMany({
+      where: {
+        isTemplate: true,
+      },
+      select: {
+        id: true,
+        title: true,
+        isTemplate: true,
+        practitionerId: true,
+      },
+    });
+    console.log('📊 All template forms in database:', allTemplateForms);
+
+    const templateForms = await this.prisma.intakeForm.findMany({
+      where: {
+        isTemplate: true, // Only get template forms, regardless of practitioner
+      },
+      include: {
+        questions: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    console.log('📋 Found template forms:', templateForms.length);
+    console.log('📋 Template forms data:', JSON.stringify(templateForms, null, 2));
+
+    return templateForms;
   }
 }

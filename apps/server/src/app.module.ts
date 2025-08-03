@@ -10,6 +10,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { PractitionerModule } from './practitioner/practitioner.module';
 import { IntakeFormModule } from './intake-form/intake-form.module';
+
 import { ClientModule } from './client/client.module';
 import { UsersModule } from './users/users.module';
 import { SessionModule } from './session/session.module';

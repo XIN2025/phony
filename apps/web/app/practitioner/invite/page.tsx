@@ -28,7 +28,12 @@ export default function InviteClientPage() {
   const { mutate: inviteClient, isPending: isInviting } = useInviteClient();
   const { mutate: createIntakeForm, isPending: isCreatingForm } = useCreateIntakeForm();
   const { mutate: updateIntakeForm, isPending: isUpdatingForm } = useUpdateIntakeForm();
-  const { data: selectedForm } = useGetIntakeForm(selectedFormId || '');
+  const { data: selectedForm } = useGetIntakeForm(
+    selectedFormId && selectedFormId !== 'create-new' ? selectedFormId : '',
+  );
+
+  // Track if the selected form is a template form
+  const [isTemplateForm, setIsTemplateForm] = React.useState(false);
 
   const handleDetailsSubmit = (data: {
     clientFirstName: string;
@@ -82,8 +87,10 @@ export default function InviteClientPage() {
         saveAsTemplate: true,
         hasChanges: false,
       });
+      setIsTemplateForm(false);
       goToNextStep();
     } else {
+      // Handle existing form selection
       setSelectedFormId(formId);
     }
   };
@@ -103,8 +110,32 @@ export default function InviteClientPage() {
     let finalData = { ...inviteData };
 
     if (inviteData.newIntakeForm) {
-      if (inviteData.intakeFormId) {
-        // Update existing form
+      // If this is a template form or we don't have an intakeFormId, create a new form
+      if (isTemplateForm || !inviteData.intakeFormId) {
+        // Create new form (don't update template)
+        createIntakeForm(inviteData.newIntakeForm, {
+          onSuccess: (response) => {
+            finalData = {
+              ...finalData,
+              intakeFormId: response.id,
+            };
+            // Send invitation after form creation
+            sendInvitation(finalData);
+          },
+          onError: (error: Error) => {
+            let errorMessage = 'Failed to create form.';
+            if (error.message) {
+              errorMessage = error.message;
+            }
+            toast.error(errorMessage, {
+              description: 'Please check your form data and try again.',
+              duration: 5000,
+            });
+            setSubmitting(false);
+          },
+        });
+      } else {
+        // Update existing non-template form
         updateIntakeForm(
           { id: inviteData.intakeFormId, data: inviteData.newIntakeForm },
           {
@@ -129,29 +160,6 @@ export default function InviteClientPage() {
             },
           },
         );
-      } else {
-        // Create new form
-        createIntakeForm(inviteData.newIntakeForm, {
-          onSuccess: (response) => {
-            finalData = {
-              ...finalData,
-              intakeFormId: response.id,
-            };
-            // Send invitation after form creation
-            sendInvitation(finalData);
-          },
-          onError: (error: Error) => {
-            let errorMessage = 'Failed to create form.';
-            if (error.message) {
-              errorMessage = error.message;
-            }
-            toast.error(errorMessage, {
-              description: 'Please check your form data and try again.',
-              duration: 5000,
-            });
-            setSubmitting(false);
-          },
-        });
       }
     } else {
       // No form to create/update, send invitation directly
@@ -292,9 +300,13 @@ export default function InviteClientPage() {
         })),
       };
 
+      // Check if this is a template form
+      const isTemplate = selectedForm.isTemplate === true;
+      setIsTemplateForm(isTemplate);
+
       setInviteData({
         newIntakeForm: transformedForm,
-        intakeFormId: selectedFormId,
+        intakeFormId: isTemplate ? undefined : selectedFormId, // Don't set intakeFormId for template forms
         saveAsTemplate: true,
         hasChanges: false,
       });

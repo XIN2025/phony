@@ -216,19 +216,14 @@ export class JournalService {
 
   async getUnreadJournalCount(practitionerId: string) {
     try {
-      console.log('getUnreadJournalCount called with practitionerId:', practitionerId);
-
       const clients = await this.prisma.user.findMany({
         where: { practitionerId },
         select: { id: true },
       });
 
-      console.log('Found clients:', clients);
-
       if (clients.length === 0) return 0;
 
       const clientIds = clients.map((client) => client.id);
-      console.log('Client IDs:', clientIds);
 
       const allEntries = await this.prisma.journalEntry.findMany({
         where: {
@@ -239,16 +234,8 @@ export class JournalService {
 
       const unreadEntries = allEntries.filter((entry) => !entry.readBy || !entry.readBy.includes(practitionerId));
 
-      console.log('Found total entries:', allEntries.length);
-      console.log('Found unread entries:', unreadEntries.length);
-      console.log('Returning count:', unreadEntries.length);
-
       return unreadEntries.length;
-    } catch (error) {
-      console.error('Error getting unread journal count:', error);
-      console.error('Error stack:', error.stack);
-      console.error('Error message:', error.message);
-      console.error('Error name:', error.name);
+    } catch {
       return 0;
     }
   }

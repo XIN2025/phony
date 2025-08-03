@@ -17,6 +17,14 @@
         "tags": ["App"]
       }
     },
+    "/api/seed-templates": {
+      "post": {
+        "operationId": "AppController_seedTemplates",
+        "parameters": [],
+        "responses": { "201": { "description": "" } },
+        "tags": ["App"]
+      }
+    },
     "/api/auth/otp/verify": {
       "post": {
         "operationId": "AuthController_verifyOtp",
@@ -274,6 +282,16 @@
         "responses": { "201": { "description": "File uploaded successfully." } },
         "security": [{ "bearer": [] }],
         "summary": "Upload a file for an intake form answer",
+        "tags": ["intake-forms"]
+      }
+    },
+    "/api/intake-forms/templates": {
+      "get": {
+        "operationId": "IntakeFormController_getTemplateForms",
+        "parameters": [],
+        "responses": { "200": { "description": "List of template forms." } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get template forms for the logged-in practitioner",
         "tags": ["intake-forms"]
       }
     },

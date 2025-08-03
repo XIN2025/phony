@@ -385,3 +385,5 @@ export const AudioRecorder = forwardRef<
     </>
   );
 });
+
+AudioRecorder.displayName = 'AudioRecorder';

@@ -19,6 +19,8 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { CreateIntakeFormDto } from '@repo/shared-types';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { saveFileToUploads, validateFileUpload, generateUniqueFilename } from '../common/utils/user.utils';
+import { CurrentUser } from '../auth/decorators/user.decorator';
+import { RequestUser } from '../auth/dto/request-user.dto';
 
 @ApiTags('intake-forms')
 @Controller('intake-forms')
@@ -60,6 +62,21 @@ export class IntakeFormController {
   findAll(@Request() req) {
     const practitionerId = req.user.id;
     return this.intakeFormService.getIntakeFormsByPractitioner(practitionerId);
+  }
+
+  @Get('templates')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get template forms for the logged-in practitioner' })
+  @ApiResponse({ status: 200, description: 'List of template forms.' })
+  async getTemplateForms(@CurrentUser() user: RequestUser) {
+    console.log('🎯 getTemplateForms endpoint called');
+    console.log('👤 User:', user);
+    console.log('👤 User ID:', user.id);
+
+    const result = await this.intakeFormService.getTemplateFormsByPractitioner(user.id);
+    console.log('✅ getTemplateForms result:', result);
+
+    return result;
   }
 
   @Get(':id')

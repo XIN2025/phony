@@ -85,54 +85,55 @@ export class ClientService {
 
   async submitIntakeForm(clientId: string, formId: string, answers: Record<string, unknown>) {
     try {
-      const result = await this.prismaService.$transaction(async (tx) => {
-        // Check if a submission already exists
-        const existingSubmission = await tx.intakeFormSubmission.findFirst({
-          where: {
-            clientId: clientId,
-            formId: formId,
-          },
-        });
-
-        if (existingSubmission) {
-          throwAuthError('Intake form has already been submitted for this client', 'badRequest');
-        }
-
-        // Create new submission
-        const submission = await tx.intakeFormSubmission.create({
-          data: {
-            clientId: clientId,
-            formId: formId,
-          },
-        });
-
-        // Create answers for each question
-        const answerPromises = Object.entries(answers).map(([questionId, value]) =>
-          tx.answer.create({
-            data: {
-              submissionId: submission.id,
-              questionId,
-              value: String(value),
+      const result = await this.prismaService.$transaction(
+        async (tx) => {
+          const existingSubmission = await tx.intakeFormSubmission.findFirst({
+            where: {
+              clientId: clientId,
+              formId: formId,
             },
-          })
-        );
-
-        await Promise.all(answerPromises);
-
-        // Update client status
-        const currentUser = await tx.user.findUnique({ where: { id: clientId } });
-        if (currentUser) {
-          const newStatus = updateClientStatus(currentUser.clientStatus || 'ACTIVE', true);
-          await tx.user.update({
-            where: { id: clientId },
-            data: { clientStatus: newStatus },
           });
 
-          return { submission, clientStatus: newStatus };
-        }
+          if (existingSubmission) {
+            throwAuthError('Intake form has already been submitted for this client', 'badRequest');
+          }
 
-        return { submission, clientStatus: 'INTAKE_COMPLETED' };
-      });
+          const submission = await tx.intakeFormSubmission.create({
+            data: {
+              clientId: clientId,
+              formId: formId,
+            },
+          });
+
+          const answerPromises = Object.entries(answers).map(([questionId, value]) =>
+            tx.answer.create({
+              data: {
+                submissionId: submission.id,
+                questionId,
+                value: value as unknown,
+              },
+            })
+          );
+
+          await Promise.all(answerPromises);
+
+          const currentUser = await tx.user.findUnique({ where: { id: clientId } });
+          if (currentUser) {
+            const newStatus = updateClientStatus(currentUser.clientStatus || 'ACTIVE', true);
+            await tx.user.update({
+              where: { id: clientId },
+              data: { clientStatus: newStatus },
+            });
+
+            return { submission, clientStatus: newStatus };
+          }
+
+          return { submission, clientStatus: 'INTAKE_COMPLETED' };
+        },
+        {
+          timeout: 30000,
+        }
+      );
 
       return {
         success: true,

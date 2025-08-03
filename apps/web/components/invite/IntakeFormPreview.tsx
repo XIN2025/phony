@@ -28,22 +28,11 @@ export function IntakeFormPreview({
   buttonText,
   hideFixedBottomBar,
 }: Props) {
-  const { inviteData, setInviteData } = useInviteContext();
-
-  const hasChanges = inviteData.hasChanges || false;
-  const shouldShowSaveOption = isNewForm || (inviteData.intakeFormId && hasChanges);
-
-  const saveAsTemplate = isNewForm ? (inviteData.saveAsTemplate ?? true) : true;
-
-  const handleSaveAsTemplateChange = (checked: boolean) => {
-    if (shouldShowSaveOption) {
-      setInviteData({ saveAsTemplate: checked });
-    }
-  };
+  const { inviteData } = useInviteContext();
 
   const renderAnswer = (question: CreateIntakeFormDto['questions'][0]) => {
     const commonProps = {
-      className: 'bg-gray-100 border-gray-300 rounded-md',
+      className: 'bg-white border-gray-200 rounded-md text-gray-700',
       disabled: true,
     };
     switch (question.type) {
@@ -64,10 +53,14 @@ export function IntakeFormPreview({
               <div key={opt.id || i} className='mb-2'>
                 <Label
                   htmlFor={`q-preview-${opt.id || i}`}
-                  className='flex items-center space-x-2 p-3 rounded-md bg-gray-100 border border-gray-300'
+                  className='flex items-center space-x-2 p-3 rounded-md bg-white border border-gray-200 hover:bg-gray-50 transition-colors'
                 >
-                  <RadioGroupItem value={opt.label} id={`q-preview-${opt.id || i}`} />
-                  <span>
+                  <RadioGroupItem
+                    value={opt.label}
+                    id={`q-preview-${opt.id || i}`}
+                    className='border-gray-400 data-[state=checked]:border-primary data-[state=checked]:bg-primary'
+                  />
+                  <span className='text-gray-700'>
                     {String.fromCharCode(65 + i)}. {opt.label}
                   </span>
                 </Label>
@@ -82,10 +75,14 @@ export function IntakeFormPreview({
               <Label
                 key={opt.id || i}
                 htmlFor={`q-preview-check-${opt.id || i}`}
-                className='flex items-center space-x-2 p-3 rounded-md bg-gray-100 border border-gray-300'
+                className='flex items-center space-x-2 p-3 rounded-md bg-white border border-gray-200 hover:bg-gray-50 transition-colors'
               >
-                <Checkbox id={`q-preview-check-${opt.id || i}`} disabled />
-                <span>
+                <Checkbox
+                  id={`q-preview-check-${opt.id || i}`}
+                  disabled
+                  className='border-gray-400 data-[state=checked]:border-primary data-[state=checked]:bg-primary'
+                />
+                <span className='text-gray-700'>
                   {String.fromCharCode(65 + i)}. {opt.label}
                 </span>
               </Label>
@@ -98,8 +95,8 @@ export function IntakeFormPreview({
         return <Input {...commonProps} type='number' placeholder='5' />;
       case QuestionType.FILE_UPLOAD:
         return (
-          <div className='border-2 border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-100'>
-            <span className='text-gray-500'>File upload placeholder</span>
+          <div className='border-2 border-dashed border-gray-300 rounded-md p-4 text-center bg-white'>
+            <span className='text-gray-600'>File upload placeholder</span>
           </div>
         );
       default:
@@ -119,6 +116,7 @@ export function IntakeFormPreview({
           }}
         >
           <h2 className='text-xl font-semibold'>{formData.title}</h2>
+          {formData.description && <p className='text-gray-600 text-sm mt-2'>{formData.description}</p>}
         </div>
         {/* Question Cards */}
         {formData.questions.map((q, index) => (
@@ -158,20 +156,8 @@ export function IntakeFormPreview({
           </div>
         )}
         {/* Normal row for sm+ only */}
-        <div className='hidden sm:flex flex-row justify-between items-center gap-4 mt-8'>
-          {shouldShowSaveOption && (
-            <div className='flex items-center space-x-2 sm:mr-auto'>
-              <Checkbox
-                id='save-template-preview'
-                checked={saveAsTemplate}
-                onCheckedChange={handleSaveAsTemplateChange}
-              />
-              <label htmlFor='save-template-preview' className='text-sm font-medium leading-none'>
-                Save form as a template
-              </label>
-            </div>
-          )}
-          <div className='flex gap-4 w-full sm:w-auto sm:ml-auto'>
+        <div className='hidden sm:flex flex-row justify-end items-center gap-4 mt-8'>
+          <div className='flex gap-4 w-full sm:w-auto'>
             <Button
               type='button'
               variant='outline'

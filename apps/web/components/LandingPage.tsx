@@ -83,19 +83,19 @@ const ContinuumLanding = () => {
     {
       title: "You're In Control",
       description: 'Nothing gets sent to clients without your approval',
-      icon: '👥',
+      image: '/landingpage/buiild-on-trust/control.svg',
       color: 'bg-pink-100',
     },
     {
       title: 'Privacy-First',
       description: 'All data is encrypted and secured to the highest standard',
-      icon: '🔒',
+      image: '/landingpage/buiild-on-trust/privacy.svg',
       color: 'bg-blue-100',
     },
     {
       title: 'AI That Supports',
       description: 'Continuum enhances & elevates what you do, but critically does not replace you',
-      icon: '🤝',
+      image: '/landingpage/buiild-on-trust/suuport.svg',
       color: 'bg-pink-100',
     },
   ];
@@ -123,38 +123,46 @@ const ContinuumLanding = () => {
           backgroundColor: 'rgba(0, 0, 0, 0.2)',
         }}
       >
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 py-3  flex justify-between items-center'>
-          <div className='flex items-center  space-x-2'>
+        <div className='max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-2 sm:py-3 flex justify-between items-center'>
+          <div className='flex items-center space-x-1 sm:space-x-2'>
             <div className='flex items-center justify-center'>
               <Image
                 src='/landingpage/infinity.svg'
                 alt='Infinity'
                 width={32}
-                height={32}
-                className='w-6 h-6 sm:w-15 sm:h-15'
+                height={12}
+                className='w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12'
+                style={{
+                  width: 'clamp(20px, 4vw, 48px)',
+                  height: 'clamp(20px, 4vw, 48px)',
+                }}
               />
             </div>
             <Image
               src='/landingpage/continuum.svg'
               alt='Continuum'
-              width={120}
+              width={32}
               height={24}
-              className='h-4 w-auto sm:h-5'
+              className='h-3 w-auto '
+              style={{
+                height: 'clamp(8px, 3vw, 16px)',
+                width: 'auto',
+              }}
             />
           </div>
-          <div className='flex items-center space-x-2 sm:space-x-4 md:space-x-6'>
-            <button className='text-white hover:text-gray-300 transition-colors font-medium text-sm sm:text-base hidden sm:block'>
+          <div className='flex items-center space-x-1 sm:space-x-2 md:space-x-3 lg:space-x-4 xl:space-x-6'>
+            <button className='text-white hover:text-gray-300 transition-colors font-medium text-xs sm:text-sm md:text-base hidden lg:block'>
               Contact Us
             </button>
             <button
               onClick={() => setIsAuthDialogOpen(true)}
-              className='px-3 py-1.5 sm:px-4 sm:py-2 md:px-6 border border-white/30 text-white rounded-lg hover:bg-white/10 transition-colors font-medium text-sm sm:text-base'
+              className='px-1.5 py-1 sm:px-2 sm:py-1 md:px-3 md:py-1.5 lg:px-4 lg:py-2 xl:px-6 border border-white/30 text-white rounded-lg hover:bg-white/10 transition-colors font-medium text-xs sm:text-sm md:text-base'
             >
               Sign In
             </button>
             <button
               onClick={() => setIsAuthDialogOpen(true)}
-              className='px-3 py-1.5 sm:px-4 sm:py-2 md:px-6 text-white rounded-lg transition-all duration-500 ease-in-out font-medium text-sm sm:text-base hover:scale-105'
+              className='px-1.5 py-1 sm:px-2 sm:py-1 md:px-3 md:py-1.5 lg:px-4 lg:py-2 xl:px-6 text-white rounded-lg transition-all duration-500 ease-in-out font-medium text-xs sm:text-sm md:text-base hover:scale-105'
               style={{
                 background: 'linear-gradient(to right, #A5B7C8 0%, #E9ADA3 50%, #C87F94 100%)',
                 transition: 'all 0.5s ease-in-out',
@@ -187,16 +195,13 @@ const ContinuumLanding = () => {
           <div className='absolute inset-0 bg-black/40'></div>
         </div>
 
-        <div
-          className='relative z-10 max-w-7xl mx-auto h-screen flex items-center'
-          style={{ paddingLeft: 'min(8vw, 120px)' }}
-        >
+        <div className='relative z-10 max-w-7xl mx-auto -mt-15 h-screen flex items-center px-4 sm:px-6 lg:px-8'>
           <div className='max-w-2xl w-full text-left'>
             <h1
-              className='font-bold text-white leading-tight mb-8'
+              className='font-bold text-white leading-tight mb-6 sm:mb-8'
               style={{
                 fontFamily: 'DM Serif Display, serif',
-                fontSize: 'min(5vw, 80px)',
+                fontSize: 'min(8vw, 64px)',
                 lineHeight: '1.1',
               }}
             >
@@ -205,19 +210,18 @@ const ContinuumLanding = () => {
               <br />
               Action & Accountability
             </h1>
-            <p className='text-white/90 leading-relaxed mb-8' style={{ fontSize: 'min(1.5vw, 24px)' }}>
+            <p className='text-white/90 leading-relaxed mb-6 sm:mb-8' style={{ fontSize: 'min(3.5vw, 24px)' }}>
               Transform every session into actionable steps that
               <br className='hidden sm:block' />
               keep clients progressing between meetings.
             </p>
             <button
               onClick={() => setIsAuthDialogOpen(true)}
-              className='text-white rounded-lg font-semibold transition-all duration-500 ease-in-out hover:scale-105'
+              className='text-white rounded-lg font-semibold transition-all duration-500 ease-in-out hover:scale-105 px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4'
               style={{
                 background: 'linear-gradient(to right, #A5B7C8 0%, #E9ADA3 50%, #C87F94 100%)',
                 transition: 'all 0.5s ease-in-out',
-                padding: '16px 32px',
-                fontSize: 'min(1.2vw, 20px)',
+                fontSize: 'min(3vw, 20px)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'linear-gradient(to right, #C87F94 0%, #E9ADA3 50%, #A5B7C8 100%)';
@@ -236,19 +240,30 @@ const ContinuumLanding = () => {
       <section className='py-0 bg-white'>
         <div className='grid lg:grid-cols-2' style={{ minHeight: '100vh' }}>
           {/* Left Content */}
-          <div className='flex items-center justify-center order-2 lg:order-1' style={{ padding: 'min(5vw, 80px)' }}>
-            <div style={{ maxWidth: '500px' }}>
+          <div
+            className='flex items-center justify-center order-2 lg:order-1 px-4 sm:px-6 lg:px-8'
+            style={{ padding: 'min(5vw, 80px)' }}
+          >
+            <div className='w-full' style={{ maxWidth: '500px' }}>
               <h2
-                className='font-bold text-gray-900 mb-8'
-                style={{ fontSize: 'min(4vw, 60px)', fontFamily: "'DM Serif Display', serif" }}
+                className='font-bold text-gray-900 mb-6 sm:mb-8'
+                style={{ fontSize: 'min(6vw, 60px)', fontFamily: "'DM Serif Display', serif" }}
               >
                 What We Do
               </h2>
-              <p className='text-gray-700 leading-relaxed' style={{ fontSize: 'min(1.2vw, 18px)' }}>
-                Continuum is a practitioner-first platform that turns conversations into notes into action. Using
-                secure, AI-assisted tools, we help therapists and coaches create personalised daily programmes — so
-                clients stay supported, engaged, and moving forward between sessions.
-              </p>
+              <div
+                className='rounded-2xl p-6 sm:p-8 shadow-sm'
+                style={{
+                  background:
+                    'linear-gradient(to right, rgba(200, 127, 148, 0.15) 0%, rgba(233, 173, 163, 0.15) 50%, rgba(165, 183, 200, 0.15) 100%)',
+                }}
+              >
+                <p className='text-gray-700 leading-relaxed' style={{ fontSize: 'min(3.5vw, 18px)' }}>
+                  Continuum is a practitioner-first platform that turns conversations into notes into action. Using
+                  secure, AI-assisted tools, we help therapists and coaches create personalised daily programmes — so
+                  clients stay supported, engaged, and moving forward between sessions.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -274,14 +289,16 @@ const ContinuumLanding = () => {
         <div className='sticky top-0 h-screen flex items-center justify-center overflow-hidden'>
           <div className='w-full h-full'>
             {/* Section Header - only show initially */}
-            <div className='absolute top-8 sm:top-12 lg:top-20 left-0 right-0 text-center z-20 px-4'>
+            <div className='absolute top-4 sm:top-8 md:top-12 lg:top-20 left-0 right-0 text-center z-20 px-4'>
               <h2
-                className='text-3xl sm:text-[46px] md:text-[56px] font-bold text-gray-900 mb-2 sm:mb-4'
+                className='text-2xl sm:text-3xl md:text-[46px] lg:text-[56px] font-bold text-gray-900 mb-2 sm:mb-4'
                 style={{ fontFamily: "'DM Serif Display', serif" }}
               >
                 How It Works
               </h2>
-              <p className='text-lg sm:text-xl text-gray-600'>Four simple steps to transform your practice</p>
+              <p className='text-base sm:text-lg md:text-xl text-gray-600'>
+                Four simple steps to transform your practice
+              </p>
             </div>
 
             <AnimatePresence mode='wait'>
@@ -303,9 +320,11 @@ const ContinuumLanding = () => {
                   >
                     <div className='relative flex items-center justify-center w-full h-full'>
                       {/* STEP NUMBER - OVERLAPPING LEFT OF VIDEO */}
-                      <div className='absolute z-20 top-1/2 left-0 -translate-y-1/2 -translate-x-1/3 pointer-events-none'>
+                      <div
+                        className={`absolute top-3 pointer-events-none ${currentStepData?.number === 1 ? '-left-8 sm:-left-12 md:-left-18' : '-left-12 sm:-left-18 md:-left-26'}`}
+                      >
                         <span
-                          className='text-8xl sm:text-10xl md:text-12xl lg:text-16xl xl:text-[20rem]
+                          className='text-4xl sm:text-6xl md:text-8xl lg:text-10xl xl:text-[240px] 
         font-bold text-[#80717133] select-none leading-none block text-left'
                         >
                           {currentStepData?.number || 1}
@@ -320,7 +339,7 @@ const ContinuumLanding = () => {
                           maxHeight: '60vh',
                           position: 'relative',
                         }}
-                        className='rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex items-center justify-center bg-black z-10'
+                        className='rounded-2xl sm:rounded-3xl shadow-2xl overflow-visible flex items-center justify-center bg-black z-10'
                       >
                         <video
                           src={currentStepData?.video || '/landingpage/step1.mp4'}
@@ -330,21 +349,25 @@ const ContinuumLanding = () => {
                           playsInline
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
-                        {/* Card overlays video as before */}
+                        {/* Card overlays video - positioned at top left */}
                         <motion.div
-                          className='absolute bottom-4 right-4 sm:bottom-8 sm:right-8 max-w-xs sm:max-w-sm 
-                   bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl z-30'
-                          initial={{ x: 50, opacity: 0 }}
+                          className='absolute -bottom-4 -right-4 sm:-bottom-8 sm:-right-8 md:-bottom-12 md:-right-8 max-w-[280px] sm:max-w-xs md:max-w-sm 
+                   bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-xl z-90'
+                          initial={{ x: -50, opacity: 0 }}
                           animate={{ x: 0, opacity: 1 }}
                           transition={{ duration: 0.8, delay: 0.6 }}
                         >
-                          <div className='flex items-center space-x-3 mb-3 sm:mb-4'>
-                            <div className='w-8 h-8 sm:w-10 sm:h-10 bg-pink-400 rounded-lg flex items-center justify-center'>
-                              <span className='text-white text-sm sm:text-lg font-bold'>
-                                {currentStepData?.number || 1}
-                              </span>
+                          <div className='flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-3 md:mb-4'>
+                            <div className='w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center'>
+                              <Image
+                                src={`/landingpage/how-it-works/${currentStepData?.number || 1}.svg`}
+                                alt={`Step ${currentStepData?.number || 1}`}
+                                width={32}
+                                height={32}
+                                className='w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8'
+                              />
                             </div>
-                            <h3 className='text-lg sm:text-xl font-bold text-gray-900'>
+                            <h3 className='text-sm sm:text-lg md:text-xl font-bold text-gray-900'>
                               {currentStepData?.title || 'Session'}
                             </h3>
                           </div>
@@ -363,25 +386,25 @@ const ContinuumLanding = () => {
       </section>
 
       {/* CTA Section */}
-      <section className='py-12 sm:py-16 lg:py-20 px-4 sm:px-6 bg-white   rounded-lg mx-4 sm:mx-6'>
-        <div className='max-w-4xl mx-auto text-center space-y-6 sm:space-y-8'>
+      <section className='py-4 md:py-10  px-4 sm:px-6 bg-white rounded-lg mx-2 sm:mx-4 md:mx-6'>
+        <div className='max-w-4xl mx-auto text-center space-y-4 sm:space-y-6 md:space-y-8'>
           <h2
-            className='text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900'
+            className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900'
             style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Ready to transform
             <br />
             your practice?
           </h2>
-          <p className='text-lg sm:text-xl text-gray-600'>
+          <p className='text-base sm:text-lg md:text-xl text-gray-600'>
             Click Get Started to sign up now, or contact us for
             <br className='hidden sm:block' />
             more information.
           </p>
-          <div className='flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4'>
+          <div className='flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4'>
             <button
               onClick={() => setIsAuthDialogOpen(true)}
-              className='px-6 py-3 sm:px-8 sm:py-4 text-white rounded-lg text-base sm:text-lg font-semibold transition-all duration-500 ease-in-out hover:scale-105'
+              className='px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 text-white rounded-lg text-sm sm:text-base md:text-lg font-semibold transition-all duration-500 ease-in-out hover:scale-105'
               style={{
                 background: 'linear-gradient(to right, #A5B7C8 0%, #E9ADA3 50%, #C87F94 100%)',
                 transition: 'all 0.5s ease-in-out',
@@ -395,7 +418,7 @@ const ContinuumLanding = () => {
             >
               Get Started
             </button>
-            <button className='px-6 py-3 sm:px-8 sm:py-4 border-2 border-pink-300 text-pink-600 rounded-lg text-base sm:text-lg font-semibold hover:bg-pink-50 transition-colors'>
+            <button className='px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 border-2 border-pink-300 text-pink-600 rounded-lg text-sm sm:text-base md:text-lg font-semibold hover:bg-pink-50 transition-colors'>
               Contact Us
             </button>
           </div>
@@ -403,15 +426,15 @@ const ContinuumLanding = () => {
       </section>
 
       {/* Solving the Biggest Gaps Section */}
-      <section className='py-16 sm:py-20 lg:py-24 px-4 sm:px-6 bg-white'>
+      <section className='py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 bg-white'>
         <div className='max-w-7xl mx-auto'>
           {/* Section Header */}
-          <div className='text-center mb-12 sm:mb-16 lg:mb-20'>
+          <div className='text-center mb-8 sm:mb-12 md:mb-16 lg:mb-20'>
             <h2
               className='font-bold text-gray-900 mb-4 sm:mb-6'
               style={{
                 fontFamily: 'DM Serif Display, serif',
-                fontSize: 'min(4vw, 60px)',
+                fontSize: 'min(6vw, 60px)',
                 lineHeight: '1.1',
               }}
             >
@@ -419,13 +442,13 @@ const ContinuumLanding = () => {
               <br />
               in Coaching & Therapy
             </h2>
-            <p className='text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto'>
+            <p className='text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto'>
               Purpose-built tools that address real practitioner challenges
             </p>
           </div>
 
           {/* Gaps Grid */}
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8'>
             {gapsData.map((gap, index) => (
               <motion.div
                 key={index}
@@ -433,15 +456,34 @@ const ContinuumLanding = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className={`p-6 sm:p-8 rounded-2xl border-2 ${gap.borderColor} ${gap.color} hover:shadow-lg transition-all duration-300`}
+                className={`py-8 sm:py-12 md:py-16 px-6 sm:px-8 md:px-12 rounded-2xl ${gap.color} hover:shadow-lg transition-all duration-500 ease-in-out group`}
+                style={{
+                  borderRadius: '1rem',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderTopLeftRadius = '15rem';
+                  e.currentTarget.style.borderTopRightRadius = '15rem';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderTopLeftRadius = '1rem';
+                  e.currentTarget.style.borderTopRightRadius = '1rem';
+                }}
               >
-                <div className='flex flex-col items-center text-center space-y-4'>
-                  <div className='w-auto h-32 rounded-full  flex items-center justify-center shadow-sm border-2 border-gray-200'>
-                    <Image src={gap.image} alt={gap.title} width={32} height={32} className='w-auto h-32' />
+                <div className='flex flex-col items-center text-center space-y-1'>
+                  <div className='w-auto h-24 sm:h-28 md:h-32 rounded-full flex items-center justify-center shadow-sm border-2 border-gray-200'>
+                    <Image
+                      src={gap.image}
+                      alt={gap.title}
+                      width={24}
+                      height={24}
+                      className='w-auto h-16 sm:h-20 md:h-24'
+                    />
                   </div>
                   <div className='flex-1'>
-                    <h3 className='font-bold text-gray-900 text-lg sm:text-xl mb-3'>{gap.title}</h3>
-                    <p className='text-gray-700 leading-relaxed text-sm sm:text-base'>{gap.description}</p>
+                    <h3 className='font-bold text-gray-900 text-base sm:text-lg md:text-xl mb-2 sm:mb-3'>
+                      {gap.title}
+                    </h3>
+                    <p className='text-gray-700 leading-relaxed text-xs sm:text-sm'>{gap.description}</p>
                   </div>
                 </div>
               </motion.div>
@@ -455,32 +497,32 @@ const ContinuumLanding = () => {
 
       {/* Built on Trust Section */}
       <section
-        className='py-16 sm:py-20 lg:py-24 px-4 sm:px-6'
+        className='py-8 sm:py-12 md:py-16 px-4 sm:px-6'
         style={{
           background:
-            'radial-gradient(ellipse at 30% 50%, rgba(200, 127, 148, 0.4) 0%, rgba(233, 173, 163, 0.3) 40%, rgba(165, 183, 200, 0.2) 70%, rgba(165, 183, 200, 0.4) 100%)',
+            'radial-gradient(ellipse at 30% 50%, rgba(200, 127, 148, 0.25) 0%, rgba(233, 173, 163, 0.2) 40%, rgba(165, 183, 200, 0.1) 70%, rgba(165, 183, 200, 0.2) 100%)',
         }}
       >
         <div className='max-w-7xl mx-auto'>
           {/* Section Header */}
-          <div className='text-center mb-12 sm:mb-16 lg:mb-20'>
+          <div className='text-center mb-6 sm:mb-12 md:mb-16 lg:mb-20'>
             <h2
               className='font-bold text-gray-900 mb-4 sm:mb-6'
               style={{
                 fontFamily: 'DM Serif Display, serif',
-                fontSize: 'min(4vw, 60px)',
+                fontSize: 'min(6vw, 60px)',
                 lineHeight: '1.1',
               }}
             >
               Built on Trust
             </h2>
-            <p className='text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto'>
+            <p className='text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto'>
               Security, privacy and practitioner autonomy at our core
             </p>
           </div>
 
           {/* Trust Grid */}
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8'>
             {trustData.map((trust, index) => (
               <motion.div
                 key={index}
@@ -488,15 +530,21 @@ const ContinuumLanding = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className='p-6 sm:p-8 rounded-2xl bg-white border-2 border-gray-100 hover:shadow-lg transition-all duration-300'
+                className='p-4 sm:p-6 rounded-2xl hover:shadow-lg transition-all duration-300'
               >
-                <div className='flex flex-col items-center text-center space-y-4'>
-                  <div className={`w-16 h-16 rounded-full ${trust.color} flex items-center justify-center shadow-sm`}>
-                    <div className='text-2xl text-gray-700'>{trust.icon}</div>
+                <div className='flex flex-col items-center text-center space-y-3 max-w-xs'>
+                  <div className='w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-sm bg-pink-100'>
+                    <Image
+                      src={trust.image}
+                      alt={trust.title}
+                      width={48}
+                      height={48}
+                      className='w-6 h-6 sm:w-8 sm:h-8'
+                    />
                   </div>
-                  <div className='flex-1'>
-                    <h3 className='font-bold text-gray-900 text-lg sm:text-xl mb-3'>{trust.title}</h3>
-                    <p className='text-gray-700 leading-relaxed text-sm sm:text-base'>{trust.description}</p>
+                  <div>
+                    <h3 className='font-bold text-gray-900 text-sm sm:text-base md:text-lg mb-2'>{trust.title}</h3>
+                    <p className='text-gray-700 leading-relaxed text-xs sm:text-sm'>{trust.description}</p>
                   </div>
                 </div>
               </motion.div>
@@ -506,28 +554,36 @@ const ContinuumLanding = () => {
       </section>
 
       {/* Contact Us Section */}
-      <section className='py-16 sm:py-20 lg:py-24 px-4 sm:px-6 bg-white'>
+      <section className='py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 bg-gray-100'>
         <div className='max-w-4xl mx-auto'>
           {/* Section Header */}
-          <div className='text-center mb-12 sm:mb-16'>
+          <div className='text-center mb-8 sm:mb-12 md:mb-16'>
             <h2
               className='font-bold text-gray-900 mb-4 sm:mb-6'
               style={{
                 fontFamily: 'DM Serif Display, serif',
-                fontSize: 'min(4vw, 60px)',
+                fontSize: 'min(8vw, 56px)',
                 lineHeight: '1.1',
               }}
             >
               Contact Us
             </h2>
-            <p className='text-lg sm:text-xl text-gray-600 mb-2 italic'>We'd love to hear from you.</p>
-            <p className='text-base text-gray-600'>Leave a message, request a callback or give feedback.</p>
+            <p
+              className='text-base sm:text-lg md:text-[32px] text-gray-600 mb-2 italic'
+              style={{
+                fontFamily: 'DM Serif Text, serif',
+                lineHeight: '1.1',
+              }}
+            >
+              We'd love to hear from you.
+            </p>
+            <p className='text-sm sm:text-base text-gray-600'>Leave a message, request a callback or give feedback.</p>
           </div>
 
           {/* Contact Form */}
-          <form className='space-y-6'>
+          <form className='space-y-4 sm:space-y-6'>
             {/* First Row - Name Fields */}
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6'>
               <div>
                 <label htmlFor='firstName' className='block text-sm font-medium text-gray-700 mb-2'>
                   First Name
@@ -536,7 +592,7 @@ const ContinuumLanding = () => {
                   type='text'
                   id='firstName'
                   name='firstName'
-                  className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
                   placeholder='Enter your first name'
                 />
               </div>
@@ -548,7 +604,7 @@ const ContinuumLanding = () => {
                   type='text'
                   id='lastName'
                   name='lastName'
-                  className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
                   placeholder='Enter your last name'
                 />
               </div>
@@ -563,7 +619,7 @@ const ContinuumLanding = () => {
                 type='email'
                 id='email'
                 name='email'
-                className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
                 placeholder='Share your thoughts, suggestions, or feature requests...'
               />
             </div>
@@ -574,7 +630,7 @@ const ContinuumLanding = () => {
                 Phone Number
               </label>
               <div className='flex'>
-                <select className='px-4 py-3 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'>
+                <select className='px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'>
                   <option>UK</option>
                   <option>US</option>
                   <option>CA</option>
@@ -583,7 +639,7 @@ const ContinuumLanding = () => {
                   type='tel'
                   id='phone'
                   name='phone'
-                  className='flex-1 px-4 py-3 border border-l-0 border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                  className='flex-1 px-3 py-2 border border-l-0 border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
                   placeholder='+44 9876543210'
                 />
               </div>
@@ -598,7 +654,7 @@ const ContinuumLanding = () => {
                 id='message'
                 name='message'
                 rows={4}
-                className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none'
+                className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white'
                 placeholder='Leave us a message or a suggestion'
               />
             </div>
@@ -607,7 +663,7 @@ const ContinuumLanding = () => {
             <div className='text-center'>
               <button
                 type='submit'
-                className='px-8 py-4 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors duration-300'
+                className='px-6 py-3 sm:px-8 sm:py-4 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors duration-300 text-sm sm:text-base'
               >
                 Send Message
               </button>
@@ -617,113 +673,103 @@ const ContinuumLanding = () => {
       </section>
 
       {/* Footer */}
-      <footer className='bg-gray-900 text-white py-12 sm:py-16 lg:py-20 px-4 sm:px-6'>
-        <div className='max-w-7xl mx-auto'>
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12'>
-            {/* Logo and Description */}
-            <div className='lg:col-span-2'>
-              <div className='flex items-center space-x-3 mb-6'>
-                <div className='flex items-center justify-center'>
-                  <Image src='/landingpage/infinity.svg' alt='Infinity' width={32} height={32} className='w-8 h-8' />
-                </div>
+      <footer className='relative text-white bg-black py-8 sm:py-10 md:py-15 px-4 sm:px-6 lg:px-8 overflow-hidden'>
+        <div
+          className='absolute bottom-0 right-0 w-[400px] h-[400px] sm:w-[600px] sm:h-[600px] md:w-[800px] md:h-[800px] pointer-events-none'
+          style={{
+            background:
+              'radial-gradient(ellipse at bottom right, rgba(200, 127, 148, 0.5) 0%, rgba(200, 127, 148, 0.3) 20%, rgba(200, 127, 148, 0.15) 45%, rgba(200, 127, 148, 0.06) 70%, transparent 95%)',
+          }}
+        />
+
+        {/* Background Infinity Symbol */}
+        <div className='absolute -bottom-8 -right-10 sm:-bottom-14 sm:-right-20 opacity-80 pointer-events-none transform'>
+          <Image
+            src='/landingpage/infinity.svg'
+            alt='Background Infinity'
+            width={200}
+            height={200}
+            className='w-auto h-[80px] sm:h-[120px] md:h-[150px]'
+          />
+        </div>
+
+        <div className='max-w-7xl mx-auto relative z-10'>
+          {/* Top Section */}
+          <div className='flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 space-y-4 sm:space-y-0'>
+            {/* Left Side - Logo, Company Name, and Contact Info */}
+            <div className='flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-8'>
+              {/* Logo Section */}
+              <div className='flex flex-col items-start'>
+                <Image
+                  src='/landingpage/infinity.svg'
+                  alt='Infinity'
+                  width={32}
+                  height={32}
+                  className='w-auto h-4 sm:h-5 mb-2'
+                />
                 <Image
                   src='/landingpage/continuum.svg'
                   alt='Continuum'
-                  width={140}
-                  height={28}
-                  className='h-6 w-auto'
+                  width={64}
+                  height={64}
+                  className='w-auto h-4 sm:h-5 mb-2'
                 />
               </div>
-              <p className='text-gray-300 leading-relaxed mb-6 max-w-md'>
-                Transform every session into actionable steps that keep clients progressing between meetings.
-              </p>
-              <div className='flex space-x-4'>
-                <button className='text-gray-400 hover:text-white transition-colors'>
-                  <svg className='w-6 h-6' fill='currentColor' viewBox='0 0 24 24'>
-                    <path d='M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z' />
+
+              {/* Contact Information */}
+              <div className='space-y-2 sm:space-y-3'>
+                <div className='text-white'>
+                  <p className='text-sm sm:text-base'>123 Street, ABC, CF, USA, 000000</p>
+                  <div className='w-full h-px bg-white mt-2'></div>
+                </div>
+                <div className='flex items-center space-x-2 text-white'>
+                  <svg className='w-3 h-3 sm:w-4 sm:h-4' fill='currentColor' viewBox='0 0 24 24'>
+                    <path d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z' />
                   </svg>
-                </button>
-                <button className='text-gray-400 hover:text-white transition-colors'>
-                  <svg className='w-6 h-6' fill='currentColor' viewBox='0 0 24 24'>
-                    <path d='M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z' />
+                  <span className='text-sm sm:text-base'>info@continuum.com</span>
+                </div>
+                <div className='flex items-center space-x-2 text-white'>
+                  <svg className='w-3 h-3 sm:w-4 sm:h-4' fill='currentColor' viewBox='0 0 24 24'>
+                    <path d='M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z' />
                   </svg>
-                </button>
-                <button className='text-gray-400 hover:text-white transition-colors'>
-                  <svg className='w-6 h-6' fill='currentColor' viewBox='0 0 24 24'>
-                    <path d='M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z' />
-                  </svg>
-                </button>
+                  <span className='text-sm sm:text-base'>+011234567890</span>
+                </div>
               </div>
             </div>
 
-            {/* Product */}
-            <div>
-              <h3 className='font-semibold text-lg mb-4'>Product</h3>
-              <ul className='space-y-3'>
-                <li>
-                  <a href='#' className='text-gray-300 hover:text-white transition-colors'>
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a href='#' className='text-gray-300 hover:text-white transition-colors'>
-                    Pricing
-                  </a>
-                </li>
-                <li>
-                  <a href='#' className='text-gray-300 hover:text-white transition-colors'>
-                    Security
-                  </a>
-                </li>
-                <li>
-                  <a href='#' className='text-gray-300 hover:text-white transition-colors'>
-                    API
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div>
-              <h3 className='font-semibold text-lg mb-4'>Company</h3>
-              <ul className='space-y-3'>
-                <li>
-                  <a href='#' className='text-gray-300 hover:text-white transition-colors'>
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a href='#' className='text-gray-300 hover:text-white transition-colors'>
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href='#' className='text-gray-300 hover:text-white transition-colors'>
-                    Careers
-                  </a>
-                </li>
-                <li>
-                  <a href='#' className='text-gray-300 hover:text-white transition-colors'>
-                    Contact
-                  </a>
-                </li>
-              </ul>
+            {/* Right Side - Social Media Icons */}
+            <div className='flex space-x-3 sm:space-x-4'>
+              <button className='w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-white flex items-center justify-center text-white hover:bg-white hover:text-gray-900 transition-colors'>
+                <svg className='w-3 h-3 sm:w-4 sm:h-4' fill='currentColor' viewBox='0 0 24 24'>
+                  <path d='M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z' />
+                </svg>
+              </button>
+              <button className='w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-white flex items-center justify-center text-white hover:bg-white hover:text-gray-900 transition-colors'>
+                <svg className='w-3 h-3 sm:w-4 sm:h-4' fill='currentColor' viewBox='0 0 24 24'>
+                  <path d='M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z' />
+                </svg>
+              </button>
+              <button className='w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-white flex items-center justify-center text-white hover:bg-white hover:text-gray-900 transition-colors'>
+                <svg className='w-3 h-3 sm:w-4 sm:h-4' fill='currentColor' viewBox='0 0 24 24'>
+                  <path d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z' />
+                </svg>
+              </button>
+              <button className='w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-white flex items-center justify-center text-white hover:bg-white hover:text-gray-900 transition-colors'>
+                <svg className='w-3 h-3 sm:w-4 sm:h-4' fill='currentColor' viewBox='0 0 24 24'>
+                  <path d='M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z' />
+                </svg>
+              </button>
             </div>
           </div>
 
-          {/* Bottom Footer */}
-          <div className='border-t border-gray-800 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center'>
-            <p className='text-gray-400 text-sm'>© 2024 Continuum. All rights reserved.</p>
-            <div className='flex space-x-6 mt-4 sm:mt-0'>
-              <a href='#' className='text-gray-400 hover:text-white transition-colors text-sm'>
-                Privacy Policy
-              </a>
-              <a href='#' className='text-gray-400 hover:text-white transition-colors text-sm'>
-                Terms of Service
-              </a>
-              <a href='#' className='text-gray-400 hover:text-white transition-colors text-sm'>
-                Cookie Policy
-              </a>
+          {/* Horizontal Line */}
+          <div className='w-full h-px bg-white mb-6 sm:mb-8'></div>
+
+          {/* Bottom Section */}
+          <div className='flex justify-center sm:justify-end mb-8 sm:mb-10 items-center'>
+            {/* Copyright */}
+            <div>
+              <p className='text-white text-xs sm:text-sm'>Continuum © 2025 All Rights Reserved.</p>
             </div>
           </div>
         </div>

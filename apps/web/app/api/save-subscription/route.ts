@@ -14,7 +14,6 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = session.user.id;
-    console.log(`[SaveSubscription] Processing subscription for user: ${userId}`);
 
     const subscription = await req.json();
 
@@ -24,9 +23,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid subscription data' }, { status: 400 });
     }
 
-    console.log(`[SaveSubscription] Saving subscription with endpoint: ${subscription.endpoint}`);
-
-    // Save or update the subscription for this user
     const savedSubscription = await prisma.pushSubscription.upsert({
       where: { endpoint: subscription.endpoint },
       update: {
@@ -40,8 +36,6 @@ export async function POST(req: NextRequest) {
         userId,
       },
     });
-
-    console.log(`[SaveSubscription] Successfully saved subscription: ${savedSubscription.id}`);
 
     return NextResponse.json(
       {

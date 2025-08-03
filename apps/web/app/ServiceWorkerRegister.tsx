@@ -54,9 +54,7 @@ export default function ServiceWorkerRegister() {
                     };
 
                     const subscription = await registration.pushManager.subscribe(subscribeOptions);
-                    console.log('[Push] Push subscription created:', subscription);
 
-                    // Send subscription to backend
                     try {
                       const response = await fetch('/api/save-subscription', {
                         method: 'POST',
