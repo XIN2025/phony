@@ -110,7 +110,7 @@ export class ClientService {
               data: {
                 submissionId: submission.id,
                 questionId,
-                value: value as unknown,
+                value: String(value),
               },
             })
           );
