@@ -220,18 +220,20 @@ export class SessionService {
     try {
       const aiResults = await this.aiService.processSessionWithAllTemplates(transcript);
 
+      const updateData = {
+        filteredTranscript: aiResults.filteredTranscript || transcript,
+        aiSummary: aiResults.defaultSummary?.summary || 'AI summary generation failed',
+        summaryTitle: aiResults.defaultSummary?.title || null,
+        soapSummary: aiResults.soapSummary?.summary || null,
+        birpSummary: aiResults.birpSummary?.summary || null,
+        girpSummary: aiResults.girpSummary?.summary || null,
+        piecSummary: aiResults.piecSummary?.summary || null,
+        status: SessionStatus.REVIEW_READY,
+      };
+
       await this.prisma.session.update({
         where: { id: sessionId },
-        data: {
-          filteredTranscript: aiResults.filteredTranscript || transcript,
-          aiSummary: aiResults.defaultSummary?.summary || 'AI summary generation failed',
-          summaryTitle: aiResults.defaultSummary?.title || null,
-          soapSummary: aiResults.soapSummary?.summary || null,
-          birpSummary: aiResults.birpSummary?.summary || null,
-          girpSummary: aiResults.girpSummary?.summary || null,
-          piecSummary: aiResults.piecSummary?.summary || null,
-          status: SessionStatus.REVIEW_READY,
-        },
+        data: updateData,
       });
 
       if (aiResults.actionItemSuggestions?.complementaryTasks?.length > 0) {
@@ -384,7 +386,7 @@ export class SessionService {
   }
 
   async getSessionById(sessionId: string) {
-    return await this.prisma.session.findUnique({
+    const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
       include: {
         practitioner: {
@@ -415,13 +417,15 @@ export class SessionService {
         },
       },
     });
+
+    return session;
   }
 
   async updateSession(
     sessionId: string,
     data: { aiSummary?: string; notes?: string; summaryTitle?: string; summaryTemplate?: string }
   ) {
-    return await this.prisma.session.update({
+    const result = await this.prisma.session.update({
       where: { id: sessionId },
       data: {
         ...(data.aiSummary !== undefined ? { aiSummary: data.aiSummary } : {}),
@@ -432,6 +436,8 @@ export class SessionService {
           : {}),
       },
     });
+
+    return result;
   }
 
   async generateComprehensiveSummaryForClient(clientId: string, start?: string, end?: string) {

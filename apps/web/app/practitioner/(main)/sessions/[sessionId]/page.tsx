@@ -1,65 +1,17 @@
 'use client';
 
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { ClientPageHeader } from '@/components/practitioner/ClientPageHeader';
 import { PlanEditor } from '@/components/practitioner/PlanEditor';
-import { useGeneratePlan, useGetSession, usePublishPlan, useUpdateSession } from '@/lib/hooks/use-api';
+import { useGeneratePlan, useGetClient, useGetSession, usePublishPlan, useUpdateSession } from '@/lib/hooks/use-api';
 import { Button } from '@repo/ui/components/button';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui/components/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
 import { ArrowLeft, Check, Edit2, Pause, Play, SkipBack, SkipForward, Sparkles, X } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import Image from 'next/image';
-import { ClientPageHeader } from '@/components/practitioner/ClientPageHeader';
-import { useGetClient } from '@/lib/hooks/use-api';
-
-type SuggestedActionItem = {
-  id: string;
-  description: string;
-  category?: string;
-  target?: string;
-  frequency?: string;
-  weeklyRepetitions?: number;
-  isMandatory?: boolean;
-  whyImportant?: string;
-  recommendedActions?: string;
-  toolsToHelp?: string;
-  status: string;
-};
-
-type SessionDetail = {
-  id: string;
-  status: string;
-  title?: string;
-  transcript?: string;
-  filteredTranscript?: string;
-  aiSummary?: string;
-  recordedAt: string;
-  client?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  practitioner?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    profession: string;
-  };
-  plan?: any;
-  audioFileUrl?: string;
-  notes?: string;
-  durationSeconds?: number;
-  summary?: string;
-  summaryTemplate?: string;
-  soapSummary?: string;
-  birpSummary?: string;
-  girpSummary?: string;
-  piecSummary?: string;
-};
 
 export default function SessionDetailPage() {
   const params = useParams();
@@ -152,6 +104,8 @@ export default function SessionDetailPage() {
         sessionId,
         data: { summaryTemplate: template },
       });
+
+      await refetch();
       toast.success('Template updated');
     } catch (error) {
       console.error('Error updating template selection:', error);
@@ -159,10 +113,12 @@ export default function SessionDetailPage() {
     }
   };
 
-  const getCurrentTemplateSummary = () => {
+  const getCurrentTemplateSummary = useCallback(() => {
     if (!session) return '';
 
-    switch (session.summaryTemplate || 'DEFAULT') {
+    const currentTemplate = session.summaryTemplate || 'DEFAULT';
+
+    switch (currentTemplate) {
       case 'SOAP':
         return session.soapSummary || session.aiSummary || '';
       case 'BIRP':
@@ -174,7 +130,7 @@ export default function SessionDetailPage() {
       default:
         return session.aiSummary || '';
     }
-  };
+  }, [session]);
   const [audioError, setAudioError] = useState(false);
 
   useEffect(() => {
@@ -182,7 +138,7 @@ export default function SessionDetailPage() {
       setSummaryDraft(getCurrentTemplateSummary());
       setNotesDraft(session.notes);
     }
-  }, [session]);
+  }, [session, session?.summaryTemplate, getCurrentTemplateSummary]);
 
   const handleSaveEdits = async () => {
     if (!session) return;
