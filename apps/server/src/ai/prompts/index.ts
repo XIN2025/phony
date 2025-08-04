@@ -3,3 +3,7 @@ export { meetingSummaryPrompt } from './meeting-summary';
 export { actionItemPrompt } from './action-item.suggestion';
 export { generateMoreTasksPrompt } from './generate-more-tasks';
 export { comprehensiveSummaryPrompt } from './comprehensive-summary';
+export { soapNotesPrompt } from './soap-notes';
+export { birpNotesPrompt } from './birp-notes';
+export { girpNotesPrompt } from './girp-notes';
+export { piecNotesPrompt } from './piec-notes';

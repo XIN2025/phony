@@ -218,14 +218,18 @@ export class SessionService {
 
   private async processWithAI(sessionId: string, transcript: string) {
     try {
-      const aiResults = await this.aiService.processSession(transcript);
+      const aiResults = await this.aiService.processSessionWithAllTemplates(transcript);
 
       await this.prisma.session.update({
         where: { id: sessionId },
         data: {
           filteredTranscript: aiResults.filteredTranscript || transcript,
-          aiSummary: aiResults.summary?.summary || 'AI summary generation failed',
-          summaryTitle: aiResults.summary?.title || null,
+          aiSummary: aiResults.defaultSummary?.summary || 'AI summary generation failed',
+          summaryTitle: aiResults.defaultSummary?.title || null,
+          soapSummary: aiResults.soapSummary?.summary || null,
+          birpSummary: aiResults.birpSummary?.summary || null,
+          girpSummary: aiResults.girpSummary?.summary || null,
+          piecSummary: aiResults.piecSummary?.summary || null,
           status: SessionStatus.REVIEW_READY,
         },
       });
@@ -413,13 +417,19 @@ export class SessionService {
     });
   }
 
-  async updateSession(sessionId: string, data: { aiSummary?: string; notes?: string; summaryTitle?: string }) {
+  async updateSession(
+    sessionId: string,
+    data: { aiSummary?: string; notes?: string; summaryTitle?: string; summaryTemplate?: string }
+  ) {
     return await this.prisma.session.update({
       where: { id: sessionId },
       data: {
         ...(data.aiSummary !== undefined ? { aiSummary: data.aiSummary } : {}),
         ...(data.notes !== undefined ? { notes: data.notes } : {}),
         ...(data.summaryTitle !== undefined ? { summaryTitle: data.summaryTitle } : {}),
+        ...(data.summaryTemplate !== undefined
+          ? { summaryTemplate: data.summaryTemplate as 'DEFAULT' | 'SOAP' | 'BIRP' | 'GIRP' | 'PIEC' }
+          : {}),
       },
     });
   }

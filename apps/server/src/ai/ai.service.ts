@@ -7,6 +7,10 @@ import { comprehensiveSummaryPrompt } from './prompts/comprehensive-summary';
 import { filterTranscriptPrompt } from './prompts/filter-transcript';
 import { generateMoreTasksPrompt } from './prompts/generate-more-tasks';
 import { meetingSummaryPrompt } from './prompts/meeting-summary';
+import { soapNotesPrompt } from './prompts/soap-notes';
+import { birpNotesPrompt } from './prompts/birp-notes';
+import { girpNotesPrompt } from './prompts/girp-notes';
+import { piecNotesPrompt } from './prompts/piec-notes';
 
 const summarySchema = z.object({
   title: z.string().describe('A concise, relevant title for the session, max 5 words'),
@@ -88,6 +92,8 @@ const actionItemSuggestionsSchema = z.object({
 export type SessionSummary = z.infer<typeof summarySchema>;
 export type ComprehensiveSummary = z.infer<typeof comprehensiveSummarySchema>;
 export type ActionItemSuggestions = z.infer<typeof actionItemSuggestionsSchema>;
+
+export type SessionSummaryTemplate = 'DEFAULT' | 'SOAP' | 'BIRP' | 'GIRP' | 'PIEC';
 
 @Injectable()
 export class AiService {
@@ -202,7 +208,10 @@ export class AiService {
     }
   }
 
-  async generateStructuredSummary(filteredTranscript: string): Promise<SessionSummary> {
+  async generateStructuredSummary(
+    filteredTranscript: string,
+    template: SessionSummaryTemplate = 'DEFAULT'
+  ): Promise<SessionSummary> {
     if (!filteredTranscript || filteredTranscript.trim().length === 0) {
       return {
         title: 'Session Summary',
@@ -210,7 +219,7 @@ export class AiService {
       };
     }
     try {
-      const prompt = this.getMeetingSummaryPrompt();
+      const prompt = this.getMeetingSummaryPrompt(template);
       const fullPrompt = `${prompt}\n\nGenerate a summary for the following transcript:\n\n---\n\n${filteredTranscript}`;
       const summaryText = await this.callOpenAI(fullPrompt);
       if (!summaryText) {
@@ -252,9 +261,7 @@ export class AiService {
       const prompt = this.getActionItemSuggestionPrompt();
       const fullPrompt = `${prompt}\n\nAnalyze the following session transcript and suggest action items:\n\n---\n\n${filteredTranscript}`;
 
-      console.log('AI SUGGEST ACTION ITEMS - PROMPT:', fullPrompt);
       const suggestionText = await this.callOpenAI(fullPrompt);
-      console.log('AI SUGGEST ACTION ITEMS - RAW RESPONSE:', suggestionText);
 
       if (!suggestionText) {
         return { sessionTasks: [], complementaryTasks: [] };
@@ -284,7 +291,10 @@ export class AiService {
     }
   }
 
-  async processSession(rawTranscript: string): Promise<{
+  async processSession(
+    rawTranscript: string,
+    template: SessionSummaryTemplate = 'DEFAULT'
+  ): Promise<{
     filteredTranscript: string;
     summary: SessionSummary;
     actionItemSuggestions: ActionItemSuggestions;
@@ -302,7 +312,7 @@ export class AiService {
     try {
       const filteredTranscript = await this.filterTranscript(rawTranscript);
       const [summary, actionItemSuggestions] = await Promise.all([
-        this.generateStructuredSummary(filteredTranscript),
+        this.generateStructuredSummary(filteredTranscript, template),
         this.suggestActionItems(filteredTranscript),
       ]);
       return {
@@ -312,6 +322,59 @@ export class AiService {
       };
     } catch (error) {
       this.logger.error(`Error in processSession:`, error);
+      this.logger.error(`Error stack:`, error.stack);
+      throw error;
+    }
+  }
+
+  async processSessionWithAllTemplates(rawTranscript: string): Promise<{
+    filteredTranscript: string;
+    defaultSummary: SessionSummary;
+    soapSummary: SessionSummary;
+    birpSummary: SessionSummary;
+    girpSummary: SessionSummary;
+    piecSummary: SessionSummary;
+    actionItemSuggestions: ActionItemSuggestions;
+  }> {
+    if (!rawTranscript || rawTranscript.trim().length === 0) {
+      const emptySummary = {
+        title: 'Session Summary',
+        summary: 'No transcript content available to process.',
+      };
+      return {
+        filteredTranscript: '',
+        defaultSummary: emptySummary,
+        soapSummary: emptySummary,
+        birpSummary: emptySummary,
+        girpSummary: emptySummary,
+        piecSummary: emptySummary,
+        actionItemSuggestions: { sessionTasks: [], complementaryTasks: [] },
+      };
+    }
+    try {
+      const filteredTranscript = await this.filterTranscript(rawTranscript);
+
+      const [defaultSummary, soapSummary, birpSummary, girpSummary, piecSummary, actionItemSuggestions] =
+        await Promise.all([
+          this.generateStructuredSummary(filteredTranscript, 'DEFAULT'),
+          this.generateStructuredSummary(filteredTranscript, 'SOAP'),
+          this.generateStructuredSummary(filteredTranscript, 'BIRP'),
+          this.generateStructuredSummary(filteredTranscript, 'GIRP'),
+          this.generateStructuredSummary(filteredTranscript, 'PIEC'),
+          this.suggestActionItems(filteredTranscript),
+        ]);
+
+      return {
+        filteredTranscript,
+        defaultSummary,
+        soapSummary,
+        birpSummary,
+        girpSummary,
+        piecSummary,
+        actionItemSuggestions,
+      };
+    } catch (error) {
+      this.logger.error(`Error in processSessionWithAllTemplates:`, error);
       this.logger.error(`Error stack:`, error.stack);
       throw error;
     }
@@ -361,8 +424,20 @@ export class AiService {
     return filterTranscriptPrompt;
   }
 
-  private getMeetingSummaryPrompt(): string {
-    return meetingSummaryPrompt;
+  private getMeetingSummaryPrompt(template: SessionSummaryTemplate = 'DEFAULT'): string {
+    switch (template) {
+      case 'SOAP':
+        return soapNotesPrompt;
+      case 'BIRP':
+        return birpNotesPrompt;
+      case 'GIRP':
+        return girpNotesPrompt;
+      case 'PIEC':
+        return piecNotesPrompt;
+      case 'DEFAULT':
+      default:
+        return meetingSummaryPrompt;
+    }
   }
 
   private getActionItemSuggestionPrompt(): string {

@@ -6,6 +6,7 @@ import { useGeneratePlan, useGetSession, usePublishPlan, useUpdateSession } from
 import { Button } from '@repo/ui/components/button';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui/components/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/select';
 import { ArrowLeft, Check, Edit2, Pause, Play, SkipBack, SkipForward, Sparkles, X } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -53,6 +54,11 @@ type SessionDetail = {
   notes?: string;
   durationSeconds?: number;
   summary?: string;
+  summaryTemplate?: string;
+  soapSummary?: string;
+  birpSummary?: string;
+  girpSummary?: string;
+  piecSummary?: string;
 };
 
 export default function SessionDetailPage() {
@@ -129,11 +135,51 @@ export default function SessionDetailPage() {
     if (!url) return false;
     return /\.(mp3|wav|ogg|webm)$/i.test(url);
   };
+
+  const templateOptions = [
+    { value: 'DEFAULT', label: 'Default Format' },
+    { value: 'SOAP', label: 'SOAP Notes' },
+    { value: 'BIRP', label: 'BIRP Notes' },
+    { value: 'GIRP', label: 'GIRP Notes' },
+    { value: 'PIEC', label: 'PIEC Notes' },
+  ];
+
+  const handleTemplateChange = async (template: string) => {
+    if (!session || template === session.summaryTemplate) return;
+
+    try {
+      await updateSessionMutation.mutateAsync({
+        sessionId,
+        data: { summaryTemplate: template },
+      });
+      toast.success('Template updated');
+    } catch (error) {
+      console.error('Error updating template selection:', error);
+      toast.error('Failed to update template selection');
+    }
+  };
+
+  const getCurrentTemplateSummary = () => {
+    if (!session) return '';
+
+    switch (session.summaryTemplate || 'DEFAULT') {
+      case 'SOAP':
+        return session.soapSummary || session.aiSummary || '';
+      case 'BIRP':
+        return session.birpSummary || session.aiSummary || '';
+      case 'GIRP':
+        return session.girpSummary || session.aiSummary || '';
+      case 'PIEC':
+        return session.piecSummary || session.aiSummary || '';
+      default:
+        return session.aiSummary || '';
+    }
+  };
   const [audioError, setAudioError] = useState(false);
 
   useEffect(() => {
     if (session) {
-      setSummaryDraft(session.aiSummary);
+      setSummaryDraft(getCurrentTemplateSummary());
       setNotesDraft(session.notes);
     }
   }, [session]);
@@ -443,11 +489,27 @@ export default function SessionDetailPage() {
         <div className='bg-white rounded-2xl shadow-lg p-6 mb-8'>
           <div className='flex items-center justify-between mb-2'>
             <div className='font-extrabold text-2xl mb-2'>Session Summary</div>
-            {!editingSummary && (
-              <button onClick={() => setEditingSummary(true)} aria-label='Edit summary'>
-                <Edit2 className='h-4 w-4 text-muted-foreground' />
-              </button>
-            )}
+            <div className='flex items-center gap-2'>
+              {!editingSummary && (
+                <>
+                  <Select value={session?.summaryTemplate || 'DEFAULT'} onValueChange={handleTemplateChange}>
+                    <SelectTrigger className='w-48'>
+                      <SelectValue placeholder='Select template' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templateOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <button onClick={() => setEditingSummary(true)} aria-label='Edit summary'>
+                    <Edit2 className='h-4 w-4 text-muted-foreground' />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
           {editingSummary ? (
             <div className='flex flex-col gap-2'>
@@ -466,7 +528,7 @@ export default function SessionDetailPage() {
                   variant='outline'
                   onClick={() => {
                     setEditingSummary(false);
-                    setSummaryDraft(session.aiSummary);
+                    setSummaryDraft(getCurrentTemplateSummary());
                   }}
                 >
                   <X className='h-4 w-4 mr-1' /> Cancel
@@ -475,7 +537,7 @@ export default function SessionDetailPage() {
               {saveError && <div className='text-destructive text-xs'>{saveError}</div>}
             </div>
           ) : (
-            <MarkdownRenderer content={session.aiSummary || ''} className='text-sm' />
+            <MarkdownRenderer content={getCurrentTemplateSummary()} className='text-sm' />
           )}
         </div>
         {/* Add grid gap and responsive margin */}

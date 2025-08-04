@@ -346,7 +346,7 @@ export default function PractitionerDashboard() {
                           -
                         </TableCell>
                         <TableCell className='py-1.5 px-2 sm:px-4 lg:px-6'>
-                          <span className='rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-[12px] sm:text-[14px] font-semibold bg-gray-100 text-gray-700 block'>
+                          <span className='rounded-full px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-[12px] sm:text-[14px] font-semibold bg-gray-100 text-gray-700 inline-block'>
                             Invitation Pending
                           </span>
                         </TableCell>

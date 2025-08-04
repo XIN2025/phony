@@ -35,7 +35,7 @@ export default function RootLayout({
         />
         {/* PWA meta tags */}
         <link rel='manifest' href='/manifest.json' />
-        <meta name='theme-color' content='#e11d48' />
+        <meta name='theme-color' content='#ffffff' />
         <meta name='apple-mobile-web-app-capable' content='yes' />
         <meta name='apple-mobile-web-app-status-bar-style' content='default' />
         <meta name='mobile-web-app-capable' content='yes' />

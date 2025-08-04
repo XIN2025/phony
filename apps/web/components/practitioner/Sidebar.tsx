@@ -1,15 +1,12 @@
 ﻿'use client';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
-import { Button } from '@repo/ui/components/button';
-import { LogOut } from 'lucide-react';
-import { signOut } from 'next-auth/react';
-import { getUserDisplayName, getAvatarUrl, getInitials } from '@/lib/utils';
-import { Skeleton } from '@repo/ui/components/skeleton';
 import { useSidebar } from '@/context/SidebarContext';
-import { useRouter } from 'next/navigation';
 import { useGetCurrentUser } from '@/lib/hooks/use-api';
+import { getAvatarUrl, getInitials, getUserDisplayName } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/avatar';
+import { Skeleton } from '@repo/ui/components/skeleton';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const ContinuumIcon = () => (
   <Image src='/Continuum.svg' alt='Continuum Logo' width={120} height={32} className='h-5 2xl:h-6 w-auto' />
@@ -120,16 +117,23 @@ const InfinityIcon = () => (
   <Image src='/infinity.svg' alt='Infinity Logo' width={32} height={32} className='h-3 2xl:h-4 w-auto' />
 );
 
-const SidebarIcon = () => (
-  <Image
-    src='/sidebar/sidebar.svg'
-    alt='Sidebar Icon'
-    width={32}
-    height={32}
-    className='hidden xl:inline h-6
-   w-auto'
-  />
-);
+const SidebarIcon = () => {
+  const { sidebarOpen, setSidebarOpen } = useSidebar();
+
+  const handleClick = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className='hidden xl:inline-flex items-center justify-center p-1 rounded-lg hover:bg-gray-100 transition-colors'
+      aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+    >
+      <Image src='/sidebar/sidebar.svg' alt='Sidebar Icon' width={32} height={32} className='h-6 w-6' />
+    </button>
+  );
+};
 
 export const SidebarContent = ({
   navLinks,
@@ -137,12 +141,14 @@ export const SidebarContent = ({
   signOutCallbackUrl = '/practitioner/auth',
   settingsPath = '/practitioner/settings',
   homePath = '/',
+  sidebarOpen = true,
 }: {
   navLinks: Array<{ href: string; icon: React.ElementType; label: string }>;
   pathname: string;
   signOutCallbackUrl?: string;
   settingsPath?: string;
   homePath?: string;
+  sidebarOpen?: boolean;
 }) => {
   const { setSidebarOpen } = useSidebar();
   const { data: user, isLoading } = useGetCurrentUser();
@@ -187,21 +193,37 @@ export const SidebarContent = ({
     );
   };
   return (
-    <div className='flex h-full flex-col font-sans bg-white lg:bg-transparent shadow-lg sm:shadow-none border-r sm:border-none min-w-0 rounded-bl-2xl'>
-      <div className='flex h-[56px] sm:h-[64px] lg:h-[68px] items-center px-6 sm:px-8 lg:px-4 xl:px-6 mb-4 sm:mb-6 lg:mb-4'>
-        <Link
-          href={homePath}
-          className='flex items-center justify-between w-full text-xl sm:text-2xl font-logo font-semibold text-black min-w-0 gap-x-2 lg:gap-x-8 xl:gap-x-12'
-        >
-          <span className='flex flex-row items-center gap-2'>
-            <InfinityIcon />
-            <ContinuumIcon />
-          </span>
-          <SidebarIcon />
-        </Link>
+    <div
+      className={`flex h-full flex-col font-sans shadow-lg sm:shadow-none border-r sm:border-none min-w-0 ${
+        sidebarOpen
+          ? 'bg-white lg:bg-transparent rounded-bl-2xl'
+          : 'bg-gradient-to-b from-red-100 via-orange-100 to-blue-100 rounded-3xl mx-3 my-4'
+      }`}
+    >
+      {/* Header */}
+      <div
+        className={`flex items-center ${sidebarOpen ? 'h-[56px] sm:h-[64px] lg:h-[68px] px-6 sm:px-8 lg:px-4 xl:px-6 mb-4 sm:mb-6 lg:mb-4' : 'h-12 px-2 justify-center mb-2'}`}
+      >
+        {sidebarOpen ? (
+          <div className='flex items-center justify-between w-full text-xl sm:text-2xl font-logo font-semibold text-black min-w-0 gap-x-2 lg:gap-x-8 xl:gap-x-12'>
+            <Link href={homePath} className='flex flex-row items-center gap-2'>
+              <InfinityIcon />
+              <ContinuumIcon />
+            </Link>
+            <SidebarIcon />
+          </div>
+        ) : (
+          <div className='flex flex-col items-center'>
+            <SidebarIcon />
+          </div>
+        )}
       </div>
-      <div className='flex-1 py-2 lg:py-2 min-w-0'>
-        <nav className='grid items-start px-6 xl:px-8 text-sm sm:text-base lg:text-lg gap-2 '>
+
+      {/* Navigation */}
+      <div className={`flex-1 ${sidebarOpen ? 'py-2 lg:py-2' : 'py-2'}`}>
+        <nav
+          className={`${sidebarOpen ? 'grid items-start gap-4 px-6 xl:px-8 text-sm sm:text-base lg:text-lg' : 'flex flex-col items-center gap-3 px-2'}`}
+        >
           {((): React.ReactNode => {
             // Find the navLink with the longest href that matches the start of the pathname
             let activeIndex = -1;
@@ -220,25 +242,66 @@ export const SidebarContent = ({
                 <Link
                   key={link.href}
                   href={link.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 sm:gap-4 lg:gap-3 rounded-full px-4 sm:px-6 lg:px-4 xl:px-6 py-2 transition-all font-medium text-xs lg:text-sm  2xl:text-md ${
+                  onClick={() => {
+                    // Navigation links just navigate, they don't collapse the sidebar
+                  }}
+                  className={`flex items-center transition-all font-medium text-xs lg:text-sm 2xl:text-md ${
+                    sidebarOpen
+                      ? 'gap-3 sm:gap-4 lg:gap-3 rounded-full px-4 sm:px-6 lg:px-4 xl:px-6 py-2'
+                      : 'justify-center rounded-lg p-3 w-12 h-12'
+                  } ${
                     isActive
-                      ? 'bg-[#8C7FC8] text-white font-semibold shadow-sm'
-                      : 'text-[#807171] hover:text-black hover:bg-[#ede6e3]'
+                      ? sidebarOpen
+                        ? 'bg-[#8C7FC8] text-white font-semibold shadow-sm'
+                        : 'bg-[#8C7FC8] text-white shadow-md'
+                      : sidebarOpen
+                        ? 'text-[#807171] hover:text-black hover:bg-[#ede6e3]'
+                        : 'text-[#807171] hover:text-black hover:bg-[#ede6e3]'
                   }`}
-                  style={{ minHeight: 40, justifyContent: 'flex-start' }}
+                  style={{
+                    minHeight: sidebarOpen ? 40 : 48,
+                    justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                    width: sidebarOpen ? 'auto' : '48px',
+                  }}
+                  title={sidebarOpen ? undefined : link.label}
                 >
-                  <link.icon className='h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6 flex-shrink-0' isActive={isActive} />
-                  <span className='truncate'>{link.label}</span>
+                  <link.icon
+                    className={`flex-shrink-0 ${sidebarOpen ? 'h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6' : 'h-6 w-6'}`}
+                    isActive={isActive}
+                  />
+                  {sidebarOpen && <span className='truncate'>{link.label}</span>}
                 </Link>
               );
             });
           })()}
         </nav>
       </div>
-      <div className='border-t border-[#e5d6d0] mt-auto px-6 sm:px-8 lg:px-4 xl:px-6 pb-4 sm:pb-6 lg:pb-4 pt-4 sm:pt-6 lg:pt-4 flex flex-col gap-3 sm:gap-4 lg:gap-3 min-w-0'>
-        <div className='flex items-center gap-2 sm:gap-3'>
-          <UserProfile />
+
+      {/* Footer */}
+      <div
+        className={`border-t border-[#e5d6d0] mt-auto flex flex-col min-w-0 ${sidebarOpen ? 'pb-4 sm:pb-6 lg:pb-4 pt-4 sm:pt-6 lg:pt-4 gap-3 sm:gap-4 lg:gap-3 px-6 sm:px-8 lg:px-4 xl:px-6' : 'pb-2 pt-2 px-2'}`}
+      >
+        <div className={`flex items-center ${sidebarOpen ? 'gap-2 sm:gap-3' : 'justify-center'}`}>
+          {sidebarOpen ? (
+            <UserProfile />
+          ) : (
+            <button
+              className='flex items-center justify-center rounded-full p-2 cursor-pointer hover:bg-[#ede6e3] transition-colors'
+              onClick={() => {
+                setSidebarOpen(false);
+                router.push(settingsPath);
+              }}
+              aria-label='View Profile'
+              type='button'
+            >
+              <Avatar className='h-10 w-10 border-2 border-white shadow-md'>
+                <AvatarImage src={getAvatarUrl(user?.avatarUrl, user)} alt="User's avatar" />
+                <AvatarFallback className='text-sm font-medium'>
+                  {getInitials({ firstName: user?.firstName, lastName: user?.lastName })}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -246,4 +309,4 @@ export const SidebarContent = ({
 };
 
 // Export the custom icons for use in layout files
-export { HomeIcon, ClientsIcon, MessagesIcon, JournalsIcon };
+export { ClientsIcon, HomeIcon, JournalsIcon, MessagesIcon };

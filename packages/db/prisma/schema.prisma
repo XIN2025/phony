@@ -183,6 +183,11 @@ model Session {
   plan               Plan?
   durationSeconds    Int?
   summaryTitle       String?
+  summaryTemplate    SessionSummaryTemplate @default(DEFAULT)
+  soapSummary        String?
+  birpSummary        String?
+  girpSummary        String?
+  piecSummary        String?
   @@map("sessions")
 }
 
@@ -209,6 +214,14 @@ enum SessionStatus {
   AI_PROCESSING
   REVIEW_READY
   COMPLETED
+}
+
+enum SessionSummaryTemplate {
+  DEFAULT
+  SOAP
+  BIRP
+  GIRP
+  PIEC
 }
 
 model Plan {

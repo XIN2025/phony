@@ -34,13 +34,8 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className='sm:max-w-md fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999] bg-white border-0 shadow-2xl rounded-2xl overflow-hidden'
+        className='sm:max-w-md w-[95vw] max-h-[90vh] overflow-y-auto bg-white border-0 shadow-2xl rounded-2xl overflow-hidden'
         style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 9999,
           background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',

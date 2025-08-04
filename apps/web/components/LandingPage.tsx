@@ -217,7 +217,7 @@ const ContinuumLanding = () => {
             </p>
             <button
               onClick={() => setIsAuthDialogOpen(true)}
-              className='text-white rounded-lg font-semibold transition-all duration-500 ease-in-out hover:scale-105 px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4'
+              className='text-white rounded-lg font-semibold transition-all duration-500 ease-in-out hover:scale-105 px-4 py-2 sm:px-6 sm:py-3 md:px-8 '
               style={{
                 background: 'linear-gradient(to right, #A5B7C8 0%, #E9ADA3 50%, #C87F94 100%)',
                 transition: 'all 0.5s ease-in-out',
@@ -539,7 +539,7 @@ const ContinuumLanding = () => {
                       alt={trust.title}
                       width={48}
                       height={48}
-                      className='w-6 h-6 sm:w-8 sm:h-8'
+                      className='w-10 h-10 sm:w-12 sm:h-12'
                     />
                   </div>
                   <div>
@@ -554,7 +554,7 @@ const ContinuumLanding = () => {
       </section>
 
       {/* Contact Us Section */}
-      <section className='py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 bg-gray-100'>
+      <section className='py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 bg-[#fdf9f5]'>
         <div className='max-w-4xl mx-auto'>
           {/* Section Header */}
           <div className='text-center mb-8 sm:mb-12 md:mb-16'>

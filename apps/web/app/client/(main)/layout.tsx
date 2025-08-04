@@ -1,12 +1,13 @@
 'use client';
 import { SidebarContent, HomeIcon, MessagesIcon, JournalsIcon } from '@/components/practitioner/Sidebar';
-import { SidebarProvider } from '@/context/SidebarContext';
+import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
 import { useClientAuth } from '@/lib/hooks/use-client-auth';
 import { usePathname } from 'next/navigation';
 import { ClientBottomNavigation } from '@/components/client/BottomNavigation';
 import { ClientHeader } from '@/components/client/ClientHeader';
 
 const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
+  const { sidebarOpen, setSidebarOpen } = useSidebar();
   const pathname = usePathname();
   const { isLoading, isAuthenticated } = useClientAuth();
 
@@ -46,14 +47,17 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
       {/* Gradient background - matching practitioner style */}
       <div className='absolute inset-0 z-0 bg-gradient-to-r from-red-50 via-orange-30 to-blue-50' />
 
-      <div className='relative z-20 grid h-screen w-full lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] 2xl:grid-cols-[360px_1fr]'>
-        <div className='hidden lg:block h-full'>
+      <div
+        className={`relative z-20 grid h-screen w-full ${sidebarOpen ? 'lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] 2xl:grid-cols-[360px_1fr]' : 'lg:grid-cols-[80px_1fr]'}`}
+      >
+        <div className='hidden lg:block h-full transition-all duration-300'>
           <SidebarContent
             navLinks={navLinks}
             pathname={pathname}
             signOutCallbackUrl='/'
             settingsPath='/client/settings'
             homePath='/client'
+            sidebarOpen={sidebarOpen}
           />
         </div>
         <div className='flex flex-1 flex-col min-w-0 h-screen'>

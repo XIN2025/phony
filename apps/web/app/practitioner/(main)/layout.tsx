@@ -36,10 +36,18 @@ function PractitionerLayoutContent({ children }: { children: React.ReactNode }) 
         }}
       />
       {/* Desktop grid layout */}
-      <div className='relative z-10 hidden lg:grid min-h-screen w-full lg:grid-cols-[220px_1fr] xl:grid-cols-[260px_1fr] 2xl:grid-cols-[300px_1fr]'>
+      <div
+        className={`relative z-10 hidden lg:grid min-h-screen w-full ${sidebarOpen ? 'lg:grid-cols-[220px_1fr] xl:grid-cols-[260px_1fr] 2xl:grid-cols-[300px_1fr]' : 'lg:grid-cols-[80px_1fr]'}`}
+      >
         {/* Sidebar */}
-        <div className='hidden lg:block h-full'>
-          <SidebarContent navLinks={navLinks} pathname={pathname} signOutCallbackUrl='/' homePath='/practitioner' />
+        <div className='hidden lg:block h-full transition-all duration-300'>
+          <SidebarContent
+            navLinks={navLinks}
+            pathname={pathname}
+            signOutCallbackUrl='/'
+            homePath='/practitioner'
+            sidebarOpen={sidebarOpen}
+          />
         </div>
         {/* Main Content for desktop */}
         <div className='flex flex-1 flex-col min-w-0'>
