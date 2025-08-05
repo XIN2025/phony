@@ -37,6 +37,7 @@ const actionItemSuggestionsSchema = z.object({
           .optional()
           .describe('Number of times per week this should be done'),
         isMandatory: z.boolean().optional().describe('Whether this is a mandatory task'),
+        duration: z.string().describe('Estimated time to complete the task'),
         whyImportant: z.string().optional().describe('Why this task is important for the client'),
         recommendedActions: z.string().optional().describe('Specific steps to complete this task'),
         toolsToHelp: z
@@ -68,6 +69,7 @@ const actionItemSuggestionsSchema = z.object({
           .optional()
           .describe('Number of times per week this should be done'),
         isMandatory: z.boolean().optional().describe('Whether this is a mandatory task'),
+        duration: z.string().describe('Estimated time to complete the task'),
         whyImportant: z.string().optional().describe('Why this task is important for the client'),
         recommendedActions: z.string().optional().describe('Specific steps to complete this task'),
         toolsToHelp: z

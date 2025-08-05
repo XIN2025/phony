@@ -280,6 +280,8 @@ model ActionItem {
   target            String?
   weeklyRepetitions Int?        @default(1)
   isMandatory       Boolean     @default(false)
+  isOneOff          Boolean     @default(false)
+  duration          String?
   whyImportant      String?
   recommendedActions String?
   toolsToHelp       String?
@@ -287,6 +289,7 @@ model ActionItem {
   resources         Resource[]
   completions       ActionItemCompletion[]
   daysOfWeek        String[]
+  completedAt       DateTime?
   @@map("action_items")
 }
 

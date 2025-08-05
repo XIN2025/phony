@@ -15,6 +15,8 @@ interface CreatePlanDto {
     target?: string;
     weeklyRepetitions?: number;
     isMandatory?: boolean;
+    isOneOff?: boolean;
+    duration?: string;
     whyImportant?: string;
     recommendedActions?: string;
     toolsToHelp?: string;
@@ -66,6 +68,8 @@ export class PlanService {
             target: item.target,
             weeklyRepetitions: item.weeklyRepetitions || 1,
             isMandatory: item.isMandatory || false,
+            isOneOff: item.isOneOff || false,
+            duration: item.duration,
             whyImportant: item.whyImportant,
             recommendedActions: item.recommendedActions,
             toolsToHelp: item.toolsToHelp,
@@ -382,6 +386,8 @@ export class PlanService {
       target?: string;
       weeklyRepetitions?: number;
       isMandatory?: boolean;
+      isOneOff?: boolean;
+      duration?: string;
       whyImportant?: string;
       recommendedActions?: string;
       toolsToHelp?: string;
@@ -401,11 +407,13 @@ export class PlanService {
         target: actionItemData.target,
         weeklyRepetitions: actionItemData.weeklyRepetitions || 1,
         isMandatory: actionItemData.isMandatory || false,
+        isOneOff: actionItemData.isOneOff || false,
+        duration: actionItemData.duration,
         whyImportant: actionItemData.whyImportant,
         recommendedActions: actionItemData.recommendedActions,
         toolsToHelp: actionItemData.toolsToHelp,
-        daysOfWeek: actionItemData.daysOfWeek || [],
         source: ActionItemSource.MANUAL,
+        daysOfWeek: actionItemData.daysOfWeek || [],
         resources: {
           create: actionItemData.resources || [],
         },
@@ -463,6 +471,7 @@ export class PlanService {
                   ? parseInt(s.weeklyRepetitions, 10) || 1
                   : s.weeklyRepetitions || 1,
               isMandatory: s.isMandatory || false,
+              duration: s.duration,
               whyImportant: s.whyImportant,
               recommendedActions: s.recommendedActions,
               toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
@@ -478,6 +487,7 @@ export class PlanService {
                   ? parseInt(s.weeklyRepetitions, 10) || 1
                   : s.weeklyRepetitions || 1,
               isMandatory: s.isMandatory || false,
+              duration: s.duration,
               whyImportant: s.whyImportant,
               recommendedActions: s.recommendedActions,
               toolsToHelp: normalizeToolsToHelp(s.toolsToHelp),
@@ -521,6 +531,8 @@ export class PlanService {
       target?: string;
       weeklyRepetitions?: number;
       isMandatory?: boolean;
+      isOneOff?: boolean;
+      duration?: string;
       whyImportant?: string;
       recommendedActions?: string;
       toolsToHelp?: string;
@@ -545,6 +557,8 @@ export class PlanService {
       target: updateData.target,
       weeklyRepetitions: updateData.weeklyRepetitions,
       isMandatory: updateData.isMandatory,
+      isOneOff: updateData.isOneOff,
+      duration: updateData.duration,
       whyImportant: updateData.whyImportant,
       recommendedActions: updateData.recommendedActions,
       toolsToHelp: updateData.toolsToHelp,
@@ -735,8 +749,8 @@ export class PlanService {
   }
 
   async getActivePlanForDate(clientId: string, date: string) {
-    const targetDate = new Date(date);
-    targetDate.setHours(23, 59, 59, 999);
+    const [year, month, day] = date.split('-').map(Number);
+    const targetDate = new Date(year, month - 1, day, 23, 59, 59, 999);
 
     const plan = await this.prisma.plan.findFirst({
       where: {
@@ -780,6 +794,11 @@ export class PlanService {
         },
       },
     });
+
+    if (!plan) {
+      return null;
+    }
+
     return plan;
   }
 

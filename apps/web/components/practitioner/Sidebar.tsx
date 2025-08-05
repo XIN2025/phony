@@ -12,7 +12,6 @@ const ContinuumIcon = () => (
   <Image src='/Continuum.svg' alt='Continuum Logo' width={120} height={32} className='h-5 2xl:h-6 w-auto' />
 );
 
-// SVG icon components that use the actual SVG files and can change color
 const HomeIcon = ({ className, isActive }: { className?: string; isActive?: boolean }) => (
   <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg' className={className}>
     <path d='M12 18V15' stroke={isActive ? '#FDF9F5' : '#807171'} strokeLinecap='round' strokeLinejoin='round' />
@@ -200,7 +199,6 @@ export const SidebarContent = ({
           : 'bg-gradient-to-b from-red-100 via-orange-100 to-blue-100 rounded-3xl mx-3 my-4'
       }`}
     >
-      {/* Header */}
       <div
         className={`flex items-center ${sidebarOpen ? 'h-[56px] sm:h-[64px] lg:h-[68px] px-6 sm:px-8 lg:px-4 xl:px-6 mb-4 sm:mb-6 lg:mb-4' : 'h-12 px-2 justify-center mb-2'}`}
       >
@@ -219,13 +217,11 @@ export const SidebarContent = ({
         )}
       </div>
 
-      {/* Navigation */}
       <div className={`flex-1 ${sidebarOpen ? 'py-2 lg:py-2' : 'py-2'}`}>
         <nav
           className={`${sidebarOpen ? 'grid items-start gap-4 px-6 xl:px-8 text-sm sm:text-base lg:text-lg' : 'flex flex-col items-center gap-3 px-2'}`}
         >
           {((): React.ReactNode => {
-            // Find the navLink with the longest href that matches the start of the pathname
             let activeIndex = -1;
             let maxLength = -1;
             (navLinks as any[]).forEach((link, idx) => {
@@ -242,9 +238,7 @@ export const SidebarContent = ({
                 <Link
                   key={link.href}
                   href={link.href}
-                  onClick={() => {
-                    // Navigation links just navigate, they don't collapse the sidebar
-                  }}
+                  onClick={() => {}}
                   className={`flex items-center transition-all font-medium text-xs lg:text-sm 2xl:text-md ${
                     sidebarOpen
                       ? 'gap-3 sm:gap-4 lg:gap-3 rounded-full px-4 sm:px-6 lg:px-4 xl:px-6 py-2'
@@ -277,7 +271,7 @@ export const SidebarContent = ({
         </nav>
       </div>
 
-      {/* Footer */}
+      {}
       <div
         className={`border-t border-[#e5d6d0] mt-auto flex flex-col min-w-0 ${sidebarOpen ? 'pb-4 sm:pb-6 lg:pb-4 pt-4 sm:pt-6 lg:pt-4 gap-3 sm:gap-4 lg:gap-3 px-6 sm:px-8 lg:px-4 xl:px-6' : 'pb-2 pt-2 px-2'}`}
       >
@@ -308,5 +302,4 @@ export const SidebarContent = ({
   );
 };
 
-// Export the custom icons for use in layout files
 export { ClientsIcon, HomeIcon, JournalsIcon, MessagesIcon };

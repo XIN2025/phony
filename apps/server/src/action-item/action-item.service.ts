@@ -15,13 +15,16 @@ export class ActionItemService {
   constructor(private prisma: PrismaService) {}
 
   async completeActionItem(data: CreateCompletionDto) {
-    console.log('Completing action item:', data);
-
     const completionDate = data.completionDate || new Date();
     const dateStart = new Date(completionDate);
     dateStart.setHours(0, 0, 0, 0);
     const dateEnd = new Date(completionDate);
     dateEnd.setHours(23, 59, 59, 999);
+
+    const actionItem = await this.prisma.actionItem.findUnique({
+      where: { id: data.actionItemId },
+      select: { isOneOff: true },
+    });
 
     // Check if there's already a completion for this task, client, and date
     const existingCompletion = await this.prisma.actionItemCompletion.findFirst({
@@ -55,7 +58,14 @@ export class ActionItemService {
           },
         },
       });
-      console.log('Action item completion updated:', result);
+
+      if (actionItem?.isOneOff) {
+        await this.prisma.actionItem.update({
+          where: { id: data.actionItemId },
+          data: { completedAt: completionDate },
+        });
+      }
+
       return result;
     } else {
       // Create new completion
@@ -79,7 +89,15 @@ export class ActionItemService {
           },
         },
       });
-      console.log('Action item completion created:', result);
+
+      // If this is a one-off task, also update the completedAt field
+      if (actionItem?.isOneOff) {
+        await this.prisma.actionItem.update({
+          where: { id: data.actionItemId },
+          data: { completedAt: completionDate },
+        });
+      }
+
       return result;
     }
   }
@@ -174,7 +192,10 @@ export class ActionItemService {
   }
 
   async undoActionItemCompletion(actionItemId: string, clientId: string, completionDate?: Date) {
-    console.log('Undoing action item completion:', { actionItemId, clientId, completionDate });
+    const actionItem = await this.prisma.actionItem.findUnique({
+      where: { id: actionItemId },
+      select: { isOneOff: true },
+    });
 
     const whereClause: {
       actionItemId: string;
@@ -205,16 +226,20 @@ export class ActionItemService {
     });
 
     if (!completion) {
-      console.log('No completion found for action item:', actionItemId);
       throw new Error('No completion found for this action item and client');
     }
 
-    console.log('Found completion to delete:', completion.id);
     await this.prisma.actionItemCompletion.delete({
       where: { id: completion.id },
     });
 
-    console.log('Action item completion undone successfully');
+    if (actionItem?.isOneOff) {
+      await this.prisma.actionItem.update({
+        where: { id: actionItemId },
+        data: { completedAt: null },
+      });
+    }
+
     return { success: true, message: 'Task completion undone successfully' };
   }
 
