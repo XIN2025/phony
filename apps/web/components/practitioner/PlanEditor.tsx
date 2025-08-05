@@ -1,26 +1,19 @@
 'use client';
 
+import {
+  useAddCustomActionItem,
+  useDeleteActionItem,
+  useGenerateMoreTasks,
+  useGetPlanWithSuggestions,
+  useUpdateActionItem,
+} from '@/lib/hooks/use-api';
 import { Button } from '@repo/ui/components/button';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import { Edit, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { TaskEditorDialog } from './TaskEditorDialog';
-import {
-  useGetPlanWithSuggestions,
-  useGetPlanStatus,
-  useApproveSuggestion,
-  useRejectSuggestion,
-  useUpdateSuggestion,
-  useAddCustomActionItem,
-  useDeleteActionItem,
-  useUpdateActionItem,
-  usePublishPlan,
-  useGenerateMoreTasks,
-} from '@/lib/hooks/use-api';
-import { useQueryClient } from '@tanstack/react-query';
-import { SetStateAction } from 'react';
 
 interface ActionItem {
   id: string;
@@ -29,6 +22,8 @@ interface ActionItem {
   target?: string;
   weeklyRepetitions?: number;
   isMandatory?: boolean;
+  isOneOff?: boolean;
+  duration?: string;
   whyImportant?: string;
   recommendedActions?: string;
   toolsToHelp?: string;
@@ -39,20 +34,7 @@ interface ActionItem {
     title?: string;
   }>;
   daysOfWeek?: string[];
-}
-
-interface SuggestedActionItem {
-  id: string;
-  description: string;
-  category?: string;
-  target?: string;
-  weeklyRepetitions?: number;
-  isMandatory?: boolean;
-  whyImportant?: string;
-  recommendedActions?: string;
-  toolsToHelp?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  daysOfWeek?: string[];
+  completedAt?: string;
 }
 
 interface PlanEditorProps {
@@ -156,15 +138,10 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
     { planId, sessionId, clientId, onPlanUpdated, showHeader = true, onPublishClick, isPublishing, onSaveChangesClick },
     ref,
   ) => {
-    const [showAddDialog, setShowAddDialog] = useState(false);
-    const [editingItem, setEditingItem] = useState<ActionItem | null>(null);
-    const [editingSuggestion, setEditingSuggestion] = useState<SuggestedActionItem | null>(null);
-    const [complementaryTasks, setComplementaryTasks] = useState<SuggestedActionItem[]>([]);
     const [showTaskDialog, setShowTaskDialog] = useState(false);
     const [taskDialogInitialValues, setTaskDialogInitialValues] = useState<any>(null);
     const [isEditingTask, setIsEditingTask] = useState(false);
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-    const [viewingSuggestion, setViewingSuggestion] = useState<SuggestedActionItem | null>(null);
 
     const [formData, setFormData] = useState({
       description: '',
@@ -179,14 +156,6 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
 
     const router = useRouter();
     const allowNavRef = useRef(false);
-    const queryClient = useQueryClient();
-
-    const {
-      data: planStatusData,
-      isLoading: isPlanStatusLoading,
-      error: planStatusError,
-      refetch: refetchPlanStatus,
-    } = useGetPlanStatus(planId);
 
     const {
       data: planData,
@@ -195,66 +164,10 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
       refetch: refetchPlanData,
     } = useGetPlanWithSuggestions(planId);
 
-    const approveSuggestionMutation = useApproveSuggestion();
-    const rejectSuggestionMutation = useRejectSuggestion();
-    const editSuggestionMutation = useUpdateSuggestion();
     const addCustomActionMutation = useAddCustomActionItem();
     const deleteActionItemMutation = useDeleteActionItem();
-    const publishPlanMutation = usePublishPlan();
     const saveTaskMutation = useUpdateActionItem();
     const generateMoreTasksMutation = useGenerateMoreTasks();
-
-    const handleApproveSuggestion = (suggestionId: string) => {
-      approveSuggestionMutation.mutate(suggestionId, {
-        onSuccess: () => {
-          onPlanUpdated?.();
-        },
-        onError: () => {
-          toast.error('Failed to approve action item');
-        },
-      });
-    };
-
-    const handleRejectSuggestion = (suggestionId: string) => {
-      rejectSuggestionMutation.mutate(suggestionId, {
-        onSuccess: () => {
-          // No toast needed for rejection
-        },
-        onError: () => {
-          toast.error('Failed to reject action item');
-        },
-      });
-    };
-
-    const handleEditSuggestion = (suggestionId: string, updatedData: Partial<SuggestedActionItem>) => {
-      editSuggestionMutation.mutate(
-        { suggestionId, updatedData },
-        {
-          onSuccess: () => {
-            // Success handled by cache invalidation
-          },
-          onError: () => {
-            toast.error('Failed to update suggestion');
-          },
-        },
-      );
-    };
-
-    const handleAddCustomAction = () => {
-      addCustomActionMutation.mutate(
-        { planId, data: formData },
-        {
-          onSuccess: () => {
-            setShowAddDialog(false);
-            resetForm();
-            onPlanUpdated?.();
-          },
-          onError: () => {
-            toast.error('Failed to add action item');
-          },
-        },
-      );
-    };
 
     const handleDeleteActionItem = (itemId: string) => {
       deleteActionItemMutation.mutate(
@@ -268,10 +181,6 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
           },
         },
       );
-    };
-
-    const handlePublishPlan = async () => {
-      onPublishClick?.();
     };
 
     const handleTaskDialogSave = (values: any) => {
@@ -360,44 +269,18 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
       });
     };
 
-    function toggleDay(item: ActionItem | SuggestedActionItem, day: string, isSessionTask: boolean) {
-      const key = 'daysOfWeek';
-      const days = item[key] || [];
-      const newDays = days.includes(day) ? days.filter((d: string) => d !== day) : [...days, day];
-      if (isSessionTask) {
-        // For session tasks, use direct update
-        updateDaysOfWeek(item as ActionItem, newDays);
-      } else {
-        // For suggestions, use the direct mutation
-        editSuggestionMutation.mutate({
-          suggestionId: item.id,
-          updatedData: { ...item, [key]: newDays },
-        });
-      }
-    }
-
-    // Track which tasks are being updated
     const [updatingTaskIds, setUpdatingTaskIds] = useState<Set<string>>(new Set());
     const isAnyTaskUpdating = updatingTaskIds.size > 0;
 
-    // Direct update functions - no pending changes
     const updateMandatory = (item: ActionItem, value: boolean) => {
-      setUpdatingTaskIds((prev) => new Set(prev).add(item.id));
       saveTaskMutation.mutate(
+        { planId, itemId: item.id, data: { ...item, isMandatory: value } },
         {
-          planId,
-          itemId: item.id,
-          data: { ...item, isMandatory: value },
-        },
-        {
-          onSettled: async () => {
-            // Wait for refetch to complete
-            await refetchPlanData();
-            setUpdatingTaskIds((prev) => {
-              const next = new Set(prev);
-              next.delete(item.id);
-              return next;
-            });
+          onSuccess: () => {
+            onPlanUpdated?.();
+          },
+          onError: () => {
+            toast.error('Failed to update task');
           },
         },
       );
@@ -424,15 +307,12 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
       );
     };
 
-    const hasPendingChanges = false; // No pending changes system
+    const hasPendingChanges = false;
 
-    // --- Save pending changes function (must be in scope for navigation handlers) ---
     const savePendingChanges = useCallback(async () => {
-      // No pending changes to save
       return Promise.resolve();
     }, []);
 
-    // Expose savePendingChanges function to parent component
     useImperativeHandle(
       ref,
       () => ({
@@ -441,10 +321,9 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
       [savePendingChanges],
     );
 
-    // --- Robust navigation blocking logic (copied/adapted from dashboard/new-session/page.tsx) ---
     useEffect(() => {
       if (!hasPendingChanges) return;
-      // Patch router.push and router.back
+
       const origPush = router.push;
       const origBack = router.back;
 
@@ -473,11 +352,9 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
       };
     }, [hasPendingChanges, router]);
 
-    // Intercept sidebar navigation (patch global window for SidebarContent to use)
     useEffect(() => {
       (window as any).__CONTINUUM_BLOCK_NAV__ = (navFn: () => void) => {
         if (hasPendingChanges) {
-          // We can't serialize a function, so just block and show modal
           setPendingNavigation(null);
           setShowUnsavedChangesDialog(true);
           return false;
@@ -489,7 +366,6 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
       };
     }, [hasPendingChanges]);
 
-    // Intercept anchor/button/document clicks for completeness
     useEffect(() => {
       if (!hasPendingChanges) return;
       const clickHandler = (e: MouseEvent) => {
@@ -523,7 +399,6 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
       };
     }, [hasPendingChanges]);
 
-    // Patch window.location methods for completeness
     useEffect(() => {
       if (!hasPendingChanges) return;
       const origAssign = window.location.assign;
@@ -559,7 +434,6 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
       } catch (e) {}
       window.open = function (...args) {
         if (hasPendingChanges && !allowNavRef.current) {
-          // We can't get the URL reliably, so just block and show modal
           setPendingNavigation(null);
           setShowUnsavedChangesDialog(true);
           return null;
@@ -576,7 +450,6 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
       };
     }, [hasPendingChanges, allowNavRef]);
 
-    // --- Handle modal actions for navigation ---
     const handleSaveAndContinue = async () => {
       await savePendingChanges();
       setShowUnsavedChangesDialog(false);
@@ -612,15 +485,6 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
       setPendingNavigation(null);
     };
 
-    const handleExternalNavigation = (url: string) => {
-      if (hasPendingChanges) {
-        setPendingNavigation(url);
-        setShowUnsavedChangesDialog(true);
-      } else {
-        window.location.href = url;
-      }
-    };
-
     const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
@@ -636,13 +500,13 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
     }
 
     const actionItems = planData?.actionItems || [];
-    // Split actionItems by source
+
     const sessionItems = actionItems.filter((item: ActionItem) => item.source !== 'AI_SUGGESTED');
     const aiSuggestedItems = actionItems.filter((item: ActionItem) => item.source === 'AI_SUGGESTED');
 
     return (
       <div className='space-y-8 w-full max-w-full  mx-auto px-2 sm:px-6 md:px-10'>
-        {/* Responsive header and publish button */}
+        {}
         {showHeader && (
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4'>
             <h2
@@ -662,9 +526,9 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
             </div>
           </div>
         )}
-        {/* Single card for all tasks */}
+        {}
         <div className='rounded-3xl shadow-2xl bg-white p-4 sm:p-10 w-full mx-0' style={{ borderColor: '#B0B3B8' }}>
-          {/* Tasks mentioned in session section */}
+          {}
           <div className='flex items-center justify-between mb-2 sm:mb-4'>
             <div className='font-bold text-lg sm:text-xl text-gray-900 text-left tracking-tighter'>
               Tasks Mentioned In Session
@@ -719,7 +583,7 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
                   </div>
                   <div className='flex flex-col sm:flex-row items-start sm:items-center w-full mt-1 text-xs gap-2 sm:gap-0'>
                     <div className='text-gray-700 min-w-[110px]'>
-                      Duration: <span className='font-medium'>15 Minutes</span>
+                      Duration: <span className='font-medium'>{item.duration || '15 Minutes'}</span>
                     </div>
                     <div className='flex-1 flex justify-center'>
                       <div className='flex flex-wrap items-center gap-1 min-w-[220px]'>
@@ -765,7 +629,7 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
               );
             })}
           </div>
-          {/* AI Task Suggestions section */}
+          {}
           <div className='flex items-center justify-between mt-8 mb-2 sm:mb-4'>
             <div className='font-bold text-lg sm:text-xl flex items-center gap-2 text-gray-900 text-left tracking-tghter'>
               <span>✧</span> AI Task Suggestions
@@ -817,7 +681,7 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
                 </div>
                 <div className='flex flex-col sm:flex-row items-start sm:items-center w-full mt-1 text-xs gap-2 sm:gap-0'>
                   <div className='text-gray-700 min-w-[110px]'>
-                    Duration: <span className='font-medium'>15 Minutes</span>
+                    Duration: <span className='font-medium'>{item.duration || '15 Minutes'}</span>
                   </div>
                   <div className='flex-1 flex justify-center'>
                     <div className='flex flex-wrap items-center gap-1 min-w-[220px]'>
@@ -863,7 +727,7 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
             ))}
           </div>
         </div>
-        {/* Dialogs remain unchanged */}
+        {}
         <TaskEditorDialog
           open={showTaskDialog}
           onClose={() => setShowTaskDialog(false)}
@@ -871,7 +735,7 @@ const PlanEditorComponent = forwardRef<{ savePendingChanges: () => Promise<void>
           initialValues={taskDialogInitialValues}
         />
 
-        {/* Unsaved Changes Confirmation Dialog */}
+        {}
         {showUnsavedChangesDialog && (
           <div className='fixed inset-0 backdrop-blur-3xl bg-black/20 flex items-center justify-center z-[9999] p-4'>
             <div className='bg-white border border-gray-200 rounded-lg shadow-2xl max-w-md w-full p-6 relative z-[10000]'>

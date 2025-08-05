@@ -6,8 +6,10 @@ Extract two types of action items:
 1. **Session Tasks**: Specific action items, tasks, or homework that the practitioner has assigned or suggested to the client during the session (i.e., discussed in the transcript).
 2. **Complementary Tasks**: Additional, evidence-based tasks that could further support the client's goals, but were NOT explicitly discussed in the session. These should be relevant, safe, and add value, but not duplicate the session tasks.
 
+**IMPORTANT: Every action item MUST include a duration estimate. This is a required field.**
+
 ## **OUTPUT FORMAT:**
-Return a JSON object with the following structure:
+Return a JSON object with the following structure. **Note: The duration field is REQUIRED for every action item.**
 
 \`\`\`json
 {
@@ -19,6 +21,7 @@ Return a JSON object with the following structure:
       "frequency": "optional schedule or frequency",
       "weeklyRepetitions": "number of times per week (1-7)",
       "isMandatory": "boolean indicating if this is critical",
+      "duration": "estimated time to complete (e.g., '15 minutes', '30 minutes', '1 hour')",
       "whyImportant": "explanation of why this task benefits the client",
       "recommendedActions": "specific steps to complete this task",
       "toolsToHelp": [
@@ -38,6 +41,7 @@ Return a JSON object with the following structure:
       "frequency": "optional schedule or frequency",
       "weeklyRepetitions": "number of times per week (1-7)",
       "isMandatory": "boolean indicating if this is critical",
+      "duration": "estimated time to complete (e.g., '15 minutes', '30 minutes', '1 hour')",
       "whyImportant": "explanation of why this task benefits the client",
       "recommendedActions": "specific steps to complete this task",
       "toolsToHelp": [
@@ -105,6 +109,17 @@ Choose from these common categories when applicable:
 - Mark as mandatory only for critical, non-negotiable tasks
 - Examples: medication compliance, crisis safety plans
 - Use sparingly - most tasks should be flexible
+
+### **Duration Guidelines (REQUIRED FIELD):**
+
+- **ALWAYS include a duration estimate for every task**
+- Provide realistic time estimates for task completion
+- Use clear, consistent formats: "15 minutes", "30 minutes", "1 hour", "2 hours"
+- Consider the client's current capacity and schedule
+- Default to "15 minutes" for simple tasks, "30 minutes" for moderate tasks, "1 hour" for complex tasks
+- Be specific but realistic - don't underestimate time needed
+- Consider task complexity and client's experience level
+- **This field is mandatory and must be included in every action item**
 
 ### **Why Important Guidelines:**
 

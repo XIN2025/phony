@@ -187,9 +187,10 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
   const rightActions = (
     <button
       ref={dateButtonRef}
-      className='rounded-full border border-gray-300 px-4 py-2 text-sm  shadow transition'
+      className='rounded-full border border-gray-300 px-4 py-2 text-sm shadow transition disabled:opacity-50 disabled:cursor-not-allowed'
       onClick={() => setShowDatePicker((v) => !v)}
       type='button'
+      disabled={isTasksLoading}
     >
       <Calendar className='h-4 w-4 inline mr-2' />
       {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -228,7 +229,7 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
                   className='text-3xl sm:text-4xl font-extrabold'
                   style={{ fontFamily: "'DM Serif Display', serif", color: '#807171' }}
                 >
-                  {pending}
+                  {isTasksLoading ? '...' : pending}
                 </div>
                 <ClipboardList className='h-8 w-8 sm:h-10 sm:w-10 text-[#807171]' />
               </div>
@@ -242,7 +243,7 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
                   className='text-2xl sm:text-3xl font-bold'
                   style={{ fontFamily: "'DM Serif Display', serif", color: '#807171' }}
                 >
-                  {engagement}
+                  {isTasksLoading ? '...' : engagement}
                 </div>
                 <Sparkles className='h-8 w-8 sm:h-10 sm:w-10 text-[#807171]' />
               </div>
@@ -254,7 +255,10 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ clientId
         {isTasksLoading && (
           <div className='text-center py-8'>
             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto'></div>
-            <p className='mt-2 text-sm text-muted-foreground'>Loading tasks...</p>
+            <p className='mt-2 text-sm text-muted-foreground'>
+              Loading tasks for{' '}
+              {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}...
+            </p>
           </div>
         )}
 

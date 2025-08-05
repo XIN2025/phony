@@ -1,46 +1,26 @@
 ﻿'use client';
-import { useSession } from 'next-auth/react';
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { Button } from '@repo/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card';
-import { Checkbox } from '@repo/ui/components/checkbox';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@repo/ui/components/dialog';
-import { Textarea } from '@repo/ui/components/textarea';
-import { Label } from '@repo/ui/components/label';
+import { TaskEditorDialog } from '@/components/practitioner/TaskEditorDialog';
 import {
-  Star,
-  Calendar,
-  Target,
-  Clock,
-  Menu,
-  AlertCircle,
-  Info,
-  ExternalLink,
-  RefreshCw,
-  Smile,
-  Meh,
-  Frown,
-  CheckCircle,
-  Plus,
-  ClipboardList,
-} from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
-import { Badge } from '@repo/ui/components/badge';
-import {
-  useGetActivePlanForDate,
   useCompleteActionItem,
+  useGetActivePlanForDate,
   useGetCurrentUser,
   useUndoTaskCompletion,
 } from '@/lib/hooks/use-api';
+import { getRatingEmoji } from '@/lib/utils';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { TaskEditorDialog } from '@/components/practitioner/TaskEditorDialog';
-import { toast } from 'sonner';
+import { Button } from '@repo/ui/components/button';
+import { Card } from '@repo/ui/components/card';
+import { Dialog, DialogContent, DialogTitle } from '@repo/ui/components/dialog';
+import { useQueryClient } from '@tanstack/react-query';
+import { ClipboardList, Frown, Meh, Plus, Smile } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { createPortal } from 'react-dom';
-import { getRatingEmoji } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface ActionItem {
   id: string;
@@ -49,6 +29,7 @@ interface ActionItem {
   frequency?: string;
   weeklyRepetitions?: number;
   isMandatory?: boolean;
+  isOneOff?: boolean;
   whyImportant?: string;
   recommendedActions?: string;
   toolsToHelp?: string;
@@ -71,6 +52,7 @@ interface ActionItem {
   daysOfWeek?: string[];
   sessionDate?: string;
   createdAt?: string;
+  completedAt?: string;
 }
 
 interface CompletionData {
@@ -103,7 +85,10 @@ const ClientPage = () => {
   });
   const selectedDate = dateRange.startDate;
 
-  const selectedDateString = selectedDate.toISOString().slice(0, 10);
+  const year = selectedDate.getFullYear();
+  const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+  const day = String(selectedDate.getDate()).padStart(2, '0');
+  const selectedDateString = `${year}-${month}-${day}`;
 
   const {
     data: activePlan,
@@ -114,7 +99,16 @@ const ClientPage = () => {
 
   const actionItems =
     activePlan?.actionItems?.map((item: ActionItem) => {
-      // Check if task is completed for the selected date
+      // For one-off tasks, check if they have been permanently completed
+      if (item.isOneOff) {
+        const result = {
+          ...item,
+          isCompleted: item.completedAt !== null,
+        };
+        return result;
+      }
+
+      // For regular tasks, check if task is completed for the selected date
       const selectedDateStart = new Date(selectedDate);
       selectedDateStart.setHours(0, 0, 0, 0);
       const selectedDateEnd = new Date(selectedDate);
@@ -127,11 +121,21 @@ const ClientPage = () => {
           return completionDate >= selectedDateStart && completionDate <= selectedDateEnd;
         });
 
-      return {
+      const result = {
         ...item,
         isCompleted,
       };
+      return result;
     }) || [];
+
+  const [taskFilter, setTaskFilter] = useState<'all' | 'pending' | 'completed'>('all');
+
+  const filteredTasks = actionItems.filter((task: ActionItem) => {
+    if (taskFilter === 'all') return true;
+    if (taskFilter === 'pending') return !task.isCompleted;
+    if (taskFilter === 'completed') return task.isCompleted;
+    return true;
+  });
 
   const getTodayShort = () => {
     const days = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
@@ -168,22 +172,38 @@ const ClientPage = () => {
       const rect = dateButtonRef.current.getBoundingClientRect();
       const pickerHeight = 380;
       const pickerWidth = 350;
+
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
       let top = rect.bottom + window.scrollY;
       if (spaceBelow < pickerHeight && spaceAbove > pickerHeight) {
         top = rect.top + window.scrollY - pickerHeight;
       }
+
       let left = rect.left + window.scrollX;
-      if (left + pickerWidth > window.innerWidth) {
-        left = window.innerWidth - pickerWidth - 8;
+      const spaceRight = window.innerWidth - rect.right;
+
+      if (spaceRight < pickerWidth) {
+        left = rect.right + window.scrollX - pickerWidth;
       }
-      setPickerPosition({ top, left, width: rect.width });
+
+      if (left < 10) {
+        left = Math.max(10, (window.innerWidth - pickerWidth) / 2);
+      }
+
+      if (left + pickerWidth > window.innerWidth - 10) {
+        left = window.innerWidth - pickerWidth - 10;
+      }
+
+      setPickerPosition({
+        top,
+        left,
+        width: rect.width,
+      });
     }
   }, [showDatePicker]);
 
   useEffect(() => {
-    if (!showDatePicker) return;
     const handleClick = (event: MouseEvent) => {
       if (
         datePickerRef.current &&
@@ -194,57 +214,23 @@ const ClientPage = () => {
         setShowDatePicker(false);
       }
     };
+
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setShowDatePicker(false);
+      if (event.key === 'Escape') {
+        setShowDatePicker(false);
+      }
     };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleEscape);
+
+    if (showDatePicker) {
+      document.addEventListener('mousedown', handleClick);
+      document.addEventListener('keydown', handleEscape);
+    }
+
     return () => {
       document.removeEventListener('mousedown', handleClick);
       document.removeEventListener('keydown', handleEscape);
     };
   }, [showDatePicker]);
-
-  const [taskFilter, setTaskFilter] = useState<'all' | 'pending' | 'completed'>('all');
-
-  function isTaskForDate(task: ActionItem, date: Date) {
-    const dayOfWeek = date.getDay();
-    const dayMap = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-    const selectedDayShort = dayMap[dayOfWeek];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const selectedDate = new Date(date);
-    selectedDate.setHours(0, 0, 0, 0);
-
-    if (task.isCompleted && selectedDate.toDateString() === today.toDateString()) {
-      return true;
-    }
-
-    if (task.isMandatory) {
-      if (selectedDate >= today) {
-        return true;
-      }
-
-      if (task.daysOfWeek && task.daysOfWeek.length > 0) {
-        return task.daysOfWeek.some((day) => day === selectedDayShort);
-      }
-      return true;
-    } else {
-      if (task.daysOfWeek && task.daysOfWeek.length > 0) {
-        return task.daysOfWeek.some((day) => day === selectedDayShort);
-      }
-      return true;
-    }
-  }
-
-  const filteredByDate = actionItems.filter((task: ActionItem) => isTaskForDate(task, selectedDate));
-
-  const filteredTasks = filteredByDate.filter((task: ActionItem) => {
-    if (taskFilter === 'all') return true;
-    if (taskFilter === 'pending') return !task.isCompleted;
-    if (taskFilter === 'completed') return task.isCompleted;
-    return true;
-  });
 
   const completeTaskMutation = useCompleteActionItem();
   const undoTaskCompletionMutation = useUndoTaskCompletion();
@@ -253,7 +239,6 @@ const ClientPage = () => {
 
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<'happy' | 'neutral' | 'sad' | null>(null);
-  const [taskForFeedback, setTaskForFeedback] = useState<ActionItem | null>(null);
 
   const { data: currentUser, isLoading: userLoading } = useGetCurrentUser();
 
@@ -338,6 +323,7 @@ const ClientPage = () => {
     description: task.description,
     duration: task.duration || '',
     isMandatory: task.isMandatory || false,
+    isOneOff: task.isOneOff || false,
     daysOfWeek: task.daysOfWeek || [],
     whyImportant: task.whyImportant || '',
     recommendedActions: task.recommendedActions || '',
@@ -418,6 +404,19 @@ const ClientPage = () => {
   const mandatoryTasks = filteredTasks.filter((task: ActionItem) => task.isMandatory);
   const dailyTasks = filteredTasks.filter((task: ActionItem) => !task.isMandatory);
 
+  if (planError) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='text-center'>
+          <p className='text-red-600 mb-4'>Error loading tasks: {planError.message}</p>
+          <Button onClick={() => refetchActivePlan()} className='mt-4'>
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className='w-full'>
       {/* Welcome Section */}
@@ -441,14 +440,23 @@ const ClientPage = () => {
         >
           Tasks
         </h2>
-        <button
-          ref={dateButtonRef}
-          className='text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 rounded-full bg-white border border-gray-300 hover:bg-gray-50 transition shadow-sm flex items-center gap-1 sm:gap-2'
-          onClick={() => setShowDatePicker((v) => !v)}
-          type='button'
-        >
-          {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-        </button>
+        <div className='flex items-center gap-2'>
+          {planLoading && (
+            <div className='flex items-center gap-2 text-sm text-gray-500'>
+              <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500'></div>
+              <span>Loading tasks...</span>
+            </div>
+          )}
+          <button
+            ref={dateButtonRef}
+            className='text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 rounded-full bg-white border border-gray-300 hover:bg-gray-50 transition shadow-sm flex items-center gap-1 sm:gap-2'
+            onClick={() => setShowDatePicker((v) => !v)}
+            type='button'
+            disabled={planLoading}
+          >
+            {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </button>
+        </div>
         {datePickerMounted &&
           showDatePicker &&
           createPortal(
@@ -475,7 +483,8 @@ const ClientPage = () => {
                       top: pickerPosition.top,
                       left: pickerPosition.left,
                       position: 'absolute',
-                      minWidth: pickerPosition.width,
+                      width: '350px',
+                      maxWidth: '90vw',
                     }
               }
               role='dialog'
@@ -485,12 +494,14 @@ const ClientPage = () => {
                 editableDateInputs={true}
                 onChange={(ranges) => {
                   const selection = ranges.selection;
-                  if (selection) {
-                    setDateRange({
-                      startDate: selection.startDate || dateRange.startDate,
-                      endDate: selection.startDate || dateRange.endDate,
+                  if (selection && selection.startDate) {
+                    const newDateRange = {
+                      startDate: selection.startDate,
+                      endDate: selection.startDate,
                       key: 'selection',
-                    });
+                    };
+
+                    setDateRange(newDateRange);
                     setShowDatePicker(false);
                   }
                 }}
@@ -514,7 +525,7 @@ const ClientPage = () => {
               className='text-2xl sm:text-3xl md:text-4xl font-serif font-semibold text-[#807171] leading-none'
               style={{ fontFamily: "'DM Serif Display', serif" }}
             >
-              {tasksPending}
+              {planLoading ? '...' : tasksPending}
             </span>
             <span className='text-xs sm:text-base md:text-lg font-serif text-[#807171] mt-1 sm:mt-2 whitespace-nowrap truncate'>
               Tasks Pending
@@ -546,149 +557,157 @@ const ClientPage = () => {
 
       {/* Task Lists */}
       <div className='px-4 sm:px-6 lg:px-8 flex flex-col gap-6'>
-        {/* Mandatory Tasks Card */}
-        <div className='bg-white rounded-2xl shadow-md p-4 sm:p-6 md:p-8'>
-          <div
-            className='text-lg sm:text-xl md:text-2xl font-bold mb-4 cursor-pointer hover:text-gray-700 transition-colors'
-            style={{ fontFamily: "'DM Serif Display', serif" }}
-            onClick={() => mandatoryTasks.length > 0 && handleTaskDetailClick(mandatoryTasks[0])}
-          >
-            Mandatory Tasks
-          </div>
-          <div className='flex flex-col gap-0'>
-            {mandatoryTasks.length === 0 ? (
-              <div className='text-muted-foreground text-xs sm:text-sm mb-4 px-4 sm:px-6 py-4 sm:py-6'>
-                No mandatory tasks for this date.
-              </div>
-            ) : (
-              mandatoryTasks.map((task: ActionItem, idx: number) => {
-                const isCompleted = task.isCompleted;
-                const latestCompletion = isCompleted ? task.completions?.[task.completions.length - 1] : null;
-                const rating = latestCompletion?.rating;
-                const ratingEmoji = getRatingEmoji(rating);
-                return (
-                  <div
-                    key={task.id}
-                    className={`flex items-center gap-3 py-4 ${idx !== mandatoryTasks.length - 1 ? 'border-b border-[#ececec]' : ''} hover:bg-gray-50 rounded-lg transition-colors`}
-                  >
+        {mandatoryTasks.length > 0 && (
+          <div className='bg-white rounded-2xl shadow-md p-4 sm:p-6 md:p-8'>
+            <div
+              className='text-lg sm:text-xl md:text-2xl font-bold mb-4 cursor-pointer hover:text-gray-700 transition-colors'
+              style={{ fontFamily: "'DM Serif Display', serif" }}
+              onClick={() => handleTaskDetailClick(mandatoryTasks[0])}
+            >
+              Mandatory Tasks
+            </div>
+            <div className='flex flex-col gap-0'>
+              {planLoading ? (
+                <div className='flex items-center justify-center py-8'>
+                  <div className='flex items-center gap-3'>
+                    <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-gray-500'></div>
+                    <span className='text-sm text-gray-500'>Loading tasks...</span>
+                  </div>
+                </div>
+              ) : (
+                mandatoryTasks.map((task: ActionItem, idx: number) => {
+                  const isCompleted = task.isCompleted;
+                  const latestCompletion = isCompleted ? task.completions?.[task.completions.length - 1] : null;
+                  const rating = latestCompletion?.rating;
+                  const ratingEmoji = getRatingEmoji(rating);
+                  return (
                     <div
-                      className='flex items-center justify-center w-5 h-5 mt-0.5 cursor-pointer'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isCompleted) {
-                          handleTaskToggleWithFeedback(task);
-                        } else {
-                          handleTaskToggle(task);
-                        }
-                      }}
+                      key={task.id}
+                      className={`flex items-center gap-3 py-4 ${idx !== mandatoryTasks.length - 1 ? 'border-b border-[#ececec]' : ''} hover:bg-gray-50 rounded-lg transition-colors`}
                     >
-                      {isCompleted ? (
-                        <div className='w-4 h-4 bg-green-500 rounded-full flex items-center justify-center'>
-                          <span className='text-white text-xs'>✓</span>
+                      <div
+                        className='flex items-center justify-center w-5 h-5 mt-0.5 cursor-pointer'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isCompleted) {
+                            handleTaskToggleWithFeedback(task);
+                          } else {
+                            handleTaskToggle(task);
+                          }
+                        }}
+                      >
+                        {isCompleted ? (
+                          <div className='w-4 h-4 bg-green-500 rounded-full flex items-center justify-center'>
+                            <span className='text-white text-xs'>✓</span>
+                          </div>
+                        ) : (
+                          <div className='w-4 h-4 border-2 border-gray-300 rounded-full hover:bg-gray-100'></div>
+                        )}
+                      </div>
+                      <div className='flex-1 cursor-pointer' onClick={() => handleTaskDetailClick(task)}>
+                        <div
+                          className={`font-medium text-sm sm:text-base flex items-center gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
+                        >
+                          {task.description}
+                          <span className='ml-1 text-gray-400 text-xs' title='Info'>
+                            ⓘ
+                          </span>
                         </div>
-                      ) : (
-                        <div className='w-4 h-4 border-2 border-gray-300 rounded-full hover:bg-gray-100'></div>
+                        <div className='text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-2'>
+                          <span role='img' aria-label='timer'>
+                            ⏱
+                          </span>{' '}
+                          {task.duration || 'No duration set'}
+                        </div>
+                      </div>
+                      {isCompleted && (
+                        <span className='ml-2 text-lg sm:text-xl md:text-2xl' role='img' aria-label='rating'>
+                          {ratingEmoji}
+                        </span>
                       )}
                     </div>
-                    <div className='flex-1 cursor-pointer' onClick={() => handleTaskDetailClick(task)}>
-                      <div
-                        className={`font-medium text-sm sm:text-base flex items-center gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
-                      >
-                        {task.description}
-                        <span className='ml-1 text-gray-400 text-xs' title='Info'>
-                          ⓘ
-                        </span>
-                      </div>
-                      <div className='text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-2'>
-                        <span role='img' aria-label='timer'>
-                          ⏱
-                        </span>{' '}
-                        {task.duration || 'No duration set'}
-                      </div>
-                    </div>
-                    {isCompleted && (
-                      <span className='ml-2 text-lg sm:text-xl md:text-2xl' role='img' aria-label='rating'>
-                        {ratingEmoji}
-                      </span>
-                    )}
-                  </div>
-                );
-              })
-            )}
+                  );
+                })
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Daily Tasks Card */}
-        <div className='bg-white rounded-2xl shadow-md p-4 sm:p-6 md:p-8'>
-          <div
-            className='text-lg sm:text-xl md:text-2xl font-bold mb-4 cursor-pointer hover:text-gray-700 transition-colors'
-            style={{ fontFamily: "'DM Serif Display', serif" }}
-            onClick={() => dailyTasks.length > 0 && handleTaskDetailClick(dailyTasks[0])}
-          >
-            Daily Tasks
-          </div>
-          <div className='flex flex-col gap-0'>
-            {dailyTasks.length === 0 ? (
-              <div className='text-muted-foreground text-xs sm:text-sm mb-4 px-4 sm:px-6 py-4 sm:py-6'>
-                No daily tasks for this date.
-              </div>
-            ) : (
-              dailyTasks.map((task: ActionItem, idx: number) => {
-                const isCompleted = task.isCompleted;
-                const latestCompletion = isCompleted ? task.completions?.[task.completions.length - 1] : null;
-                const rating = latestCompletion?.rating;
-                const ratingEmoji = getRatingEmoji(rating);
-                return (
-                  <div
-                    key={task.id}
-                    className={`flex items-center gap-3 py-4 ${idx !== dailyTasks.length - 1 ? 'border-b border-[#ececec]' : ''} hover:bg-gray-50 rounded-lg transition-colors`}
-                  >
+        {dailyTasks.length > 0 && (
+          <div className='bg-white rounded-2xl shadow-md p-4 sm:p-6 md:p-8'>
+            <div
+              className='text-lg sm:text-xl md:text-2xl font-bold mb-4 cursor-pointer hover:text-gray-700 transition-colors'
+              style={{ fontFamily: "'DM Serif Display', serif" }}
+              onClick={() => handleTaskDetailClick(dailyTasks[0])}
+            >
+              Daily Tasks
+            </div>
+            <div className='flex flex-col gap-0'>
+              {planLoading ? (
+                <div className='flex items-center justify-center py-8'>
+                  <div className='flex items-center gap-3'>
+                    <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-gray-500'></div>
+                    <span className='text-sm text-gray-500'>Loading tasks...</span>
+                  </div>
+                </div>
+              ) : (
+                dailyTasks.map((task: ActionItem, idx: number) => {
+                  const isCompleted = task.isCompleted;
+                  const latestCompletion = isCompleted ? task.completions?.[task.completions.length - 1] : null;
+                  const rating = latestCompletion?.rating;
+                  const ratingEmoji = getRatingEmoji(rating);
+                  return (
                     <div
-                      className='flex items-center justify-center w-5 h-5 mt-0.5 cursor-pointer'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isCompleted) {
-                          handleTaskToggleWithFeedback(task);
-                        } else {
-                          handleTaskToggle(task);
-                        }
-                      }}
+                      key={task.id}
+                      className={`flex items-center gap-3 py-4 ${idx !== dailyTasks.length - 1 ? 'border-b border-[#ececec]' : ''} hover:bg-gray-50 rounded-lg transition-colors`}
                     >
-                      {isCompleted ? (
-                        <div className='w-4 h-4 bg-green-500 rounded-full flex items-center justify-center'>
-                          <span className='text-white text-xs'>✓</span>
+                      <div
+                        className='flex items-center justify-center w-5 h-5 mt-0.5 cursor-pointer'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isCompleted) {
+                            handleTaskToggleWithFeedback(task);
+                          } else {
+                            handleTaskToggle(task);
+                          }
+                        }}
+                      >
+                        {isCompleted ? (
+                          <div className='w-4 h-4 bg-green-500 rounded-full flex items-center justify-center'>
+                            <span className='text-white text-xs'>✓</span>
+                          </div>
+                        ) : (
+                          <div className='w-4 h-4 border-2 border-gray-300 rounded-full hover:bg-gray-100'></div>
+                        )}
+                      </div>
+                      <div className='flex-1 cursor-pointer' onClick={() => handleTaskDetailClick(task)}>
+                        <div
+                          className={`font-medium text-sm sm:text-base flex items-center gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
+                        >
+                          {task.description}
+                          <span className='ml-1 text-gray-400 text-xs' title='Info'>
+                            ⓘ
+                          </span>
                         </div>
-                      ) : (
-                        <div className='w-4 h-4 border-2 border-gray-300 rounded-full hover:bg-gray-100'></div>
+                        <div className='text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-2'>
+                          <span role='img' aria-label='timer'>
+                            ⏱
+                          </span>{' '}
+                          {task.duration || 'No duration set'}
+                        </div>
+                      </div>
+                      {isCompleted && (
+                        <span className='ml-2 text-lg sm:text-xl md:text-2xl' role='img' aria-label='rating'>
+                          {ratingEmoji}
+                        </span>
                       )}
                     </div>
-                    <div className='flex-1 cursor-pointer' onClick={() => handleTaskDetailClick(task)}>
-                      <div
-                        className={`font-medium text-sm sm:text-base flex items-center gap-2 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
-                      >
-                        {task.description}
-                        <span className='ml-1 text-gray-400 text-xs' title='Info'>
-                          ⓘ
-                        </span>
-                      </div>
-                      <div className='text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-2'>
-                        <span role='img' aria-label='timer'>
-                          ⏱
-                        </span>{' '}
-                        {task.duration || 'No duration set'}
-                      </div>
-                    </div>
-                    {isCompleted && (
-                      <span className='ml-2 text-lg sm:text-xl md:text-2xl' role='img' aria-label='rating'>
-                        {ratingEmoji}
-                      </span>
-                    )}
-                  </div>
-                );
-              })
-            )}
+                  );
+                })
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Feedback Modal */}

@@ -964,10 +964,10 @@ export function useCompleteActionItem() {
     mutationFn: ({ taskId, completionData }: { taskId: string; completionData: any }) =>
       ApiClient.post(`/api/action-items/${taskId}/complete`, completionData),
     onSuccess: (_, { taskId }) => {
+      queryClient.invalidateQueries({ queryKey: ['active-plan'] });
       queryClient.invalidateQueries({ queryKey: ['client-plans'] });
       queryClient.invalidateQueries({ queryKey: ['client-action-items'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
-      queryClient.refetchQueries({ queryKey: ['client-plans'] });
     },
   });
 }
@@ -993,10 +993,10 @@ export function useUndoTaskCompletion() {
       return ApiClient.delete(`/api/action-items/${taskId}/complete?${params.toString()}`);
     },
     onSuccess: (_, { taskId }) => {
+      queryClient.invalidateQueries({ queryKey: ['active-plan'] });
       queryClient.invalidateQueries({ queryKey: ['client-plans'] });
       queryClient.invalidateQueries({ queryKey: ['client-action-items'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
-      queryClient.refetchQueries({ queryKey: ['client-plans'] });
     },
   });
 }

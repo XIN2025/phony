@@ -43,7 +43,9 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
 }) => {
   const [form, setForm] = useState({
     isMandatory: initialValues?.isMandatory || false,
+    isOneOff: initialValues?.isOneOff || false,
     description: initialValues?.description || '',
+    duration: initialValues?.duration || '',
     weeklyRepetitions: initialValues?.weeklyRepetitions || 1,
     daysOfWeek: initialValues?.daysOfWeek || [],
     whyImportant: initialValues?.whyImportant || '',
@@ -77,7 +79,9 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
     if (initialValues) {
       setForm({
         isMandatory: initialValues.isMandatory || false,
+        isOneOff: initialValues.isOneOff || false,
         description: initialValues.description || '',
+        duration: initialValues.duration || '',
         weeklyRepetitions: initialValues.weeklyRepetitions || 1,
         daysOfWeek: initialValues.daysOfWeek || [],
         whyImportant: initialValues.whyImportant || '',
@@ -94,7 +98,9 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
     } else {
       setForm({
         isMandatory: false,
+        isOneOff: false,
         description: '',
+        duration: '',
         weeklyRepetitions: 1,
         daysOfWeek: [],
         whyImportant: '',
@@ -222,6 +228,16 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
               disabled={readOnly}
             />
             <div>
+              <div className='font-medium mb-2'>Duration</div>
+              <Input
+                placeholder='e.g., 15 minutes, 30 minutes, 1 hour'
+                value={form.duration}
+                onChange={(e) => handleChange('duration', e.target.value)}
+                className={`bg-white border border-gray-300 rounded-md px-3 py-2 text-base w-full ${readOnly ? 'text-gray-900 bg-gray-50' : ''}`}
+                disabled={readOnly}
+              />
+            </div>
+            <div>
               <div className='font-medium mb-2'>Select Days</div>
               <div className='flex flex-wrap gap-2'>
                 {DAYS.map((d) => (
@@ -248,6 +264,26 @@ export const TaskEditorDialog: React.FC<TaskEditorDialogProps> = ({
                 disabled={readOnly}
               />
             </div>
+            {readOnly && form.isOneOff && (
+              <div className='flex items-center space-x-2 p-3 bg-purple-50 border border-purple-200 rounded-md'>
+                <span className='text-purple-600'>⏱</span>
+                <span className='text-sm font-medium text-purple-700'>One-time Task</span>
+                <span className='text-xs text-purple-600'>(This task won't repeat after completion)</span>
+              </div>
+            )}
+            {!readOnly && (
+              <div className='flex items-center space-x-2'>
+                <Checkbox
+                  id='isOneOff'
+                  checked={form.isOneOff}
+                  onCheckedChange={(checked) => handleChange('isOneOff', checked)}
+                  disabled={readOnly}
+                />
+                <label htmlFor='isOneOff' className='text-sm font-medium text-gray-700'>
+                  One-time task (won't repeat after completion)
+                </label>
+              </div>
+            )}
             <div>
               <div className='font-medium mb-2'>Recommended Actions</div>
               <Textarea

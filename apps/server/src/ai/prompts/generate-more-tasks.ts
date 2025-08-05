@@ -28,6 +28,7 @@ Return a JSON object with the following structure:
       "frequency": "optional schedule or frequency",
       "weeklyRepetitions": "number of times per week (1-7)",
       "isMandatory": "boolean indicating if this is critical",
+      "duration": "estimated time to complete (e.g., '15 minutes', '30 minutes', '1 hour')",
       "whyImportant": "explanation of why this task benefits the client",
       "recommendedActions": "specific steps to complete this task",
       "toolsToHelp": [
@@ -115,6 +116,14 @@ Choose from these common categories when applicable:
 - Mark as mandatory only for critical, non-negotiable tasks
 - Examples: medication compliance, crisis safety plans
 - Use sparingly - most tasks should be flexible
+
+### **Duration Guidelines:**
+- Provide realistic time estimates for task completion
+- Use clear, consistent formats: "15 minutes", "30 minutes", "1 hour", "2 hours"
+- Consider the client's current capacity and schedule
+- Default to "15 minutes" for simple tasks, "30 minutes" for moderate tasks, "1 hour" for complex tasks
+- Be specific but realistic - don't underestimate time needed
+- Consider task complexity and client's experience level
 
 ### **Why Important Guidelines:**
 - Explain the therapeutic benefit clearly with scientific backing when possible

@@ -14,6 +14,7 @@ interface TaskDetailModalProps {
     target?: string;
     weeklyRepetitions?: number;
     isMandatory?: boolean;
+    isOneOff?: boolean;
     whyImportant?: string;
     recommendedActions?: string;
     toolsToHelp?: string;
@@ -58,6 +59,12 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ open, onClose,
                     <Badge variant='destructive' className='text-xs bg-red-100 text-red-700 border-red-200'>
                       <Star className='w-3 h-3 mr-1' />
                       Mandatory
+                    </Badge>
+                  )}
+                  {task.isOneOff && (
+                    <Badge variant='outline' className='text-xs bg-purple-100 text-purple-700 border-purple-200'>
+                      <Clock className='w-3 h-3 mr-1' />
+                      One-time Task
                     </Badge>
                   )}
                   {task.category && (
