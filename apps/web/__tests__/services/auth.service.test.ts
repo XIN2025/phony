@@ -46,6 +46,7 @@ describe('Auth hooks', () => {
         practitionerId: null,
         idProofUrl: null,
         dob: null,
+        trackingEnabled: true,
       },
     };
 
@@ -142,6 +143,7 @@ describe('Auth hooks', () => {
         practitionerId: null,
         idProofUrl: null,
         dob: null,
+        trackingEnabled: true,
       },
     };
 
@@ -184,7 +186,7 @@ describe('Auth hooks', () => {
     signupData.append('firstName', 'John');
     signupData.append('lastName', 'Doe');
     signupData.append('invitationToken', 'test-invitation-token');
-    
+
     const mockLoginResponse: LoginResponse = {
       token: 'client-jwt-token',
       user: {
@@ -200,6 +202,7 @@ describe('Auth hooks', () => {
         practitionerId: null,
         idProofUrl: null,
         dob: null,
+        trackingEnabled: true,
       },
     };
 
@@ -245,7 +248,7 @@ describe('Auth hooks', () => {
       signupDataWithImage.append('firstName', 'John');
       signupDataWithImage.append('lastName', 'Doe');
       signupDataWithImage.append('invitationToken', 'test-invitation-token');
-      
+
       // Mock a file
       const mockFile = new File(['test'], 'profile.jpg', { type: 'image/jpeg' });
       signupDataWithImage.append('profileImage', mockFile);
@@ -265,6 +268,7 @@ describe('Auth hooks', () => {
           practitionerId: null,
           idProofUrl: null,
           dob: null,
+          trackingEnabled: true,
         },
       };
 
