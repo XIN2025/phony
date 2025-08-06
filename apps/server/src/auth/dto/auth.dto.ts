@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ClientStatus, UserRole } from '@repo/db';
 import { LoginResponse, SendOtpRequest, VerifyOtpRequest } from '@repo/shared-types';
-import { IsEmail, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class OtpAuthDto implements SendOtpRequest {
   @ApiProperty()
@@ -212,6 +212,13 @@ export class UserDto {
   @IsEnum(ClientStatus)
   @IsOptional()
   clientStatus?: (typeof ClientStatus)[keyof typeof ClientStatus];
+
+  @ApiProperty({
+    type: 'boolean',
+    description: 'Whether progress tracking is enabled for this user',
+  })
+  @IsBoolean()
+  trackingEnabled: boolean;
 
   @ApiProperty({
     type: 'string',

@@ -111,4 +111,24 @@ export class UsersService {
       },
     });
   }
+
+  async updateTrackingSettings(userId: string, trackingEnabled: boolean) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        trackingEnabled,
+        updatedAt: new Date(),
+      },
+      select: {
+        id: true,
+        trackingEnabled: true,
+        updatedAt: true,
+      },
+    });
+  }
 }

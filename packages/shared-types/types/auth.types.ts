@@ -20,6 +20,7 @@ export type User = {
   isEmailVerified: boolean;
   practitionerId: string | null;
   idProofUrl: string | null;
+  trackingEnabled: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 };

@@ -664,6 +664,15 @@ export class PlanService {
   }
 
   async getClientActionItemsInRange(clientId: string, start: string, end: string) {
+    const client = await this.prisma.user.findUnique({
+      where: { id: clientId },
+      select: { trackingEnabled: true },
+    });
+
+    if (!client || !client.trackingEnabled) {
+      return [];
+    }
+
     const startDate = new Date(start);
     startDate.setHours(0, 0, 0, 0);
     const endDate = new Date(end);

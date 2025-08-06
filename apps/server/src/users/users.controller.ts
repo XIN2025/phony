@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Delete, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Delete, Request, Patch } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '../auth/decorators/public.decorator';
@@ -60,6 +60,16 @@ export class UsersController {
     }
   ) {
     return await this.usersService.createUser(userData);
+  }
+
+  @Patch('me/tracking')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update tracking settings for current user' })
+  @ApiResponse({ status: 200, description: 'Tracking settings updated successfully.' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  async updateTrackingSettings(@Request() req, @Body() body: { trackingEnabled: boolean }) {
+    const userId = req.user.id;
+    return await this.usersService.updateTrackingSettings(userId, body.trackingEnabled);
   }
 
   @Delete('me')

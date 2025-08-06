@@ -134,6 +134,9 @@ export class JournalService {
       if (!client) {
         throw new Error('Client not found or not authorized');
       }
+      if (!client.trackingEnabled) {
+        return [];
+      }
     }
 
     return await this.prisma.journalEntry.findMany({

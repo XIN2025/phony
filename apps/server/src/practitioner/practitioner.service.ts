@@ -309,6 +309,7 @@ export class PractitionerService {
       phoneNumber: client.phoneNumber,
       avatarUrl: client.avatarUrl,
       clientStatus: client.clientStatus,
+      trackingEnabled: client.trackingEnabled,
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
       dob: client.dob || '',

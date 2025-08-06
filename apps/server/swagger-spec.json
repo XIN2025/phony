@@ -427,6 +427,19 @@
         "tags": ["users"]
       }
     },
+    "/api/users/me/tracking": {
+      "patch": {
+        "operationId": "UsersController_updateTrackingSettings",
+        "parameters": [],
+        "responses": {
+          "200": { "description": "Tracking settings updated successfully." },
+          "404": { "description": "User not found." }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Update tracking settings for current user",
+        "tags": ["users"]
+      }
+    },
     "/api/users/me": {
       "delete": {
         "operationId": "UsersController_deleteCurrentUser",
@@ -1053,6 +1066,7 @@
           "isEmailVerified": { "type": "boolean" },
           "idProofUrl": { "type": "string", "nullable": true },
           "clientStatus": { "type": "string", "enum": ["ACTIVE", "NEEDS_INTAKE", "INTAKE_COMPLETED"] },
+          "trackingEnabled": { "type": "boolean", "description": "Whether progress tracking is enabled for this user" },
           "createdAt": { "type": "string", "nullable": true },
           "updatedAt": { "type": "string", "nullable": true }
         },
@@ -1069,7 +1083,8 @@
           "dob",
           "practitionerId",
           "isEmailVerified",
-          "idProofUrl"
+          "idProofUrl",
+          "trackingEnabled"
         ]
       },
       "LoginResponseDto": {

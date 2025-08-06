@@ -442,6 +442,20 @@ export class SessionService {
 
   async generateComprehensiveSummaryForClient(clientId: string, start?: string, end?: string) {
     try {
+      const client = await this.prisma.user.findUnique({
+        where: { id: clientId },
+        select: { trackingEnabled: true },
+      });
+
+      if (!client || !client.trackingEnabled) {
+        return {
+          title: 'Comprehensive Client Summary',
+          summary: 'Client has disabled progress tracking.',
+          keyInsights: ['Progress tracking is disabled'],
+          recommendations: ['Client has chosen to disable progress tracking'],
+        };
+      }
+
       const sessionWhere: Record<string, unknown> = { clientId };
       if (start && end) {
         sessionWhere.recordedAt = {

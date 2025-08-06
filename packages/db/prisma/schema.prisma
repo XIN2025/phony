@@ -25,6 +25,7 @@ model User {
   isEmailVerified Boolean  @default(false) @map("is_email_verified")
   isActive        Boolean  @default(true) @map("is_active")
   clientStatus    ClientStatus? @map("client_status")
+  trackingEnabled Boolean  @default(true) @map("tracking_enabled")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 

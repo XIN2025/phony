@@ -172,7 +172,6 @@ export const SidebarContent = ({
       <button
         className='flex items-center gap-2 sm:gap-3 w-full text-left focus:outline-none rounded-lg p-1.5 cursor-pointer min-w-0'
         onClick={() => {
-          setSidebarOpen(false);
           router.push(settingsPath);
         }}
         aria-label='View Profile'
@@ -282,7 +281,6 @@ export const SidebarContent = ({
             <button
               className='flex items-center justify-center rounded-full p-2 cursor-pointer hover:bg-[#ede6e3] transition-colors'
               onClick={() => {
-                setSidebarOpen(false);
                 router.push(settingsPath);
               }}
               aria-label='View Profile'

@@ -1212,3 +1212,13 @@ export function useDeleteAccount() {
     mutationFn: async () => ApiClient.delete<{ message: string }>('/api/users/me'),
   });
 }
+
+export function useUpdateTrackingSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (trackingEnabled: boolean) => ApiClient.patch('/api/users/me/tracking', { trackingEnabled }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+    },
+  });
+}
