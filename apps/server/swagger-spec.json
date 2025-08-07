@@ -1025,6 +1025,7 @@
     },
     "/api/contact": {
       "post": {
+        "description": "Submit a contact form message. The message will be sent to the configured contact email address.",
         "operationId": "ContactController_submitContactForm",
         "parameters": [],
         "requestBody": {
@@ -1032,8 +1033,30 @@
           "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContactFormDto" } } }
         },
         "responses": {
-          "200": { "description": "Contact form submitted successfully." },
-          "400": { "description": "Bad request - invalid form data." }
+          "200": {
+            "description": "Contact form submitted successfully.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContactFormResponseDto" } } }
+          },
+          "400": {
+            "description": "Bad request - invalid form data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Validation failed" },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": { "field": { "type": "string" }, "message": { "type": "string" } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         "summary": "Submit contact form",
         "tags": ["contact"]
@@ -1145,7 +1168,53 @@
         },
         "required": ["email", "firstName", "invitationToken"]
       },
-      "ContactFormDto": { "type": "object", "properties": {} }
+      "ContactFormDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "First name of the person submitting the contact form",
+            "example": "John",
+            "minLength": 1
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name of the person submitting the contact form",
+            "example": "Doe",
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address of the person submitting the contact form",
+            "example": "john.doe@example.com",
+            "format": "email"
+          },
+          "phone": { "type": "string", "description": "Phone number (optional)", "example": "+44 1234567890" },
+          "message": {
+            "type": "string",
+            "description": "Message content from the contact form",
+            "example": "I would like to learn more about your services. Please contact me at your earliest convenience.",
+            "minLength": 10
+          }
+        },
+        "required": ["firstName", "lastName", "email", "message"]
+      },
+      "ContactFormResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the contact form was submitted successfully",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message indicating success or failure",
+            "example": "Thank you for your message! We will get back to you soon."
+          }
+        },
+        "required": ["success", "message"]
+      }
     }
   }
 }

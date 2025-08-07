@@ -78,17 +78,17 @@ export const ContactForm = () => {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4 sm:space-y-6'>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6'>
+    <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-3 sm:space-y-4 md:space-y-6'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6'>
         <div>
-          <label htmlFor='firstName' className='block text-sm font-medium text-gray-700 mb-2'>
+          <label htmlFor='firstName' className='block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2'>
             First Name
           </label>
           <input
             type='text'
             id='firstName'
             {...form.register('firstName')}
-            className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
+            className='w-full px-2 sm:px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
             placeholder='Enter your first name'
             disabled={isPending}
           />
@@ -97,14 +97,14 @@ export const ContactForm = () => {
           )}
         </div>
         <div>
-          <label htmlFor='lastName' className='block text-sm font-medium text-gray-700 mb-2'>
+          <label htmlFor='lastName' className='block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2'>
             Last Name
           </label>
           <input
             type='text'
             id='lastName'
             {...form.register('lastName')}
-            className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
+            className='w-full px-2 sm:px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
             placeholder='Enter your last name'
             disabled={isPending}
           />
@@ -115,14 +115,14 @@ export const ContactForm = () => {
       </div>
 
       <div>
-        <label htmlFor='email' className='block text-sm font-medium text-gray-700 mb-2'>
+        <label htmlFor='email' className='block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2'>
           Email
         </label>
         <input
           type='email'
           id='email'
           {...form.register('email')}
-          className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
+          className='w-full px-2 sm:px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
           placeholder='your.email@example.com'
           disabled={isPending}
         />
@@ -132,19 +132,19 @@ export const ContactForm = () => {
       </div>
 
       <div>
-        <label htmlFor='phone' className='block text-sm font-medium text-gray-700 mb-2'>
+        <label htmlFor='phone' className='block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2'>
           Phone Number (Optional)
         </label>
-        <div className='flex'>
+        <div className='flex gap-0'>
           <select
             value={selectedCountry}
             onChange={(e) => setSelectedCountry(e.target.value)}
-            className='px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
+            className='px-1 sm:px-2 py-2 sm:py-2.5 text-xs sm:text-sm border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white w-16 sm:w-20'
             disabled={isPending}
           >
             {countries.map((country) => (
               <option key={country.code} value={country.code}>
-                {country.code} {country.name}
+                {country.code}
               </option>
             ))}
           </select>
@@ -152,7 +152,7 @@ export const ContactForm = () => {
             type='tel'
             id='phone'
             {...form.register('phone')}
-            className='flex-1 px-3 py-2 border border-l-0 border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
+            className='flex-1 px-2 sm:px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-l-0 border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
             placeholder='9876543210'
             disabled={isPending}
           />
@@ -163,14 +163,14 @@ export const ContactForm = () => {
       </div>
 
       <div>
-        <label htmlFor='message' className='block text-sm font-medium text-gray-700 mb-2'>
+        <label htmlFor='message' className='block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2'>
           Message
         </label>
         <textarea
           id='message'
           {...form.register('message')}
-          rows={4}
-          className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white'
+          rows={3}
+          className='w-full px-2 sm:px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white min-h-[80px] sm:min-h-[100px]'
           placeholder='Leave us a message or a suggestion'
           disabled={isPending}
         />
@@ -179,11 +179,11 @@ export const ContactForm = () => {
         )}
       </div>
 
-      <div className='text-center'>
+      <div className='text-center pt-2 sm:pt-4'>
         <button
           type='submit'
           disabled={isPending}
-          className='px-6 py-3 sm:px-8 sm:py-4 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors duration-300 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto'
+          className='w-full sm:w-auto px-4 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors duration-300 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto min-h-[44px]'
         >
           {isPending && <Loader2 className='w-4 h-4 animate-spin' />}
           {isPending ? 'Sending...' : 'Send Message'}

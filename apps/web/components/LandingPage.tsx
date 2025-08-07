@@ -555,34 +555,38 @@ const ContinuumLanding = () => {
       </section>
 
       {/* Contact Us Section */}
-      <section className='py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 bg-[#fdf9f5]'>
+      <section className='py-8 sm:py-12 md:py-16 lg:py-20 px-3 sm:px-4 md:px-6 bg-[#fdf9f5]'>
         <div className='max-w-4xl mx-auto'>
           {/* Section Header */}
-          <div className='text-center mb-8 sm:mb-12 md:mb-16'>
+          <div className='text-center mb-6 sm:mb-8 md:mb-12 lg:mb-16'>
             <h2
-              className='font-bold text-gray-900 mb-4 sm:mb-6'
+              className='font-bold text-gray-900 mb-3 sm:mb-4 md:mb-6 px-2'
               style={{
                 fontFamily: 'DM Serif Display, serif',
-                fontSize: 'min(8vw, 56px)',
-                lineHeight: '1.1',
+                fontSize: 'min(7vw, 48px)',
+                lineHeight: '1.2',
               }}
             >
               Contact Us
             </h2>
             <p
-              className='text-base sm:text-lg md:text-[32px] text-gray-600 mb-2 italic'
+              className='text-sm sm:text-base md:text-lg lg:text-[28px] xl:text-[32px] text-gray-600 mb-2 italic px-2'
               style={{
                 fontFamily: 'DM Serif Text, serif',
-                lineHeight: '1.1',
+                lineHeight: '1.3',
               }}
             >
               We'd love to hear from you.
             </p>
-            <p className='text-sm sm:text-base text-gray-600'>Leave a message, request a callback or give feedback.</p>
+            <p className='text-xs sm:text-sm md:text-base text-gray-600 px-2'>
+              Leave a message, request a callback or give feedback.
+            </p>
           </div>
 
           {/* Contact Form */}
-          <ContactForm />
+          <div className='px-2 sm:px-0'>
+            <ContactForm />
+          </div>
         </div>
       </section>
 
