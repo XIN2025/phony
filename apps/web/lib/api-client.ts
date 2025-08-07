@@ -19,6 +19,7 @@ export class ApiClient {
         '/api/auth/practitioner/signup',
         '/api/auth/client/signup',
         '/api/practitioner/invitations/token/',
+        '/api/contact',
       ];
 
       const isPublicEndpoint = PUBLIC_ENDPOINTS.some((endpoint) => config.url?.includes(endpoint));

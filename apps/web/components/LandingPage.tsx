@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { AuthDialog } from './AuthDialog';
+import { ContactForm } from './ContactForm';
 
 const ContinuumLanding = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -581,94 +582,7 @@ const ContinuumLanding = () => {
           </div>
 
           {/* Contact Form */}
-          <form className='space-y-4 sm:space-y-6'>
-            {/* First Row - Name Fields */}
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6'>
-              <div>
-                <label htmlFor='firstName' className='block text-sm font-medium text-gray-700 mb-2'>
-                  First Name
-                </label>
-                <input
-                  type='text'
-                  id='firstName'
-                  name='firstName'
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
-                  placeholder='Enter your first name'
-                />
-              </div>
-              <div>
-                <label htmlFor='lastName' className='block text-sm font-medium text-gray-700 mb-2'>
-                  Last Name
-                </label>
-                <input
-                  type='text'
-                  id='lastName'
-                  name='lastName'
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
-                  placeholder='Enter your last name'
-                />
-              </div>
-            </div>
-
-            {/* Email Field */}
-            <div>
-              <label htmlFor='email' className='block text-sm font-medium text-gray-700 mb-2'>
-                Email
-              </label>
-              <input
-                type='email'
-                id='email'
-                name='email'
-                className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
-                placeholder='Share your thoughts, suggestions, or feature requests...'
-              />
-            </div>
-
-            {/* Phone Number Field */}
-            <div>
-              <label htmlFor='phone' className='block text-sm font-medium text-gray-700 mb-2'>
-                Phone Number
-              </label>
-              <div className='flex'>
-                <select className='px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'>
-                  <option>UK</option>
-                  <option>US</option>
-                  <option>CA</option>
-                </select>
-                <input
-                  type='tel'
-                  id='phone'
-                  name='phone'
-                  className='flex-1 px-3 py-2 border border-l-0 border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
-                  placeholder='+44 9876543210'
-                />
-              </div>
-            </div>
-
-            {/* Message Field */}
-            <div>
-              <label htmlFor='message' className='block text-sm font-medium text-gray-700 mb-2'>
-                Message
-              </label>
-              <textarea
-                id='message'
-                name='message'
-                rows={4}
-                className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white'
-                placeholder='Leave us a message or a suggestion'
-              />
-            </div>
-
-            {/* Submit Button */}
-            <div className='text-center'>
-              <button
-                type='submit'
-                className='px-6 py-3 sm:px-8 sm:py-4 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors duration-300 text-sm sm:text-base'
-              >
-                Send Message
-              </button>
-            </div>
-          </form>
+          <ContactForm />
         </div>
       </section>
 

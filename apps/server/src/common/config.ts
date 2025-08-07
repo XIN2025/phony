@@ -20,6 +20,7 @@ const optionalEnvVars = {
   SMTP_USER: process.env.SMTP_USER || '',
   SMTP_PASSWORD: process.env.SMTP_PASSWORD || '',
   SMTP_FROM: process.env.SMTP_FROM || '',
+  CONTACT_EMAIL: process.env.CONTACT_EMAIL || '',
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
   GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/api/auth/callback/google',
@@ -55,6 +56,7 @@ export const config = {
       from: optionalEnvVars.SMTP_FROM,
       fromName: process.env.SMTP_FROM_NAME ?? 'Continuum',
     },
+    contactEmail: optionalEnvVars.CONTACT_EMAIL,
   },
   otp: {
     expiryMs: OTP_EXPIRY_MS,

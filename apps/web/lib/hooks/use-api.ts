@@ -1222,3 +1222,17 @@ export function useUpdateTrackingSettings() {
     },
   });
 }
+
+export interface ContactFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  message: string;
+}
+
+export function useSubmitContactForm() {
+  return useMutation({
+    mutationFn: (data: ContactFormData) => ApiClient.post<{ success: boolean; message: string }>('/api/contact', data),
+  });
+}

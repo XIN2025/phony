@@ -1022,6 +1022,22 @@
         "summary": "Upload a file attachment for chat messages",
         "tags": ["Chat"]
       }
+    },
+    "/api/contact": {
+      "post": {
+        "operationId": "ContactController_submitContactForm",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContactFormDto" } } }
+        },
+        "responses": {
+          "200": { "description": "Contact form submitted successfully." },
+          "400": { "description": "Bad request - invalid form data." }
+        },
+        "summary": "Submit contact form",
+        "tags": ["contact"]
+      }
     }
   },
   "info": { "title": "NestJS API", "description": "API for NestJS", "version": "1.0", "contact": {} },
@@ -1128,7 +1144,8 @@
           "notificationSettings": { "type": "object" }
         },
         "required": ["email", "firstName", "invitationToken"]
-      }
+      },
+      "ContactFormDto": { "type": "object", "properties": {} }
     }
   }
 }

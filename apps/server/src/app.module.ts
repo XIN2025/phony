@@ -23,6 +23,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { TranscriptionModule } from './transcription/transcription.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
@@ -79,6 +80,7 @@ import { TranscriptionModule } from './transcription/transcription.module';
       exclude: ['/api/(.*)'],
     }),
     TranscriptionModule,
+    ContactModule,
   ],
   controllers: [AppController],
   providers: [
